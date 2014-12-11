@@ -1,0 +1,16 @@
+hfst (3.8.1~r4088-1) trusty; urgency=low
+
+  [ Kartik Mistry ]
+  * Rebuild for Trusty.
+  * Removed patches/hfst_02_notimestamp.diff, not needed.
+
+  [ Tino Didriksen ]
+  * New upstream release
+
+ -- Kartik Mistry <kartik@debian.org>  Sat, 13 Dec 2014 11:21:13 +0530
+
+hfst (3.8.0~r4029-1) experimental; urgency=low
+
+  * Initial release
+
+ -- Tino Didriksen <mail@tinodidriksen.com>  Fri, 3 Oct 2014 13:13:49 +0000
