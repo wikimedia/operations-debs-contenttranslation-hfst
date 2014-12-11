@@ -1,0 +1,9 @@
+Multichar_Symbols +Sg +Pl
+
+LEXICON Root
+cat	Num	"weight: 1"	;
+dog	Num	"weight: 2"	;
+
+LEXICON Num
++Sg:	#	"weight: 1"	;
++Pl:s	#	"weight: 4"	;

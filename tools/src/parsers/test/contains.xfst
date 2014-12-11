@@ -1,0 +1,21 @@
+set precision 1
+set print-weight ON
+
+# weights are ignored
+define foo [a b::1 c::2] ;
+regex $[foo] ;
+apply up
+abd
+bcd
+dabc
+dabcabcd
+<ctrl-d>
+echo --
+
+regex $[a|[a a]];
+apply up
+b
+ba
+aab
+baaa
+baaaab

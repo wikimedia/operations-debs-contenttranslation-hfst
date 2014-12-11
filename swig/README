@@ -1,0 +1,38 @@
+This is the SWIG binding for using the hfst library with Python.
+
+Building and installation is done using the standard Python module distutils.
+Once you've successfully built libhfst, use the script setup.py to build the
+Python extension eg. like so:
+
+    python setup.py build_ext --inplace
+
+If you are using Python3 ( =< 3.2), you can execute
+
+    sed -i 's/class HfstException(_object):/class HfstException(Exception):/' libhfst.py
+
+after build to be able to use HfstException and its subclasses in Python. 
+
+If you wish to install the extension, run
+
+    python setup.py install
+
+
+To test the SWIG bindings after installation, run
+
+    ./test/test.sh (--python PYTHON)
+
+For further information, consult
+
+    python setup.py --help
+    python setup.py --help-commands
+
+and the distutils documentation.
+
+If you are using SWIG bindings locally, or want to run ./test/test.sh before
+installation, add path/to/hfst-top-dir/swig/ to PYTHONPATH and 
+path/to/hfst-top-dir/libhfst/src/.libs/ to LD_LIBRARY_PATH.
+
+Demonstration utilities:
+	      omor_query.py, lookup and basic usage (needs omorfi installed)
+	      hfstBot.py, a irc bot for lookup
+

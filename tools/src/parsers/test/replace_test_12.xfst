@@ -1,0 +1,6 @@
+set precision 1
+set print-weight ON
+
+# this doesn't work in foma or xfst either
+regex ?::1 -> x ;
+apply up s

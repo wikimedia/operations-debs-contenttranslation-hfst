@@ -1,0 +1,40 @@
+echo "[1|2|3|4|5|6|7|8|9]" | $2/hfst-regexp2fst -f $1 > N
+echo '["0" | @"N"]' | $2/hfst-regexp2fst -f $1 > Z
+
+# Insert an initial 1 in front of a sequence of zeros. To make
+# this relation functional in both directions, we need two
+# replace expressions. One introduces 1, the other removes 1.
+# The composition of the two is a relation that uniquely maps,
+# for example, 100 to 99 and, conversely, 99 to 100.
+
+echo '[ 1 <- [. .] || .#. _ "0"+ .#. ] .o.  [ 1 -> 0 || .#. _ "0"+ .#. ]' | $2/hfst-regexp2fst -f $1 > CarryUp
+
+echo ' [ 1 <- "0", 2 <- 1, 3 <- 2, 4 <- 3,  5  <- 4, 6 <-  5 , 7 <- 6, 8 <- 7, 9 <- 8, "0" <- 9 || .#. ("+") @"Z"* _ 9* .#. ]' | $2/hfst-regexp2fst -f $1 > AddUp
+
+echo ' [ "0" => .#. @"N" @"Z"* _ , .#. _ .#. ]'  | $2/hfst-regexp2fst -f $1 > NoLeadingZero
+
+# PlusOrMinusOne.hfst maps any natural number N to (N-1), and vice versa.
+
+echo ' @"CarryUp" .o. @"AddUp" .o. @"NoLeadingZero" ' | $2/hfst-regexp2fst -f $1 > PlusOrMinusOne
+
+echo ' @"PlusOrMinusOne" .o. @"PlusOrMinusOne" ' | $2/hfst-regexp2fst -f $1 > PlusOrMinusTwo
+echo ' @"PlusOrMinusTwo" .o. @"PlusOrMinusOne" ' | $2/hfst-regexp2fst -f $1 > PlusOrMinusThree
+echo ' @"PlusOrMinusThree" .o. @"PlusOrMinusOne" ' | $2/hfst-regexp2fst -f $1 > PlusOrMinusFour
+echo ' @"PlusOrMinusFour" .o. @"PlusOrMinusOne" ' | $2/hfst-regexp2fst -f $1 > PlusOrMinusFive
+echo ' @"PlusOrMinusFive" .o. @"PlusOrMinusOne" ' | $2/hfst-regexp2fst -f $1 > PlusOrMinusSix
+echo ' @"PlusOrMinusSix" .o. @"PlusOrMinusOne" ' | $2/hfst-regexp2fst -f $1 > PlusOrMinusSeven
+echo ' @"PlusOrMinusSeven" .o. @"PlusOrMinusOne" ' | $2/hfst-regexp2fst -f $1 > PlusOrMinusEight
+echo ' @"PlusOrMinusEight" .o. @"PlusOrMinusOne" ' | $2/hfst-regexp2fst -f $1 >  PlusOrMinusNine
+echo ' @"PlusOrMinusNine" .o. @"PlusOrMinusOne" ' | $2/hfst-regexp2fst -f $1 > PlusOrMinusTen    
+
+
+
+rm -f Result
+
+for i in One Two Three Four Five Six Seven Eight Nine Ten; do \
+  cat "PlusOrMinus"$i >> Result;
+done
+
+rm -f PlusOrMinusSix CarryUp PlusOrMinusThree PlusOrMinusTwo PlusOrMinusFour
+rm -f N NoLeadingZero PlusOrMinusOne Z PlusOrMinusFive PlusOrMinusNine
+rm -f AddUp PlusOrMinusSeven PlusOrMinusTen PlusOrMinusEight

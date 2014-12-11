@@ -1,0 +1,4 @@
+regex a b:c;
+regex a b:c b:c a a d:e f;
+print label-tally
+exit

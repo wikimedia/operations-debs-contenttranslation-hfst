@@ -1,0 +1,20 @@
+Definitions
+
+       with_tab =      a s d f;
+       with_quotes = "asdf";
+       another_one = "asdf";
+
+
+LEXICON Root
+
+A;
+B;
+
+LEXICON A
+
+cat #;
+dog #;
+
+LEXICON B
+
+mouse #;

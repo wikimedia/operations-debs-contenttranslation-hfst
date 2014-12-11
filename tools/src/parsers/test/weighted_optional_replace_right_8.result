@@ -1,0 +1,16 @@
+ca	0.0
+cb	8.0
+--
+caa	0.0
+cab	8.0
+cba	8.0
+cbb	16.0
+--
+caaa	0.0
+caab	8.0
+caba	8.0
+cbaa	8.0
+cabb	16.0
+cbab	16.0
+cbba	16.0
+cbbb	24.0

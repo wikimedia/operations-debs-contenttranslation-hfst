@@ -1,0 +1,11 @@
+Alphabet
+
+a:b ;
+
+Sets
+A = a;
+B = b;
+
+Rules
+"R"
+a:c /<= A:B ? _ ;

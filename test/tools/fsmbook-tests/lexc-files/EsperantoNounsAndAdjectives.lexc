@@ -1,0 +1,55 @@
+LEXICON Root
+	Nouns ;
+	Adjectives ;
+
+LEXICON Nouns
+	NounRoots ;
+ge	NounRoots ;
+
+LEXICON NounRoots
+bird	Nmf ;
+hund	Nmf ;
+kat	Nmf ;
+elefant	Nmf ;
+
+LEXICON Nmf
+in	Nmf ;
+et	Nmf ;
+eg	Nmf ;
+	Nend ;
+	Adjend ;
+
+LEXICON Nend
+o	Number ;
+
+LEXICON Adjectives
+	AdjPrefixes ;
+	AdjRoots ;
+
+LEXICON AdjPrefixes
+mal	AdjRoots ;
+ne	AdjRoots ;
+
+LEXICON AdjRoots
+bon	Adj ;
+long	Adj ;
+jun	Adj ;
+alt	Adj ;
+grav	Adj ;
+
+LEXICON Adj
+eg	Adj ;
+et	Adj ;
+	Adjend ;
+ec	Nend ;
+
+LEXICON Adjend
+a	Number ;
+
+LEXICON Number
+j	Case ;
+	Case ;
+
+LEXICON Case
+n	# ;
+	# ;

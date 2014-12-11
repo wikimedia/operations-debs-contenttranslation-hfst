@@ -1,0 +1,10 @@
+set quit-on-fail OFF
+regex a:b;
+regex c:d;
+test overlap
+assert test overlap
+set quit-on-fail ON
+test overlap
+echo pass
+assert test overlap
+echo fail

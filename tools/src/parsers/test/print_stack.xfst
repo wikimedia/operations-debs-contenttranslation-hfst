@@ -1,0 +1,4 @@
+regex a:b;
+regex c:d;
+print stack
+exit

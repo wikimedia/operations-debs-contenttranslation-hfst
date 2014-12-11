@@ -1,0 +1,7 @@
+set xerox-composition OFF
+regex [~$[ a ]] .o. [[a a a] | [b b b] | [b a b]];
+print upper-words
+echo --
+set xerox-composition ON
+regex [~$[ a ]] .o. [[a a a] | [b b b] | [b a b]];
+print upper-words

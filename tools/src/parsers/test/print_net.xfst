@@ -1,0 +1,14 @@
+regex a:b;
+print net
+echo --
+regex a:b | c;
+print net
+echo --
+regex [a:b c]*;
+print net
+echo --
+regex [0|a];
+print net
+echo --
+regex 0:" ";
+print net

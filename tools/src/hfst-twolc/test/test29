@@ -1,0 +1,5 @@
+Alphabet a b ;
+Rules
+"rule name"
+a:b <=> X Y _  ; where X in ( x y ) Y in ( x y ) matched ;
+

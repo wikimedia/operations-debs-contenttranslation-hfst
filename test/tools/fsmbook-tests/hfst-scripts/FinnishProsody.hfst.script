@@ -1,0 +1,131 @@
+# The data
+
+echo "kalastelet
+kalasteleminen
+ilmoittautuminen
+järjestelemättömyydestänsä
+kalastelemme
+ilmoittautumisesta
+järjestelmällisyydelläni
+järjestelmällistämätöntä
+voimisteluttelemasta
+opiskelija
+opettamassa
+kalastelet
+strukturalismi
+onnittelemanikin
+mäki
+perijä
+repeämä
+ergonomia
+puhelimellani
+matematiikka
+puhelimistani
+rakastajattariansa
+kuningas
+kainostelijat
+ravintolat
+merkonomin" | $2/hfst-strings2fst -f $1 -j > FinnWords.hfst
+
+
+# Some definitions:
+
+echo "[u | y | i]" | $2/hfst-regexp2fst -f $1 > HighV                       # High vowel
+echo "[e | o | ö]" | $2/hfst-regexp2fst -f $1 > MidV                        # Mid vowel
+echo "[a | ä]" | $2/hfst-regexp2fst -f $1 > LowV                            # Low vowel
+echo '[ @"HighV" | @"MidV" | @"LowV" ]' | $2/hfst-regexp2fst -f $1 > USV    # Unstressed Vowel
+
+echo "[ b | c | d | f | g | h | j | k | l | m | n | p | q | r | s | t | v | w | x | z ]" | $2/hfst-regexp2fst -f $1 > C     # Consonant
+
+echo '[á | é | í | ó | ú | ý | ä´ | ö´ ]' | $2/hfst-regexp2fst -f $1 > MSV
+echo '[à | è | ì | ò | ù | y` | ä` | ö` ]' | $2/hfst-regexp2fst -f $1 > SSV
+echo '[ @"MSV" | @"SSV" ]' | $2/hfst-regexp2fst -f $1 > SV                  # Stressed vowel
+echo '[ @"USV" | @"SV" ]' | $2/hfst-regexp2fst -f $1 > V                    # Vowel
+
+echo '[ @"V" | @"C" ]' | $2/hfst-regexp2fst -f $1 > P                       # Phone
+
+echo '[[\@"P"+] | .#.]' | $2/hfst-regexp2fst -f $1 > B                      # Boundary
+echo '[ .#. | "."]' | $2/hfst-regexp2fst -f $1 > E                           # Edge
+echo '[~$"." "." ~$"."]' | $2/hfst-regexp2fst -f $1 > SB                    # At most one syllable boundary
+
+echo '[ @"C"* @"V" ]'| $2/hfst-regexp2fst -f $1 > Light                     # Light syllable
+echo '[ @"Light" @"P"+ ]'| $2/hfst-regexp2fst -f $1 > Heavy                 # Heavy syllable
+
+echo '[ @"Heavy" | @"Light" ]' | $2/hfst-regexp2fst -f $1 > S               # Syllable
+echo '[ @"S" & $@"SV" ]' | $2/hfst-regexp2fst -f $1 > SS                    # Stressed syllable
+echo '[ @"S" & ~@"SV" ]' | $2/hfst-regexp2fst -f $1 > US                    # Unstressed syllable
+echo '[ @"S" & $@"MSV" ]' | $2/hfst-regexp2fst -f $1 > MSS                  # Syllable with main stress
+
+echo '[ @"S" "." @"S" ]' | $2/hfst-regexp2fst -f $1 > BF                    # Binary foot
+
+# Rules for prosody:
+
+echo '[ [. .] -> "." || [ @"HighV" | @"MidV" ] _ @"LowV",'\
+  'i _ [@"MidV" - e],'\
+  'u _ [@"MidV" - o],'\
+  'y _ [@"MidV" - ö] ]'\
+| $2/hfst-regexp2fst -f $1 > MarkNonDiphtongs      # y.e
+
+# The general syllabification rule has exceptions. In particular, loan
+# words such as ate.isti 'atheist' must be partially syllabified in the
+# lexicon.
+
+echo ' @"C"*  @"V"+ @"C"* @-> ... "." || _ @"C" @"V" ' \
+| $2/hfst-regexp2fst -f $1 > Syllabify
+
+echo ' @"BF" "." @"Light" @-> "(" ... ")" '\
+     '// [{).} | .#.] [@"BF" "."]*  _'\
+     '["." @"Heavy" "." @"S" ] | .#. ' \
+| $2/hfst-regexp2fst -f $1 > TernaryFeet
+
+# Scan all the unfooted material into binary feet.
+
+echo ' @"BF" @-> "(" ... ")" || .#.|"." _ .#.|"." ' | $2/hfst-regexp2fst -f $1 > BinaryFeet
+
+# Assign the primary stress to the first vowel of the first syllable.
+
+echo ' a -> á, e -> é, i -> í, o -> ó,'\
+     'u -> ú, y -> ý, ä -> "ä´", ö -> "ö´" || .#. "(" @"C"* _' \
+| $2/hfst-regexp2fst -f $1 > MainStress
+
+# Assign secondary stress to all initial vowels of non-initial syllables.
+
+echo ' a -> à, e -> è, i -> ì, o -> ò,'\
+     'u -> ù, y -> "y`", ä -> "ä`", ö -> "ö`"'\
+     '|| "(" @"C"* _ ' | $2/hfst-regexp2fst -f $1 > SecondaryStress
+
+# Assign an optional secondary stress to an unfooted final syllable
+# if it is heavy.
+
+echo 'a (->) à, e (->) è, i (->) ì,'\
+     'o (->) ò, u (->) ù, y (->) "y`",'\
+     'ä (->) "ä`", ö (->) "ö`" || "." @"C"* _ @"P" .#. ' \
+| $2/hfst-regexp2fst -f $1 > OptFinalStress
+
+
+# Calculate the composition of rules from =MarkNonDiphtongs= to =OptFinalStress=
+# and compose the lexicon with the composition of rules.
+
+cp MarkNonDiphtongs Rules;
+for i in \
+  Syllabify \
+  TernaryFeet \
+  BinaryFeet \
+  MainStress \
+  SecondaryStress \
+  OptFinalStress; \
+do
+  cat Rules | $2/hfst-compose $i > TMP;
+  mv TMP Rules;
+done
+
+cat FinnWords.hfst | $2/hfst-compose Rules > FinnProsody
+
+# Print the lexicon with prosody indicated.
+# cat FinnProsody | $2/hfst-project -p output | $2/hfst-fst2strings | sort > result
+cp FinnProsody Result
+
+rm -f OptFinalStress SS BF US TernaryFeet SV BinaryFeet MainStress
+rm -f SecondaryStress MidV HighV FinnProsody FinnWords.hfst B C E
+rm -f MarkNonDiphtongs LowV Rules Syllabify P MSS S SB V MSV Light
+rm -f SSV Heavy USV

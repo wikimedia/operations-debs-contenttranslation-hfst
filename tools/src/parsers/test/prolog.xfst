@@ -1,0 +1,26 @@
+!
+! test writing and reading a simple regex in prolog format
+!
+regex a:b - c;
+write prolog tmp
+clear stack
+read prolog tmp
+write att
+clear stack
+!
+! test writing and reading a regex whose alphabet contains
+! a symbol "a" not used in transitions
+!
+regex ? - a;
+write prolog tmp
+clear stack
+read prolog tmp
+!
+! concatenate with "a" to see that identities are not expanded to "a"
+!
+regex a;
+concatenate net
+minimize net
+echo --
+write att
+exit

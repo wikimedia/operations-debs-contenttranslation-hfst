@@ -1,0 +1,12 @@
+Alphabet
+
+a b ;
+
+Diacritics
+' ;
+
+Rules
+
+"R"
+a:b <=> _ ': ' ':0 ;
+

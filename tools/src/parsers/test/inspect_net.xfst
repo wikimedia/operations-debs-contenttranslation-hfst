@@ -1,0 +1,10 @@
+regex [a:b|c:d] e:f;
+inspect net
+1
+<
+2
+1
+<
+-1
+<
+echo ok

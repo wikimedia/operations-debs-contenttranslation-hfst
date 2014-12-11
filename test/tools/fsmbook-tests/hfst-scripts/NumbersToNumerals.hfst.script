@@ -1,0 +1,51 @@
+# From one to nine.
+
+echo "1:one
+2:two
+3:three
+4:four
+5:five
+6:six
+7:seven
+8:eight
+9:nine" | $2/hfst-strings2fst -j -f $1 > OneToNine.hfst;
+
+# Numbers to prefixes that can preceed "-teen" or "-ten".
+
+echo "3:thir
+5:fif
+6:six
+7:seven
+8:eigh
+9:nine" | $2/hfst-strings2fst -j -f $1 > TeenTen.hfst;
+
+# Special numbers.
+
+echo "10:ten
+11:eleven
+12:twelve
+14:fourteen" | $2/hfst-strings2fst -j -f $1 > Special.hfst;
+
+# Here we handle ordinary teens and disjunct them with the special numbers.
+
+echo ":teen" | $2/hfst-strings2fst -f $1 > Epsilon2Teen.hfst;
+echo "1:" | $2/hfst-strings2fst -f $1 > One2Epsilon.hfst;
+$2/hfst-concatenate One2Epsilon.hfst TeenTen.hfst | $2/hfst-concatenate Epsilon2Teen.hfst > Teens_.hfst;
+$2/hfst-disjunct Special.hfst Teens_.hfst > Teens.hfst;
+
+# Special stems.
+
+echo "2:twen
+4:for" | $2/hfst-strings2fst -j -f $1 | $2/hfst-disjunct TeenTen.hfst > TenStem.hfst;
+
+# TenStem is followed either by "ty" paired with a zero or by "ty-" mapped to an epsilon and followed by one number.
+
+echo ":ty-" | $2/hfst-strings2fst -f $1 | $2/hfst-concatenate OneToNine.hfst > TMP;
+echo "0:ty" | $2/hfst-strings2fst -f $1 | $2/hfst-disjunct TMP | $2/hfst-concatenate -1 TenStem.hfst > Tens.hfst;
+
+# We finally disjunct all numbers.
+
+$2/hfst-disjunct OneToNine.hfst Teens.hfst | $2/hfst-disjunct Tens.hfst | $2/hfst-minimize > Result
+
+rm -f Epsilon2Teen.hfst Teens.hfst TMP OneToNine.hfst TeenTen.hfst
+rm -f Tens.hfst Teens_.hfst TenStem.hfst Special.hfst One2Epsilon.hfst

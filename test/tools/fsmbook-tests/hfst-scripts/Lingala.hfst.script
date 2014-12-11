@@ -1,0 +1,150 @@
+echo "[ {bet} | {béb} | {bomb} | {bóndel} | {bóngol} | {bót} | {búk} | \
+ {fung} | {kabol} | {kang} | {kom} | {kund} | {kóm} | {lakis} | \
+ {lí}  | {lob} | {luk} | {ndim} | {palangan} | {pangwis} | {sál} | \
+ {sepel} | {sómb} | {tál} | {támbol} | {tambwis} | {tataban} | \
+ {tún} | {yébis} \
+]" | $2/hfst-regexp2fst -f $1 > Stems
+
+echo "[a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|á|é|í|ó|ú]" | $2/hfst-regexp2fst -f $1 > L
+
+echo '[Per ":" 1]' | $2/hfst-regexp2fst -f $1 > Person1
+echo '[Per ":" 2]' | $2/hfst-regexp2fst -f $1 > Person2
+echo '[Per ":" 3]' | $2/hfst-regexp2fst -f $1 > Person3
+echo '[Num ":" [Sg|Pl] ]' | $2/hfst-regexp2fst -f $1 > Number
+
+# define Gender [Gen ":" [[1["0"|1]|2|3|4|5|6|7|8|9] "." [1[4|5]|[1|9|10]a]]];
+echo '[Gen ":" [1 "." 2 | 1a "." 2 | 3 "." 4 | 5 "." 6 | 7 "." 8 | 9a "." "10a" | "10" | 11 "." 6 | 14 "." 6 | 15]]' | $2/hfst-regexp2fst -f $1 > Gender3
+ 
+# define Reflexive [No | Yes];
+
+# Passive: -am-
+# Causative: -is-
+# Reciprocal: -an-
+# Applicative:l -el-
+# Reversive: -ol-
+# Iterative: reduplication of the root or root plus other morpheme;
+#  the two copies are separated by -a-; the second copy of the root
+#  has low tone on the first syllable
+# That is, the order of the morphemes is: REV, CAUS, PASS, APPL, RECIP
+
+# alobaloba 'he/she speak SP ITER'
+# alíalia   'he eat SP ITER'
+
+echo '[Past ":" [Rec|Hist|MoreRem|MostRem]]' | $2/hfst-regexp2fst -f $1 > PastTense
+echo '[Pres ":" [Cont|Hab1|Hab2]]' | $2/hfst-regexp2fst -f $1 > PresTense
+echo '[Fut ":" [Immed|MostRem]]' | $2/hfst-regexp2fst -f $1 > FutTense
+
+# define Reflexive [Refl ":" [No|Yes]];
+echo '[Tns ":" [@"PastTense"|@"PresTense"|@"FutTense"]]' | $2/hfst-regexp2fst -f $1 > Tense
+# define Polarity [Pol ":" [Pos|Neg]];
+
+echo ' [[[@"Person1" | @"Person2"] " " @"Number"] | [@"Person3" " " @"Number" " " @"Gender3"]]' | $2/hfst-regexp2fst -f $1 > Agreement
+
+                
+# For Gender 15 we have only singular subject marker, no plural
+# and no object markers. Missing info?
+
+echo '[Sub ":" @"Agreement"]  - [$Pl & $15]' | $2/hfst-regexp2fst -f $1 > SubjAgr
+echo '[Obj ":" @"Agreement"] - $15 ' | $2/hfst-regexp2fst -f $1 > ObjAgr
+echo '[Func ":" @"Agreement"]' | $2/hfst-regexp2fst -f $1 > Agr
+
+#define Features [SubjAgr " " ObjAgr " "  Tense " " Polarity];
+
+echo '[@"SubjAgr" " " @"ObjAgr" " " @"Tense"]' | $2/hfst-regexp2fst -f $1 > Features
+
+echo '"<" @"Stems" "," @"Features" ">" ' | $2/hfst-regexp2fst -f $1 > VerbLex
+
+# Common singular agreement markers.
+
+echo '[[. .] -> {mo} || "<" _ [$[@"Agr" & $@"Person3" & $Sg & $4]]]' | $2/hfst-regexp2fst -f $1 > RAgr1
+echo '[[. .] -> {li} || "<" _ [$[@"Agr" & $@"Person3" & $Sg & $5]]]' | $2/hfst-regexp2fst -f $1 > RAgr2
+echo '[[. .] -> e  || "<" _ [$[@"Agr" & $@"Person3" & $Sg & $[9a . "10a"]]]]' | $2/hfst-regexp2fst -f $1 > RAgr3
+echo '[[. .] -> {lo} || "<" _ [$[@"Agr" & $@"Person3" & $Sg & $["10"|11]]]]' | $2/hfst-regexp2fst -f $1 > RAgr4
+echo '[[. .] -> {bo} || "<" _ [$[@"Agr" & $@"Person3" & $Sg & $14]]]' | $2/hfst-regexp2fst -f $1 > RAgr5
+# Common plural agreement markers
+
+echo '[[. .] -> {bo} || "<" _ [$[@"Agr" & $@"Person2" & $Pl]]] ' | $2/hfst-regexp2fst -f $1 > RAgr6
+echo '[[. .] -> {ba} || "<" _ [$[@"Agr" & $@"Person3" & $Pl & $2]]]' | $2/hfst-regexp2fst -f $1 > RAgr7
+echo '[[. .] -> {mi} || "<" _ [$[@"Agr" & $@"Person3" & $Pl & $4]]]' | $2/hfst-regexp2fst -f $1 > RAgr8
+echo '[[. .] -> {ma} || "<" _ [$[@"Agr" & $@"Person3" & $Pl & $[5|6]]]]' | $2/hfst-regexp2fst -f $1 > RAgr9
+echo '[[. .] -> {bi}  || "<" _ [$[@"Agr" & $@"Person3" & $Pl & $7]]]' | $2/hfst-regexp2fst -f $1 > RAgr10
+echo '[[. .] -> i  || "<" _ [$[@"Agr" & $@"Person3" & $Pl & $[9a|"10"]]]]' | $2/hfst-regexp2fst -f $1 > RAgr11
+
+# Rule Block 1
+# Singular specific subject markers
+
+echo '[[. .] -> {na} || "<" _ [$[@"SubjAgr" & $@"Person1" & $Sg]]] ' | $2/hfst-regexp2fst -f $1 > R101
+echo '[[. .] -> o || "<" _ [$[@"SubjAgr" & $@"Person2" & $Sg]]] ' | $2/hfst-regexp2fst -f $1 > R102
+echo '[[. .] -> a || "<" _ [$[@"SubjAgr" & $@"Person3" & $Sg & $2]]]' | $2/hfst-regexp2fst -f $1 > R103
+echo '[[. .] -> e  || "<" _ [$[@"SubjAgr" & $@"Person3" & $Sg & $7]]]' | $2/hfst-regexp2fst -f $1 > R104
+echo '[[. .] -> {ei} || "<" _[$[@"SubjAgr" & $@"Person3" & $Sg & $15]]]' | $2/hfst-regexp2fst -f $1 > R105
+
+# Rules of referral for singular subject markers
+echo '`[@"RAgr1", Func, Sub]' | $2/hfst-regexp2fst -f $1 > R106
+echo '`[@"RAgr2", Func, Sub]' | $2/hfst-regexp2fst -f $1 > R107
+echo '`[@"RAgr3", Func, Sub]' | $2/hfst-regexp2fst -f $1 > R108
+echo '`[@"RAgr4", Func, Sub]' | $2/hfst-regexp2fst -f $1 > R109
+echo '`[@"RAgr5", Func, Sub]' | $2/hfst-regexp2fst -f $1 > R110
+# Plural specific subject markers
+
+echo '[[. .] -> {to} || "<" _ [$[@"SubjAgr" & $@"Person1" & $Pl]]] ' | $2/hfst-regexp2fst -f $1 > R111
+
+# Rules of referral for plural subject markers.
+
+echo '`[@"RAgr6", Func, Sub]' | $2/hfst-regexp2fst -f $1 > R112
+echo '`[@"RAgr7", Func, Sub]' | $2/hfst-regexp2fst -f $1 > R113
+echo '`[@"RAgr8", Func, Sub]' | $2/hfst-regexp2fst -f $1 > R114
+echo '`[@"RAgr9", Func, Sub]' | $2/hfst-regexp2fst -f $1 > R115
+echo '`[@"RAgr10", Func, Sub]' | $2/hfst-regexp2fst -f $1 > R116
+echo '`[@"RAgr11", Func, Sub]' | $2/hfst-regexp2fst -f $1 > R117
+
+echo '[[. .] -> {ko} || "<" _ [$[Fut":"Immed]]] ' | $2/hfst-regexp2fst -f $1 > R201
+
+# Singular specific object markers
+
+echo '[[. .] -> n || "<" _ [$[@"ObjAgr" & $@"Person1" & $Sg]]] ' | $2/hfst-regexp2fst -f $1 > R301
+echo '[[. .] -> {ko} || "<" _ [$[@"ObjAgr" & $@"Person2" & $Sg]]] ' | $2/hfst-regexp2fst -f $1 > R302
+echo '[[. .] -> {mo} || "<" _ [$[@"ObjAgr" & $@"Person3" & $Sg & $2]]]' | $2/hfst-regexp2fst -f $1 > R303
+echo '[[. .] -> {ei}  || "<" _ [$[@"ObjAgr" & $@"Person3" & $Sg & $7]]]' | $2/hfst-regexp2fst -f $1 > R304
+
+# Rules of referral for singular object markers
+
+echo '`[@"RAgr1", Func, Obj]' | $2/hfst-regexp2fst -f $1 > R305
+echo '`[@"RAgr2", Func, Obj]' | $2/hfst-regexp2fst -f $1 > R306
+echo '`[@"RAgr3", Func, Obj]' | $2/hfst-regexp2fst -f $1 > R307
+echo '`[@"RAgr4", Func, Obj]' | $2/hfst-regexp2fst -f $1 > R308
+echo '`[@"RAgr5", Func, Obj]' | $2/hfst-regexp2fst -f $1 > R309
+
+# Plural specific object markers
+
+echo '[[. .] -> {lo} || "<" _ [$[@"ObjAgr" & $@"Person1" & $Pl]]] ' | $2/hfst-regexp2fst -f $1 > R310
+
+# Rules of referral for plural object markers
+
+echo '`[@"RAgr6", Func, Obj]' | $2/hfst-regexp2fst -f $1 > R311
+echo '`[@"RAgr7", Func, Obj]' | $2/hfst-regexp2fst -f $1 > R312
+echo '`[@"RAgr8", Func, Obj]' | $2/hfst-regexp2fst -f $1 > R313
+echo '`[@"RAgr9", Func, Obj]' | $2/hfst-regexp2fst -f $1 > R314
+echo '`[@"RAgr10", Func, Obj]' | $2/hfst-regexp2fst -f $1 > R315
+echo '`[@"RAgr11", Func, Obj]' | $2/hfst-regexp2fst -f $1 > R316
+
+# Tense rules
+echo '[[. .] -> {ak} || _ "," [$[Pres ":" [Hab1|Hab2]| Past ":" [Hist|MostRem]]]]' | $2/hfst-regexp2fst -f $1 > R401 
+echo '[[. .] -> a    || _ "," [$[Pres ":" Cont|Fut ":" Immed]]]' | $2/hfst-regexp2fst -f $1 > R402
+
+echo '[[. .] -> i || _ "," [$[Fut ":" MostRem|Past ":" [Rec|Hist]]]]' | $2/hfst-regexp2fst -f $1 > R501
+
+# Eliminate Features and auxiliary symbols from the lower side.
+echo '\@"L" -> 0' | $2/hfst-regexp2fst -f $1 > Cleanup
+
+# Build the Lingala Verb Transducer
+echo  '@"VerbLex" .o. @"R301" .o. @"R302" .o. @"R303" .o. @"R304" .o. @"R305" .o. @"R306" .o. @"R307" .o. @"R308" .o. @"R309" .o. @"R310" .o. @"R311" .o. @"R312" .o. @"R313" .o. @"R314" .o. @"R315" .o. @"R316" .o. @"R201" .o. @"R101" .o. @"R102" .o. @"R103" .o. @"R104" .o. @"R105" .o. @"R106" .o. @"R107" .o. @"R108" .o. @"R109" .o. @"R110" .o. @"R111" .o. @"R112" .o. @"R113" .o. @"R114" .o. @"R115" .o. @"R116" .o. @"R117" .o. @"R401" .o. @"R402" .o. @"R501" .o. @"Cleanup" ' | $2/hfst-regexp2fst -f $1 > Result
+
+rm -f R313 Person2 R115 R314 R116 Person3 R117 R315 R316
+rm -f RAgr10 RAgr11 SubjAgr Agreement PresTense Tense R201
+rm -f R401 R402 Cleanup L ObjAgr Stems PastTense VerbLex
+rm -f Agr RAgr1 RAgr2 Features RAgr3 RAgr4 RAgr5 RAgr6
+rm -f RAgr7 R101 RAgr8 RAgr9 R102 R301 R103 R104 R302 R501
+rm -f R105 R303 R106 R304 Number R107 R305 R108 R306 R307
+rm -f R109 R308 FutTense R309 R110 R111 R310 R112 R311 R113
+rm -f Person1 Gender3 R312 R114

@@ -1,0 +1,16 @@
+ac	0.0
+bc	8.0
+--
+aac	0.0
+abc	8.0
+bac	8.0
+bbc	16.0
+--
+aaac	0.0
+aabc	8.0
+abac	8.0
+baac	8.0
+abbc	16.0
+babc	16.0
+bbac	16.0
+bbbc	24.0

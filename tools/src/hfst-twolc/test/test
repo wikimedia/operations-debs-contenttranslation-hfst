@@ -1,0 +1,140 @@
+#!/bin/sh
+
+NUMBER_OF_TESTS=`ls $srcdir | egrep "test[0-9][0-9]*$" | wc -l`
+
+GENERATED_FILES="temp.hfst temp.twolc.hfst temp.twolc.hfst0 temp.twolc.hfst1 temp.twolc.hfst2 temp.twolc.hfst3"
+
+echo "There are $NUMBER_OF_TESTS substests for hfst-twolc."
+
+echo "" | ../../hfst-format --test-format foma > /dev/null
+FOMA_EXISTS=$?
+
+echo "" | ../../hfst-format --test-format openfst-log > /dev/null
+LOG_OPENFST_EXISTS=$?
+# Don't run tests for log-weight format.
+LOG_OPENFST_EXISTS=1
+
+echo "" | ../../hfst-format --test-format openfst-tropical > /dev/null
+TROPICAL_OPENFST_EXISTS=$?
+
+echo "" | ../../hfst-format --test-format sfst > /dev/null
+SFST_EXISTS=$?
+
+WINDOWS=1
+if ( uname | egrep "MINGW|mingw" 2>1 > /dev/null); then
+    WINDOWS=0
+fi
+    
+
+for f in $(ls -d $srcdir/* | egrep "test[0-9][0-9]*$" | sort -n)
+do
+        if [ $FOMA_EXISTS -eq 0 ]
+	then
+	    if [ $WINDOWS -eq 0 ]
+	    then
+		cat "$f" | ../src/htwolcpre1 -R -s -f foma | \
+		    ../src/htwolcpre2 -R -s -f foma | \
+		    ../src/htwolcpre3 -R -s -f foma > temp.twolc.hfst0
+	    else
+		cat "$f" | ../src/hfst-twolc-loc -R -s -f foma > temp.twolc.hfst0
+	    fi
+	fi
+
+	if [ $LOG_OPENFST_EXISTS -eq 0 ]
+	then
+	    if [ $WINDOWS -eq 0 ]
+	    then
+		cat "$f" | ../src/htwolcpre1 -R -s -f openfst-log | \
+		    ../src/htwolcpre2 -R -s -f openfst-log | \
+		    ../src/htwolcpre3 -R -s -f openfst-log > temp.twolc.hfst1
+	    else
+		cat "$f" | ../src/hfst-twolc-loc -R -s -f openfst-log > temp.twolc.hfst1
+	    fi
+	fi
+
+	if [ $TROPICAL_OPENFST_EXISTS -eq 0 ]
+	then
+	    if [ $WINDOWS -eq 0 ]
+	    then
+		cat "$f" | ../src/htwolcpre1 -R -s -f openfst-tropical | \
+		    ../src/htwolcpre2 -R -s -f openfst-tropical | \
+		    ../src/htwolcpre3 -R -s -f openfst-tropical > temp.twolc.hfst2
+	    else
+		cat "$f" | ../src/hfst-twolc-loc -R -s -f openfst-tropical > temp.twolc.hfst2
+	    fi
+	fi
+
+	if [ $SFST_EXISTS -eq 0 ]
+	then
+	    if [ $WINDOWS -eq 0 ]
+	    then
+		cat "$f" | ../src/htwolcpre1 -R -s -f sfst | \
+		    ../src/htwolcpre2 -R -s -f sfst | \
+		    ../src/htwolcpre3 -R -s -f sfst > temp.twolc.hfst3
+	    else
+		cat "$f" | ../src/hfst-twolc-loc -R -s -f sfst             > temp.twolc.hfst3
+	    fi
+	fi
+
+	if  [ $? -ne 0 ] 
+	then
+	        rm -f $GENERATED_FILES
+	        exit 1
+	fi
+	cat "$f.txt_fst" | ../../hfst-txt2fst -e"@_EPSILON_SYMBOL_@" > temp.hfst
+	for n in 0 1 2 3  
+	do
+	    cat temp.twolc.hfst"$n" > /dev/null 2> /dev/null
+	    if [ $? -eq 0 ]
+	    then
+		cat temp.twolc.hfst"$n" | ../../hfst-fst2txt | ../../hfst-txt2fst -e"@_EPSILON_SYMBOL_@" > temp.twolc.hfst
+		if [ $WINDOWS -eq 0 ]
+		then
+		    cat "$f" | ../src/htwolcpre1 -R -s | \
+			../src/htwolcpre2 -R -s | \
+			../src/htwolcpre3 -R -s > /dev/null 2>&1
+		else
+		    cat "$f" | ../src/hfst-twolc-loc -R -s > /dev/null 2>&1
+		fi
+		if ! ../../hfst-compare -q -1 temp.hfst -2 temp.twolc.hfst > /dev/null 2>&1
+		then
+		    echo "hfst-twolc sub$(basename $f) failed."
+		    if [ $n -eq 0 ]
+		    then
+			echo "For foma type."
+		    fi
+		    if [ $n -eq 1 ]
+		    then
+			echo "For log-openfst type."
+		    fi
+		    if [ $n -eq 2 ]
+		    then
+			echo "For tropical-openfst type."
+		    fi
+		    if [ $n -eq 3 ]
+		    then
+			echo "For sfst type."
+		    fi
+		    echo
+		    echo "Grammar:"
+		    echo
+		    cat "$f"
+		    echo
+		    echo "Should be:"
+		    echo
+		    ../../hfst-fst2txt temp.hfst
+		    echo
+		    echo "Is:"
+		    echo
+		    ../../hfst-fst2txt temp.twolc.hfst
+		    echo
+		    rm -f $GENERATED_FILES
+		    exit 1
+		fi
+	    fi
+	done
+	echo "hfst-twolc sub$(basename $f) passed."
+done
+
+rm -f $GENERATED_FILES
+

@@ -1,0 +1,7 @@
+regex d:e;
+regex c:d;
+regex b:c;
+regex [0 a:b 0];
+epsilon-remove net
+write att
+quit

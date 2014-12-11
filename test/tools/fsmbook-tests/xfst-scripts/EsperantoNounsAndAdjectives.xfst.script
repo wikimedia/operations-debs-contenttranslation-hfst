@@ -1,0 +1,2 @@
+read lexc lexc-files/EsperantoNounsAndAdjectives.lexc;
+write prolog > Result

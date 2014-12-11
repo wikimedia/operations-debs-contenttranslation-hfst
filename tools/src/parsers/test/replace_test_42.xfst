@@ -1,0 +1,5 @@
+set precision 1
+set print-weight ON
+
+regex a::1 -> b::1 , b::2 -> c::2 ;
+apply up abcabc

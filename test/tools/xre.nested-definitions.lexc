@@ -1,0 +1,7 @@
+Definitions
+	Cons = k | p | t | g | b | d ;
+	Vowel = a | e | i | o | u ;
+	Letter = Cons | Vowel ;
+
+LEXICON Root
+< Cons Vowel Letter Cons Vowel > # ;

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+echo '[( [m a l] | [n e] )]' | $2/hfst-regexp2fst -f $1 -j > AdjPrefix
+
+echo "bon
+long
+jun
+alt
+grav" | $2/hfst-strings2fst -f $1 -j > Adjectives
+
+echo '[[e g] | [e t]]*' | $2/hfst-regexp2fst -f $1 -j > Adj
+
+echo '[a]' | $2/hfst-regexp2fst -f $1 -j > AdjEnd
+
+echo '[(j)]' | $2/hfst-regexp2fst -f $1 -j > Number
+
+echo '[(n)]' | $2/hfst-regexp2fst -f $1 -j > Case
+
+echo '[0]' | $2/hfst-regexp2fst -f $1 > Result
+for i in AdjPrefix Adjectives Adj AdjEnd Number Case;
+do
+  $2/hfst-concatenate Result $i > TMP;
+  mv TMP Result;
+done
+
+$2/hfst-minimize Result > TMP
+mv TMP Result
+
+rm -f Case AdjPrefix Adjectives AdjEnd Number Adj

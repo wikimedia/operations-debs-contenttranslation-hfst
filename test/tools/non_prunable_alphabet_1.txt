@@ -1,0 +1,6 @@
+0 1 a b
+0 3 e e
+0 3 f f
+1 2 c c
+1 2 @_UNKNOWN_SYMBOL_@ d
+2

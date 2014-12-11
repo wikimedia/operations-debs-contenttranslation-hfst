@@ -1,0 +1,9 @@
+Alphabet
+
+a b
+;
+
+Rules
+
+"D"
+b:y <= .#. _ a ;

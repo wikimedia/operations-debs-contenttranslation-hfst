@@ -1,0 +1,6 @@
+regex a a:b c;
+substitute label c:d for foo:bar
+write att
+echo --
+sigma net
+write att

@@ -1,0 +1,19 @@
+##foma-net 1.0##
+##props##
+1 4 5 6 1 1 1 2 2 1 1 2 
+##sigma##
+0 @_EPSILON_SYMBOL_@
+1 @_UNKNOWN_SYMBOL_@
+2 @_IDENTITY_SYMBOL_@
+3 @P.LEXNAME.#@
+4 @P.LEXNAME.Root@
+5 @R.LEXNAME.#@
+6 @R.LEXNAME.Root@
+##states##
+0 4 1 0
+1 6 2 0
+2 3 3 0
+3 5 4 0
+4 -1 -1 1
+-1 -1 -1 -1 -1
+##end##

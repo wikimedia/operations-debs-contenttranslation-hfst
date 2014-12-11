@@ -1,0 +1,9 @@
+set print-weight ON
+set precision 1
+set lookup-cycle-cutoff 5
+set encode-weights ON
+
+regex a::1 -> [\A] ,, a::2 -> A ;
+apply up 
+abba
+<ctrl-d>

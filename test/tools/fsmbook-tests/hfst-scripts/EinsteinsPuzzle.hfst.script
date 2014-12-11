@@ -1,0 +1,188 @@
+
+
+# matches all symbols
+echo "0 0 @_IDENTITY_SYMBOL_@ @_IDENTITY_SYMBOL_@
+0" | $2/$TOOLDIR/hfst-txt2fst -f $1 > pi.hfst
+
+# matches all symbols except "|"
+echo "0 0 @_IDENTITY_SYMBOL_@ @_IDENTITY_SYMBOL_@
+0 1 | |
+0" | $2/$TOOLDIR/hfst-txt2fst -f $1 > pi_house.hfst
+
+# The possible values of a house color (spaces are added for better readability)
+echo -e "blue \ngreen \nred \nwhite \nyellow " | $2/$TOOLDIR/hfst-strings2fst -f $1 -j > Color.hfst
+
+# The possible values of nationality
+echo -e "Dane \nEnglishman \nGerman \nSwede \nNorwegian " | $2/$TOOLDIR/hfst-strings2fst -f $1 -j > Nationality.hfst
+
+# The possible values of a drink
+echo -e "bier \ncoffee \nmilk \ntea \nwater " | $2/$TOOLDIR/hfst-strings2fst -f $1 -j > Drink.hfst
+
+# The possible values of cigarettes
+echo -e "Blend \nBlueMaster \nDunhill \nPallMall \nPrince " | $2/$TOOLDIR/hfst-strings2fst -f $1 -j > Cigarette.hfst
+
+# The possible values of animals
+echo -e "birds \ncats \ndogs \nfish \nhorses " | $2/$TOOLDIR/hfst-strings2fst -f $1 -j > Pet.hfst
+
+# Convert all strings into transducers
+for i in blue green red white yellow \
+Dane Englishman German Swede Norwegian \
+bier coffee milk tea water \
+Blend BlueMaster Dunhill PallMall Prince \
+birds cats dogs fish horses; \
+do 
+  echo $i" " | $2/$TOOLDIR/hfst-strings2fst -f $1 > $i.hfst
+done
+
+# Separator character (spaces are included for better readability)
+echo "| " | $2/$TOOLDIR/hfst-strings2fst -f $1 > HouseSeparator.hfst
+
+# House contains the consecutive values "ColorNationalityDrinkCigarettePet"
+echo "" | $2/$TOOLDIR/hfst-strings2fst -f $1 > House.hfst
+for i in Color Nationality Drink Cigarette Pet; 
+do 
+  $2/$TOOLDIR/hfst-concatenate House.hfst $i.hfst > TMP
+  mv TMP House.hfst
+done
+
+# Houses is "House| House| House| House| House"
+$2/$TOOLDIR/hfst-concatenate House.hfst HouseSeparator.hfst | $2/$TOOLDIR/hfst-repeat -f 4 -t 4 > Houses.hfst
+$2/$TOOLDIR/hfst-concatenate Houses.hfst House.hfst > TMP
+mv TMP Houses.hfst
+
+# 1. The Englishman lives in the red house.
+# Since color and nationality are adjacent, it is enough to accept all strings that contain "red Englishman"
+echo "red Englishman" | 
+$2/$TOOLDIR/hfst-strings2fst -f $1 |  # "red Englishman"
+$2/$TOOLDIR/hfst-concatenate -1 pi.hfst |  # .* "red Englishman"
+$2/$TOOLDIR/hfst-concatenate -2 pi.hfst > C1.hfst  # .* "red Englishman" .*
+
+# If the constraint works, the following command
+#   $2/$TOOLDIR/hfst-conjunct Houses.hfst C1.hfst | $2/$TOOLDIR/hfst-fst2strings -r 50 | grep -v "red Englishman"
+# should print no lines
+
+# 2. The Swede keeps dogs.
+# Now we must match the string between Swede and dog inside the same house.
+echo "Swede" | 
+$2/$TOOLDIR/hfst-strings2fst -f $1 |  # "Swede"
+$2/$TOOLDIR/hfst-concatenate pi_house.hfst > TMP;  # "Swede" .*
+echo "dogs" | 
+$2/$TOOLDIR/hfst-strings2fst -f $1 |  # "dogs"
+$2/$TOOLDIR/hfst-concatenate -1 TMP |  # "Swede" .* "dogs"
+$2/$TOOLDIR/hfst-concatenate -1 pi.hfst |  # .* "Swede" .* "dogs"
+$2/$TOOLDIR/hfst-concatenate -2 pi.hfst > C2.hfst  # .* "Swede" .* "dogs" .*
+
+# We can test the two constraints with the command
+#   $2/$TOOLDIR/hfst-conjunct C1.hfst C2.hfst | $2/$TOOLDIR/hfst-conjunct Houses.hfst | $2/$TOOLDIR/hfst-minimize | $2/$TOOLDIR/hfst-fst2strings -r 10 > houses;
+#   cat houses | wc -l > N1  # number of lines in total
+#   grep "red Englishman" houses | wc -l > N2  # number of lines that contain "red Englishman"
+#   grep "Swede[^|]*dogs" houses | wc -l > N3  # number of lines that contain a house inhabited by a Swede that keeps dogs
+#   diff N1 N2 && diff N2 N3 && echo "TEST OK"
+# which should print the text "TEST OK".
+
+# 3. The Dane drinks tea
+$2/$TOOLDIR/hfst-concatenate Dane.hfst tea.hfst | $2/$TOOLDIR/hfst-concatenate -1 pi.hfst | $2/$TOOLDIR/hfst-concatenate -2 pi.hfst > C3.hfst 
+
+# 4. The green house is just to the left of the white one
+$2/$TOOLDIR/hfst-concatenate green.hfst pi_house.hfst | $2/$TOOLDIR/hfst-concatenate HouseSeparator.hfst | $2/$TOOLDIR/hfst-concatenate white.hfst | \
+$2/$TOOLDIR/hfst-concatenate -1 pi.hfst | $2/$TOOLDIR/hfst-concatenate -2 pi.hfst > C4.hfst
+
+# 5. The owner of the green house drinks coffee
+$2/$TOOLDIR/hfst-concatenate green.hfst pi_house.hfst | $2/$TOOLDIR/hfst-concatenate coffee.hfst | $2/$TOOLDIR/hfst-concatenate -1 pi.hfst | $2/$TOOLDIR/hfst-concatenate -2 pi.hfst > C5.hfst
+
+# 6. The Pall Mall smoker keeps birds
+$2/$TOOLDIR/hfst-concatenate PallMall.hfst birds.hfst | $2/$TOOLDIR/hfst-concatenate -1 pi.hfst | $2/$TOOLDIR/hfst-concatenate -2 pi.hfst > C6.hfst
+
+# 7. The owner of the yellow house smokes Dunhills
+$2/$TOOLDIR/hfst-concatenate yellow.hfst pi_house.hfst | $2/$TOOLDIR/hfst-concatenate Dunhill.hfst | $2/$TOOLDIR/hfst-concatenate -1 pi.hfst | $2/$TOOLDIR/hfst-concatenate -2 pi.hfst > C7.hfst
+
+# 8. The man in the center house drinks milk
+echo "" | $2/$TOOLDIR/hfst-strings2fst -f $1 > C8.hfst
+for i in pi_house.hfst HouseSeparator.hfst pi_house.hfst HouseSeparator.hfst pi_house.hfst milk.hfst pi_house.hfst HouseSeparator.hfst pi_house.hfst HouseSeparator.hfst pi_house.hfst; \
+do  $2/$TOOLDIR/hfst-concatenate C8.hfst $i > TMP; mv TMP C8.hfst ; done  
+
+# 9. The Norwegian lives in the first house
+$2/$TOOLDIR/hfst-concatenate pi_house.hfst Norwegian.hfst | $2/$TOOLDIR/hfst-concatenate pi.hfst > C9.hfst
+
+# 10. The Blend smoker has a neighbor who keeps cats
+echo "" | $2/$TOOLDIR/hfst-strings2fst -f $1 > C10_1.hfst
+for i in pi.hfst Blend.hfst Pet.hfst HouseSeparator.hfst pi_house.hfst cats.hfst pi.hfst; \
+do  $2/$TOOLDIR/hfst-concatenate C10_1.hfst $i > TMP; mv TMP C10_1.hfst;  done
+echo "" | $2/$TOOLDIR/hfst-strings2fst -f $1 > C10_2.hfst
+for i in pi.hfst cats.hfst pi_house.hfst HouseSeparator.hfst pi_house.hfst Blend.hfst pi.hfst; \
+do  $2/$TOOLDIR/hfst-concatenate C10_2.hfst $i > TMP; mv TMP C10_2.hfst;  done
+$2/$TOOLDIR/hfst-disjunct C10_1.hfst C10_2.hfst | $2/$TOOLDIR/hfst-minimize > C10.hfst
+
+# 11. The man who keeps horses lives next to the Dunhill smoker
+echo "" | $2/$TOOLDIR/hfst-strings2fst -f $1 > C11_1.hfst
+for i in pi.hfst horses.hfst HouseSeparator.hfst pi_house.hfst Dunhill.hfst pi.hfst; \
+do $2/$TOOLDIR/hfst-concatenate C11_1.hfst $i > TMP; mv TMP C11_1.hfst;  done
+echo "" | $2/$TOOLDIR/hfst-strings2fst -f $1 > C11_2.hfst
+for i in pi.hfst Dunhill.hfst pi_house.hfst HouseSeparator.hfst pi_house.hfst horses.hfst pi.hfst; \
+do $2/$TOOLDIR/hfst-concatenate C11_2.hfst $i > TMP; mv TMP C11_2.hfst;  done
+$2/$TOOLDIR/hfst-disjunct C11_1.hfst C11_2.hfst | $2/$TOOLDIR/hfst-minimize > C11.hfst
+
+# 12. The man who smokes Blue Masters drinks bier.
+echo "" | $2/$TOOLDIR/hfst-strings2fst -f $1 > C12.hfst
+for i in pi.hfst bier.hfst BlueMaster.hfst pi.hfst; \
+do $2/$TOOLDIR/hfst-concatenate C12.hfst $i > TMP; mv TMP C12.hfst;  done
+
+# 13. The German smokes Prince
+echo "" | $2/$TOOLDIR/hfst-strings2fst -f $1 > C13.hfst
+for i in pi.hfst German.hfst Drink.hfst Prince.hfst pi.hfst; \
+do $2/$TOOLDIR/hfst-concatenate C13.hfst $i > TMP; mv TMP C13.hfst;  done
+
+# 14. The Norwegian lives next to the blue house
+echo "" | $2/$TOOLDIR/hfst-strings2fst -f $1 > C14_1.hfst
+for i in pi.hfst Norwegian.hfst pi_house.hfst HouseSeparator.hfst blue.hfst pi.hfst; \
+do $2/$TOOLDIR/hfst-concatenate C14_1.hfst $i > TMP; mv TMP C14_1.hfst;  done
+echo "" | $2/$TOOLDIR/hfst-strings2fst -f $1 > C14_2.hfst
+for i in pi.hfst blue.hfst pi_house.hfst HouseSeparator.hfst Color.hfst Norwegian.hfst pi.hfst; \
+do $2/$TOOLDIR/hfst-concatenate C14_2.hfst $i > TMP; mv TMP C14_2.hfst;  done
+$2/$TOOLDIR/hfst-disjunct C14_1.hfst C14_2.hfst | $2/$TOOLDIR/hfst-minimize > C14.hfst
+
+# 15. The Blend smoker has a neighbor who drinks water
+echo "" | $2/$TOOLDIR/hfst-strings2fst -f $1 > C15_1.hfst
+for i in pi.hfst Blend.hfst Pet.hfst HouseSeparator.hfst pi_house.hfst water.hfst pi.hfst; \
+do $2/$TOOLDIR/hfst-concatenate C15_1.hfst $i > TMP; mv TMP C15_1.hfst;  done
+echo "" | $2/$TOOLDIR/hfst-strings2fst -f $1 > C15_2.hfst
+for i in pi.hfst water.hfst pi_house.hfst HouseSeparator.hfst pi_house.hfst Blend.hfst pi.hfst; \
+do $2/$TOOLDIR/hfst-concatenate C15_2.hfst $i > TMP; mv TMP C15_2.hfst;  done
+$2/$TOOLDIR/hfst-disjunct C15_1.hfst C15_2.hfst | $2/$TOOLDIR/hfst-minimize > C15.hfst
+
+# Let's minimize the constraint transducers to carry out conjunction more efficiently:
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15;
+do
+  $2/$TOOLDIR/hfst-minimize C$i.hfst > TMP;
+  mv TMP C$i.hfst;
+done
+
+# Let's conjunct =Houses.hfst= with the constraints one by one. 
+# We can also print the constraint number and the number of 
+# states in the intermediate result.
+
+cp Houses.hfst Result.hfst; 
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15;
+do 
+  # echo $i; 
+  $2/$TOOLDIR/hfst-conjunct Result.hfst C$i.hfst | $2/$TOOLDIR/hfst-minimize > TMP; 
+  mv TMP Result.hfst;  
+  # $2/$TOOLDIR/hfst-summarize Result.hfst | grep "# of states"; 
+done
+
+# The command $2/$TOOLDIR/hfst-fst2strings Result.hfst gives us five possible solutions:
+# One missing constraint is that someone keeps fish, as indicated by the original question "Who keeps the fish?". 
+# We can make the constraint easily by filtering the previous output with the command grep "fish":
+
+mv Result.hfst Result
+
+rm -f House.hfst C10.hfst C14.hfst coffee.hfst cats.hfst dogs.hfst milk.hfst
+rm -f green.hfst horses.hfst BlueMaster.hfst C11_1.hfst C4.hfst Swede.hfst 
+rm -f Dane.hfst C15_1.hfst tea.hfst C8.hfst Color.hfst Prince.hfst bier.hfst
+rm -f C11.hfst blue.hfst C15.hfst Norwegian.hfst Dunhill.hfst C10_1.hfst
+rm -f birds.hfst C1.hfst HouseSeparator.hfst C11_2.hfst C5.hfst C14_1.hfst
+rm -f C15_2.hfst red.hfst C9.hfst white.hfst water.hfst Blend.hfst C12.hfst
+rm -f Nationality.hfst C10_2.hfst C2.hfst pi.hfst C14_2.hfst C6.hfst
+rm -f pi_house.hfst Result.hfst Englishman.hfst C13.hfst Pet.hfst fish.hfst
+rm -f PallMall.hfst C3.hfst Houses.hfst Drink.hfst Cigarette.hfst German.hfst
+rm -f C7.hfst yellow.hfst Result.hfst

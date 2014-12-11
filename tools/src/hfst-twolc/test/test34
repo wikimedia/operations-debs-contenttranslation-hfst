@@ -1,0 +1,13 @@
+Alphabet 
+a b ;
+Diacritics 
+' £ ;
+Rules
+"rule name 1"
+a:a <= : £ _ ;
+
+"rule name 2"
+a:b <= : ' _ ;
+
+
+

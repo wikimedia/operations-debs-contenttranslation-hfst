@@ -1,0 +1,8 @@
+Alphabet 
+a b 0:a ;
+Sets
+X = a;
+
+Rules
+"R"
+0:X <= a _ a ;

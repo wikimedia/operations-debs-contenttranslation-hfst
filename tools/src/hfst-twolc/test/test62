@@ -1,0 +1,9 @@
+Alphabet 
+;
+
+Rules
+"R"
+[a:b | a:c] => a _ ;
+
+"S"
+a:b => b _ ;

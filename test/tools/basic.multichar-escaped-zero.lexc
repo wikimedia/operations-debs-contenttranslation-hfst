@@ -1,0 +1,8 @@
+Multichar_Symbols A%0
+
+LEXICON Root
+    A%0 A ;
+    aA%0 # ;
+    A%00 # ;
+LEXICON A
+  b0 #;

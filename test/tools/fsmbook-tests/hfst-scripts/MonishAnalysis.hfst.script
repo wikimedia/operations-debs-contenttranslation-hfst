@@ -1,0 +1,45 @@
+# $2 is tooldir
+
+echo '[ i | e | é | ä ]' | $2/hfst-regexp2fst -f $1 > FrontV
+
+echo '[ u | o | ó | a ]' | $2/hfst-regexp2fst -f $1 > BackV
+
+echo '[ %^U | %^O | %^Ó | %^A ]' | $2/hfst-regexp2fst -f $1 > MorphoV
+
+echo '[ r u u z o d | t s a r l ó k | n t o n ó l | b u n o o t s |' \
+     'v é s i i m b | y ä ä q i n | f e s é é n g ]' \
+      | $2/hfst-regexp2fst -f $1 > Root
+
+echo '[ %+Int .x. [ %^U %^U k ] ]' | $2/hfst-regexp2fst -f $1 > Suff1
+
+echo '[ %+Perf .x. [ %^O n ] ] | ' \
+     '[ %+Imperf .x. [ %^Ó m b ] ] | ' \
+     '[ %+Opt .x. [ %^U d d ] ] ' | $2/hfst-regexp2fst -f $1 > Suff2
+
+echo '[ %+True .x. [ %^A n k ] ] | ' \
+     '[ %+Belief .x. [ %^A %^A v %^O  t ] ] | ' \
+     '[ %+Doubt .x. [ %^U %^U z ] ] | ' \
+     '[ %+False .x. [ %^Ó q ] ] ' | $2/hfst-regexp2fst -f $1 > Suff3
+
+
+
+echo	'[ %+1P %+Sg .x. %^A %^A b %^A ] | ' \
+		'[ %+2P %+Sg .x. %^Ó m %^A ] | ' \
+		'[ %+3P %+Sg .x. %^U v v %^U ] | ' \
+		'[ %+1P %+Pl %+Excl .x. %^A %^A b %^O r %^A ] | ' \
+		'[ %+1P %+Pl %+Incl .x. %^A %^A b %^U g %^A ] | ' \
+		'[ %+2P %+Pl .x. %^Ó m %^O r %^A ] | ' \
+		'[ %+3P %+Pl .x. %^U v v %^O r %^U ]' | $2/hfst-regexp2fst -f $1 > Suff4 
+	     
+echo	'[ %^U -> u , %^O -> o , %^Ó -> ó , %^A -> a || @"BackV" ?* _ ]' | $2/hfst-regexp2fst -f $1 > Rule1
+
+
+echo '[ %^U -> i , %^O -> e , %^Ó -> é , %^A -> ä ]' | $2/hfst-regexp2fst -f $1 > Rule2
+
+echo '[ @"Root" (@"Suff1") @"Suff2" (@"Suff3") @"Suff4" ]' | \
+     $2/hfst-regexp2fst -f $1 | \
+     $2/hfst-compose -2 Rule1 | $2/hfst-compose -2 Rule2 \
+       > Result
+
+rm -f BackV Rule1 Rule2 MorphoV FrontV Root Suff1
+rm -f Suff2 Suff3 Suff4

@@ -1,0 +1,30 @@
+LEXICON Root
+	Adjectives ;
+	AdjPrefix ;
+
+LEXICON AdjPrefix
+mal	Adjectives ;
+ne	Adjectives ;
+
+LEXICON Adjectives
+bon	Adj ;
+long	Adj ;
+jun	Adj ;
+alt	Adj ;
+grav	Adj ;
+
+LEXICON Adj
+eg	Adj ;
+et	Adj ;
+	Adjend ;
+
+LEXICON Adjend
+a	Number ;
+
+LEXICON Number
+j	Case ;
+	Case ;
+
+LEXICON Case
+n	# ;
+	# ;

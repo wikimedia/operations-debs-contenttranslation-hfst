@@ -1,0 +1,36 @@
+Multichar_Symbols
+ @P.TRANS.on@
+ @P.TRANS.off@
+ @U.TRANS.on@
+ @U.TRANS.off@
+
+Lexicon Root
+xz DER ;               ! No declaration of transitivity
+xyz TRANS ;            ! Declare transitivity of root in TRANS lexicon
+xyyz INTRANS ;         ! Declare intransitivity of root in INTRANS
+
+Lexicon TRANS
+@P.TRANS.on@ DER ;
+
+Lexicon INTRANS
+@P.TRANS.off@ DER ;
+
+Lexicon DER
+END-check ;            ! Go to ending
+ght END-check ;        ! Go to ending with derivation
+def DER ;              ! Add derivation without affirming status
+bhj TRANS ;            ! Add derivation affirming transitivity
+bhhj INTRANS ;         ! Add derivation affirming intransitivity
+
+Lexicon END-check
+@U.TRANS.on@ TRANS-end ;     ! Select transitive endings
+@U.TRANS.off@ INTRANS-end ;  ! Select intransitive endings
+
+Lexicon TRANS-end
+tr ## ;
+
+Lexicon INTRANS-end
+intr ## ;
+
+Lexicon ##
+# ;

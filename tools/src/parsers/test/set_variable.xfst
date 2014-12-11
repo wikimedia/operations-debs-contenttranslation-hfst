@@ -1,0 +1,21 @@
+set show-flags ON
+set obey-flags ON
+set minimal ON
+set print-pairs ON
+set print-space ON
+set print-sigma ON
+set quit-on-fail ON
+set quote-special ON
+set recursive-define ON
+set verbose ON
+set show-flags OFF
+set obey-flags OFF
+set minimal OFF
+set print-pairs OFF
+set print-space OFF
+set print-sigma OFF
+set quit-on-fail OFF
+set quote-special OFF
+set recursive-define OFF
+set verbose OFF
+exit

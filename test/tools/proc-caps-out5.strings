@@ -1,0 +1,13 @@
+"<test>"
+	"test"	n
+"<Test>"
+	"Test"	np
+	"test"	nlp
+"<TEST>"
+	"*TEST"
+"<TeSt>"
+	"*TeSt"
+"<tesT>"
+	"*tesT"
+"<TEst>"
+	"*TEst"

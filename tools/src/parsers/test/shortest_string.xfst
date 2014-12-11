@@ -1,0 +1,10 @@
+regex [[foo]|[foo bar]]+;
+shortest-string
+shortest-string-size
+regex [foo]|[];
+shortest-string
+shortest-string-size
+regex [] - [];
+shortest-string
+shortest-string-size
+exit

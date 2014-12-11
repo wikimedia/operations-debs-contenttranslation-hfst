@@ -1,0 +1,6 @@
+Alphabet
+a:b c:d
+;
+Rules
+"rule name"
+a:b <=> c: _ ; 

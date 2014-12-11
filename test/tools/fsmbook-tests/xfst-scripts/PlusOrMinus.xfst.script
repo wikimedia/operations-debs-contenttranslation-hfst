@@ -1,0 +1,64 @@
+# PlusOrMinus.script
+
+# Copyright (C) 2004  Lauri Karttunen
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of GNU General Public Licenseas published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+# This script creates a set of Adding/Subtracting transducers for
+# non-negative integers with no leading zeros.
+
+define N [1|2|3|4|5|6|7|8|9];
+define Z ["0" | N];
+
+# Insert an initial 1 in front of a sequence of zeros. To make
+# this relation functional in both directions, we need two
+# replace expressions. One introduces 1, the other removes 1.
+# The composition of the two is a relation that uniquely maps,
+# for example, 100 to 99 and, conversely, 99 to 100.
+
+# [ [..] -> B ].i = B <- [..]
+# [ [..] -> B || C _ D ].i = B <- [..] || C _ D ;
+# 1 <- [. .] || .#. _ "0"+ .#. =  [ [. .] -> 1 || .#. _ "0"+ .#. ].i
+ 
+define CarryUp [ [ [. .] -> 1 || .#. _ "0"+ .#. ].i .o. 1 -> 0 || .#. _ "0"+ .#. ];
+
+define AddUp  [1 <- "0", 2 <- 1, 3 <- 2, 4 <- 3,  5  <- 4, 6 <-  5 , 7 <- 6, 8 <- 7, 9 <- 8, "0" <- 9 || .#. ("+") Z* _ 9* .#.];
+
+define NoLeadingZero [ "0" => .#. N Z* _ , .#. _ .#. ];
+
+# PlusOrMinusOne maps any natural number N to (N-1), and vice versa.
+
+define PlusOrMinusOne [CarryUp .o. AddUp .o. NoLeadingZero];
+
+define PlusOrMinusTwo   [PlusOrMinusOne   .o. PlusOrMinusOne];
+define PlusOrMinusThree [PlusOrMinusTwo   .o. PlusOrMinusOne];
+define PlusOrMinusFour  [PlusOrMinusThree .o. PlusOrMinusOne];
+define PlusOrMinusFive  [PlusOrMinusFour  .o. PlusOrMinusOne];
+define PlusOrMinusSix   [PlusOrMinusFive  .o. PlusOrMinusOne];
+define PlusOrMinusSeven [PlusOrMinusSix   .o. PlusOrMinusOne];
+define PlusOrMinusEight [PlusOrMinusSeven .o. PlusOrMinusOne];
+define PlusOrMinusNine  [PlusOrMinusEight .o. PlusOrMinusOne];
+define PlusOrMinusTen   [PlusOrMinusNine  .o. PlusOrMinusOne];
+
+
+# Save the transducers in prolog format
+
+push PlusOrMinusTen
+push PlusOrMinusNine
+push PlusOrMinusEight
+push PlusOrMinusSeven
+push PlusOrMinusSix
+push PlusOrMinusFive
+push PlusOrMinusFour
+push PlusOrMinusThree
+push PlusOrMinusTwo
+push PlusOrMinusOne
+
+write prolog > Result

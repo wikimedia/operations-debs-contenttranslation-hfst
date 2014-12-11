@@ -1,0 +1,3 @@
+regex a a:b c;
+substitute label NOTHING for a:b
+write att

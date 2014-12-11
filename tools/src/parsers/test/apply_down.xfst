@@ -1,0 +1,13 @@
+regex [ {foo}:{baz} | {bar}:{baz} ];
+apply down
+baz
+foo
+bar
+<ctrl-d>
+set print-space ON
+apply down
+baz
+foo
+bar
+<ctrl-d>
+exit

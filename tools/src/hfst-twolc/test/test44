@@ -1,0 +1,12 @@
+Alphabet
+
+a b ;
+
+Definitions
+
+X = a a ;
+
+Rules
+
+"Vowel Harmony"
+a:b => X _ ; 

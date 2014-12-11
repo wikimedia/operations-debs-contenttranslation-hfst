@@ -1,0 +1,31 @@
+regex ? %<;
+write att
+echo --
+regex ? %>;
+write att
+echo --
+regex ? "<";
+write att
+echo --
+regex ? ">";
+write att
+echo --
+regex ? %<foo%>;
+write att
+echo --
+regex ? "<foo>";
+write att
+echo --
+regex ? %<foo;
+write att
+echo --
+regex ? "<foo";
+write att
+echo --
+regex ? foo%>;
+write att
+echo --
+regex ? "foo>";
+write att
+
+

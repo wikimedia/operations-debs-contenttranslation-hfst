@@ -1,0 +1,7 @@
+Alphabet
+
+x y z ;
+
+Rules
+"Flip x and y"
+<[ x:y y:x ]> <==> z _ z ;

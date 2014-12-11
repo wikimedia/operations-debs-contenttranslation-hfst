@@ -1,0 +1,22 @@
+set precision 1
+set print-weight ON
+
+define foo [a b::1 c::2];
+regex $.[foo];
+apply up
+ab
+bc
+abc
+dabcbc
+abcab
+abcababc
+<ctrl-d>
+echo --
+
+# containment uses shortest matching
+regex $.[a::3|[a a::1]];
+apply up
+b
+a
+baa
+<ctrl-d>

@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# $1 defines the implementation type, 
+# $2 the relative path of the tools
+
+# Numbers from one to nine.
+
+
+echo '[1|2|3|4|5|6|7|8|9]' | $2/hfst-regexp2fst -f $1 > OneToNine.hfst
+echo '["0"|@"OneToNine.hfst"]' | $2/hfst-regexp2fst -f $1 > ZeroToNine.hfst
+echo '[{0} | 2 | 4 | 6 | 8]' | $2/hfst-regexp2fst -f $1 > Even.hfst
+echo '[1 | 3 | 5 | 7 | 9]' | $2/hfst-regexp2fst -f $1 > Odd.hfst
+echo '[@"Even.hfst" | @"Odd.hfst"]' | $2/hfst-regexp2fst -f $1 > N.hfst;
+
+
+# Days of the week.
+echo '[{Monday} | {Tuesday} | {Wednesday} | {Thursday} | {Friday} | {Saturday} | {Sunday}]' | $2/hfst-regexp2fst -f $1 > Day.hfst
+
+# A special month that usually has only 28 days.
+echo '{February}' | $2/hfst-regexp2fst -f $1 > Month29.hfst
+# Months that have 30 days.
+echo '[{April} | {June} | {September} | {November}]' | $2/hfst-regexp2fst -f $1 > Month30.hfst
+# Months that have 31 days.
+echo '[{January} | {March} | {May} | {July} | {August} | {October} | {December}]' | $2/hfst-regexp2fst -f $1 > Month31.hfst
+# All months.
+echo '[@"Month29.hfst" | @"Month30.hfst" | @"Month31.hfst"]' | $2/hfst-regexp2fst -f $1 > Month.hfst
+
+
+# Numbers from 1 to 31
+echo '[@"OneToNine.hfst" | [1 | 2] @"ZeroToNine.hfst" | 3 [%0 | 1]]' | $2/hfst-regexp2fst -f $1 > Date.hfst
+
+# Numbers from 1 to 9999
+
+#echo '[@"OneToNine.hfst" @"ZeroToNine.hfst"^<4]' | $2/hfst-regexp2fst -f $1 > Year.hfst
+$2/hfst-repeat -t 3 ZeroToNine.hfst | $2/hfst-concatenate -1 OneToNine.hfst > Year.hfst;
+  
+  
+# Day or [Month and Date] with optional Day and Year
+# define AllDates [Day | (Day {, }) Month { } Date ({, } Year)];
+echo '[@"Day.hfst" | (@"Day.hfst" {, }) @"Month.hfst" { } @"Date.hfst" ({, } @"Year.hfst")]' | $2/hfst-regexp2fst -f $1 > AllDates.hfst
+
+
+# Constraints on dates 30 and 31
+echo '~$[@"Month29.hfst" { 30}]' | $2/hfst-regexp2fst -f $1 > MaxDays30.hfst
+echo '~$[[@"Month29.hfst" | @"Month30.hfst"] { 31}]' | $2/hfst-regexp2fst -f $1 > MaxDays31.hfst
+
+# Combining constraints on dates 30 and 31
+echo '[@"MaxDays30.hfst" & @"MaxDays31.hfst"]' | $2/hfst-regexp2fst -f $1 > MaxDays.hfst
+
+
+
+
+# Divisible by 4
+# Of single digit numbers, 4 and 8 are divisible by 4.
+# In larger numbers divisible with 4, if the penultimate
+# is even, the last number is 0, 4, or 8. If the penultimate
+# is odd, the last number is 2 or 6.
+echo '[4 | 8 | @"N.hfst"* [@"Even.hfst" [%0 | 4 | 8] | @"Odd.hfst" [2 | 6]]]' | $2/hfst-regexp2fst -f $1 > Div4.hfst
+
+
+# Leap years are divisible by 4 but we subtract centuries
+# that are not divisible by 400. Note the double
+# subtraction. [[N+ - Div4] {00}] includes 1900 but not 2000.
+echo '[@"Div4.hfst" - [[@"N.hfst"+ - @"Div4.hfst"] {00}]]' | $2/hfst-regexp2fst -f $1 > LeapYear.hfst
+
+# Note the [.#. | \N] at the end of the right context.
+# 2405 is not a leap year although the year 240 was (in principle).
+echo '{February 29, } => _ @"LeapYear.hfst" [.#. | \@"N.hfst" ]' | $2/hfst-regexp2fst -f $1 > LeapDates.hfst
+
+echo '[@"AllDates.hfst" & @"MaxDays.hfst" & @"LeapDates.hfst"]' | $2/hfst-regexp2fst -f $1 > ValidDates.hfst
+
+echo '[@"ValidDates.hfst" @-> "<DATE>" ... "</DATE>"]' | $2/hfst-regexp2fst -f $1 > Result
+
+rm -f Date.hfst Day.hfst ValidDates.hfst Month.hfst Month30.hfst Month31.hfst AllDates.hfst
+rm -f ZeroToNine.hfst N.hfst Even.hfst OneToNine.hfst Year.hfst Month29.hfst
+rm -f LeapDates.hfst LeapYear.hfst Div4.hfst MaxDays.hfst Odd.hfst MaxDays30.hfst MaxDays31.hfst

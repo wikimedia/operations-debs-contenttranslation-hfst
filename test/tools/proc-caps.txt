@@ -1,0 +1,17 @@
+0 1 t t
+0 5 T T
+0 9 T t
+1 2 e e
+2 3 s s
+3 4 t t
+4 13 @_EPSILON_SYMBOL_@ +n
+5 6 e e
+6 7 s s
+7 8 t t
+8 13 @_EPSILON_SYMBOL_@ +np
+9 10 e e
+10 11 s s
+11 12 t t
+12 13 @_EPSILON_SYMBOL_@ +nlp
+13
+

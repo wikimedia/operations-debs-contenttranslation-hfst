@@ -1,0 +1,7 @@
+# foo -> bar, neither exists
+regex a:x a y:a z;
+substitute symbol bar for foo
+write att
+echo --
+sigma net
+write att

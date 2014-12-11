@@ -1,0 +1,49 @@
+
+
+# From "one" to "nine":
+
+echo "one
+two
+three
+four
+five
+six
+seven
+eight
+nine" | $2/$TOOLDIR/hfst-strings2fst -j -f $1 > OneToNine.hfst;
+
+# It is convenient to define a set of prefixes that can be followed either by "teen" or by "ty":
+
+echo "thir
+fif
+six
+seven
+eigh
+nine" | $2/$TOOLDIR/hfst-strings2fst -j -f $1 > TeenTen.hfst;
+
+# From "ten" to "nineteen":
+
+echo "ten
+eleven
+twelve" | $2/$TOOLDIR/hfst-strings2fst -j -f $1 > TenElevenTwelve.hfst;
+echo "teen" | $2/$TOOLDIR/hfst-strings2fst -f $1 > Teen.hfst;
+echo "four" | $2/$TOOLDIR/hfst-strings2fst -f $1 | $2/$TOOLDIR/hfst-disjunct TeenTen.hfst | $2/$TOOLDIR/hfst-concatenate -2 Teen.hfst | $2/$TOOLDIR/hfst-disjunct TenElevenTwelve.hfst > Teens.hfst;
+
+# Let's define a set of prefixes that can be followed by "ty".
+
+echo "twen
+for" | $2/$TOOLDIR/hfst-strings2fst -j -f $1 | $2/$TOOLDIR/hfst-disjunct TeenTen.hfst > TenStem.hfst;
+
+# TenStem is followed either by "ty" or by ty-" and a number from OneToNine.
+
+echo "ty" | $2/$TOOLDIR/hfst-strings2fst -f $1 | $2/$TOOLDIR/hfst-concatenate -1 TenStem.hfst > TMP.hfst;
+echo "" | $2/$TOOLDIR/hfst-strings2fst -f $1 > Epsilon.hfst;
+echo "-" | $2/$TOOLDIR/hfst-strings2fst -f $1 | $2/$TOOLDIR/hfst-concatenate -2 OneToNine.hfst | $2/$TOOLDIR/hfst-disjunct Epsilon.hfst | $2/$TOOLDIR/hfst-concatenate -1 TMP.hfst > Tens.hfst;
+
+$2/$TOOLDIR/hfst-disjunct OneToNine.hfst Teens.hfst | $2/$TOOLDIR/hfst-disjunct -2 Tens.hfst > OneToNinetyNine.hfst;
+
+cp OneToNinetyNine.hfst Result
+
+rm -f OneToNine.hfst TeenTen.hfst Epsilon.hfst Tens.hfst TenStem.hfst
+rm -f OneToNinetyNine.hfst Teen.hfst TMP.hfst TenElevenTwelve.hfst
+rm -f Teens.hfst

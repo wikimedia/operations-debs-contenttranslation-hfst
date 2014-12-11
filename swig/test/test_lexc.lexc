@@ -1,0 +1,13 @@
+LEXICON Root
+
+A;
+B;
+
+LEXICON A
+
+cat #;
+dog #;
+
+LEXICON B
+
+mouse #;

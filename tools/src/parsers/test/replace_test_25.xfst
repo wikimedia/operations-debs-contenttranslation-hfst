@@ -1,0 +1,21 @@
+set precision 1
+set print-weight ON
+
+regex [[a::1]+ [b::2]+] | [[b::2]+ [a::1]+] @-> x ;
+apply up aabbaa
+# xaa
+echo --
+
+regex [[a::1]+ [b::2]+] | [[b::2]+ [a::1]+] @> x ;
+apply up aabbaa
+# xxa
+echo --
+
+regex [[a::1]+ [b::2]+] | [[b::2]+ [a::1]+] ->@ x ;
+apply up aabbaa
+# aax
+echo --
+
+regex [[a::1]+ [b::2]+] | [[b::2]+ [a::1]+] >@ x ;
+apply up aabbaa
+# axx

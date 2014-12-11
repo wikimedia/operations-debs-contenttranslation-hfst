@@ -1,0 +1,7 @@
+regex d:e;
+regex c:d;
+regex b:c;
+regex a:b;
+zero-plus net
+write att
+quit

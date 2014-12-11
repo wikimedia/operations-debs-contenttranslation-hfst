@@ -1,0 +1,10 @@
+LEXICON Root
+C:C	#	;
+L:	#	;
+:R	#	;
+left:	#	;
+:right	#	;
+:	#	;
+Cp%:Cp	#	;
+Lp%:	#	;
+%:Rp	#	;

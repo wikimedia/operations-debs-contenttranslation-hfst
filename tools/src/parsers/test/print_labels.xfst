@@ -1,0 +1,4 @@
+define Foo foo;
+print labels Foo
+regex a b:c a b:c d;
+print labels

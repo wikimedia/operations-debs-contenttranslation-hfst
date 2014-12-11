@@ -1,0 +1,42 @@
+# NumbersToNumerals.script
+
+# Copyright (C) 2004  Lauri Karttunen
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+# This script constructs a transducer that maps the English numerals
+# "one", "two", "three", ..., "ninety-nine", to the corresponding numbers
+#  "1", "2", "3", ... "99".
+
+
+define OneToNine [1:{one} | 2:{two} | 3:{three} | 4:{four}  | 5:{five} |
+                  6:{six} | 7:{seven} | 8:{eight} | 9:{nine}];
+
+define TeenTen [3:{thir} | 5:{fif} | 6:{six}|
+                7:{seven} | 8:{eigh} | 9:{nine}];
+
+define Teens [1:0 [{0}:{ten} | 1:{eleven} | 2:{twelve}|
+                  [TeenTen | 4:{four}] 0:{teen}]];
+
+define TenStem [2:{twen} | TeenTen | 4:{for}];
+
+# TenStem is followed either by "ty" paired with a zero
+# or by "ty-" mapped to an epsilon and folowed by a one
+# number. Note that {0} means zero and not epsilon
+
+define Tens [TenStem [{0}:{ty} | 0:{ty-} OneToNine]];
+
+define OneToNinetyNine [ OneToNine | Teens | Tens ];
+
+# Let's put the result on the stack for testing.
+
+push OneToNinetyNine
+
+write prolog > Result

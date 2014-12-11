@@ -1,0 +1,2 @@
+regex @txt"words.txt" @stxt"words.stxt" @txt"words.txt" @stxt"words.stxt";
+write att

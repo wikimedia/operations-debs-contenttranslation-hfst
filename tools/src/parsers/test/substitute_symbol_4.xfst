@@ -1,0 +1,7 @@
+# a ->
+regex a:x a y:a z;
+substitute symbol NOTHING for a
+write att
+# echo --
+# sigma net
+# write att

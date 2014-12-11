@@ -1,0 +1,11 @@
+0 1 foo foo
+1 2 foo foo
+2
+--
+0 1 foo bar
+1 2 foo bar
+2
+--
+0 1 a b
+1 2 a b
+2

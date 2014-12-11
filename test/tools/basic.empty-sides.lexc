@@ -1,0 +1,11 @@
+LEXICON Root
+foo:	A	;
+:bar	B	;
+baz	A	;
+quux	B	;
+
+LEXICON A
+:a	#	;
+
+LEXICON B
+b:	#	;

@@ -1,0 +1,5 @@
+Alphabet a b ;
+Rules
+"rule name"
+a:b <=> X _ ; where X in ( x y ) ;
+

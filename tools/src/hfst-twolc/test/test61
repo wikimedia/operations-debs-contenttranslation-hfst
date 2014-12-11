@@ -1,0 +1,9 @@
+Alphabet
+ a b c a:c ;
+Sets
+alpha = a b c;
+Definitions
+ D = b ;
+
+Rules
+"test" :c <=> D _ ;

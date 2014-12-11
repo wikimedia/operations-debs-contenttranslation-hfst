@@ -1,0 +1,15 @@
+define Foo foo;
+regex Foo:Foo Foo;
+write att
+define Foobar foo:bar;
+regex Foobar Foobar;
+echo --
+write att
+clear
+regex a:b;
+regex a:b;
+define Foo
+define Bar ;
+regex Foo Bar;
+echo --
+write att

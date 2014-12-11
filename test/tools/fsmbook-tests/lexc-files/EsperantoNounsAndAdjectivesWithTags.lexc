@@ -1,0 +1,65 @@
+Multichar_Symbols +Noun +Adj +NSuff +ASuff +Nize
+		  +Pl +Sg +Acc MF+
+		  +Aug +Dim +Fem Op+ Neg+
+
+LEXICON Root
+	Nouns ;
+	Adjectives ;
+
+LEXICON Nouns
+	NounRoots ;
+MF+:ge	NounRoots ;
+
+LEXICON NounRoots
+bird	Nmf ;
+hund	Nmf ;
+kat	Nmf ;
+elefant	Nmf ;
+
+LEXICON Nmf
++Noun:0	AugDimFem ;
+
+LEXICON AugDimFem
++Fem:in	AugDimFem ;
++Dim:et	AugDimFem ;
++Aug:eg	AugDimFem ;
+	Nend ;
+	Adjend ;
+
+LEXICON Nend
++NSuff:o	Number ;
+
+LEXICON Adjectives
+	AdjPrefixes ;
+	AdjRoots ;
+
+LEXICON AdjPrefixes
+Op+:mal	AdjRoots ;
+Neg+:ne	AdjRoots ;
+
+LEXICON AdjRoots
+bon	Adj ;
+long	Adj ;
+jun	Adj ;
+alt	Adj ;
+grav	Adj ;
+
+LEXICON Adj
++Adj:0	AugDimNize ;
+
+LEXICON AugDimNize
++Aug:eg	AugDimNize ;
++Dim:et	AugDimNize ;
+	Adjend ;
++Nize:ec       Nend ;
+
+LEXICON Adjend
++ASuff:a	Number ;
+
+LEXICON Number
++Pl:j	Case ;
++Sg:0	Case ;
+
+LEXICON Case
++Acc:n	# ;
+	# ;

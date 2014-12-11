@@ -1,0 +1,5 @@
+LEXICON Root
+go	#	;
+go:went	#	;
+< d o:i 0:d >	#	;
+< a b c* (d) e+ >	#	;

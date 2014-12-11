@@ -1,0 +1,5 @@
+define Foobar foo:bar;
+regex ? - a;
+substitute defined Foobar for a
+write att
+# alphabet not well defined

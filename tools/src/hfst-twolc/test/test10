@@ -1,0 +1,5 @@
+Alphabet 
+a b x ;
+Rules
+"rule name"
+a:b => x [? - x] - a:b  _ ;

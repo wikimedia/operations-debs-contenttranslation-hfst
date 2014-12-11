@@ -1,0 +1,4 @@
+0 1 a b
+0 1 b b
+0 1 @_UNKNOWN_SYMBOL_@ b
+1

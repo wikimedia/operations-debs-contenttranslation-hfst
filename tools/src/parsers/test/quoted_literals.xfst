@@ -1,0 +1,17 @@
+regex "foo":"bar";
+write att
+echo --
+regex "foo":bar;
+write att
+echo --
+regex foo:"bar";
+write att
+echo --
+regex "foo""bar";
+write att
+echo --
+regex foo":"bar;
+write att
+echo --
+regex "foo" "bar";
+write att

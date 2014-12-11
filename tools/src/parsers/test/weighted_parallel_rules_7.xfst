@@ -1,0 +1,11 @@
+set print-weight ON
+set precision 1
+set lookup-cycle-cutoff 5
+set encode-weights ON
+
+# note that the first rule includes the second one with lower weight
+# so the second rule doesn't have any effect
+regex a::1 -> ? ,, a::2 -> A ;
+apply up 
+abba
+<ctrl-d>

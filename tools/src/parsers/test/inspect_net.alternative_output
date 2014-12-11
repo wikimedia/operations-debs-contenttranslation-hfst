@@ -1,0 +1,16 @@
+'N' transits arc N, '-N' returns to level N, '<' to previous level, '0' quits.
+Level 1
+Arcs: 1. c:d,  2. a:b
+  c:d --> Level 2
+Arcs: 1. e:f
+Level 1
+Arcs: 1. c:d,  2. a:b
+  a:b --> Level 2
+Arcs: 1. e:f
+  e:f --> Level 3 (final)
+
+Level 2
+Arcs: 1. e:f
+Level 1
+Arcs: 1. c:d,  2. a:b
+ok

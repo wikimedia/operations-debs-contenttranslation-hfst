@@ -1,0 +1,49 @@
+
+    define Color [blue | green | red | white | yellow];
+    define Nationality [Dane | Englishman | German | Swede | Norwegian];
+    define Drink [bier | coffee | milk |tea | water];
+    define Cigarette [Blend | BlueMaster | Dunhill | PallMall | Prince];
+    define Pet [birds | cats | dogs | fish | horses];
+
+    define 	 House 	   [Color Nationality Drink Cigarette Pet];
+
+    define 	    C1 	    $[red Englishman];
+    # The Englishman lives in the red house.
+    define 	     C2    $[Swede ~$Pet dogs];
+    # The Swede keeps dogs.
+    define 	C3    $[Dane tea];
+    # The Dane drinks tea.
+    define     C4     $[green ~$Color white];
+    # The green house is just to the left of the white one.
+    define 	C5    $[green ~$Drink coffee];
+    # The owner of the green house drinks coffee.
+    define 	C6     $[PallMall birds];
+    # The Pall Mall smoker keeps birds.
+    define     C7   $[yellow ~$Cigarette Dunhill];
+    # The owner of the yellow house smokes Dunhills.
+    define 	C8     [House^2 ~$Drink milk ~$Drink House^2];
+    # The man in the center house drinks milk.
+    define    C9     [? Norwegian ?*];
+    # The Norwegian lives in the first house.
+    define 	    C10   $[Blend ? ~$Pet cats | cats ~$Cigarette Blend];
+    # The Blend smoker has a neighbor who keeps cats.
+    define 	C11    $[horses ~$Cigarette Dunhill | Dunhill ? ~$Pet horses];
+    # The man who keeps horses lives next to the Dunhill smoker.
+    define    C12 	$[bier BlueMaster];
+    # The man who smokes Blue Masters drinks bier.
+    define    C13 	 $[German ~$Cigarette Prince];
+    # The German smokes Prince.
+    define 	 C14 	$[Norwegian ~$Color blue | blue ? ~$Nationality Norwegian];
+    # The Norwegian lives next to the blue house.
+    define 	    C15   $[Blend ~$Drink water | water ? ~$Cigarette Blend];
+    # The Blend smoker has a neighbor who drinks water.    
+    define    C16 	$fish;
+    # Someone keeps fish
+
+    define Solution [House^5 & C1 & C2 & C3 &C4 & C5 & 
+    	   	     C6 & C7 & C8 & C9 & C10 & C11 & 
+		     C12 & C13 & C14 & C15 & C16];
+
+    push Solution
+
+    write prolog > Result

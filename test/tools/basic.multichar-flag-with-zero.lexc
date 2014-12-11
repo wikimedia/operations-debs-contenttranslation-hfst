@@ -1,0 +1,11 @@
+Multichar_Symbols
+@P.X.0@ @R.X.0@
+@P.X.1@ @R.X.1@
+
+LEXICON Root
+@P.X.0@px%0  Root    ;
+@R.X.0@rx%0  Root    ;
+@P.X.1@px1  Root    ;
+@R.X.1@rx1  Root    ;
+    #   ;
+

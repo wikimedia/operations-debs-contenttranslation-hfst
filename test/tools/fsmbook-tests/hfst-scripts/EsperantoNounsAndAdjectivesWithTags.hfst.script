@@ -1,0 +1,50 @@
+#!/bin/bash
+
+echo '([MF%+:g 0:e])' | $2/hfst-regexp2fst -f $1 > NounPrefix
+
+echo "bird
+hund
+kat
+elefant" | $2/hfst-strings2fst -j -f $1 > NounRoots
+
+echo "bon
+long
+jun
+alt
+grav" | $2/hfst-strings2fst -j -f $1 > AdjRoots
+
+echo '%+Noun:0' | $2/hfst-regexp2fst -f $1 > Nmf
+
+echo '%+NSuff:o' | $2/hfst-regexp2fst -f $1 > Nend
+
+echo '%+ASuff:a' | $2/hfst-regexp2fst -f $1 > Adjend
+
+echo '[[%+Fem:i 0:n] | [%+Dim:e 0:t] | [%+Aug:e 0:g]]* [@"Nend" | @"Adjend"]' \
+     | $2/hfst-regexp2fst -f $1 > AugDimFem 
+
+echo '([Op%+:m 0:a 0:l] | [Neg%+:n 0:e])' | $2/hfst-regexp2fst -f $1 \
+     > AdjPrefixes
+
+echo '[[%+Aug:e 0:g] | [%+Dim:e 0:t]]* [[[%+Nize:e 0:c] @"Nend"]|[@"Adjend"]]' \
+     | $2/hfst-regexp2fst -f $1 > AugDimNize
+
+echo '%+Adj:0' | $2/hfst-regexp2fst -f $1 > Adj
+
+echo '%+Pl:j | %+Sg:0' | $2/hfst-regexp2fst -f $1 > Number
+
+echo '(%+Acc:n)' | $2/hfst-regexp2fst -f $1 > Case
+	
+
+$2/hfst-concatenate NounPrefix NounRoots | $2/hfst-concatenate -2 Nmf | \
+  $2/hfst-concatenate -2 AugDimFem  > NounStem
+$2/hfst-concatenate AdjPrefixes AdjRoots | $2/hfst-concatenate -2 Adj | \
+  $2/hfst-concatenate -2 AugDimNize > AdjectiveStem
+$2/hfst-disjunct NounStem AdjectiveStem > Stems
+$2/hfst-concatenate Number Case | $2/hfst-concatenate -1 Stems > Result
+
+$2/hfst-minimize Result > TMP
+mv TMP Result
+
+rm -f Case Nend Stems AugDimFem AdjPrefixes NounRoots NounStem
+rm -f Nmf AdjRoots Adjend AdjectiveStem Number AugDimNize
+rm -f NounPrefix Adj

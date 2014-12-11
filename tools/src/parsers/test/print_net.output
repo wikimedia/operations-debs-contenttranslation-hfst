@@ -1,0 +1,14 @@
+Ss0:	<a:b> -> fs1.
+fs1:	(no arcs).
+--
+Ss0:	<a:b> -> fs1, c -> fs1.
+fs1:	(no arcs).
+--
+Sfs0:	<a:b> -> s1.
+s1:	c -> Sfs0.
+--
+Sfs0:	a -> fs1.
+fs1:	(no arcs).
+--
+Ss0:	<0: > -> fs1.
+fs1:	(no arcs).

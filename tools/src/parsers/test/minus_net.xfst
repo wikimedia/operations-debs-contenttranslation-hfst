@@ -1,0 +1,7 @@
+regex d:e;
+regex a:b;
+regex b:c;
+regex [a:b | b:c];
+minus net
+write att
+quit

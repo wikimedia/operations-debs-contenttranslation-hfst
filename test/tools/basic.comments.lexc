@@ -1,0 +1,11 @@
+! initial comment
+LEXICON Root
+foo	A	;
+bar	B	; ! inline final comment
+
+LEXICON A
+baz	#	;
+! comment between lexica
+
+LEXICON B
+%!notacomment	#	;

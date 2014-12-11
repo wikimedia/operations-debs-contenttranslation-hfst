@@ -1,0 +1,9 @@
+LEXICON Root
+<a:B> BAR ;
+<a:C> BAZ ;
+
+LEXICON BAR
+a:b # ;
+
+LEXICON BAZ
+a:c # ;

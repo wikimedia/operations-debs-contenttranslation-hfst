@@ -1,0 +1,45 @@
+
+
+# First, we create a transducer that maps numbers 2 ... 9 to the corresponding numerals:
+echo "2:kaksi
+3:kolme
+4:neljä
+5:viisi
+6:kuusi
+7:seitsemän
+8:kahdeksan
+9:yhdeksän" | $2/hfst-strings2fst -f $1 -j > 2to9.hfst;
+
+# and 1 ... 9:
+echo "1:yksi" | $2/hfst-strings2fst -f $1 | $2/hfst-disjunct 2to9.hfst > 1to9.hfst;
+
+# 10 is handled as a separate case:
+echo "10:kymmenen" | $2/hfst-strings2fst -f $1 > 10.hfst;
+
+# From 11 to 19, i.e.  [ 1:0 1to9 0:toista ]:
+echo "1:" | $2/hfst-strings2fst -f $1 > 1toEps.hfst;
+echo ":toista" | $2/hfst-strings2fst -f $1 > EpsToToista.hfst;
+$2/hfst-concatenate 1toEps.hfst 1to9.hfst | $2/hfst-concatenate EpsToToista.hfst > 11to19.hfst;
+
+# From 20 to 99, i.e.  [ 2to9 0:kymmentä ( "0":0 | 1to9 ) ]:
+echo ":kymmentä" | $2/hfst-strings2fst -f $1 > EpsToKymmenta.hfst;
+echo "0:" | $2/hfst-strings2fst -f $1 > 0toEps.hfst;
+$2/hfst-concatenate 2to9.hfst EpsToKymmenta.hfst > TMP;
+$2/hfst-disjunct 0toEps.hfst 1to9.hfst | $2/hfst-concatenate -1 TMP > 20to99.hfst;
+
+# Finally, from 1 to 99:
+$2/hfst-disjunct 1to9.hfst 10.hfst | $2/hfst-disjunct 11to19.hfst | $2/hfst-disjunct 20to99.hfst > FinnishNumerals.hfst;
+
+# To get transducers that map Finnish to English numerals and vice versa, we use
+# composition and inversion.
+# NOTE: we assume that the file NumbersToNumerals is already created
+$2/hfst-fst2fst -f $1 tmpdir/NumbersToNumerals > TMP
+
+$2/hfst-invert FinnishNumerals.hfst | $2/hfst-compose TMP | $2/hfst-minimize > FinnishToEnglishNumerals
+$2/hfst-invert FinnishToEnglishNumerals | $2/hfst-minimize > EnglishToFinnishNumerals
+
+mv EnglishToFinnishNumerals Result
+
+rm -f FinnishNumerals.hfst 10.hfst 1to9.hfst 2to9.hfst 20to99.hfst 0toEps.hfst
+rm -f 1toEps.hfst EpsToToista.hfst FinnishToEnglishNumerals EnglishToFinnishNumerals TMP 11to19.hfst
+rm -f EpsToKymmenta.hfst

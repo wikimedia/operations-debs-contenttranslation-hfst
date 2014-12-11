@@ -1,0 +1,6 @@
+! This is a comment; yes it is. The following lines contain a regex and more comments.
+0 <- %+N 
+! This is another comment; the next line contains the ending semicolon..
+; ! ..and the end of this comment.
+!
+! The above line contained an empty comment.

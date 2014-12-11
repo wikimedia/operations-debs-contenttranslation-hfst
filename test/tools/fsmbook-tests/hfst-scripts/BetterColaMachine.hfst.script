@@ -1,0 +1,5 @@
+#
+# $1 is the transducer format
+
+# echo ' [ D -> N^2, Q -> N^5 ] .o. N^5/\N @-> ...  "[COLA]" .o. N -> 0 || _ $"[COLA]" .o. N^2/\N @-> ...  D .o. N -> 0 || _ $D ; ' | $2/hfst-regexp2fst -f $1 > BetterColaMachine
+echo ' [ D -> N^2, Q -> N^5 ] ' | $2/hfst-regexp2fst -f $1 > Result

@@ -1,0 +1,3 @@
+regex a -> b || _ ;
+regex a -> b ;
+test equivalent

@@ -1,0 +1,10 @@
+Alphabet
+
+x y z ;
+
+Rules
+
+"Change x to y after z but not between two z symbols"
+x:y <=>      z _ ;
+    except
+             z _ z ;

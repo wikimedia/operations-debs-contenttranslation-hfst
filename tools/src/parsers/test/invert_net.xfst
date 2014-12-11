@@ -1,0 +1,5 @@
+regex a:b c:d;
+regex A:B C:D;
+invert net
+write att
+quit

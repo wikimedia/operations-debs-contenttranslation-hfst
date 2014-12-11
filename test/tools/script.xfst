@@ -1,0 +1,3 @@
+regex a:b;
+
+save stack script.hfst

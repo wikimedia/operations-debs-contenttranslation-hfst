@@ -1,0 +1,42 @@
+clear stack
+
+define FrontV [ i | e | é | ä ];
+
+define BackV [ u | o | ó | a ];
+
+define MorphoV [ %^U | %^O | %^Ó | %^A ];
+
+define Root [ r u u z o d |
+       	      t s a r l ó k |
+	      n t o n ó l |
+	      b u n o o t s |
+	      v é s i i m b |
+	      y ä ä q i n |
+	      f e s é é n g ];
+
+define Suff1 [ %+Int .x. [ %^U %^U k ] ];
+
+define Suff2 [ %+Perf .x. [ %^O n ] ] |
+       	     [ %+Imperf .x. [ %^Ó m b ] ] |
+	     [ %+Opt .x. [ %^U d d ] ] ;
+
+define Suff3 [ %+True .x. [ %^A n k ] ] |
+       	     [ %+Belief .x. [ %^A %^A v %^O  t ] ] |
+	     [ %+Doubt .x. [ %^U %^U z ] ] |
+	     [ %+False .x. [ %^Ó q ] ] ;
+
+define Suff4 [ %+1P %+Sg .x. %^A %^A b %^A ] |
+       	     [ %+2P %+Sg .x. %^Ó m %^A ] |
+	     [ %+3P %+Sg .x. %^U v v %^U ] |
+	     [ %+1P %+Pl %+Excl .x. %^A %^A b %^O r %^A ] | 
+	     [ %+1P %+Pl %+Incl .x. %^A %^A b %^U g %^A ] |
+	     [ %+2P %+Pl .x. %^Ó m %^O r %^A ] |
+	     [ %+3P %+Pl .x. %^U v v %^O r %^U ] ; 
+
+define Rules [ %^U -> u , %^O -> o , %^Ó -> ó , %^A -> a || BackV ?* _ ]
+                                     .o.
+                  [ %^U -> i , %^O -> e , %^Ó -> é , %^A -> ä ] ;
+
+read regex [ Root (Suff1) Suff2 (Suff3) Suff4 ] .o. Rules ;
+write prolog > Result
+

@@ -1,0 +1,6 @@
+set quit-on-fail OFF
+regex [;
+echo pass
+set quit-on-fail ON
+regex [;
+echo fail

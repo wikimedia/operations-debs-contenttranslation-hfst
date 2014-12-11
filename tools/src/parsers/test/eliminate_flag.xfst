@@ -1,0 +1,33 @@
+regex [ [x|X] a [x|X] ]  |  [ [y|Y|z|Z] a [y|Y|z|Z] ];
+regex [ ["@U.X.ON@" [x|X]] | ["@U.X.OFF@" [y|Y|z|Z]] ] a [ ["@U.X.ON@" [x|X]] | ["@U.X.OFF@" [y|Y|z|Z]] ];
+eliminate flag X
+equivalent
+regex [ ["@P.X.ON@" [x|X]] | ["@P.X.OFF@" [y|Y|z|Z]] ] a [ ["@U.X.ON@" [x|X]] | ["@U.X.OFF@" [y|Y|z|Z]] ];
+eliminate flag X
+equivalent
+regex [ ["@N.X.OFF@" [x|X]] | ["@N.X.ON@" [y|Y|z|Z]] ] a [ ["@U.X.ON@" [x|X]] | ["@U.X.OFF@" [y|Y|z|Z]] ];
+eliminate flag X
+equivalent
+regex [ ["@N.X.OFF@" [x|X]] | ["@N.X.ON@" [y|Y|z|Z]] ] a [ ["@U.X.ON@" [x|X]] | ["@U.X.OFF@" [y|Y|z|Z]] ];
+eliminate flag X
+equivalent
+regex [ ["@N.X.OFF@" [x|X]] | ["@N.X.ON@" [y|Y|z|Z]] ] a [ ["@P.X.ON@" [x|X]] | ["@P.X.OFF@" [y|Y|z|Z]] ];
+eliminate flag X
+equivalent
+regex [ [x|X] | [y|Y|z|Z] ] a [ [x|X] | [y|Y|z|Z] ];
+eliminate flag X
+equivalent
+#
+#
+clear stack
+#
+#
+define Flags [ ["@U.X.ON@" [x|X]] | ["@U.X.OFF@" [y|Y|z|Z]] ] a [ ["@U.X.ON@" [x|X]] | ["@U.X.OFF@" [y|Y|z|Z]] ];
+regex "@U.FOO.ON@" Flags "@U.FOO.ON@";
+eliminate flag X
+eliminate flag FOO
+regex "@U.FOO.ON@" Flags "@U.FOO.ON@";
+eliminate flags
+equivalent
+regex [ [x|X] a [x|X] ]  |  [ [y|Y|z|Z] a [y|Y|z|Z] ];
+equivalent

@@ -1,0 +1,68 @@
+! Ripped and simplified from North sámi material: testing that lexer eats
+! punctuation properly
+
+Multichar_Symbols +PUNCT
+
+LEXICON Root
+,+PUNCT:,  # ;
+.+PUNCT:.  # ;
+..+PUNCT:..   # ;
+...+PUNCT:...   # ;
+?+PUNCT:?  # ; 
+…+PUNCT:…  # ;
+¿+PUNCT:¿  # ;
+¶+PUNCT:¶  # ;
+§+PUNCT:§  # ;
+§§+PUNCT:§§ # ;
+$+PUNCT:$  # ;
+€+PUNCT:€  # ;
+£+PUNCT:£  # ;
+®+PUNCT:®  # ;
+©+PUNCT:©  # ;
+
+•+PUNCT:•  # ; !U+2022 Bullet
+●+PUNCT:●  # ; !U+25CF Black circle
+·+PUNCT:·  # ; !U+0097 Middle dot
+ּ+PUNCT:ּ   # ; !U+05BC Hebrew (sic!) middle dot
+·+PUNCT:·  # ; !U+0387, Greek (sic!) middle dot, or rather semicolon, in Greek.
+-+PUNCT:-  # ; !hyphen
+--+PUNCT:--  # ; !double hyphen
+–+PUNCT:–  # ; !endash
+—+PUNCT:—  # ; !emdash
+―+PUNCT:―  # ; !horizontal bar U+2015
+=+PUNCT:=  # ;
+≈+PUNCT:≈  # ;
+&+PUNCT:&  # ;
+'+PUNCT:'  # ;
+*+PUNCT:*  # ;
+++PUNCT:+  # ;
+±+PUNCT:±  # ;
+`+PUNCT:`  # ;
+´+PUNCT:´  # ;
+/+PUNCT:/  # ; 
++/-+PUNCT:+/- # ;
+~+PUNCT:~	  # ;
+«+PUNCT:«  # ;
+»+PUNCT:»  # ;
+“+PUNCT:“  # ;
+”+PUNCT:”  # ;
+‘+PUNCT:‘  # ;
+’+PUNCT:’  # ;
+„+PUNCT:„  # ;
+‹+PUNCT:‹  # ;
+›+PUNCT:›  # ;
+(+PUNCT:(  # ;
+)+PUNCT:)  # ;
+[+PUNCT:[  # ;
+]+PUNCT:]  # ;
+{+PUNCT:{  # ;
+}+PUNCT:}  # ;
+! escape required
+%"+PUNCT:%"  # ;
+%!+PUNCT:%!  # ;
+%<+PUNCT:%<  # ;
+%>+PUNCT:%>  # ;
+%%+PUNCT:%%  # ;
+%:+PUNCT:%:  # ;
+%;+PUNCT:%;  # ;
+%#+PUNCT:%#  # ;
