@@ -58,6 +58,10 @@
   size_t line_number = 1;
   InputReader input_reader(line_number);
 
+#ifdef HAVE_XFSM
+  #define Alphabet TwolCAlphabet
+#endif
+
   // The Alphabet of the grammar
   Alphabet alphabet;
 
@@ -395,7 +399,7 @@ ALPHABET_PAIR_LIST: /* empty */
 
 PAIR: PAIR_SYMBOL COLON PAIR_SYMBOL
 { 
-  if (std::string("__HFST_TWOLC_0") == $1 and 
+  if (std::string("__HFST_TWOLC_0") == $1 && 
       std::string("__HFST_TWOLC_0") == $3)
     { $$ = new OtherSymbolTransducer(HFST_EPSILON); }
   else if (std::string("__HFST_TWOLC_#") == $1)
@@ -524,7 +528,7 @@ unsigned int get_second_number(const std::string &s)
 
 void message(const std::string &m)
 {
-  if (not silent)
+  if (! silent)
     { std::cerr << m << std::endl; }
 }
 
@@ -553,7 +557,7 @@ int main(int argc, char * argv[])
   try 
     {
       CommandLine command_line(argc,argv);
-      if (command_line.help or command_line.usage or command_line.version)
+      if (command_line.help || command_line.usage || command_line.version)
     { exit(0); }
       if (command_line.has_debug_file)
     { input_reader.set_input(command_line.set_input_file()); }
@@ -574,7 +578,7 @@ int main(int argc, char * argv[])
     { exit(exit_code); }
       
       message("Compiling and storing rules.");
-      if (not command_line.has_output_file)
+      if (! command_line.has_output_file)
     {
       HfstOutputStream stdout_(command_line.format);
       grammar->compile_and_store(stdout_);

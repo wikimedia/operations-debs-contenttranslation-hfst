@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #ifndef _CONVERT_TRANSDUCER_H_
 #define _CONVERT_TRANSDUCER_H_
@@ -23,11 +20,11 @@
 #include <map>
 
 #if HAVE_OPENFST
-#ifdef WINDOWS
+#ifdef _MSC_VER
 #include "back-ends/openfstwin/src/include/fst/fstlib.h"
 #else 
 #include "back-ends/openfst/src/include/fst/fstlib.h"
-#endif // WINDOWS
+#endif // _MSC_VER
 #endif // HAVE_OPENFST
 
 #if HAVE_SFST
@@ -37,11 +34,13 @@
 #if HAVE_FOMA
 #ifndef _FOMALIB_H_
 #define _FOMALIB_H_
-#include <stdbool.h>
-#define _Bool bool
 #include "back-ends/foma/fomalib.h"
 #endif // _FOMALIB_H_
 #endif // HAVE_FOMA
+
+#if HAVE_XFSM
+#include "xfsm/xfsm_api.h"
+#endif
 
 /* Add here your transducer library header (and possibly a guard). */
 //#if HAVE_MY_TRANSDUCER_LIBRARY
@@ -161,6 +160,11 @@ namespace implementations {
   (const HfstConstantTransducer * t); */
 #endif // HAVE_FOMA
 
+#if HAVE_XFSM
+  static HfstBasicTransducer * xfsm_to_hfst_basic_transducer(NETptr t);
+  static NETptr hfst_basic_transducer_to_xfsm(const HfstBasicTransducer * t);
+#endif // HAVE_XFSM
+
 #if HAVE_OPENFST
   static HfstBasicTransducer * tropical_ofst_to_hfst_basic_transducer
     (fst::StdVectorFst * t, bool has_hfst_header=true);
@@ -217,7 +221,6 @@ namespace implementations {
 #endif // HAVE_OPENFST 
   
   
-  
   static HfstBasicTransducer * hfst_ol_to_hfst_basic_transducer
     (hfst_ol::Transducer * t);
 
@@ -226,9 +229,10 @@ namespace implementations {
        std::string options="", HfstTransducer * harmonizer = NULL);
 
   // A way to smuggle a hfst_ol backend into a HfstTransducer wrapper
-  static HfstTransducer * hfst_ol_to_hfst_transducer
-      (hfst_ol::Transducer * t);
+  static HfstTransducer * hfst_ol_to_hfst_transducer(hfst_ol::Transducer * t);
 
+  // And the reverse
+  static hfst_ol::Transducer * hfst_transducer_to_hfst_ol(HfstTransducer * t);
 
   /* Define here the functions that convert between HfstBasicTransducer and 
      your transducer class. */

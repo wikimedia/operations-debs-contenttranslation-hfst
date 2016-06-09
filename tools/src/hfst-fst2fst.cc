@@ -70,6 +70,7 @@ print_usage()
     "  -b, --use-backend-format          Write result in implementation format, without any HFST wrappers\n"
     "  -S, --sfst                        Write output in (HFST's) SFST implementation\n"
     "  -F, --foma                        Write output in (HFST's) foma implementation\n"
+    "  -x, --xfsm                        Write output in native xfsm format\n"
     "  -t, --openfst-tropical            Write output in (HFST's) tropical weight (OpenFST) implementation\n"
     "  -l, --openfst-log                 Write output in (HFST's) log weight (OpenFST) implementation\n"
     "  -O, --optimized-lookup-unweighted Write output in the HFST optimized-lookup implementation\n"
@@ -79,8 +80,9 @@ print_usage()
     print_common_unary_program_parameter_instructions(message_out);
         fprintf(message_out, 
             "FMT must be name of a format usable by libhfst, i.e. one of the following:\n"
-        "{ foma, openfst-tropical, openfst-log, sfst,\n"
-        "  optimized-lookup-weighted, optimized-lookup-unweighted }.\n");
+        "{ foma, openfst-tropical, openfst-log, sfst, xfsm\n"
+        "  optimized-lookup-weighted, optimized-lookup-unweighted }.\n"
+        "Note that xfsm format is always written in native format without HFST wrappers.\n");
     fprintf(message_out, "\n");
     print_report_bugs();
     fprintf(message_out, "\n");
@@ -103,6 +105,7 @@ parse_options(int argc, char** argv)
           {"format",       required_argument, 0, 'f'},
           {"sfst",               no_argument, 0, 'S'},
           {"foma",               no_argument, 0, 'F'},
+          {"xfsm",               no_argument, 0, 'x'},
           {"openfst-tropical",    no_argument, 0, 't'},
           {"openfst-log",         no_argument, 0, 'l'},
           {"optimized-lookup-unweighted",   no_argument, 0, 'O'},
@@ -113,7 +116,7 @@ parse_options(int argc, char** argv)
         int option_index = 0;
         // add tool-specific options here 
         char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
-                             HFST_GETOPT_UNARY_SHORT "SFtlOwQf:b",
+                             HFST_GETOPT_UNARY_SHORT "SFtlOwQf:bx",
                              long_options, &option_index);
         if (-1 == c)
         {
@@ -138,6 +141,9 @@ parse_options(int argc, char** argv)
         case 'F':
           output_type = hfst::FOMA_TYPE;
           break;
+        case 'x':
+          output_type = hfst::XFSM_TYPE;
+          break;
         case 't':
           output_type = hfst::TROPICAL_OPENFST_TYPE;
           break;
@@ -161,7 +167,7 @@ parse_options(int argc, char** argv)
     {
         error(EXIT_FAILURE, 0, 
               "You must specify an output type "
-              "(one of -S, -f, -t, -l, -O, or -w)");
+              "(one of -S, -F, -t, -x, -l, -O, or -w)");
     }
 
 #include "inc/check-params-common.h"
@@ -171,14 +177,22 @@ parse_options(int argc, char** argv)
 int
 process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
 {
-  //instream.open();
-  //    outstream.open();
+  if (instream.get_type() == hfst::FOMA_TYPE && ! instream.is_hfst_header_included())
+    {
+      if (!silent)
+        {
+          fprintf(message_out, "warning: converting native foma transducer: "
+                  "inversion may be needed for hfst-lookup to work as expected "
+                  "(hfst-flookup works as foma's flookup)\n");
+        }
+    }
     
     size_t transducer_n = 0;
     while(instream.is_good())
     {
         transducer_n++;
         HfstTransducer orig(instream);
+
         char* inputname = hfst_get_name(orig, inputfilename);
         if (transducer_n == 1)
         {
@@ -197,6 +211,7 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
         outstream << orig;
         free(inputname);
     }
+    outstream.flush(); // needed for xfsm transducers whose writing is delayed
     instream.close();
     outstream.close();
     return EXIT_SUCCESS;
@@ -226,7 +241,7 @@ int main( int argc, char **argv ) {
     verbose_printf("Reading from %s, writing to %s\n", 
         inputfilename, outfilename);
     char* format_description = hfst_strformat(output_type);
-    if (hfst_format) 
+    if (hfst_format && (output_type != hfst::XFSM_TYPE)) 
       {
         verbose_printf("Writing %s format transducers with HFST3 headers\n",
                        format_description);
@@ -237,16 +252,40 @@ int main( int argc, char **argv ) {
                        " headers\n", format_description);
       }
     free(format_description);
+
+    if (output_type == hfst::XFSM_TYPE)
+      {
+        if (strcmp(outfilename, "<stdout>") == 0) {
+          error(EXIT_FAILURE, 0, "Writing to standard output not supported for xfsm transducers,\n"
+                "use 'hfst-fst2fst [--output|-o] OUTFILE' instead");
+          return EXIT_FAILURE;
+        }
+      }
+
     // here starts the buffer handling part
     HfstInputStream* instream = NULL;
     try {
       instream = (inputfile != stdin) ?
         new HfstInputStream(inputfilename) : new HfstInputStream();
-    } catch(const HfstException e)  {
-        error(EXIT_FAILURE, 0, "%s is not a valid transducer file",
+    } 
+    catch(const FileIsInGZFormatException e)
+      {
+        error(EXIT_FAILURE, 0, "%s seems to be a gzipped native foma file, you must first unzip it",
               inputfilename);
         return EXIT_FAILURE;
+      }
+    catch(const HfstException e)  {
+        error(EXIT_FAILURE, 0, "%s is not a valid transducer file",
+              inputfilename);
+#if HAVE_XFSM
+        if (inputfile == stdin) {
+          error(EXIT_FAILURE, 0, "note that you cannot read xfsm transducers from standard input,\n"
+                "use hfst-fst2fst [--input|-i] INFILE instead");
+        }
+#endif
+        return EXIT_FAILURE;
     }
+
     HfstOutputStream* outstream = (outfile != stdout) ?
       new HfstOutputStream(outfilename, output_type, hfst_format) :
       new HfstOutputStream(output_type, hfst_format);

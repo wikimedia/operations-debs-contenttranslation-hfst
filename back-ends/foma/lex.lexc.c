@@ -1,9 +1,7 @@
 #line 22 "lexc.l"
 #define YY_BUF_SIZE 16777216
 
-#ifdef WINDOWS
-typedef long off_t;
-#endif
+
 
 #line 7 "lex.lexc.c"
 
@@ -71,7 +69,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -79,7 +76,6 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
-#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -109,6 +105,8 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
+
+#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -166,7 +164,15 @@ typedef unsigned int flex_uint32_t;
 
 /* Size of default input buffer. */
 #ifndef YY_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k.
+ * Moreover, YY_BUF_SIZE is 2*YY_READ_BUF_SIZE in the general case.
+ * Ditto for the __ia64__ case accordingly.
+ */
+#define YY_BUF_SIZE 32768
+#else
 #define YY_BUF_SIZE 16384
+#endif /* __ia64__ */
 #endif
 
 /* The state buf must be large enough to hold one state per character in the main buffer.
@@ -178,12 +184,7 @@ typedef unsigned int flex_uint32_t;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #endif
 
-#ifndef YY_TYPEDEF_YY_SIZE_T
-#define YY_TYPEDEF_YY_SIZE_T
-typedef size_t yy_size_t;
-#endif
-
-extern yy_size_t lexcleng;
+extern int lexcleng;
 
 extern FILE *lexcin, *lexcout;
 
@@ -209,6 +210,11 @@ extern FILE *lexcin, *lexcout;
 
 #define unput(c) yyunput( c, (yytext_ptr)  )
 
+#ifndef YY_TYPEDEF_YY_SIZE_T
+#define YY_TYPEDEF_YY_SIZE_T
+typedef size_t yy_size_t;
+#endif
+
 #ifndef YY_STRUCT_YY_BUFFER_STATE
 #define YY_STRUCT_YY_BUFFER_STATE
 struct yy_buffer_state
@@ -226,7 +232,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	yy_size_t yy_n_chars;
+	int yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -296,8 +302,8 @@ static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
 
 /* yy_hold_char holds the character lost when lexctext is formed. */
 static char yy_hold_char;
-static yy_size_t yy_n_chars;		/* number of characters read into yy_ch_buf */
-yy_size_t lexcleng;
+static int yy_n_chars;		/* number of characters read into yy_ch_buf */
+int lexcleng;
 
 /* Points to current character in buffer. */
 static char *yy_c_buf_p = (char *) 0;
@@ -325,7 +331,7 @@ static void lexc_init_buffer (YY_BUFFER_STATE b,FILE *file  );
 
 YY_BUFFER_STATE lexc_scan_buffer (char *base,yy_size_t size  );
 YY_BUFFER_STATE lexc_scan_string (yyconst char *yy_str  );
-YY_BUFFER_STATE lexc_scan_bytes (yyconst char *bytes,yy_size_t len  );
+YY_BUFFER_STATE lexc_scan_bytes (yyconst char *bytes,int len  );
 
 void *lexcalloc (yy_size_t  );
 void *lexcrealloc (void *,yy_size_t  );
@@ -382,7 +388,7 @@ static void yy_fatal_error (yyconst char msg[]  );
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
 	(yytext_ptr) -= (yy_more_len); \
-	lexcleng = (yy_size_t) (yy_cp - (yytext_ptr)); \
+	lexcleng = (size_t) (yy_cp - (yytext_ptr)); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
@@ -1312,7 +1318,7 @@ static int yy_more_len = 0;
 char *lexctext;
 #line 1 "lexc.l"
 /*     Foma: a finite-state toolkit and library.                             */
-/*     Copyright © 2008-2011 Mans Hulden                                     */
+/*     Copyright © 2008-2015 Mans Hulden                                     */
 /*     This file is part of foma.                                            */
 /*     Foma is free software: you can redistribute it and/or modify          */
 /*     it under the terms of the GNU General Public License version 2 as     */
@@ -1335,46 +1341,43 @@ char *lexctext;
 #define YY_USER_ACTION lexccolumn += lexcleng;
 static int lexentries;
 extern int lexclex();
-extern struct defined *defines;
-static struct defined *olddefines;
-extern int my_yyparse(char *my_string, int lineno);
+static struct defined_networks *olddefines;
+extern int my_yyparse(char *my_string, int lineno, struct defined_networks *defined_nets, struct defined_functions *defined_funcs);
 extern struct fsm *current_parse;
 static char *tempstr;
 int lexccolumn = 0;
 
-int verbose_lexc_ = 1; // HFST addition
+#ifndef ORIGINAL
+int verbose_lexc_ = 1;
+#endif
 
-// HFST added parameter verbose
 struct fsm *fsm_lexc_parse_string(char *string, int verbose) {
 
-   olddefines = defines;
+   olddefines = g_defines;
    YY_BUFFER_STATE my_string_buffer;
-   verbose_lexc_ = verbose;
    my_string_buffer = lexc_scan_string(string);
    lexentries = -1;
    lexclineno = 1;
    lexc_init();
    if (lexclex() != 1) {
      if (lexentries != -1) {
-       if (verbose == 1)
-         fprintf(stderr, "%i\n",lexentries);   // HFST changed stdout to stderr
+         printf("%i\n",lexentries);
      }       
    } 
    lexc_delete_buffer(my_string_buffer);
-   defines = olddefines;
+   g_defines = olddefines;
    return(lexc_to_fsm());
 }
 
 struct fsm *fsm_lexc_parse_file(char *filename, int verbose) {
   char *mystring;
   mystring = file_to_mem(filename);
-  return(fsm_lexc_parse_string(mystring, verbose));					       
+  return(fsm_lexc_parse_string(mystring, verbose));
 }
 
 void lexc_trim(char *s) {
   /* Remove trailing ; and = and space and initial space */
   int i,j;
-  i = strlen(s);
   for (i = strlen(s)-1; *(s+i) == ';' || *(s+i) == '=' || *(s+i) == ' ' || *(s+i) == '\t'; i--)
     *(s+i) = '\0';  
   for (i=0; *(s+i) == ' ' || *(s+i) == '\t' || *(s+i) == '\n'; i++) {
@@ -1387,7 +1390,7 @@ void lexc_trim(char *s) {
 
 /* Nonreserved = anything except ; < > ! or space */
 
-#line 1384 "lex.lexc.c"
+#line 1394 "lex.lexc.c"
 
 #define INITIAL 0
 #define MCS 1
@@ -1438,7 +1441,7 @@ FILE *lexcget_out (void );
 
 void lexcset_out  (FILE * out_str  );
 
-yy_size_t lexcget_leng (void );
+int lexcget_leng (void );
 
 char *lexcget_text (void );
 
@@ -1478,7 +1481,12 @@ static int input (void );
 
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k */
+#define YY_READ_BUF_SIZE 16384
+#else
 #define YY_READ_BUF_SIZE 8192
+#endif /* __ia64__ */
 #endif
 
 /* Copy whatever the last rule matched to the standard output. */
@@ -1486,7 +1494,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( lexctext, lexcleng, 1, lexcout )
+#define ECHO do { if (fwrite( lexctext, lexcleng, 1, lexcout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -1497,7 +1505,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		yy_size_t n; \
+		size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( lexcin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -1579,11 +1587,11 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 96 "lexc.l"
+#line 98 "lexc.l"
 
 
  /* Files begin with one of these three identifiers */
-#line 1580 "lex.lexc.c"
+#line 1595 "lex.lexc.c"
 
 	if ( !(yy_init) )
 		{
@@ -1659,7 +1667,6 @@ yy_match:
 yy_find_action:
 		yy_current_state = *--(yy_state_ptr);
 		(yy_lp) = yy_accept[yy_current_state];
-goto find_rule; /* Shut up GCC warning -Wall */
 find_rule: /* we branch to this label when backing up */
 		for ( ; ; ) /* until we find what rule we matched */
 			{
@@ -1704,14 +1711,14 @@ do_action:	/* This label is used only to access EOF actions. */
 	{ /* beginning of action switch */
 case 1:
 YY_RULE_SETUP
-#line 99 "lexc.l"
+#line 101 "lexc.l"
 {
   BEGIN(MCS);
 }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 103 "lexc.l"
+#line 105 "lexc.l"
 {
     BEGIN(DEF);
 }
@@ -1721,20 +1728,20 @@ YY_RULE_SETUP
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 109 "lexc.l"
+#line 111 "lexc.l"
 {
   yymore();
 }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 113 "lexc.l"
+#line 115 "lexc.l"
 { }
 	YY_BREAK
 case 5:
 /* rule 5 can match eol */
 YY_RULE_SETUP
-#line 114 "lexc.l"
+#line 116 "lexc.l"
 { lexclineno++; lexccolumn = 1;}
 	YY_BREAK
 /* Multichar definitions */
@@ -1742,7 +1749,7 @@ YY_RULE_SETUP
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 118 "lexc.l"
+#line 120 "lexc.l"
 {
   lexc_add_mc(lexctext);
 }
@@ -1750,17 +1757,14 @@ YY_RULE_SETUP
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 122 "lexc.l"
+#line 124 "lexc.l"
 {
   lexc_trim(lexctext+8);
   if (lexentries != -1) {
-    if (verbose_lexc_ == 1)
-      fprintf(stderr, "%i, ",lexentries);   // HFST changed stdout to stderr
+    printf("%i, ",lexentries);
   }
-  if (verbose_lexc_ == 1) {
-    fprintf(stderr, "%s...",lexctext+8);  // HFST changed stdout to stderr
-    fflush(stderr);
-  }
+  printf("%s...",lexctext+8); 
+  fflush(stdout);
   lexentries = 0;
   lexc_set_current_lexicon(lexctext+8, SOURCE_LEXICON);
   BEGIN(LEXENTRIES);
@@ -1769,7 +1773,7 @@ YY_RULE_SETUP
 /* Grab info string */
 case 8:
 YY_RULE_SETUP
-#line 135 "lexc.l"
+#line 137 "lexc.l"
 {
   BEGIN(LEXENTRIES);
 }
@@ -1778,16 +1782,16 @@ YY_RULE_SETUP
 case 9:
 /* rule 9 can match eol */
 YY_RULE_SETUP
-#line 139 "lexc.l"
+#line 141 "lexc.l"
 {
     lexc_trim(lexctext);
     lexc_set_current_lexicon(lexctext, TARGET_LEXICON);
     lexc_add_word();
     lexc_clear_current_word();
     lexentries++;
-    if (lexentries %10000 == 0 && verbose_lexc_ == 1) {
-      fprintf(stderr, "%i...",lexentries);   // HFST changed stdout to stderr
-      fflush(stderr);
+    if (lexentries %10000 == 0) {
+      printf("%i...",lexentries);
+      fflush(stdout);
     }
     BEGIN(EATUPINFO);
 }
@@ -1796,7 +1800,7 @@ YY_RULE_SETUP
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 154 "lexc.l"
+#line 156 "lexc.l"
 {
       lexc_set_current_word(lexctext);
 }
@@ -1804,7 +1808,7 @@ YY_RULE_SETUP
 case 11:
 /* rule 11 can match eol */
 YY_RULE_SETUP
-#line 159 "lexc.l"
+#line 161 "lexc.l"
 {
     //printf("[%s]\n", lexctext);
     lexc_trim(lexctext);
@@ -1812,16 +1816,16 @@ YY_RULE_SETUP
     lexc_add_word();
     lexc_clear_current_word();
     lexentries++;
-    if (lexentries %10000 == 0 && verbose_lexc_ == 1) {
-      fprintf(stderr, "%i...",lexentries);   // HFST changed stdout to stderr
-      fflush(stderr);
+    if (lexentries %10000 == 0) {
+      printf("%i...",lexentries);
+      fflush(stdout);
     }
 }
 	YY_BREAK
 /* A REGEX entry begins and ends with a < , > */
 case 12:
 YY_RULE_SETUP
-#line 173 "lexc.l"
+#line 175 "lexc.l"
 {
   BEGIN(REGEX);
 }
@@ -1829,10 +1833,10 @@ YY_RULE_SETUP
 /* \076 = > */
 case 13:
 YY_RULE_SETUP
-#line 177 "lexc.l"
+#line 179 "lexc.l"
 {
     *(lexctext+lexcleng-1) = ';';
-    if (my_yyparse(lexctext, lexclineno) == 0) {
+    if (my_yyparse(lexctext, lexclineno, g_defines, NULL) == 0) {
        lexc_set_network(current_parse);
     }    
     BEGIN(LEXENTRIES);
@@ -1840,7 +1844,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 185 "lexc.l"
+#line 187 "lexc.l"
 {
   BEGIN(REGEXB);
   yymore();
@@ -1849,14 +1853,14 @@ YY_RULE_SETUP
 case 15:
 /* rule 15 can match eol */
 YY_RULE_SETUP
-#line 189 "lexc.l"
+#line 191 "lexc.l"
 {
   yymore();
 }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 192 "lexc.l"
+#line 194 "lexc.l"
 {
   BEGIN(REGEX);
   yymore();
@@ -1864,7 +1868,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 196 "lexc.l"
+#line 198 "lexc.l"
 {
   BEGIN(REGEXQ);
   yymore();
@@ -1873,14 +1877,14 @@ YY_RULE_SETUP
 case 18:
 /* rule 18 can match eol */
 YY_RULE_SETUP
-#line 200 "lexc.l"
+#line 202 "lexc.l"
 {
   yymore();
 }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 203 "lexc.l"
+#line 205 "lexc.l"
 {
   BEGIN(REGEX);
   yymore();
@@ -1889,7 +1893,7 @@ YY_RULE_SETUP
 case 20:
 /* rule 20 can match eol */
 YY_RULE_SETUP
-#line 207 "lexc.l"
+#line 209 "lexc.l"
 {
     lexc_trim(lexctext);
     tempstr = xxstrdup(lexctext);
@@ -1899,10 +1903,10 @@ YY_RULE_SETUP
 /* \073 = ; */
 case 21:
 YY_RULE_SETUP
-#line 213 "lexc.l"
+#line 215 "lexc.l"
 {
-    if (my_yyparse(lexctext, lexclineno) == 0) {
-      add_defined(fsm_topsort(fsm_minimize(current_parse)),tempstr);
+    if (my_yyparse(lexctext, lexclineno, g_defines, NULL) == 0) {
+      add_defined(g_defines, fsm_topsort(fsm_minimize(current_parse)),tempstr);
     }
     xxfree(tempstr);
     BEGIN(DEF);
@@ -1911,14 +1915,14 @@ YY_RULE_SETUP
 case 22:
 /* rule 22 can match eol */
 YY_RULE_SETUP
-#line 220 "lexc.l"
+#line 222 "lexc.l"
 {
   yymore();
 }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 223 "lexc.l"
+#line 225 "lexc.l"
 {
   BEGIN(DEFREGEXB);
   yymore();
@@ -1927,14 +1931,14 @@ YY_RULE_SETUP
 case 24:
 /* rule 24 can match eol */
 YY_RULE_SETUP
-#line 227 "lexc.l"
+#line 229 "lexc.l"
 {
   yymore();
 }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 230 "lexc.l"
+#line 232 "lexc.l"
 {
   BEGIN(DEFREGEX);
   yymore();
@@ -1942,7 +1946,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 234 "lexc.l"
+#line 236 "lexc.l"
 {
   BEGIN(DEFREGEXQ);
   yymore();
@@ -1951,14 +1955,14 @@ YY_RULE_SETUP
 case 27:
 /* rule 27 can match eol */
 YY_RULE_SETUP
-#line 238 "lexc.l"
+#line 240 "lexc.l"
 {
   yymore();
 }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 241 "lexc.l"
+#line 243 "lexc.l"
 {
   BEGIN(DEFREGEX);
   yymore();
@@ -1967,20 +1971,20 @@ YY_RULE_SETUP
 case 29:
 /* rule 29 can match eol */
 YY_RULE_SETUP
-#line 245 "lexc.l"
-{ /* printf ("Comment: [%s]\n",lexctext); */ }
+#line 247 "lexc.l"
+{  /* printf ("Comment: [%s]\n",lexctext); */  }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 247 "lexc.l"
-{ fprintf(stderr, "\n***Syntax error on line %i column %i at '%s'\n",lexclineno,lexccolumn,lexctext); return 1;}   // HFST changed stdout to stderr
+#line 249 "lexc.l"
+{ printf("\n***Syntax error on line %i column %i at '%s'\n",lexclineno,lexccolumn,lexctext); return 1;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 248 "lexc.l"
+#line 250 "lexc.l"
 ECHO;
 	YY_BREAK
-#line 1974 "lex.lexc.c"
+#line 1988 "lex.lexc.c"
 			case YY_STATE_EOF(INITIAL):
 			case YY_STATE_EOF(MCS):
 			case YY_STATE_EOF(LEXICON):
@@ -2178,7 +2182,7 @@ static int yy_get_next_buffer (void)
 
 	else
 		{
-			yy_size_t num_to_read =
+			int num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -2194,7 +2198,7 @@ static int yy_get_next_buffer (void)
 
 		/* Read in more data. */
 		YY_INPUT( (&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move]),
-			(yy_n_chars), num_to_read );
+			(yy_n_chars), (size_t) num_to_read );
 
 		YY_CURRENT_BUFFER_LVALUE->yy_n_chars = (yy_n_chars);
 		}
@@ -2311,7 +2315,7 @@ static int yy_get_next_buffer (void)
 
 		else
 			{ /* need more input */
-			yy_size_t offset = (yy_c_buf_p) - (yytext_ptr);
+			int offset = (yy_c_buf_p) - (yytext_ptr);
 			++(yy_c_buf_p);
 
 			switch ( yy_get_next_buffer(  ) )
@@ -2335,7 +2339,7 @@ static int yy_get_next_buffer (void)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( lexcwrap( ) )
-						return 0;
+						return EOF;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
 						YY_NEW_FILE;
@@ -2587,7 +2591,7 @@ void lexcpop_buffer_state (void)
  */
 static void lexcensure_buffer_stack (void)
 {
-	yy_size_t num_to_alloc;
+	int num_to_alloc;
     
 	if (!(yy_buffer_stack)) {
 
@@ -2671,7 +2675,7 @@ YY_BUFFER_STATE lexc_scan_buffer  (char * base, yy_size_t  size )
  * @note If you want to scan bytes that may contain NUL values, then use
  *       lexc_scan_bytes() instead.
  */
-YY_BUFFER_STATE lexc_scan_string (yyconst char * yystr)
+YY_BUFFER_STATE lexc_scan_string (yyconst char * yystr )
 {
     
 	return lexc_scan_bytes(yystr,strlen(yystr) );
@@ -2679,16 +2683,17 @@ YY_BUFFER_STATE lexc_scan_string (yyconst char * yystr)
 
 /** Setup the input buffer state to scan the given bytes. The next call to lexclex() will
  * scan from a @e copy of @a bytes.
- * @param bytes the byte buffer to scan
- * @param len the number of bytes in the buffer pointed to by @a bytes.
+ * @param yybytes the byte buffer to scan
+ * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE lexc_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len )
+YY_BUFFER_STATE lexc_scan_bytes  (yyconst char * yybytes, int  _yybytes_len )
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t n, i;
+	yy_size_t n;
+	int i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
@@ -2770,7 +2775,7 @@ FILE *lexcget_out  (void)
 /** Get the length of the current token.
  * 
  */
-yy_size_t lexcget_leng  (void)
+int lexcget_leng  (void)
 {
         return lexcleng;
 }
@@ -2926,4 +2931,4 @@ void lexcfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 248 "lexc.l"
+#line 250 "lexc.l"

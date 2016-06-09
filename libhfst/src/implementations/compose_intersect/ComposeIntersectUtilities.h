@@ -1,3 +1,12 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 #ifndef HEADER_COMPOSE_INTERSECT_UTILITIES_H
 #define HEADER_COMPOSE_INTERSECT_UTILITIES_H
 
@@ -46,7 +55,7 @@ namespace hfst
       {
         iterator least_upper_bound = get_least_upper_bound(x);
         const X &new_x = *least_upper_bound;
-        if (least_upper_bound == end() or not (x == new_x))
+        if (least_upper_bound == end() || !(x == new_x))
           { add_value(x,least_upper_bound); }
       }
 
@@ -88,7 +97,7 @@ namespace hfst
         const_iterator it = container_.begin();
         for ( ; it != container_.end(); ++it)
           { 
-        if (not comparator(*it,x))
+        if (! comparator(*it,x))
           { break; }
           }
         return it;
@@ -99,7 +108,7 @@ namespace hfst
         iterator it = container_.begin();
         for ( ; it != container_.end(); ++it)
           { 
-        if (not comparator(*it,x))
+        if (! comparator(*it,x))
           { break; }
           }
         return it;

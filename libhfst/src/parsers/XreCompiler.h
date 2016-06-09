@@ -1,3 +1,12 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 //! @file XreCompiler.h
 //!
 //! @brief A class that encapsulates compilation of Xerox compatible regular
@@ -10,18 +19,6 @@
 //!
 //!        This class is merely a wrapper around lex and yacc functions handling
 //!        the parsing.
-
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef GUARD_XreCompiler_h
 #define GUARD_XreCompiler_h
@@ -38,6 +35,31 @@ namespace hfst {
 //! @brief hfst::xre namespace is used for all functions related to Xerox 
 //! Regular Expresisions (XRE) parsing.
 namespace xre {
+
+  // needed for merge operation
+struct XreConstructorArguments
+{
+  std::map<std::string,hfst::HfstTransducer*> definitions;
+  std::map<std::string, std::string> function_definitions;
+  std::map<std::string, unsigned int > function_arguments;
+  std::map<std::string, std::set<std::string> > list_definitions;
+  hfst::ImplementationType format;
+
+  XreConstructorArguments
+  (std::map<std::string,hfst::HfstTransducer*> definitions_,
+   std::map<std::string, std::string> function_definitions_,
+   std::map<std::string, unsigned int > function_arguments_,
+   std::map<std::string, std::set<std::string> > list_definitions_,
+   hfst::ImplementationType format_)
+  {
+    definitions = definitions_;
+    function_definitions = function_definitions_;
+    function_arguments = function_arguments_;
+    list_definitions = list_definitions_;
+    format = format_;
+  }
+};
+
 //! @brief A compiler holding information needed to compile XREs.
 class XreCompiler
 {
@@ -46,11 +68,16 @@ class XreCompiler
   XreCompiler();
   //! @brief Create compiler for @a impl format transducers
   XreCompiler(hfst::ImplementationType impl);
+  // ...
+  XreCompiler(const struct XreConstructorArguments & args);
 
   //! @brief Add a definition macro.
   //!        Compilers will replace arcs labeled @a name, with the transducer
   //!        defined by @a xre in later phases of compilation.
-  void define(const std::string& name, const std::string& xre);
+  //! @return Whether parsing \a xre was succesful.
+  bool define(const std::string& name, const std::string& xre);
+
+  void define_list(const std::string& name, const std::set<std::string>& symbol_list);
 
   //! @brief Add a function macro.
   //!        Compilers will replace call to function \a name with the transducer
@@ -81,7 +108,6 @@ class XreCompiler
   //! @brief Remove a definition macro.
   void undefine(const std::string& name);
 
-
   //! @brief Compile a transducer defined by @a xre.
   //!        May return a pointer to @e empty transducer on non-fatal error.
   //!        A null pointer is returned on fatal error, if abort is not called.
@@ -93,8 +119,6 @@ class XreCompiler
   //!        May return a pointer to @e empty transducer on non-fatal error.
   //!        A null pointer is returned on fatal error, if abort is not called.
   HfstTransducer* compile_first(const std::string& xre, unsigned int & chars_read);
-
-  std::string get_error_message();
 
   //! @brief Whether the last regex compiled contained only comments.
   //!        
@@ -118,15 +142,30 @@ class XreCompiler
   //!        Default is false.
   void set_flag_harmonization(bool harmonize_flags);
 
-  //! @brief Whether warning messages are printed to \a file.
-  //!        Default is false, If verbose==false, \a file is ignored.
-  void set_verbosity(bool verbose, FILE * file);
+  void set_verbosity(bool verbose);
+  bool get_verbosity();
+  void set_error_stream(std::ostream * os);
+  std::ostream * get_error_stream();
+
+  XreCompiler& setOutputToConsole(bool value);
+  bool getOutputToConsole();
+
+  // TODO get rid of global variables so these functions can be non-static
+  static std::ostream * get_stream(std::ostream * oss);
+  static void flush(std::ostream * oss);
 
   private:
   std::map<std::string,hfst::HfstTransducer*> definitions_;
   std::map<std::string, std::string> function_definitions_;
   std::map<std::string, unsigned int > function_arguments_;
+  std::map<std::string, std::set<std::string> > list_definitions_;
   hfst::ImplementationType format_;
+  bool verbose_;
+#ifdef WINDOWS
+  bool output_to_console_;
+  // global std::ostringstream * winoss_;
+  // global std::ostream * redirected_stream_;
+#endif
 
 }
 ;

@@ -1,21 +1,15 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 //! @file lexc-utils.cc
 //!
 //! @brief Implementation of some string handling in HFST lexc.
-//!
-//! @author Tommi A. Pirinen
-
-
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, version 3 of the License.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #if HAVE_CONFIG_H
 #  include <config.h>
@@ -33,8 +27,15 @@
 // for internal epsilon
 #include "HfstSymbolDefs.h"
 
+#include "LexcCompiler.h"
 #include "lexc-utils.h"
-#include "lexc-parser.hh"
+#include "string-utils.h"
+
+#ifdef YACC_USE_PARSER_H_EXTENSION
+  #include "lexc-parser.h"
+#else
+  #include "lexc-parser.hh"
+#endif
 
 using std::string;
 
@@ -45,20 +46,8 @@ extern char* hlexctext;
 extern YYLTYPE hlexclloc;
 
 namespace hfst { namespace lexc {
-// string mangling
-static
-string&
-replace_all(string& haystack, const string& needle, const string& replacement)
-  {
-    size_t last_needle = haystack.find(needle);
-    size_t needle_len = needle.length();
-    while (last_needle != string::npos)
-      {
-        haystack.replace(last_needle, needle_len, replacement);
-        last_needle = haystack.find(needle);
-      }
-    return haystack;
-  }
+
+extern hfst::lexc::LexcCompiler * lexc_;
 
 
 string&
@@ -370,8 +359,11 @@ strip_percents(const char* s, bool do_zeros)
     *p = '\0';
     if (escaping)
     {
-        fprintf(stderr, "Stray escape char %% in %s\n", s);
-        return NULL;
+      //fprintf(stderr, "Stray escape char %% in %s\n", s);
+      std::ostream * err = hfst::lexc::lexc_->get_stream((hfst::lexc::lexc_->get_error_stream()));
+      *err << "Stray escape char %% in " << s << std::endl;
+      hfst::lexc::lexc_->flush(err);
+      return NULL;
     }
     return rv;
 }
@@ -454,9 +446,108 @@ error_at_current_token(int, int, const char* format)
 {
     char* leader = strdup_token_positions();
     char* token = strdup_token_part();
-    fprintf(stderr, "%s: %s %s\n", leader, format, token);
+    //fprintf(stderr, "%s: %s %s\n", leader, format, token);
+      std::ostream * err = hfst::lexc::lexc_->get_stream((hfst::lexc::lexc_->get_error_stream()));
+      *err << leader << ": " << format << ": " << token << std::endl;
+      hfst::lexc::lexc_->flush(err);
     free(leader);
 }
 
+
+
+pair<vector<string>, vector<string> > find_med_alingment(const vector<string> &s1, const vector<string> &s2)
+{
+    const size_t substitution = 100;
+    const size_t deletion = 1;
+    const size_t insertion = 1;
+
+    const size_t len1 = s1.size(), len2 = s2.size();
+    vector<vector<unsigned int> > d(len1 + 1, vector<unsigned int>(len2 + 1));
+    vector<vector<unsigned int> > dir(len1 + 1, vector<unsigned int>(len2 + 1));
+    d[0][0] = 0;
+    dir[0][0] = 0;
+    for(unsigned int i = 1; i <= len1; ++i)
+    {
+        d[i][0] = deletion * i;
+        dir[i][0] = DELETE;
+        
+    }
+    for(unsigned int i = 1; i <= len2; ++i)
+    {    
+        d[0][i] = insertion * i;
+        dir[0][i] = INSERT;
+    }
+    
+    for(unsigned int i = 1; i <= len1; ++i)
+    {
+        for(unsigned int j = 1; j <= len2; ++j)
+        {
+           
+            int sub = d[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 0 : substitution);
+            int ins = d[i][j - 1] + insertion ;
+            int del = d[i - 1][j] + deletion ;
+            
+           
+            if ( sub <= ins &&  sub <= del )
+            {
+                d[i][j] = sub;
+                dir[i][j] = SUBSTITUTE;
+            }
+             // It's important to prioritize "del" when it has the same value as "ins"" because we want the first 
+             // string to have zeroes before the second one.
+             // For example, if we have two strings: abc and xyz, we would prefer the output 000abc:xyz000 
+             // over abc000:000xyz, because we need to invert the transducer to use it for the analysis and in lookup
+             // we want zeroes as late as possible on the upper side.
+             // Anyway, the order of this two following blocks determines the order of zeroes on upper/lower side
+            else if (del <= sub && del <= ins)
+            {
+                d[i][j] = del;
+                dir[i][j] = DELETE;
+            }
+            else
+            {
+                d[i][j] = ins;
+                dir[i][j] = INSERT;
+            }
+        }
+    }
+    
+    vector<string> medcwordin;
+    vector<string> medcwordout;
+    
+    int x, y, i ;
+    for ( x = s1.size(), y = s2.size(), i = 0; (x > 0) || (y > 0); i++)
+    {
+        int dirValue = dir[x][y];
+         
+        if (dirValue == SUBSTITUTE)
+        {
+            medcwordin.push_back(s1[x-1]) ;
+            medcwordout.push_back(s2[y-1]);
+            x--;
+            y--;
+        }
+        else if (dirValue == INSERT)
+        {
+            medcwordin.push_back(EPSILON_);
+            medcwordout.push_back(s2[y-1]);
+            y--;
+        }
+        else
+        {
+            medcwordin.push_back(s1[x-1]);
+            medcwordout.push_back(EPSILON_);
+            x--;
+        }
+    }
+
+    std::reverse(medcwordin.begin(), medcwordin.end());
+    std::reverse(medcwordout.begin(), medcwordout.end());
+    
+    pair<vector<string>, vector<string> > returnValue (medcwordin,medcwordout);
+    return returnValue;
+}
+        
+    
 } } 
 

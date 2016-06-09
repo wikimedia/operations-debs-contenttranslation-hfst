@@ -1,0 +1,2 @@
+regex [a:x | b:y] .P. [b:{zs} | c:w];
+write att

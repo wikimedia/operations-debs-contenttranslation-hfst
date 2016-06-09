@@ -3,4 +3,4 @@ set print-weight ON
 
 set encode-weights ON
 regex a::1 -> x \/ m _ ,, b::1 -> y || x _ ;
-apply up maab
+apply down maab

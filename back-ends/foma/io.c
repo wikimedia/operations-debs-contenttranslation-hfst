@@ -1,11 +1,11 @@
 /*     Foma: a finite-state toolkit and library.                             */
-/*     Copyright © 2008-2011 Mans Hulden                                     */
+/*     Copyright © 2008-2014 Mans Hulden                                     */
 
 /*     This file is part of foma.                                            */
 
 /*     Foma is free software: you can redistribute it and/or modify          */
 /*     it under the terms of the GNU General Public License version 2 as     */
-/*     published by the Free Software Foundation. */
+/*     published by the Free Software Foundation.                            */
 
 /*     Foma is distributed in the hope that it will be useful,               */
 /*     but WITHOUT ANY WARRANTY; without even the implied warranty of        */
@@ -20,10 +20,12 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include "foma.h"
-#ifdef ZLIB
-  #include "zlib.h"
+#ifdef ORIGINAL
+#include "zlib.h"
 #else
-
+  #ifdef ZLIB
+    #include "zlib.h"
+  #endif
 #endif
 
 #define TYPE_TRANSITION 1
@@ -48,83 +50,93 @@ struct binaryline {
 
 extern char *g_att_epsilon;
 
+extern struct defined_networks   *g_defines;
+extern struct defined_functions  *g_defines_f;
+
 struct io_buf_handle {
     char *io_buf;
     char *io_buf_ptr;
 };
 
+#ifdef ORIGINAL
 struct io_buf_handle *io_init();
 void io_free(struct io_buf_handle *iobh);
-#ifdef ZLIB // HFST addition
-  static int io_gets(struct io_buf_handle *iobh, char *target);
-  static size_t io_get_gz_file_size(char *filename);
-  static size_t io_get_file_size(char *filename);
-  static size_t io_get_regular_file_size(char *filename);
-#endif
+static int io_gets(struct io_buf_handle *iobh, char *target);
+static size_t io_get_gz_file_size(char *filename);
+static size_t io_get_file_size(char *filename);
+static size_t io_get_regular_file_size(char *filename);
 size_t io_gz_file_to_mem (struct io_buf_handle *iobh, char *filename);
-#ifdef ZLIB // HFST addition
-  int foma_net_print(struct fsm *net, gzFile *outfile);
-#endif
+int foma_net_print(struct fsm *net, gzFile outfile);
 struct fsm *io_net_read(struct io_buf_handle *iobh, char **net_name);
-#ifdef ZLIB // HFST addition
-  static inline int explode_line (char *buf, int *values);
-#endif
+static INLINE int explode_line (char *buf, int *values);
+#else // #ifdef ORIGINAL
+  struct io_buf_handle *io_init();
+  void io_free(struct io_buf_handle *iobh);
+  #ifdef ZLIB
+    static int io_gets(struct io_buf_handle *iobh, char *target);
+    static size_t io_get_gz_file_size(char *filename);
+    static size_t io_get_file_size(char *filename);
+    static size_t io_get_regular_file_size(char *filename);
+  #endif // ZLIB
+  size_t io_gz_file_to_mem (struct io_buf_handle *iobh, char *filename);
+  #ifdef ZLIB
+    int foma_net_print(struct fsm *net, gzFile outfile);
+  #endif // ZLIB
+  struct fsm *io_net_read(struct io_buf_handle *iobh, char **net_name);
+  #ifdef ZLIB
+    static INLINE int explode_line (char *buf, int *values);
+  #endif
+#endif // #ifdef ORIGINAL
 
-// HFST addition; dummy implementations for non-static io functions 
-// that might be called outside io.c.
-#ifndef ZLIB
-static void io_error() { 
-  fprintf(stderr, "ERROR: functions in io.c omitted on Windows."); 
-  exit(1); }
-struct io_buf_handle *io_init() { 
-  io_error(); return NULL; }
-void io_free(struct io_buf_handle *iobh) { 
-  io_error(); return; }
-size_t io_gz_file_to_mem (struct io_buf_handle *iobh, char *filename) { 
-  io_error(); return 0; }
-struct fsm *io_net_read(struct io_buf_handle *iobh, char **net_name) { 
-  io_error(); return NULL; }
-struct fsm *fsm_read_binary_file(char *filename) {
-  io_error(); return NULL; }
-struct fsm *fsm_read_binary_file_multiple(fsm_read_binary_handle fsrh) {
-  io_error(); return NULL; }
-fsm_read_binary_handle fsm_read_binary_file_multiple_init(char *filename) {
-  io_error(); return NULL; }
-struct fsm *read_att(char *filename) {
-  io_error(); return NULL; }
-struct fsm *fsm_read_prolog(char *filename) {
-  io_error(); return NULL; }
-int load_defined(char *filename) {
-  io_error(); return 0; }
-int save_defined(char *filename) {
-  io_error(); return 0; }
-int write_prolog (struct fsm *net, char *filename) {
-  io_error(); return 0; }
-#else
+#ifndef ORIGINAL
+  #if defined (_MSC_VER) || (__MINGW32__)
+    #define LONG_LONG_SPECIFIER "%I64d"
+  #else
+    #define LONG_LONG_SPECIFIER "%lld"
+  #endif
+#endif // #ifndef ORIGINAL
 
-// HFST addition
-#ifdef WINDOWS
-#define LONG_LONG_SPECIFIER "%I64d"
-#else
-#define LONG_LONG_SPECIFIER "%lld"
-#endif
+#ifndef ORIGINAL
+// HFST addition. Dummy implementations for non static io functions
+// that could be called outside io.c when ZLIB is not defined.
+  #ifndef ZLIB
+    static void io_error() { fprintf(stderr, "IO_C_ERROR\n"); exit(1); }
+    struct io_buf_handle *io_init() {  io_error(); return NULL; }
+    void io_free(struct io_buf_handle *iobh) { io_error(); return; }
+    size_t io_gz_file_to_mem (struct io_buf_handle *iobh, char *filename) {
+      io_error(); return 0; }
+    struct fsm *io_net_read(struct io_buf_handle *iobh, char **net_name) {
+      io_error(); return NULL; }
+    struct fsm *fsm_read_binary_file(char *filename) { io_error(); return NULL; }
+    struct fsm *fsm_read_binary_file_multiple(fsm_read_binary_handle fsrh) {
+      io_error(); return NULL; }
+    fsm_read_binary_handle fsm_read_binary_file_multiple_init(char *filename) {
+      io_error(); return NULL; }
+    struct fsm *read_att(char *filename) { io_error(); return NULL; }
+    struct fsm *fsm_read_prolog(char *filename) { io_error(); return NULL; }
+    int load_defined(struct defined_networks *def, char *filename) { io_error(); return 0; }
+    int save_defined(struct defined_networks *def, char *filename) { io_error(); return 0; }
+    int foma_write_prolog(struct fsm *net, char *filename) { io_error(); return 0; }
+  #endif // #ifndef ZLIB
+#endif // #ifndef ORIGINAL
 
+#if defined(ORIGINAL) || defined(ZLIB)
 void escape_print(FILE *stream, char* string) {
     int i;
     if (strchr(string, '"') != NULL) {
-        for (i = 0; *(string+i) != '\0'; i++) {
-            if (*(string+i) == '"') {
-                fprintf(stream, "\\\""); 
-            } else {
-                fputc(*(string+i), stream);
-            }
-        }
+	for (i = 0; *(string+i) != '\0'; i++) {
+	    if (*(string+i) == '"') {
+		fprintf(stream, "\\\""); 
+	    } else {
+		fputc(*(string+i), stream);
+	    }
+	}
     } else {
-        fprintf(stream, "%s", string);
+	fprintf(stream, "%s", string);
     }
 }
 
-int write_prolog (struct fsm *net, char *filename) {
+int foma_write_prolog (struct fsm *net, char *filename) {
   struct fsm_state *stateptr;
   int i, *finals, *used_symbols, maxsigma;
   FILE *out;
@@ -170,7 +182,7 @@ int write_prolog (struct fsm *net, char *filename) {
     if (*(used_symbols+i) == 0) {
       instring = sigma_string(i, net->sigma);
       if (strcmp(instring,"0") == 0) {
-          instring = "%0";
+	  instring = "%0";
       } 
       fprintf(out, "symbol(%s, \"", identifier);
       escape_print(out, instring);
@@ -202,11 +214,11 @@ int write_prolog (struct fsm *net, char *filename) {
       fprintf(out, "\"?\").\n");
     }
     else if (net->arity == 2 && stateptr->in == stateptr->out && stateptr->in != UNKNOWN) {
-        fprintf(out, "\"");
-        escape_print(out, instring);
-        fprintf(out, "\").\n");
+	fprintf(out, "\"");
+	escape_print(out, instring);
+	fprintf(out, "\").\n");
     }
-    else if (net->arity == 2) { 
+    else if (net->arity == 2) {	
       fprintf(out, "\"");
       escape_print(out, instring);
       fprintf(out, "\":\"");
@@ -214,9 +226,9 @@ int write_prolog (struct fsm *net, char *filename) {
       fprintf(out, "\").\n");
     }
     else if (net->arity == 1) {
-        fprintf(out, "\"");
-        escape_print(out, instring);
-        fprintf(out, "\").\n");
+	fprintf(out, "\"");
+	escape_print(out, instring);
+	fprintf(out, "\").\n");
     }
   }
 
@@ -238,7 +250,7 @@ struct fsm *read_att(char *filename) {
     struct fsm_construct_handle *h;
     struct fsm *net;
     int i;
-    char inword[1024], delimiters[] = "\t", *tokens[5];
+    char inword[1024], delimiters[] = "\t", *tokens[6];
     FILE *INFILE;
 
     INFILE = fopen(filename, "r");
@@ -296,135 +308,135 @@ struct fsm *fsm_read_prolog (char *filename) {
     has_net = 0;
     prolog_file = fopen(filename, "r");
     if (prolog_file == NULL) {
-        return NULL;
+	return NULL;
     }
 
     while (fgets(buf, 1023, prolog_file) != NULL) {
-        if (strstr(buf, "network(") == buf) {
-            /* Extract network name */
-            if (has_net == 1) {
-                perror("WARNING: prolog file contains multiple nets. Only returning the first one.\n");
-                break;
-            } else {
-                has_net = 1;
-            }
-            temp_ptr = strstr(buf, "network(")+8;
-            temp_ptr2 = strstr(buf, ").");
-            strncpy(temp, temp_ptr, (temp_ptr2 - temp_ptr));
-            temp[(temp_ptr2-temp_ptr)] = '\0';
-            
-            /* Start network */
-            outh = fsm_construct_init(temp);
-        }
-        if (strstr(buf, "final(") == buf) {
-            temp_ptr = strstr(buf, " ");
-            temp_ptr++;
-            temp_ptr2 = strstr(temp_ptr, ").");
-            strncpy(temp, temp_ptr, (temp_ptr2 - temp_ptr));
-            temp[(temp_ptr2-temp_ptr)] = '\0';
-            
-            fsm_construct_set_final(outh, atoi(temp));
-        }
-        if (strstr(buf, "symbol(") == buf) {
-            temp_ptr = strstr(buf, ", \"")+3;
-            temp_ptr2 = strstr(temp_ptr, "\").");
-            strncpy(temp, temp_ptr, (temp_ptr2 - temp_ptr));
-            temp[(temp_ptr2-temp_ptr)] = '\0';
-            if (strcmp(temp, "%0") == 0)
-                strcpy(temp, "0");
-            //printf("special: %s\n",temp);
-            
-            if (fsm_construct_check_symbol(outh, temp) == -1) {
-                fsm_construct_add_symbol(outh, temp);
-            }      
-            continue;
-        }
-        if (strstr(buf, "arc(") == buf) {
-            in[0] = '\0';
-            out[0] = '\0';
-            
-            if (strstr(buf, "\":\"") == NULL || strstr(buf, ", \":\").") != NULL) {
-                arity = 1;
-            } else {
-                arity = 2;
-            }
-            
-            /* Get source */
-            temp_ptr = strstr(buf, " ");
-            temp_ptr++;
-            temp_ptr2 = strstr(temp_ptr, ",");
-            strncpy(temp, temp_ptr, (temp_ptr2 - temp_ptr));
-            temp[(temp_ptr2-temp_ptr)] = '\0';
-            source = atoi(temp);
-            
-            /* Get target */
-            temp_ptr = strstr(temp_ptr2, " ");
-            temp_ptr++;
-            temp_ptr2 = strstr(temp_ptr, ",");
-            strncpy(temp, temp_ptr, (temp_ptr2 - temp_ptr));
-            temp[(temp_ptr2-temp_ptr)] = '\0';
-            target = atoi(temp);
-            
-            temp_ptr = strstr(temp_ptr2, "\"");
-            temp_ptr++;
-            if (arity == 2)  { 
-                temp_ptr2 = strstr(temp_ptr, "\":");
-            } else {
-                temp_ptr2 = strstr(temp_ptr, "\").");
-            }
-            strncpy(in, temp_ptr, (temp_ptr2 - temp_ptr));
-            in[(temp_ptr2 - temp_ptr)] = '\0';
-            
-            if (arity == 2) {
-                temp_ptr = strstr(temp_ptr2, ":\"");
-                temp_ptr += 2;
-                temp_ptr2 = strstr(temp_ptr, "\").");
-                strncpy(out, temp_ptr, (temp_ptr2 - temp_ptr));
-                out[(temp_ptr2 - temp_ptr)] = '\0';
-            }
-            if (arity == 1 && (strcmp(in, "?") == 0)) {
-                strcpy(in,"@_IDENTITY_SYMBOL_@");
-            }
-            if (arity == 2 && (strcmp(in, "?") == 0)) {
-                strcpy(in,"@_UNKNOWN_SYMBOL_@");
-            }
-            if (arity == 2 && (strcmp(out, "?") == 0)) {
-                strcpy(out,"@_UNKNOWN_SYMBOL_@");
-            }
-            if (strcmp(in, "0") == 0) {
-                strcpy(in,"@_EPSILON_SYMBOL_@");
-            }
-            if (strcmp(out, "0") == 0) {
-                strcpy(out,"@_EPSILON_SYMBOL_@");
-            }
-            if (strcmp(in, "%0") == 0) {
-                strcpy(in,"0");
-            }
-            if (strcmp(out, "%0") == 0) {
-                strcpy(out,"0");
-            }
-            if (strcmp(in, "%?") == 0) {
-                strcpy(in,"?");
-            }
-            if (strcmp(out, "%?") == 0) {
-                strcpy(out,"?");
-            }
-            
-            if (arity == 1) { 
-                fsm_construct_add_arc(outh, source, target, in, in);        
-            } else {
-                fsm_construct_add_arc(outh, source, target, in, out);
-            }
-        }
+	if (strstr(buf, "network(") == buf) {
+	    /* Extract network name */
+	    if (has_net == 1) {
+		perror("WARNING: prolog file contains multiple nets. Only returning the first one.\n");
+		break;
+	    } else {
+		has_net = 1;
+	    }
+	    temp_ptr = strstr(buf, "network(")+8;
+	    temp_ptr2 = strstr(buf, ").");
+	    strncpy(temp, temp_ptr, (temp_ptr2 - temp_ptr));
+	    temp[(temp_ptr2-temp_ptr)] = '\0';
+	    
+	    /* Start network */
+	    outh = fsm_construct_init(temp);
+	}
+	if (strstr(buf, "final(") == buf) {
+	    temp_ptr = strstr(buf, " ");
+	    temp_ptr++;
+	    temp_ptr2 = strstr(temp_ptr, ").");
+	    strncpy(temp, temp_ptr, (temp_ptr2 - temp_ptr));
+	    temp[(temp_ptr2-temp_ptr)] = '\0';
+	    
+	    fsm_construct_set_final(outh, atoi(temp));
+	}
+	if (strstr(buf, "symbol(") == buf) {
+	    temp_ptr = strstr(buf, ", \"")+3;
+	    temp_ptr2 = strstr(temp_ptr, "\").");
+	    strncpy(temp, temp_ptr, (temp_ptr2 - temp_ptr));
+	    temp[(temp_ptr2-temp_ptr)] = '\0';
+	    if (strcmp(temp, "%0") == 0)
+		strcpy(temp, "0");
+	    //printf("special: %s\n",temp);
+	    
+	    if (fsm_construct_check_symbol(outh, temp) == -1) {
+		fsm_construct_add_symbol(outh, temp);
+	    }      
+	    continue;
+	}
+	if (strstr(buf, "arc(") == buf) {
+	    in[0] = '\0';
+	    out[0] = '\0';
+	    
+	    if (strstr(buf, "\":\"") == NULL || strstr(buf, ", \":\").") != NULL) {
+		arity = 1;
+	    } else {
+		arity = 2;
+	    }
+	    
+	    /* Get source */
+	    temp_ptr = strstr(buf, " ");
+	    temp_ptr++;
+	    temp_ptr2 = strstr(temp_ptr, ",");
+	    strncpy(temp, temp_ptr, (temp_ptr2 - temp_ptr));
+	    temp[(temp_ptr2-temp_ptr)] = '\0';
+	    source = atoi(temp);
+	    
+	    /* Get target */
+	    temp_ptr = strstr(temp_ptr2, " ");
+	    temp_ptr++;
+	    temp_ptr2 = strstr(temp_ptr, ",");
+	    strncpy(temp, temp_ptr, (temp_ptr2 - temp_ptr));
+	    temp[(temp_ptr2-temp_ptr)] = '\0';
+	    target = atoi(temp);
+	    
+	    temp_ptr = strstr(temp_ptr2, "\"");
+	    temp_ptr++;
+	    if (arity == 2)  { 
+		temp_ptr2 = strstr(temp_ptr, "\":");
+	    } else {
+		temp_ptr2 = strstr(temp_ptr, "\").");
+	    }
+	    strncpy(in, temp_ptr, (temp_ptr2 - temp_ptr));
+	    in[(temp_ptr2 - temp_ptr)] = '\0';
+	    
+	    if (arity == 2) {
+		temp_ptr = strstr(temp_ptr2, ":\"");
+		temp_ptr += 2;
+		temp_ptr2 = strstr(temp_ptr, "\").");
+		strncpy(out, temp_ptr, (temp_ptr2 - temp_ptr));
+		out[(temp_ptr2 - temp_ptr)] = '\0';
+	    }
+	    if (arity == 1 && (strcmp(in, "?") == 0)) {
+		strcpy(in,"@_IDENTITY_SYMBOL_@");
+	    }
+	    if (arity == 2 && (strcmp(in, "?") == 0)) {
+		strcpy(in,"@_UNKNOWN_SYMBOL_@");
+	    }
+	    if (arity == 2 && (strcmp(out, "?") == 0)) {
+		strcpy(out,"@_UNKNOWN_SYMBOL_@");
+	    }
+	    if (strcmp(in, "0") == 0) {
+		strcpy(in,"@_EPSILON_SYMBOL_@");
+	    }
+	    if (strcmp(out, "0") == 0) {
+		strcpy(out,"@_EPSILON_SYMBOL_@");
+	    }
+	    if (strcmp(in, "%0") == 0) {
+		strcpy(in,"0");
+	    }
+	    if (strcmp(out, "%0") == 0) {
+		strcpy(out,"0");
+	    }
+	    if (strcmp(in, "%?") == 0) {
+		strcpy(in,"?");
+	    }
+	    if (strcmp(out, "%?") == 0) {
+		strcpy(out,"?");
+	    }
+	    
+	    if (arity == 1) { 
+		fsm_construct_add_arc(outh, source, target, in, in);	    
+	    } else {
+		fsm_construct_add_arc(outh, source, target, in, out);
+	    }
+	}
     }
     fclose(prolog_file);
     if (has_net == 1) {
-        fsm_construct_set_initial(outh, 0);
-        outnet = fsm_construct_done(outh);
-        fsm_topsort(outnet);
-        return(outnet);
+	fsm_construct_set_initial(outh, 0);
+	outnet = fsm_construct_done(outh);
+	fsm_topsort(outnet);
+	return(outnet);
     } else {
-        return(NULL);
+	return(NULL);
     }
 }
 
@@ -444,19 +456,19 @@ void io_free(struct io_buf_handle *iobh) {
     xxfree(iobh);
 }
 
-#endif // if zlib; HFST addition
+#endif // #if defined(ORIGINAL) || defined(ZLIB)
 
 char *spacedtext_get_next_line(char **text) {
     char *t, *ret;
     ret = *text;
     if (**text == '\0')
-        return NULL;
-    for (t = *text; *t != '\0' && *t != '\n'; t++) {    
+	return NULL;
+    for (t = *text; *t != '\0' && *t != '\n'; t++) {	
     }
     if (*t == '\0')
-        *text = t;
+	*text = t;
     else 
-        *text = t+1;
+	*text = t+1;
     *t = '\0';
     return(ret);
 }
@@ -464,16 +476,16 @@ char *spacedtext_get_next_line(char **text) {
 char *spacedtext_get_next_token(char **text) {
     char *t, *ret;
     if (**text == '\0' || **text == '\n')
-        return NULL;
+	return NULL;
     for ( ; **text == ' ' ; (*text)++) {
     }
     ret = *text;
     for (t = *text; *t != '\0' && *t != '\n' && *t != ' '; t++) {
     }
     if (*t == '\0' || *t == '\n')
-        *text = t;
+	*text = t;
     else
-        *text = t+1;
+	*text = t+1;
     *t = '\0';
     return(ret);
 }
@@ -485,49 +497,48 @@ struct fsm *fsm_read_spaced_text_file(char *filename) {
     text = textorig = file_to_mem(filename);
     
     if (text == NULL)
-        return NULL;
+	return NULL;
     th = fsm_trie_init();
     for (;;) {
-        for ( ; *text != '\0' && *text == '\n'; text++) { }
-        t1 = spacedtext_get_next_line(&text);
-        if (t1 == NULL)
-            break;
-        if (strlen(t1) == 0)
-            continue;
-        t2 = spacedtext_get_next_line(&text);
-        if (t2 == NULL || strlen(t2) == 0) {
-            for (l1 = t1; (insym = spacedtext_get_next_token(&l1)) != NULL; ) {
-                if (strcmp(insym, "0") == 0)
-                    fsm_trie_symbol(th,  "@_EPSILON_SYMBOL_@", "@_EPSILON_SYMBOL_@");
-                else if (strcmp(insym, "%0") == 0)
-                    fsm_trie_symbol(th,  "0", "0");
-                else
-                    fsm_trie_symbol(th,  insym, insym);
-            }
-            fsm_trie_end_word(th);
-        } else {
-            for (l1 = t1, l2 = t2; ; ) {
-                insym = spacedtext_get_next_token(&l1);
-                outsym = spacedtext_get_next_token(&l2);
-                if (insym == NULL && outsym == NULL)
-                    break;
-                if (insym == NULL || strcmp(insym, "0") == 0)
-                    insym = "@_EPSILON_SYMBOL_@";
-                if (strcmp(insym, "%0") == 0)
-                    insym = "0";
-                if (outsym == NULL || strcmp(outsym, "0") == 0)
-                    outsym = "@_EPSILON_SYMBOL_@";
-                if (strcmp(outsym, "%0") == 0)
-                    outsym = "0";
-                fsm_trie_symbol(th, insym, outsym);
-            }
-            fsm_trie_end_word(th);
-        }
+	for ( ; *text != '\0' && *text == '\n'; text++) { }
+	t1 = spacedtext_get_next_line(&text);
+	if (t1 == NULL)
+	    break;
+	if (strlen(t1) == 0)
+	    continue;
+	t2 = spacedtext_get_next_line(&text);
+	if (t2 == NULL || strlen(t2) == 0) {
+	    for (l1 = t1; (insym = spacedtext_get_next_token(&l1)) != NULL; ) {
+		if (strcmp(insym, "0") == 0)
+		    fsm_trie_symbol(th,  "@_EPSILON_SYMBOL_@", "@_EPSILON_SYMBOL_@");
+		else if (strcmp(insym, "%0") == 0)
+		    fsm_trie_symbol(th,  "0", "0");
+		else
+		    fsm_trie_symbol(th,  insym, insym);
+	    }
+	    fsm_trie_end_word(th);
+	} else {
+	    for (l1 = t1, l2 = t2; ; ) {
+		insym = spacedtext_get_next_token(&l1);
+		outsym = spacedtext_get_next_token(&l2);
+		if (insym == NULL && outsym == NULL)
+		    break;
+		if (insym == NULL || strcmp(insym, "0") == 0)
+		    insym = "@_EPSILON_SYMBOL_@";
+		if (strcmp(insym, "%0") == 0)
+		    insym = "0";
+		if (outsym == NULL || strcmp(outsym, "0") == 0)
+		    outsym = "@_EPSILON_SYMBOL_@";
+		if (strcmp(outsym, "%0") == 0)
+		    outsym = "0";
+		fsm_trie_symbol(th, insym, outsym);
+	    }
+	    fsm_trie_end_word(th);
+	}
     }
     xxfree(textorig);
     return(fsm_trie_done(th));
 }
-
 
 struct fsm *fsm_read_text_file(char *filename) {
     struct fsm_trie_handle *th;
@@ -536,33 +547,33 @@ struct fsm *fsm_read_text_file(char *filename) {
 
     text = file_to_mem(filename);
     if (text == NULL) {
-        return NULL;
+	return NULL;
     }
     textp1 = text;
     th = fsm_trie_init();
 
     for (lastword = 0 ; lastword == 0 ; textp1 = textp2+1) {
-        for (textp2 = textp1 ; *textp2 != '\n' && *textp2 != '\0'; textp2++) {
-        }
-        if (*textp2 == '\0') {
-            lastword = 1;
-            if (textp2 == textp1)
-                break;
-        }
-        *textp2 = '\0';
-        if (strlen(textp1) > 0)
-            fsm_trie_add_word(th, textp1);
+	for (textp2 = textp1 ; *textp2 != '\n' && *textp2 != '\0'; textp2++) {
+	}
+	if (*textp2 == '\0') {
+	    lastword = 1;
+	    if (textp2 == textp1)
+		break;
+	}
+	*textp2 = '\0';
+	if (strlen(textp1) > 0)
+	    fsm_trie_add_word(th, textp1);
     }
     xxfree(text);
     return(fsm_trie_done(th));
 }
 
-#ifdef ZLIB // HFST addition
+#if defined(ORIGINAL) || defined(ZLIB)
 
 int fsm_write_binary_file(struct fsm *net, char *filename) {
-    gzFile *outfile;
+    gzFile outfile;
     if ((outfile = gzopen(filename,"wb")) == NULL) {
-        return(1);
+	return(1);
     }
     foma_net_print(net, outfile);
     gzclose(outfile);
@@ -576,11 +587,11 @@ struct fsm *fsm_read_binary_file_multiple(fsm_read_binary_handle fsrh) {
     iobh = (struct io_buf_handle *) fsrh;
     net = io_net_read(iobh, &net_name);
     if (net == NULL) {
-        io_free(iobh);
-        return(NULL);
+	io_free(iobh);
+	return(NULL);
     } else {
-        xxfree(net_name);
-        return(net);
+	xxfree(net_name);
+	return(net);
     }
 }
 
@@ -591,8 +602,8 @@ fsm_read_binary_handle fsm_read_binary_file_multiple_init(char *filename) {
 
     iobh = io_init();
     if (io_gz_file_to_mem(iobh, filename) == 0) {
-        io_free(iobh);
-        return NULL;
+	io_free(iobh);
+	return NULL;
     }
     fsm_read_handle = (void *) iobh;
     return(fsm_read_handle);
@@ -604,7 +615,7 @@ struct fsm *fsm_read_binary_file(char *filename) {
     struct io_buf_handle *iobh;
     iobh = io_init();
     if (io_gz_file_to_mem(iobh, filename) == 0) {
-        io_free(iobh);
+	io_free(iobh);
         return NULL;
     }
     net = io_net_read(iobh, &net_name);
@@ -612,12 +623,11 @@ struct fsm *fsm_read_binary_file(char *filename) {
     return(net);
 }
 
-int save_defined(char *filename) {
-    gzFile *outfile;
-    struct defined *def;
-    def = get_defines();
+int save_defined(struct defined_networks *def, char *filename) {
+    struct defined_networks *d;
+    gzFile outfile;
     if (def == NULL) {
-        printf("No defined networks.\n");
+        fprintf(stderr, "No defined networks.\n");
         return(0);
     }
     if ((outfile = gzopen(filename, "wb")) == NULL) {
@@ -625,15 +635,15 @@ int save_defined(char *filename) {
         return(-1);
     }
     printf("Writing definitions to file %s.\n", filename);
-    for ( ; def != NULL; def = def->next) {
-        strcpy(def->net->name, def->name);
-        foma_net_print(def->net, outfile);
+    for (d = def; d != NULL; d = d->next) {
+        strcpy(d->net->name, d->name);
+        foma_net_print(d->net, outfile);
     }
     gzclose(outfile);
     return(1);
 }
 
-int load_defined(char *filename) {
+int load_defined(struct defined_networks *def, char *filename) {
     struct fsm *net;
     char *net_name;
     struct io_buf_handle *iobh;
@@ -641,20 +651,18 @@ int load_defined(char *filename) {
     iobh = io_init();
     printf("Loading definitions from %s.\n",filename);
     if (io_gz_file_to_mem(iobh, filename) == 0) {
-        printf("File error.\n");
-        io_free(iobh);
+        fprintf(stderr, "File error.\n");
+	io_free(iobh);
         return 0;
     }
-
     while ((net = io_net_read(iobh, &net_name)) != NULL) {
-        add_defined(net, net_name);
+        add_defined(def, net, net_name);
     }
     io_free(iobh);
     return(1);
 }
 
-static inline int explode_line(char *buf, int *values) {
-
+static INLINE int explode_line(char *buf, int *values) {
     int i, j, items;
     j = i = items = 0;
     for (;;) {
@@ -668,7 +676,6 @@ static inline int explode_line(char *buf, int *values) {
             *(values+items) = atoi(buf+i);
             items++;
             j++;
-            i = j;
         }
     }
     return(items);
@@ -698,6 +705,9 @@ static inline int explode_line(char *buf, int *values) {
 /* is_pruned is_minimized is_epsilon_free is_loop_free is_completed name  */
 
 /* where name is used if defined networks are saved/loaded */
+
+/* Following the props line, we accept anything (for future expansion) */
+/* until we find ##sigma## */
 
 /* the section beginning with "##sigma##" consists of lines with two fields: */
 /* number string */
@@ -741,49 +751,56 @@ struct fsm *io_net_read(struct io_buf_handle *iobh, char **net_name) {
     net = fsm_create("");
 
     if (strcmp(buf, "##foma-net 1.0##") != 0) {
-        fsm_destroy(net);
+	fsm_destroy(net);
         perror("File format error foma!\n");
         return NULL;
     }
     io_gets(iobh, buf);
     if (strcmp(buf, "##props##") != 0) {
         perror("File format error props!\n");
-        fsm_destroy(net);
+	fsm_destroy(net);
         return NULL;
     }
     /* Properties */
     io_gets(iobh, buf);
     extras = 0;
-    sscanf(buf, "%i %i %i %i %i " LONG_LONG_SPECIFIER " %i %i %i %i %i %i %s", &net->arity, &net->arccount, &net->statecount, &net->linecount, &net->finalcount, &net->pathcount, &net->is_deterministic, &net->is_pruned, &net->is_minimized, &net->is_epsilon_free, &net->is_loop_free, &extras, buf);
+#ifdef ORIGINAL
+    sscanf(buf, "%i %i %i %i %i %lld %i %i %i %i %i %i %s", &net->arity, &net->arccount, &net->statecount, &net->linecount, &net->finalcount, &net->pathcount, &net->is_deterministic, &net->is_pruned, &net->is_minimized, &net->is_epsilon_free, &net->is_loop_free, &extras, buf);
+#else
+    sscanf(buf, "%i %i %i %i %i LONG_LONG_SPECIFIER %i %i %i %i %i %i %s", &net->arity, &net->arccount, &net->statecount, &net->linecount, &net->finalcount, &net->pathcount, &net->is_deterministic, &net->is_pruned, &net->is_minimized, &net->is_epsilon_free, &net->is_loop_free, &extras, buf);
+#endif
     strcpy(net->name, buf);
     *net_name = xxstrdup(buf);
     io_gets(iobh, buf);
 
-    net->is_completed = (extras & 3) ;
+    net->is_completed = (extras & 3);
     net->arcs_sorted_in = (extras & 12) >> 2;
     net->arcs_sorted_out = (extras & 48) >> 4;
 
     /* Sigma */
-    if (strcmp(buf, "##sigma##") != 0) {
-        printf("File format error sigma!\n");
-        fsm_destroy(net);
-        return NULL;
+    while (strcmp(buf, "##sigma##") != 0) { /* Loop until we encounter ##sigma## */
+        if (buf[0] == '\0') {
+	  printf("File format error at sigma definition!\n");
+	  fsm_destroy(net);
+	  return NULL;
+        }
+        io_gets(iobh, buf);
     }
-    //    net->sigma = sigma_create();
+
     for (;;) {
         io_gets(iobh, buf);
         if (buf[0] == '#') break;
         if (buf[0] == '\0') continue;
         new_symbol = strstr(buf, " ");
-        new_symbol[0] = '\0';
-        new_symbol++;
-        if (new_symbol[0] == '\0') {
-            sscanf(buf,"%i", &new_symbol_number);
-            sigma_add_number(net->sigma, "\n", new_symbol_number);
-        } else {
-            sscanf(buf,"%i", &new_symbol_number);
-            sigma_add_number(net->sigma, new_symbol, new_symbol_number);
-        }
+	new_symbol[0] = '\0';
+	new_symbol++;
+	if (new_symbol[0] == '\0') {
+	    sscanf(buf,"%i", &new_symbol_number);
+	    sigma_add_number(net->sigma, "\n", new_symbol_number);
+	} else {
+	    sscanf(buf,"%i", &new_symbol_number);
+	    sigma_add_number(net->sigma, new_symbol, new_symbol_number);
+	}
     }
 
     /* States */
@@ -882,7 +899,7 @@ static int io_gets(struct io_buf_handle *iobh, char *target) {
     return(i);
 }
 
-int foma_net_print(struct fsm *net, gzFile *outfile) {
+int foma_net_print(struct fsm *net, gzFile outfile) {
     struct sigma *sigma;
     struct fsm_state *fsm;
     int i, maxsigma, laststate, *cm, extras;
@@ -893,11 +910,15 @@ int foma_net_print(struct fsm *net, gzFile *outfile) {
     /* Properties */
     gzprintf(outfile, "%s","##props##\n");
 
-    extras = 0;
     extras = (net->is_completed) | (net->arcs_sorted_in << 2) | (net->arcs_sorted_out << 4);
  
+#ifdef ORIGINAL
     gzprintf(outfile, 
-             "%i %i %i %i %i " LONG_LONG_SPECIFIER " %i %i %i %i %i %i %s\n", net->arity, net->arccount, net->statecount, net->linecount, net->finalcount, net->pathcount, net->is_deterministic, net->is_pruned, net->is_minimized, net->is_epsilon_free, net->is_loop_free, extras, net->name);
+	     "%i %i %i %i %i %lld %i %i %i %i %i %i %s\n", net->arity, net->arccount, net->statecount, net->linecount, net->finalcount, net->pathcount, net->is_deterministic, net->is_pruned, net->is_minimized, net->is_epsilon_free, net->is_loop_free, extras, net->name);
+#else
+    gzprintf(outfile, 
+	     "%i %i %i %i %i LONG_LONG_SPECIFIER %i %i %i %i %i %i %s\n", net->arity, net->arccount, net->statecount, net->linecount, net->finalcount, net->pathcount, net->is_deterministic, net->is_pruned, net->is_minimized, net->is_epsilon_free, net->is_loop_free, extras, net->name);
+#endif
     
     /* Sigma */
     gzprintf(outfile, "%s","##sigma##\n");
@@ -907,7 +928,6 @@ int foma_net_print(struct fsm *net, gzFile *outfile) {
 
     /* State array */
     laststate = -1;
-    fsm = net->states;
     gzprintf(outfile, "%s","##states##\n");
     for (fsm = net->states; fsm->state_no !=-1; fsm++) {
         if (fsm->state_no != laststate) {
@@ -944,7 +964,7 @@ int foma_net_print(struct fsm *net, gzFile *outfile) {
     return(1);
 }
 
-#endif // if not zlib; HFST addition
+#endif // #if defined(ORIGINAL) || defined(ZLIB)
 
 int net_print_att(struct fsm *net, FILE *outfile) {
     struct fsm_state *fsm;
@@ -971,7 +991,7 @@ int net_print_att(struct fsm *net, FILE *outfile) {
     return(1);
 }
 
-#ifdef ZLIB // HFST addition
+#if defined(ORIGINAL) || defined(ZLIB)
 
 static size_t io_get_gz_file_size(char *filename) {
 
@@ -1006,7 +1026,7 @@ static size_t io_get_regular_file_size(char *filename) {
 
 
 static size_t io_get_file_size(char *filename) {
-    gzFile *FILE;
+    gzFile FILE;
     size_t size;
     FILE = gzopen(filename, "r");
     if (FILE == NULL) {
@@ -1025,7 +1045,7 @@ static size_t io_get_file_size(char *filename) {
 size_t io_gz_file_to_mem(struct io_buf_handle *iobh, char *filename) {
 
     size_t size;
-    gzFile *FILE;
+    gzFile FILE;
 
     size = io_get_file_size(filename);
     if (size == 0) {
@@ -1040,10 +1060,9 @@ size_t io_gz_file_to_mem(struct io_buf_handle *iobh, char *filename) {
     return(size);
 }
 
-#endif // if not zlib; HFST addition
+#endif // #if defined(ORIGINAL) || defined(ZLIB)
 
 char *file_to_mem(char *name) {
-
     FILE    *infile;
     size_t    numbytes;
     char *buffer;
@@ -1068,5 +1087,3 @@ char *file_to_mem(char *name) {
     *(buffer+numbytes)='\0';
     return(buffer);
 }
-
-

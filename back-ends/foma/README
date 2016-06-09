@@ -1,17 +1,17 @@
-
-Note 
+Note
 ----
 
-This directory contains files from foma library that are used as a part of the HFST library. Makefile.am is an HFST addition, and some of the original foma files are omitted. There are small changes in fomalib.h that are indicated in comments.
+This directory contains files from foma library that are used as a part of the HFST library. Makefile.am is an HFST addition, and some of the original foma files are omitted. There are small changes in foma source files. The changes are indicated by "#ifdef ORIGINAL" preprocessor directives or in comments. The rest of this file is the same as foma's original README file:
 
 
 Foma
 ====
 
-version 0.9.16alpha
-2011/12/13
+version 0.9.18alpha
+2015/06/12
 
-Email: wampeter@users.sourceforge.net
+Author: Mans Hulden
+Email: mans.hulden@gmail.com
 WWW: http://foma.googlecode.com
 
 
@@ -46,5 +46,5 @@ To compile foma (and flookup) as well as the foma static and dynamic library, "m
 Bugs
 ----
 
-Many. The current release is 0.9.16alpha, and bug reports will be gratefully received at 
-wampeter@users.sourceforge.net.
+Many. The current release is 0.9.18alpha, and bug reports will be gratefully received at mans.hulden@gmail.com.
+

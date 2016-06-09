@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 #include "HfstTransducer.h"
 
 #ifndef MAIN_TEST
@@ -32,8 +29,9 @@ namespace hfst
       else if (repl_type == REPL_DOWN)
         t_proj.output_project();
       else {
-        fprintf(stderr, "ERROR: replace: Impossible replace type\n");
-        exit(1);
+        //fprintf(stderr, "ERROR: replace: Impossible replace type\n");
+        //exit(1);
+        HFST_THROW_MESSAGE(HfstFatalException, "impossible replace type");
       }
 
       HfstTransducer pi_star(alphabet, type, true);
@@ -289,8 +287,8 @@ namespace hfst
       HfstTransducer t2_proj(context.second);
       t2_proj.input_project();
 
-      if ( not t1_proj.compare(context.first) ||
-           not t2_proj.compare(context.second) ) {
+      if ( ! t1_proj.compare(context.first) ||
+           ! t2_proj.compare(context.second) ) {
         HFST_THROW(ContextTransducersAreNotAutomataException); }
       
       std::string leftm("@_LEFT_MARKER_@");
@@ -563,7 +561,7 @@ namespace hfst
       for (HfstTransducerPairVector::const_iterator it = contexts.begin();
            it != contexts.end(); it++)
         {
-          if (not type_defined) {
+          if (! type_defined) {
             type = it->first.get_type();
             type_defined=true;
           } 
@@ -578,7 +576,7 @@ namespace hfst
                                "rules::restriction");
       }
          }
-      if (not type_defined) {
+      if (! type_defined) {
     HFST_THROW_MESSAGE(EmptySetOfContextsException, "rules::restriction");
       }
 
@@ -659,9 +657,10 @@ namespace hfst
 
         return retval1.intersect(retval2);
       }
-      else
+      else {
         assert(false);
-
+        return HfstTransducer(type); // make compiler happy 
+          }
     }
 
     HfstTransducer restriction(HfstTransducerPairVector &contexts, 

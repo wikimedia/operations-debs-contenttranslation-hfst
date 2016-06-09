@@ -2,5 +2,5 @@ set precision 1
 set print-weight ON
 
 regex a::3 -> b b, a::1 -> b;
-apply up aaa
+apply down aaa
 

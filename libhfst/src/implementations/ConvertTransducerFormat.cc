@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #if HAVE_CONFIG_H
 #  include <config.h>
@@ -92,6 +89,12 @@ namespace hfst { namespace implementations
     if (t.type == FOMA_TYPE)
       return foma_to_hfst_basic_transducer(t.implementation.foma); 
 #endif // HAVE_FOMA
+
+#if HAVE_XFSM
+    if (t.type == XFSM_TYPE)
+      return xfsm_to_hfst_basic_transducer(t.implementation.xfsm); 
+#endif // HAVE_FOMA
+
     
     /* Add here your implementation. */
     //#if HAVE_MY_TRANSDUCER_LIBRARY

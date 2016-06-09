@@ -63,14 +63,14 @@ public ConstContainerIterator<T>
   MixedConstContainerIterator(const ConstContainerIterator<T> &another)
    { 
       ConstContainerIterator<T>::operator=(another); 
-      while (didnt_end() and equal_indices())
+      while (didnt_end() && equal_indices())
     { operator++(); }
    }
   //! @brief Increment.
   int operator++(void)
    {
      do { ConstContainerIterator<T>::operator++(); } 
-     while (didnt_end() and equal_indices());
+     while (didnt_end() && equal_indices());
      return 1;
    }  
   MixedConstContainerIterator operator+(size_t i) const

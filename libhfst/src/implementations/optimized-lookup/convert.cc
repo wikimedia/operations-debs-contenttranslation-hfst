@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #include "convert.h"
 
@@ -36,36 +33,36 @@ void write_transitions_from_state_placeholders(
         // Then we iterate through the symbols each state has.
     // First we do a pass for epsilon and flags (they have to come
     // first), then everything else.
-    if (it->inputs.count(0) != 0) {
-        add_transitions_with(0, it->inputs[0],
-                 transition_table,
-                 state_placeholders,
-                 flag_symbols);
+        if (it->input_present(0)) {
+            add_transitions_with(0, it->get_transition_placeholders(0),
+                                 transition_table,
+                                 state_placeholders,
+                                 flag_symbols);
     }
     for (std::set<hfst_ol::SymbolNumber>::iterator flag_it =
          flag_symbols.begin(); flag_it != flag_symbols.end();
          ++flag_it) {
-        if (it->inputs.count(*flag_it) != 0) {
-        hfst_ol::add_transitions_with(*flag_it,
-                          it->inputs[*flag_it],
-                          transition_table,
-                          state_placeholders,
-                          flag_symbols);
-        
+        if (it->input_present(*flag_it)) {
+            hfst_ol::add_transitions_with(
+                *flag_it,
+                it->get_transition_placeholders(*flag_it),
+                transition_table,
+                state_placeholders,
+                flag_symbols);
+            
         }
     }
-        for (std::map<SymbolNumber,
-         std::vector<TransitionPlaceholder> >::iterator sym_it =
-                 it->inputs.begin(); 
-             sym_it != it->inputs.end(); ++sym_it) {
-            if (sym_it->first == 0 or flag_symbols.count(sym_it->first) != 0) {
+    for (unsigned int i = 1; i < it->symbol_to_transition_placeholder_v.size();
+         ++i) {
+        if (!it->input_present(i) ||
+            flag_symbols.count(i) != 0) {
         continue;
         }
-        hfst_ol::add_transitions_with(sym_it->first,
-                      it->inputs[sym_it->first],
-                      transition_table,
-                      state_placeholders,
-                      flag_symbols);
+        hfst_ol::add_transitions_with(i,
+                                      it->get_transition_placeholders(i),
+                                      transition_table,
+                                      state_placeholders,
+                                      flag_symbols);
     }
     }
 
@@ -88,7 +85,7 @@ void add_transitions_with(SymbolNumber symbol,
     // before writing each transition, find out whether its
     // target is simple (ie. should point directly to TA entry)
     unsigned int target;
-    if (state_placeholders[it->target].is_simple(flag_symbols)) {
+    if (state_placeholders[it->target].is_simple()) {
         target = state_placeholders[it->target].first_transition + 
         TRANSITION_TARGET_TABLE_START - 1;
     } else {
@@ -106,7 +103,7 @@ bool compare_states_by_input_size(
     const StatePlaceholder & lhs, const StatePlaceholder & rhs)
 {
     // descending by input size
-    return lhs.inputs.size() > rhs.inputs.size();
+    return lhs.inputs > rhs.inputs;
 }
 
 bool compare_states_by_state_number(
@@ -504,7 +501,7 @@ void ConvertFstState::set_transition_indices(void)
         previous_symbol = input_symbol;
       }
     }
-    if(input_symbol == 0) { zero_transitions = true; }		
+    if(input_symbol == 0) { zero_transitions = true; }
     ++position;
   }
 }
@@ -539,7 +536,7 @@ TransitionTableIndex ConvertFstState::set_transition_table_indices(
   ++place;
   
   // update the TransitionIndex's to store the table location of the
-  associated transition
+  // associated transition
   for(ConvertTransitionIndexSet::iterator it=transition_indices.begin();
       it!=transition_indices.end(); ++it)
   {
@@ -724,9 +721,9 @@ PlaceHolderVector::size_type ConvertTransitionTableIndices::add_state(
   {
     // Only try the first 100 indices.
     //    if (index > lower_bound+100000)
-    //	{
-    //	  index = last_full_index()+1;
-    //	}
+    //{
+    //  index = last_full_index()+1;
+    //}
     if((index + number_of_input_symbols + 1) >= indices.size())
       get_more_space();
     
@@ -872,7 +869,7 @@ void ConvertTransducerHeader::compute_header(TransducerHeader& header,
   if(!header.weighted)
     header.has_unweighted_input_epsilon_cycles =
     header.has_input_epsilon_cycles;
-}	
+}
 
 
 ConvertTransducer* ConvertTransducer::constructing_transducer = NULL;

@@ -1,0 +1,94 @@
+===============================
+ Coding style and instructions
+===============================
+
+This file contains information on coding conventions, and guidelines for
+implementation. When contributing code to project, try to follow it whenever
+possible.
+
+Coding style
+------------
+
+Coding style is not currently forced, but it is suggested that authors follow
+or acknowledge `GNU coding style guidelines`_ and `C++ coding style`_ for C and
+C++ parts, `SUN coding conventions`_ for Java parts, PEP8_ for python parts,
+and so on. But more important than following certain guidelines is being
+*consistent*. The users of vim are advised to use ``cindent``, ``autoindent``
+and file type indentation rules at all times. The users of emacs should also
+turn on automatic indentation. The code formatting-for C and C++ emacs defaults
+to GNU coding styles anyways. At very least stick to maximum line length of 79,
+and use some indentation. The tab characters should be expanded to spaces.
+
+Version control usage
+---------------------
+
+All changes should be commited to version control system, ideally one change at
+a time. Each commit must be accompanied by meaningful commit message summarising
+change(s) in English. Commit logs are collected to ChangeLog on each release
+using scripts, such as svn2cl. Good ChangeLog message conventions are detailed
+in the `GNU coding style guidelines`_.
+
+Commits and releases
+--------------------
+
+Do not commit anything that won’t pass ``make``. Do not
+distribute any alphas that do not pass ``make check``. Do not distribute
+any betas that won’t pass ``make distcheck``. Do not distribute release versions
+that have not had large-scale end-user testings, if in doubt, mark them at least
+release candidates.
+
+Library specific practices
+--------------------------
+
+Libraries are used by internal and external projects altogether, so there are
+many requirements to them. API stability is one of them; public symbols may not
+be deleted or modified between releases, it is legal to add new ones though. The
+libraries are versioned by releases, following library versioning standards,
+not the release numbers; *HFST3* has version vector 1.x.y.
+Libraries *do not print* unless asked, error handling is done by exceptions in
+C++ or return values in C.
+
+Tool specific practices
+-----------------------
+
+All command line tools follow same argument processing logic, implemented in
+getopt_long. The non-interactive tools by default print only warnings and
+errors, but user may specify more verbose or quiet processing. Quiet processing
+mode must not print anything else than fatal errors. If stdout is not reserved
+for piped output, messages and warnings are printed to stdout, otherwise stderr.
+Stderr is always used for error messages.
+
+The typical command line tool works like this:
+
+1. hfst_set_program_name(char*, char*, char*)
+
+2. getopt loop (more or less standard, use inc/)
+
+3. verify option sanity (enough input files, files readable, writable)
+
+4. open inputs
+
+5. process inputs, write outputs
+
+6. clean up and die
+
+To write output to users:
+
+* On errors, error(int,int,char*,...) should be used.
+
+* When verbose is on, each step should include informative
+  verbose_printf(char*, ...).
+
+* When debug is on, additionally each intermediate result may be saved
+  with debug_save_transducer(HfstTransducer, char*).
+  debug_printf(char*, ...) is also available.
+
+* For other cases, use fprintf(message_out, ...), and always check for
+  !silent (and possibly verbose).
+
+.. _GNU coding style guidelines: http://www.gnu.org/prep/standards/standards.html
+.. _C++ coding style: http://geosoft.no/development/cppstyle.html
+.. _SUN coding conventions: http://java.sun.com/docs/codeconv/
+.. _PEP8: http://www.python.org/dev/peps/pep-0008/
+
+.. vim: set ft=rst:

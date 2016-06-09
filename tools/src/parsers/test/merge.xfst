@@ -1,0 +1,17 @@
+list V a e i o u ;
+regex [a+ i] .m>. {kVtVbV} ;
+write att
+echo --
+list C k t b ;
+regex [k t b] .m>. {CaCaCi} ;
+write att
+echo --
+regex [k t b] .m>. [ [a+ i] .m>. {CVCVCV} ] ;
+write att
+echo --
+regex [a+ i] .m>. [ [k t b] .m>. {CVCVCV} ] ;
+write att
+echo --
+regex [ {CVCVCV} .<m. [k t b] ] .<m. [a+ i] ;
+write att
+quit

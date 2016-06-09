@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 //! @FIXME: The structure of this class and its functions is disorganised.
 
@@ -116,6 +113,7 @@ namespace hfst
         assert(false);
         break;
       }
+    HFST_THROW(HfstFatalException); // make compiler happy
   }
 
   short &HfstInputStream::stream_get(short &i)
@@ -162,6 +160,7 @@ namespace hfst
         assert(false);
         break;
       }
+    HFST_THROW(HfstFatalException); // make compiler happy
   }
 
   unsigned short &HfstInputStream::stream_get(unsigned short &i)
@@ -212,6 +211,7 @@ namespace hfst
         assert(false);
         break;
       }
+    HFST_THROW(HfstFatalException); // make compiler happy
   }
 
   void HfstInputStream::stream_unget(char c)
@@ -305,25 +305,28 @@ namespace hfst
 
   void HfstInputStream::read_transducer(HfstTransducer &t)
   {
-    if (input_stream != NULL) { // first transducer in the stream
-      input_stream = NULL;
-      if (stream_eof())
-        HFST_THROW(EndOfStreamException);
-      // if header bytes have been read from a file, skip these bytes
-      if (strcmp(filename.c_str(), "") != 0)
-        ignore(bytes_to_skip);
-    }
-    else {
-      if (stream_eof())
-        HFST_THROW(EndOfStreamException);
-      ImplementationType current_type  = this->get_type();
-      ImplementationType stype = this->stream_fst_type();
-      if (stype != current_type) {
-        HFST_THROW_MESSAGE(TransducerTypeMismatchException,
-                           "HfstInputStream contains HfstTransducers "
-                           "whose type is not the same");
+    if (type != XFSM_TYPE)
+      {
+        if (input_stream != NULL) { // first transducer in the stream
+          input_stream = NULL;
+          if (stream_eof())
+            HFST_THROW(EndOfStreamException);
+          // if header bytes have been read from a file, skip these bytes
+          if (strcmp(filename.c_str(), "") != 0)
+            ignore(bytes_to_skip);
+        }
+        else {
+          if (stream_eof())
+            HFST_THROW(EndOfStreamException);
+          ImplementationType current_type  = this->get_type();
+          ImplementationType stype = this->stream_fst_type();
+          if (stype != current_type) {
+            HFST_THROW_MESSAGE(TransducerTypeMismatchException,
+                               "HfstInputStream contains HfstTransducers "
+                               "whose type is not the same");
+          }
+        }
       }
-    }
 
     switch (type)
       {
@@ -365,7 +368,7 @@ namespace hfst
              and/or that epsilon is coded differently than "@_EPSILON_SYMBOL_@"
              and/or that numbers 1 and 2 are reserved for other use than
              "@_UNKNOWN_SYMBOL_@" or "@_IDENTITY_SYMBOL_@". */
-          if (not has_hfst_header)
+          if (! has_hfst_header)
             {
               HfstBasicTransducer * net = 
                 ConversionFunctions::
@@ -481,7 +484,7 @@ namespace hfst
              and/or that epsilon is coded differently than "@_EPSILON_SYMBOL_@"
              and/or that numbers 1 and 2 are reserved for other use than
              "@_UNKNOWN_SYMBOL_@" or "@_IDENTITY_SYMBOL_@". */
-          if (not has_hfst_header)
+          if (! has_hfst_header)
             {
               HfstBasicTransducer * net = 
                 ConversionFunctions::
@@ -496,8 +499,9 @@ namespace hfst
 
         if (hfst_version_2_weighted_transducer) // this should not happen
           { 
-            fprintf(stderr, "ERROR: not transducer stream\n");
-            exit(1);
+            //fprintf(stderr, "ERROR: not transducer stream\n");
+            //exit(1);
+            HFST_THROW_MESSAGE(HfstFatalException, "not transducer stream");
           }
         break;
         }
@@ -507,6 +511,12 @@ namespace hfst
       case FOMA_TYPE:
         t.implementation.foma =
           this->implementation.foma->read_transducer();
+        break;
+#endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        t.implementation.xfsm =
+          this->implementation.xfsm->read_transducer();
         break;
 #endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
@@ -529,13 +539,16 @@ namespace hfst
         break;
   }
 
-  t.set_name(name);
-  for (std::map<string,string>::const_iterator prop = props.begin();
-       prop != props.end();
-       ++prop)
-    {
-      t.set_property(prop->first, prop->second);
-    }
+    if (type != XFSM_TYPE)
+      {
+        t.set_name(name);
+        for (std::map<string,string>::const_iterator prop = props.begin();
+             prop != props.end();
+             ++prop)
+          {
+            t.set_property(prop->first, prop->second);
+          }
+      }
 
 }
 
@@ -573,6 +586,22 @@ namespace hfst
       case '#':  // foma
         return FOMA_;
         break;
+      case (char)0x1f:  // native foma (gz magic number is 1F 8B 08)
+        {
+          char c0 = (char)stream_get();
+          if (stream_eof()) { HFST_THROW(EndOfStreamException); }
+          char c1 = (char)stream_get();
+          if (stream_eof()) { HFST_THROW(EndOfStreamException); }
+          char c2 = (char)stream_get();
+          if (stream_eof()) { HFST_THROW(EndOfStreamException); }
+          stream_unget(c2);
+          stream_unget(c1);
+          stream_unget(c0);
+          if (c0 == (char)0x1f && c1 == (char)0x8b && c2 == (char)0x08)
+            HFST_THROW(FileIsInGZFormatException);
+          else
+            HFST_THROW(NotTransducerStreamException);
+        }
       case 'a':  // SFST
         return SFST_;
         break;
@@ -619,7 +648,12 @@ namespace hfst
           break;
         }
       default:
+#ifdef HAVE_XFSM
+        return XFSM_;
+#else
         return ERROR_TYPE_;
+#endif
+
       }
     return ERROR_TYPE_;
   }
@@ -633,7 +667,7 @@ namespace hfst
     }
 
     // (1) first pair "version", "3.0"
-    if ( not ( ( strcmp("version", header_data[0].first.c_str()) == 0 ) &&
+    if ( ! ( ( strcmp("version", header_data[0].first.c_str()) == 0 ) &&
                ( ( strcmp("3.0", header_data[0].second.c_str()) == 0 ) ||
                  ( strcmp("3.3", header_data[0].second.c_str()) == 0 ) ) ) ){
       HFST_THROW_MESSAGE(TransducerHeaderException,
@@ -641,7 +675,7 @@ namespace hfst
     }
 
     // (2) second pair "type", (valid type field)
-    if ( not ( strcmp("type", header_data[1].first.c_str()) == 0 ) ) {
+    if ( ! ( strcmp("type", header_data[1].first.c_str()) == 0 ) ) {
       HFST_THROW_MESSAGE(TransducerHeaderException,
                          "Hfst header: transducer type not given");
     }
@@ -857,7 +891,7 @@ namespace hfst
     }
 
     // whether the stream contains an HFST version <3.0 transducer
-    // or an SFST, OpenFst or a foma transducer
+    // or a native SFST, OpenFst, foma or xfsm transducer
     TransducerType transducer_type = guess_fst_type(bytes_read);
     bytes_to_skip=bytes_read;
 
@@ -888,6 +922,9 @@ namespace hfst
       case FOMA_:
         return FOMA_TYPE;
         break;
+      case XFSM_:
+        return XFSM_TYPE;
+        break;
 #if HAVE_MY_TRANSDUCER_LIBRARY
       case MY_TRANSDUCER_LIBRARY_:
         return MY_TRANSDUCER_LIBRARY_TYPE;
@@ -906,17 +943,12 @@ namespace hfst
     bytes_to_skip(0), filename(std::string()), has_hfst_header(false),
     hfst_version_2_weighted_transducer(false)
   {
-    try { 
-      input_stream = &std::cin;
-      if (stream_eof())
-        HFST_THROW(EndOfStreamException);
-      type = stream_fst_type();
-    }
+    input_stream = &std::cin;
+    if (stream_eof())
+      HFST_THROW(EndOfStreamException);
+    type = stream_fst_type();
 
-    catch (const HfstException e)
-    { throw e; }
-
-    if ( not HfstTransducer::is_implementation_type_available(type)) {
+    if ( ! HfstTransducer::is_implementation_type_available(type)) {
       HFST_THROW(ImplementationTypeNotAvailableException);
     }
 
@@ -942,6 +974,12 @@ namespace hfst
 #if HAVE_FOMA
     case FOMA_TYPE:
       implementation.foma = new hfst::implementations::FomaInputStream;
+      break;
+#endif
+#if HAVE_XFSM
+    case XFSM_TYPE:
+      // Will throw an error.
+      implementation.xfsm = new hfst::implementations::XfsmInputStream;
       break;
 #endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
@@ -971,85 +1009,87 @@ namespace hfst
     bytes_to_skip(0), filename(std::string(filename)), has_hfst_header(false),
     hfst_version_2_weighted_transducer(false)
   {
-    try { 
-      if (strcmp("",filename.c_str()) != 0) {
-        std::ifstream ifs(filename.c_str());
-        if (ifs.fail())
-          HFST_THROW_MESSAGE(NotTransducerStreamException, 
-                             "file could not be opened");
-        input_stream = &ifs;
-        if (stream_eof())
-          HFST_THROW(EndOfStreamException);
-        type = stream_fst_type();
-      }
-      else {
-        input_stream = &std::cin;
-        if (stream_eof())
-          HFST_THROW(EndOfStreamException);
-        type = stream_fst_type();
-      }
+    if (strcmp("",filename.c_str()) != 0) {
+      std::ifstream ifs(filename.c_str());
+      if (ifs.fail())
+        HFST_THROW_MESSAGE(NotTransducerStreamException, 
+                           "file could not be opened");
+      input_stream = &ifs;
+      if (stream_eof())
+        HFST_THROW(EndOfStreamException);
+      type = stream_fst_type();
     }
-
-    catch( const HfstException e)
-      { throw e; }
-    if ( not HfstTransducer::is_implementation_type_available(type)) {
+    else {
+      input_stream = &std::cin;
+      if (stream_eof())
+        HFST_THROW(EndOfStreamException);
+      type = stream_fst_type();
+    }
+    
+    if ( ! HfstTransducer::is_implementation_type_available(type)) {
       HFST_THROW(ImplementationTypeNotAvailableException);
     }
-
+    
     switch (type)
-    {
+      {
 #if HAVE_SFST
-    case SFST_TYPE:
-      implementation.sfst 
-        = new hfst::implementations::SfstInputStream(filename);
-      break;
+      case SFST_TYPE:
+        implementation.sfst 
+          = new hfst::implementations::SfstInputStream(filename);
+        break;
 #endif
 #if HAVE_OPENFST
-    case TROPICAL_OPENFST_TYPE:
-      if (strcmp(filename.c_str(),"") == 0) {  
-        // FIXME: this should be done in TropicalWeight layer
-        implementation.tropical_ofst = 
-          new hfst::implementations::TropicalWeightInputStream();
-      }
-      else
-        implementation.tropical_ofst = 
-          new hfst::implementations::TropicalWeightInputStream(filename);
-      break;
+      case TROPICAL_OPENFST_TYPE:
+        if (strcmp(filename.c_str(),"") == 0) {  
+          // FIXME: this should be done in TropicalWeight layer
+          implementation.tropical_ofst = 
+            new hfst::implementations::TropicalWeightInputStream();
+        }
+        else
+          implementation.tropical_ofst = 
+            new hfst::implementations::TropicalWeightInputStream(filename);
+        break;
 #if HAVE_OPENFST_LOG
-    case LOG_OPENFST_TYPE:
-      implementation.log_ofst = 
-        new hfst::implementations::LogWeightInputStream(filename);
-      break;
+      case LOG_OPENFST_TYPE:
+        implementation.log_ofst = 
+          new hfst::implementations::LogWeightInputStream(filename);
+        break;
 #endif
 #endif
 #if HAVE_FOMA
-    case FOMA_TYPE:
-      implementation.foma 
-        = new hfst::implementations::FomaInputStream(filename);
-      break;
+      case FOMA_TYPE:
+        implementation.foma 
+          = new hfst::implementations::FomaInputStream(filename);
+        break;
+#endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        implementation.xfsm 
+          = new hfst::implementations::XfsmInputStream(filename);
+        break;
 #endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
-    case MY_TRANSDUCER_LIBRARY_TYPE:
-      implementation.my_transducer_library 
-        = new hfst::implementations::MyTransducerLibraryInputStream(filename);
-      break;
+      case MY_TRANSDUCER_LIBRARY_TYPE:
+        implementation.my_transducer_library 
+          = new hfst::implementations::MyTransducerLibraryInputStream(filename);
+        break;
 #endif
-    case HFST_OL_TYPE:
-      implementation.hfst_ol 
-        = new hfst::implementations::HfstOlInputStream(filename, false);
-      break;
-    case HFST_OLW_TYPE:
-      implementation.hfst_ol 
-        = new hfst::implementations::HfstOlInputStream(filename, true);
-      break;
-    default:
-      debug_error("#10");
-
-      HFST_THROW_MESSAGE(NotTransducerStreamException,
-                         "transducer type not recognised");
-    }
+      case HFST_OL_TYPE:
+        implementation.hfst_ol 
+          = new hfst::implementations::HfstOlInputStream(filename, false);
+        break;
+      case HFST_OLW_TYPE:
+        implementation.hfst_ol 
+          = new hfst::implementations::HfstOlInputStream(filename, true);
+        break;
+      default:
+        debug_error("#10");
+        
+        HFST_THROW_MESSAGE(NotTransducerStreamException,
+                           "transducer type not recognised");
+      }
   }
-
+  
   HfstInputStream::~HfstInputStream(void)
   { 
     switch (type)
@@ -1072,6 +1112,11 @@ namespace hfst
 #if HAVE_FOMA
       case FOMA_TYPE:
         delete implementation.foma;
+        break;
+#endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        delete implementation.xfsm;
         break;
 #endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
@@ -1114,6 +1159,11 @@ namespace hfst
         implementation.foma->close();
         break;
 #endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        implementation.xfsm->close();
+        break;
+#endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
       case MY_TRANSDUCER_LIBRARY_TYPE:
         implementation.my_transducer_library->close();
@@ -1152,6 +1202,11 @@ namespace hfst
         return implementation.foma->is_eof();
         break;
 #endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        return implementation.xfsm->is_eof();
+        break;
+#endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
       case MY_TRANSDUCER_LIBRARY_TYPE:
         return implementation.my_transducer_library->is_eof();
@@ -1188,6 +1243,11 @@ namespace hfst
 #if HAVE_FOMA
       case FOMA_TYPE:
         return implementation.foma->is_bad();
+        break;
+#endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        return implementation.xfsm->is_bad();
         break;
 #endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
@@ -1229,6 +1289,11 @@ namespace hfst
         return implementation.foma->is_good();
         break;
 #endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        return implementation.xfsm->is_good();
+        break;
+#endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
       case MY_TRANSDUCER_LIBRARY_TYPE:
         return implementation.my_transducer_library->is_good();
@@ -1248,6 +1313,12 @@ namespace hfst
   {
     return type;
   }
+
+  bool HfstInputStream::is_hfst_header_included(void) const
+  {
+    return has_hfst_header;
+  }
+
 }
 
 #else // MAIN_TEST was defined

@@ -21,10 +21,14 @@ rm test.pmatch
 
 # Jyrki's suite
 if ! $srcdir/pmatch-tests.sh --log none; then
-    rm $srcdir/pmatch-tests.sh.*
+    if [ -e $srcdir/pmatch-tests.sh.* ]; then
+        rm $srcdir/pmatch-tests.sh.*
+    fi
     exit 77
     # Pending stabilisation of various things the suite fails, so we pretend
     # we skipped it
 fi
 
-rm $srcdir/pmatch-tests.sh.*
+if [ -e $srcdir/pmatch-tests.sh.* ]; then
+    rm $srcdir/pmatch-tests.sh.*
+fi

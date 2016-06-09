@@ -2,4 +2,4 @@ set precision 1
 set print-weight ON
 
 regex 0 -> m::1 ;
-apply up foobar
+apply down foobar

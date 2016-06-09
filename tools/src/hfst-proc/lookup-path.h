@@ -135,7 +135,7 @@ class LookupPathW : public LookupPath
   Weight final_weight;
  public:
   LookupPathW(const ProcTransducer& t, const TransitionTableIndex initial): 
-  	LookupPath(t, initial), weight(0.0f), final_weight(0.0f) {}
+        LookupPath(t, initial), weight(0.0f), final_weight(0.0f) {}
   LookupPathW(const LookupPathW& o): LookupPath(o), weight(o.weight),
     final_weight(o.final_weight) {}
   
@@ -144,6 +144,17 @@ class LookupPathW : public LookupPath
   virtual void follow(const TransitionIndex& index);
   virtual bool follow(const Transition& transition);
   
+  static bool compare_weights(LookupPath* p1, LookupPath* p2) {
+          LookupPathW* pw1 = dynamic_cast<LookupPathW*>(p1);
+          LookupPathW* pw2 = dynamic_cast<LookupPathW*>(p2);
+          if(pw1 != NULL && pw2 != NULL) {
+                  return (*pw1) < (*pw2);
+          }
+          else {
+                  return (*p1) < (*p2);
+          }
+  }
+
   /**
    * This sorts first by weight then by the value of output_symbols
    */

@@ -95,7 +95,7 @@ endif
 if WANT_INVERT
 MAYBE_INVERT=hfst-invert$(EXEEXT)
 endif
-if WANT_LEXC_WRAPPER
+if GENERATE_LEXC_WRAPPER
 MAYBE_LEXC_WRAPPER=hfst-lexc-wrapper$(EXEEXT)
 endif
 if WANT_LEXC
@@ -103,6 +103,9 @@ MAYBE_LEXC=hfst-lexc$(EXEEXT)
 endif
 if WANT_LOOKUP
 MAYBE_LOOKUP=hfst-lookup$(EXEEXT)
+endif
+if WANT_FLOOKUP
+MAYBE_FLOOKUP=hfst-flookup$(EXEEXT)
 endif
 if WANT_PAIR_TEST
 MAYBE_PAIR_TEST=hfst-pair-test$(EXEEXT)
@@ -122,8 +125,8 @@ endif
 if WANT_PMATCH2FST
 MAYBE_PMATCH2FST=hfst-pmatch2fst$(EXEEXT)
 endif
-if WANT_PROC2
-MAYBE_PROC2=hfst-proc2$(EXEEXT)
+if WANT_TOKENIZE
+MAYBE_TOKENIZE=hfst-tokenize$(EXEEXT)
 endif
 if WANT_PROJECT
 MAYBE_PROJECT=hfst-project$(EXEEXT)
@@ -183,18 +186,23 @@ if WANT_SUBSTITUTE
 MAYBE_SUBSTITUTE=hfst-substitute$(EXEEXT)
 endif
 
+if YACC_USE_PARSER_H_EXTENSION
+  HEADER=h
+else
+  HEADER=hh
+endif
+
 noinst_HEADERS= \
 	calculate_functions.h hfst-commandline.h hfst-program-options.h \
-	hfst-compiler.hh HfstCompiler.h HfstBasic.h HfstAlphabet.h HfstUtf8.h \
+	HfstCompiler.h HfstBasic.h HfstAlphabet.h HfstUtf8.h \
 	inc/check-params-binary.h inc/check-params-common.h \
 	inc/check-params-unary.h  inc/getopt-cases-binary.h \
 	inc/getopt-cases-common.h inc/getopt-cases-error.h  \
 	inc/getopt-cases-unary.h  inc/globals-binary.h      \
 	inc/globals-common.h      inc/globals-unary.h \
-	HfstStrings2FstTokenizer.h hfst-file-to-mem.h \
-	hfst-string-conversions.h \
+	hfst-file-to-mem.h \
 	hfst-tool-metadata.h hfst-optimized-lookup.h \
-	guessify_fst.h generate_model_forms.h
+	guessify_fst.h generate_model_forms.h hfst-compiler.$(HEADER)
 # parsers/XreCompiler.h parsers/xre_utils.h
 
 # sort alphabetically
@@ -212,9 +220,9 @@ bin_PROGRAMS= \
 			 $(MAYBE_FORMAT) $(MAYBE_FST2FST) $(MAYBE_FST2STRINGS)      \
 			 $(MAYBE_FST2TXT) $(MAYBE_GREP) $(MAYBE_HEAD)               \
 			 $(MAYBE_INVERT)                                            \
-			 $(MAYBE_LOOKUP) $(MAYBE_MINIMIZE) $(MAYBE_NAME)            \
+			 $(MAYBE_LOOKUP) $(MAYBE_FLOOKUP) $(MAYBE_MINIMIZE) $(MAYBE_NAME)            \
 			 $(MAYBE_OPTIMIZED_LOOKUP) $(MAYBE_PMATCH)                  \
-			 $(MAYBE_PMATCH2FST) $(MAYBE_PROC2)                         \
+			 $(MAYBE_PMATCH2FST) $(MAYBE_TOKENIZE)                         \
 			 $(MAYBE_PROJECT) $(MAYBE_PRUNE_ALPHABET)                   \
 			 $(MAYBE_PUSH_WEIGHTS) $(MAYBE_REGEXP2FST)                  \
 			 $(MAYBE_REMOVE_EPSILONS) $(MAYBE_REPEAT) $(MAYBE_REVERSE)  \
@@ -234,7 +242,7 @@ HFST_COMMON_SRC=hfst-program-options.cc hfst-commandline.cc \
 				hfst-tool-metadata.cc
 # sort alphabetically
 hfst_affix_guessify_SOURCES=hfst-affix-guessify.cc $(HFST_COMMON_SRC)
-hfst_calculate_SOURCES=hfst-scanner.ll hfst-compiler.yy HfstCompiler.cc HfstBasic.cc HfstAlphabet.cc HfstUtf8.cc $(HFST_COMMON_SRC)
+hfst_calculate_SOURCES=hfst-compiler.yy hfst-scanner.ll HfstCompiler.cc HfstBasic.cc HfstAlphabet.cc HfstUtf8.cc $(HFST_COMMON_SRC)
 hfst_compare_SOURCES=hfst-compare.cc $(HFST_COMMON_SRC)
 hfst_compose_intersect_SOURCES=hfst-compose-intersect.cc $(HFST_COMMON_SRC)
 hfst_compose_SOURCES=hfst-compose.cc $(HFST_COMMON_SRC)
@@ -265,17 +273,16 @@ hfst_lexc_SOURCES=hfst-lexc-compiler.cc $(HFST_COMMON_SRC)
 #					  parsers/xre_lex.ll parsers/xre_utils.cc \
 #					  parsers/LexcCompiler.h parsers/lexc-utils.h
 #hfst_lexc2fst_BUILT=parsers/lexc-parser.h parsers/xre_parse.h
-hfst_lookup_SOURCES=hfst-lookup.cc $(HFST_COMMON_SRC) \
-HfstStrings2FstTokenizer.cc
-hfst_pair_test_SOURCES=hfst-pair-test.cc $(HFST_COMMON_SRC) \
-HfstStrings2FstTokenizer.cc 
+hfst_lookup_SOURCES=hfst-lookup.cc $(HFST_COMMON_SRC)
+hfst_flookup_SOURCES=hfst-flookup.cc $(HFST_COMMON_SRC)
+hfst_pair_test_SOURCES=hfst-pair-test.cc $(HFST_COMMON_SRC) 
 hfst_minimize_SOURCES=hfst-minimize.cc $(HFST_COMMON_SRC)
 hfst_name_SOURCES=hfst-name.cc $(HFST_COMMON_SRC)
 hfst_optimized_lookup_SOURCES=hfst-optimized-lookup.cc
 hfst_pmatch_SOURCES=hfst-pmatch.cc $(HFST_COMMON_SRC)
 #hfst_preprocess_for_optimized_lookup_format_SOURCES=hfst-preprocess-for-optimized-lookup-format.cc
 #	$(HFST_COMMON_SRC)
-hfst_proc2_SOURCES=hfst-proc2.cc $(HFST_COMMON_SRC)	
+hfst_tokenize_SOURCES=hfst-tokenize.cc $(HFST_COMMON_SRC)	
 hfst_project_SOURCES=hfst-project.cc $(HFST_COMMON_SRC)
 hfst_prune_alphabet_SOURCES=hfst-prune-alphabet.cc $(HFST_COMMON_SRC)
 hfst_push_weights_SOURCES=hfst-push-weights.cc $(HFST_COMMON_SRC)
@@ -287,8 +294,7 @@ hfst_reverse_SOURCES=hfst-reverse.cc $(HFST_COMMON_SRC)
 hfst_reweight_SOURCES=hfst-reweight.cc $(HFST_COMMON_SRC)
 hfst_shuffle_SOURCES=hfst-shuffle.cc $(HFST_COMMON_SRC)
 hfst_split_SOURCES=hfst-split.cc $(HFST_COMMON_SRC)
-hfst_strings2fst_SOURCES=hfst-strings2fst.cc $(HFST_COMMON_SRC) \
-HfstStrings2FstTokenizer.cc
+hfst_strings2fst_SOURCES=hfst-strings2fst.cc $(HFST_COMMON_SRC)
 #hfst_strip_header_SOURCES=hfst-strip-header.cc $(HFST_COMMON_SRC)
 hfst_substitute_SOURCES=hfst-substitute.cc $(HFST_COMMON_SRC)
 hfst_subtract_SOURCES=hfst-subtract.cc $(HFST_COMMON_SRC)
@@ -309,7 +315,9 @@ install-exec-hook:
 		$(LN_S) -f hfst-subtract$(EXEEXT) hfst-minus$(EXEEXT) && \
 		$(LN_S) -f hfst-calculate$(EXEEXT) hfst-sfstpl2fst$(EXEEXT) && \
 		$(LN_S) -f hfst-summarize$(EXEEXT) hfst-summarise$(EXEEXT) && \
-		$(LN_S) -f hfst-disjunct$(EXEEXT) hfst-union$(EXEEXT)
+		$(LN_S) -f hfst-disjunct$(EXEEXT) hfst-union$(EXEEXT) && \
+		$(LN_S) -f hfst-tokenize$(EXEEXT) hfst-proc2$(EXEEXT) && \
+		$(LN_S) -f hfst-tokenize$(EXEEXT) hfst-tokenise$(EXEEXT)
 #		$(LN_S) -f hfst-preprocess-for-optimized-lookup-format$(EXEEXT) hfst-preprocess-for-optimised-lookup-format$(EXEEXT) &&
 
 uninstall-local:
@@ -322,11 +330,13 @@ uninstall-local:
 		rm hfst-minus && \
 		rm hfst-sfstpl2fst && \
 		rm hfst-summarise && \
-		rm hfst-union
+		rm hfst-union && \
+		rm hfst-tokenise && \
+		rm hfst-proc2
 
 BUILT_SOURCES=$(hfst_lexc_BUILT) 
 
-CLEANFILES=hfst-compiler.hh hfst-compiler.cc $(hfst_lexc_BUILT) 
+CLEANFILES=$(hfst_compiler_header_file) hfst-compiler.cc $(hfst_lexc_BUILT) 
 
 
 hfst_calculate_CXXFLAGS= -Wall -Wno-error -Wno-sign-compare -Wno-deprecated
@@ -335,9 +345,7 @@ hfst_calculate_CXXFLAGS= -Wall -Wno-error -Wno-sign-compare -Wno-deprecated
 AM_YFLAGS=-d
 AM_LFLAGS=--outfile=$(LEX_OUTPUT_ROOT).c 
 
-# make make realise headers automatically follow from flexing
-hfst-scanner.hh: hfst-scanner.cc
-CLEANFILES+=hfst-scanner.hh hfst-compiler.hh
-BUILT_SOURCES+=hfst-scanner.hh
+hfst-scanner.ll: hfst-compiler.$(HEADER)
 
-#EXTRA_DIST=hfst-scanner.cc hfst-compiler.cc hfst-compiler.hh
+CLEANFILES+=hfst-compiler.$(HEADER)
+EXTRA_DIST=hfst-scanner.cc hfst-compiler.cc hfst-compiler.$(HEADER)

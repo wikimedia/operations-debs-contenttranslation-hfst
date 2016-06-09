@@ -1,22 +1,19 @@
 %{
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 //! @file lexc-parser.yy
 //!
 //! @brief A parser for lexc
 //!
 //! @author Tommi A. Pirinen
 
-
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, version 3 of the License.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #if HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -53,7 +50,10 @@ static
 void
 handle_noflag(const string& lexname)
 {
-    fprintf(stderr, "DEBUG: Adding %s to noflags\n", lexname.c_str());
+    //fprintf(stderr, "DEBUG: Adding %s to noflags\n", lexname.c_str());
+    std::ostream * err = hfst::lexc::lexc_->get_stream((hfst::lexc::lexc_->get_error_stream()));
+    *err << "DEBUG: Adding " << lexname << " to noflags" << std::endl;
+    hfst::lexc::lexc_->flush(err);
     hfst::lexc::lexc_->addNoFlag(lexname);
 }
 static
@@ -64,10 +64,18 @@ handle_definition(const string& variable_name, const string& reg_exp)
 }
 
 static
-void
+bool
 handle_lexicon_name(const string& lexiconName)
 {
+  try 
+  {
     hfst::lexc::lexc_->setCurrentLexiconName(lexiconName);
+  }
+  catch(const char * msg)
+  {
+    return false;
+  }
+  return true;
 }
 
 static
@@ -116,7 +124,7 @@ handle_string_entry(const string& data, const string& cont, const string& gloss)
 }
 
 static
-void
+bool
 handle_string_pair_entry(const string& upper, const string& lower,
                                 const string& cont, const string& gloss)
 {
@@ -127,7 +135,11 @@ handle_string_pair_entry(const string& upper, const string& lower,
     // handle epsilon "0"
     if (upper != "0" && lower != "0")
     {
-       hfst::lexc::lexc_->addStringPairEntry(upper, lower, cont, weight);
+       try {
+         hfst::lexc::lexc_->addStringPairEntry(upper, lower, cont, weight);
+       } catch(const char * msg) {
+         return false;
+       } 
     }
     else
     {
@@ -137,8 +149,13 @@ handle_string_pair_entry(const string& upper, const string& lower,
          upper_ = std::string("");
        if (lower == "0")
          lower_ = std::string("");
-       hfst::lexc::lexc_->addStringPairEntry(upper_, lower_, cont, weight);
+       try {
+         hfst::lexc::lexc_->addStringPairEntry(upper_, lower_, cont, weight);
+       } catch(const char * msg) {
+         return false;
+       }
     }
+    return true;
 }
 
 static
@@ -152,6 +169,15 @@ handle_regexp_entry(const string& reg_exp, const string& cont,
     handle_string_entry_common(cont, gloss, &weight, &is_glossed, &is_heavy);
     hfst::lexc::lexc_->addXreEntry(reg_exp, cont, weight);
 }
+
+static
+void
+hlexcwarn(const char* text)
+{
+  if (! hfst::lexc::lexc_->isQuiet())      
+    { hfst::lexc::error_at_current_token(0, 0, text); }
+}
+
 
 static
 void
@@ -255,12 +281,20 @@ LEXICONS: LEXICONS LEXICON2 LEXICON_LINES
           ;
 
 LEXICON2: LEXICON_START {
-            handle_lexicon_name($1);
+            bool retval = handle_lexicon_name($1);
             free($1);
+            if (!retval)
+              { hlexcerror("Sublexicon defined more than once."); YYABORT; }
           }
           | LEXICON_START_WRONG_CASE {
-            handle_lexicon_name($1);
+            if (hfst::lexc::lexc_->areWarningsTreatedAsErrors()) 
+              { hlexcerror("Keyword 'Lexicon' used instead of 'LEXICON'. [--Werror]"); YYABORT; }
+            else
+              { hlexcwarn("Titlecase Lexicon parsed as LEXICON"); }
+            bool retval = handle_lexicon_name($1);
             free($1);
+            if (!retval)
+              { hlexcerror("Sublexicon defined more than once."); YYABORT; }
           }
           ;
 
@@ -275,24 +309,30 @@ LEXICON_LINE: ULSTRING LEXICON_NAME ';' {
               }
               | ULSTRING ':' ULSTRING
                 LEXICON_NAME ';' {
-                handle_string_pair_entry($1, $3, $4, "");
+                bool retval = handle_string_pair_entry($1, $3, $4, "");
                 free( $1);
                 free( $3);
                 free( $4);
+                if (!retval)
+                  { hlexcerror("Erroneous string pair entry."); YYABORT; }
               }
               | LEXICON_NAME ';' {
                 handle_string_entry("", $1, "");
                 free( $1);
               }
               | ULSTRING ':' LEXICON_NAME ';' {
-                handle_string_pair_entry($1, "", $3, "");
+                bool retval = handle_string_pair_entry($1, "", $3, "");
                 free( $1);
                 free( $3);
+                if (!retval)
+                  { hlexcerror("Erroneous string pair entry."); YYABORT; }
               }
               | ':' ULSTRING LEXICON_NAME ';' {
-                handle_string_pair_entry("", $2, $3, "");
+                bool retval = handle_string_pair_entry("", $2, $3, "");
                 free( $2);
                 free( $3);
+                if (!retval)
+                  { hlexcerror("Erroneous string pair entry."); YYABORT; }
               }
               | ':' LEXICON_NAME ';' {
                 handle_string_entry("", $2, "");
@@ -306,11 +346,13 @@ LEXICON_LINE: ULSTRING LEXICON_NAME ';' {
               }
               | ULSTRING ':' ULSTRING
                 LEXICON_NAME ENTRY_GLOSS ';' {
-                handle_string_pair_entry($1, $3, $4, $5);
+                bool retval = handle_string_pair_entry($1, $3, $4, $5);
                 free( $1);
                 free( $3);
                 free( $4);
                 free( $5);
+                if (!retval)
+                  { hlexcerror("Erroneous string pair entry."); YYABORT; }
               }
               | LEXICON_NAME ENTRY_GLOSS ';' {
                 handle_string_entry("", $1, $2);
@@ -318,16 +360,20 @@ LEXICON_LINE: ULSTRING LEXICON_NAME ';' {
                 free( $2);
               }
               | ULSTRING ':' LEXICON_NAME ENTRY_GLOSS ';' {
-                handle_string_pair_entry($1, "", $3, $4);
+                bool retval = handle_string_pair_entry($1, "", $3, $4);
                 free( $1);
                 free( $3);
                 free( $4);
+                if (!retval)
+                  { hlexcerror("Erroneous string pair entry."); YYABORT; }
               }
               | ':' ULSTRING LEXICON_NAME ENTRY_GLOSS ';' {
-                handle_string_pair_entry("", $2, $3, $4);
+                bool retval = handle_string_pair_entry("", $2, $3, $4);
                 free( $2);
                 free( $3);
                 free( $4);
+                if (!retval)
+                  { hlexcerror("Erroneous string pair entry."); YYABORT; }
               }
               | ':' LEXICON_NAME ENTRY_GLOSS ';' {
                 handle_string_entry("", $2, $3);
@@ -363,7 +409,7 @@ void
 hlexcerror(const char* text)
 {
     hfst::lexc::error_at_current_token(0, 0, text);
+    hlexcnerrs++;
 }
-
 
 // vim: set ft=yacc:

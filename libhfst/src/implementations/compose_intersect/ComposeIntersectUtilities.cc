@@ -1,3 +1,11 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 #include "ComposeIntersectUtilities.h"
 
 #include <set>
@@ -25,7 +33,7 @@ int main(int argc, char * argv[])
     
   IntSpaceSavingSet sset;
   assert(sset.size() == 0);
-  assert(not sset.has_element(0));
+  assert(! sset.has_element(0));
   
   sset.insert(0);
   assert(sset.size() == 1);
@@ -50,7 +58,7 @@ int main(int argc, char * argv[])
 
   sset.clear();
   assert(sset.size() == 0);
-  assert(not sset.has_element(0));
+  assert(! sset.has_element(0));
   sset.insert(0);
   sset.insert(1);
   assert(sset.has_element(1));
@@ -67,7 +75,7 @@ int main(int argc, char * argv[])
 
   sset.clear();
   assert(sset.size() == 0);
-  assert(not sset.has_element(0));
+  assert(! sset.has_element(0));
   sset.insert(1);
   sset.insert(0);
   assert(sset.has_element(0));
@@ -91,7 +99,7 @@ int main(int argc, char * argv[])
 
   sset.clear();
   sset.insert(2);
-  assert(not sset.has_element(1));
+  assert(! sset.has_element(1));
 
   std::cout << "ok" << std::endl;
   return 0;

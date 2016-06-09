@@ -1,5 +1,5 @@
 /*     Foma: a finite-state toolkit and library.                             */
-/*     Copyright © 2008-2012 Mans Hulden                                     */
+/*     Copyright © 2008-2015 Mans Hulden                                     */
 
 /*     This file is part of foma.                                            */
 
@@ -24,7 +24,13 @@
 #include <ctype.h>
 
 #include "foma.h"
+#ifdef ORIGINAL
 #include "zlib.h"
+#else // #ifdef ORIGINAL
+  #ifdef ZLIB
+    #include "zlib.h"
+  #endif
+#endif // #ifdef ORIGINAL 
 
 extern int g_show_flags;
 extern int g_obey_flags;
@@ -45,11 +51,19 @@ extern int g_list_random_limit;
 extern int g_compose_tristate;
 extern int g_med_limit ;
 extern int g_med_cutoff ;
+extern int g_lexc_align ;
 extern char *g_att_epsilon;
 
-#ifdef ZLIB
-extern int foma_net_print(struct fsm *net, gzFile *outfile);
-#endif
+extern struct defined_networks   *g_defines;
+extern struct defined_functions  *g_defines_f;
+
+#ifdef ORIGINAL
+extern int foma_net_print(struct fsm *net, gzFile outfile);
+#else // #ifdef ORIGINAL
+  #ifdef ZLIB
+    extern int foma_net_print(struct fsm *net, gzFile outfile);
+  #endif
+#endif // #ifdef ORIGINAL
 
 static char *sigptr(struct sigma *sigma, int number);
 static int print_dot(struct fsm *net, char *filename);
@@ -85,6 +99,7 @@ struct g_v {
     {&g_compose_tristate, "compose-tristate", FVAR_BOOL},
     {&g_med_limit,        "med-limit",        FVAR_INT},
     {&g_med_cutoff,       "med-cutoff",       FVAR_INT},
+    {&g_lexc_align,       "lexc-align",       FVAR_BOOL},
     {&g_att_epsilon,      "att-epsilon",      FVAR_STRING},
     {NULL, NULL, 0}
 };
@@ -106,6 +121,7 @@ struct global_help {
     {"apply med","enter apply med mode (Ctrl-D exits)","Short form: med\n"},
     {"apropos <string>","search help for <string>",""},
     {"clear stack","clears the stack",""},
+    {"close sigma","removes unknown symbols from FSM","" },
     {"compact sigma","removes redundant symbols from FSM","" },
     {"complete net","completes the FSM","" },
     {"compose net","composes networks on stack",""},
@@ -142,9 +158,12 @@ struct global_help {
     {"print lower-words > filename","prints words on the lower side of top FSM to file",""},
     {"print name","prints the name of the top FSM","" },
     {"print net","prints all information about top FSM","Short form: net\n" },
+    {"print pairs","prints input-output pairs from top FSM","Short form: pairs\n"},
+    {"print pairs > filename","prints input-output pairs from top FSM to file","Short form: pairs\n"},
     {"print random-lower","prints random words from lower side","Short form: random-lower\n" },
     {"print random-upper","prints random words from upper side","Short form: random-upper" },
     {"print random-words","prints random words from top FSM","Short form: random-words\n"},
+    {"print random-pairs","prints random input-output pairs from top FSM","Short form: random-pairs\n"},
     {"print sigma","prints the alphabet of the top FSM","Short form: sigma\n"},
     {"print size","prints size information about top FSM","Short form: size\n"},
     {"print shortest-string","prints the shortest string of the top FSM","Short form: pss\n"},
@@ -152,7 +171,7 @@ struct global_help {
     {"print upper-words","prints words on the upper side of top FSM","Short form: upper-words"},
     {"print upper-words > filename","prints words on the upper side of top FSM to file","Short form:upper-words"},
     {"print words","prints words of top FSM","Short form: words"},
-    {"print words > filename","prints words of top FSM to file","Short form: words"},
+    {"print words > filename","prints words of top FSM to file","Short form: words"},    
     {"prune net","makes top network coaccessible",""},
     {"push (defined) <name>","adds a defined FSM to top of stack",""},
     {"quit","exit foma",""},
@@ -208,6 +227,7 @@ struct global_help {
     {"variable med-limit","the limit on number of matches in apply med","Default value: 3\n"},
     {"variable med-cutoff","the cost limit for terminating a search in apply med","Default value: 3\n"},
     {"variable att-epsilon","the EPSILON symbol when reading/writing AT&T files","Default value: @0@\n"},
+    {"variable lexc-align","Forces X:0 X:X or 0:X alignment of lexicon entry symbols","Default value: OFF\n"},
     {"write prolog (> filename)","writes top network to prolog format file/stdout","Short form: wpl"},
     {"write att (> <filename>)","writes top network to AT&T format file/stdout","Short form: watt"},
     {"re operator: (∀<var name>)(F)","universal quantification","Example: $.A is equivalent to:\n(∃x)(x ∈ A ∧ (∀y)(¬(y ∈ A ∧ ¬(x = y))))"},
@@ -483,6 +503,12 @@ void iface_apply_up(char *word) {
     }
 }
 
+void iface_close() {
+    if (iface_stack_check(1)) {
+      stack_add(fsm_topsort(fsm_minimize(fsm_close_sigma(stack_pop(),0))));
+    }
+}
+
 void iface_compact() {
     if (iface_stack_check(1)) {
         fsm_compact(stack_find_top()->fsm); 
@@ -601,7 +627,7 @@ void iface_letter_machine() {
 }
 
 void iface_load_defined(char *filename) {
-    load_defined(filename);
+    load_defined(g_defines, filename);
 }
 
 void iface_load_stack(char *filename) {
@@ -691,7 +717,7 @@ void iface_print_dot(char *filename) {
 void iface_print_net(char *netname, char *filename) {
     struct fsm *net;
     if (netname != NULL) {
-        if ((net = find_defined(netname)) == NULL) {
+        if ((net = find_defined(g_defines, netname)) == NULL) {
             printf("No defined network %s.\n", netname);
             return;
         }
@@ -730,18 +756,22 @@ void iface_print_cmatrix() {
 }
 
 void iface_print_defined() {
-    struct defined  *defined;
-    struct definedf *defined_f;
-    if (get_defines() == NULL) {
+    struct defined_networks  *defined;
+    struct defined_functions *defined_f;
+    if (g_defines == NULL) {
         printf("No defined symbols.\n");
     }
-    for (defined = get_defines(); defined != NULL; defined = defined->next) {
-        printf("%s\t",defined->name);
-        print_stats(defined->net);
+    for (defined = g_defines; defined != NULL; defined = defined->next) {
+	if (defined->name != NULL) {
+	    printf("%s\t",defined->name);
+	    print_stats(defined->net);
+	}
     }
-    for (defined_f = get_defines_f(); defined_f != NULL; defined_f = defined_f->next) {
-        printf("%s@%i)\t",defined_f->name,defined_f->numargs);
-        printf("%s\n",defined_f->regex);
+    for (defined_f = g_defines_f; defined_f != NULL; defined_f = defined_f->next) {
+	if (defined_f->name != NULL) {
+		printf("%s@%i)\t",defined_f->name,defined_f->numargs);
+		printf("%s\n",defined_f->regex);
+	}
     }
 }
 
@@ -752,7 +782,7 @@ void iface_print_name() {
 
 void iface_quit() {
     struct fsm *net;
-    remove_defined(NULL);
+    remove_defined(g_defines, NULL);
     while (!(stack_isempty())) {
         net = stack_pop();
         fsm_destroy(net);
@@ -951,13 +981,13 @@ void iface_substitute_defined (char *original, char *substitute) {
     if (iface_stack_check(1)) {
         dequote_string(original);
         dequote_string(substitute);
-	if ((subnet = find_defined(substitute)) == NULL) {
+	if ((subnet = find_defined(g_defines, substitute)) == NULL) {
 	    printf("No defined network '%s'.\n",substitute);
 	} else {
-	    newnet = fsm_substitute_label(stack_find_top()->fsm, original, subnet);
-	    if (newnet == NULL) {
+	    if (fsm_symbol_occurs(stack_find_top()->fsm, original, M_UPPER + M_LOWER) == 0) {
 		printf("Symbol '%s' does not occur.\n", original);
 	    } else {
+		newnet = fsm_substitute_label(stack_find_top()->fsm, original, subnet);
 		stack_pop();
 		printf("Substituted network '%s' for '%s'.\n", substitute, original);
 		stack_add(fsm_topsort(fsm_minimize(newnet)));
@@ -997,11 +1027,12 @@ void iface_rotate() {
         stack_rotate();
 }
 void iface_save_defined(char *filename) {
-    save_defined(filename);
+    save_defined(g_defines, filename);
 }
 
+#if defined(ORIGINAL) || defined(ZLIB) 
 void iface_save_stack(char *filename) {
-    gzFile *outfile;
+    gzFile outfile;
     struct stack_entry *stack_ptr;
 
     if (iface_stack_check(1)) {
@@ -1011,14 +1042,16 @@ void iface_save_stack(char *filename) {
         }
         printf("Writing to file %s.\n", filename);
         for (stack_ptr = stack_find_bottom(); stack_ptr->next != NULL; stack_ptr = stack_ptr->next) {
-#ifdef ZLIB
-            foma_net_print(stack_ptr->fsm, outfile);
-#endif
+          foma_net_print(stack_ptr->fsm, outfile);
         }
         gzclose(outfile);
         return;
     }
 }
+#else
+void iface_save_stack(char *filename) {
+  fprintf(stderr, "IFACE_C_ERROR\n"); exit(1); }
+#endif
 
 void iface_show_variables() {
     int i;
@@ -1117,11 +1150,19 @@ void iface_sort() {
 
 
 void iface_test_equivalent() {
-    struct fsm *one, *two;
+  struct fsm *one, *two;
     if (iface_stack_check(2)) {
         one = fsm_copy(stack_find_top()->fsm);
         two = fsm_copy(stack_find_second()->fsm);
-        iface_print_bool(fsm_isempty(fsm_union(fsm_minus(fsm_copy(one),fsm_copy(two)),fsm_minus(fsm_copy(two),fsm_copy(one)))));
+	fsm_count(one);
+	fsm_count(two);
+	
+	//if (one->arccount != two->arccount || one->statecount != two->statecount || one->finalcount != two->finalcount) {
+	//iface_print_bool(0);
+	    //} else {
+	    iface_print_bool(fsm_equivalent(one, two));
+	    //iface_print_bool(fsm_isempty(fsm_union(fsm_minus(fsm_copy(one),fsm_copy(two)),fsm_minus(fsm_copy(two),fsm_copy(one)))));
+	    //}
     }
 }
 
@@ -1245,6 +1286,131 @@ void iface_words(int limit) {
     }
 }
 
+/* Splits string of upper:lower pairs with space separator into two strings */
+/* e.g. a:b c:d e 0:g => ace,bdeg  */
+
+void iface_split_string(char *result, char *string) {
+    int i;
+    char space = '\001', epsilon = '\002', separator = '\003';
+    /* Simulate: SEPARATOR \SPACE+ @-> 0 .o. SPACE|SEPARATOR|EPSILON -> 0 */
+    /*           to extract only upper side of string                     */
+    for (i = 0 ; ; ) {
+    zero:
+	if (result[i] == '\0') {
+	    break;
+	} else if (result[i] == space || result[i] == epsilon) {
+	    i++;
+	    goto zero;
+	} else if (result[i] == separator) {
+	    i++;
+	    goto one;
+	} else {
+	    strncat(string, result+i, 1);
+	    i++;
+	    goto zero;
+	}
+    one:
+	if (result[i] == '\0') {
+	    break;
+	} else if (result[i] == space) {
+	    i++;
+	    goto zero;
+	} else {
+	    i++;
+	    goto one;
+	}
+    }
+}
+
+void iface_split_result(char *result, char **upper, char **lower) {
+    *upper = calloc(strlen(result), sizeof(char));
+    *lower = calloc(strlen(result), sizeof(char));
+    /* Split string into upper by filtering input side */
+    /* and lower by the same filter, but reversed      */
+    iface_split_string(result, *upper);
+    xstrrev(result);
+    iface_split_string(result, *lower);
+    xstrrev(*lower);
+    xstrrev(result);
+}
+
+
+void iface_pairs_call(int limit, int random) {
+    char *result, *upper, *lower;
+    struct apply_handle *ah;
+    int i;
+    limit = (limit == -1) ? g_list_limit : limit;
+    if (iface_stack_check(1)) {
+        ah = stack_get_ah();
+	apply_set_show_flags(ah, g_show_flags);
+	apply_set_obey_flags(ah, g_obey_flags);	
+	apply_set_space_symbol(ah, "\001");
+	apply_set_epsilon(ah, "\002");
+	apply_set_separator(ah, "\003");
+        for (i = limit; i > 0; i--) {
+	    if (random == 1)		
+		result = apply_random_words(ah);
+	    else
+		result = apply_words(ah);		
+            if (result == NULL)
+                break;
+	    iface_split_result(result, &upper, &lower);
+            printf("%s\t%s\n",upper, lower);
+	    xxfree(upper);
+	    xxfree(lower);
+        }
+	apply_set_space_symbol(ah, " ");
+	apply_set_epsilon(ah, "0");
+	apply_set_separator(ah, ":");	
+        apply_reset_enumerator(ah);
+    }
+}
+
+void iface_random_pairs(int limit) {
+    iface_pairs_call(limit, 1);
+}
+
+void iface_pairs(int limit) {
+    iface_pairs_call(limit, 0);
+}
+
+void iface_pairs_file(char *filename) {
+    FILE *outfile;
+    char *result, *upper, *lower;
+    struct apply_handle *ah;
+    if (iface_stack_check(1)) {
+	if (stack_find_top()->fsm->pathcount == PATHCOUNT_CYCLIC) {
+	    printf("FSM is cyclic: can't write all pairs to file.\n");
+	    return;
+	}
+	printf("Writing to %s.\n",filename);
+	if ((outfile = fopen(filename, "w")) == NULL) {
+	    perror("Error opening file");
+	    return;
+	}
+	ah = stack_get_ah();
+	apply_set_show_flags(ah, g_show_flags);
+	apply_set_obey_flags(ah, g_obey_flags);	
+	apply_set_space_symbol(ah, "\001");
+	apply_set_epsilon(ah, "\002");
+	apply_set_separator(ah, "\003");
+        for (;;) {
+	    result = apply_words(ah);		
+            if (result == NULL)
+                break;
+	    iface_split_result(result, &upper, &lower);
+	    fprintf(outfile, "%s\t%s\n", upper, lower);
+	    xxfree(upper);
+	    xxfree(lower);
+        }
+	apply_set_space_symbol(ah, " ");
+	apply_set_epsilon(ah, "0");
+	apply_set_separator(ah, ":");	
+        apply_reset_enumerator(ah);
+	fclose(outfile);
+    }
+}
+
 int iface_write_att(char *filename) {
     FILE    *outfile;
     struct fsm *net;
@@ -1271,7 +1437,7 @@ int iface_write_att(char *filename) {
 
 void iface_write_prolog(char *filename) {
   if (iface_stack_check(1))       
-    write_prolog(stack_find_top()->fsm, filename);
+    foma_write_prolog(stack_find_top()->fsm, filename);
 }
 
 void iface_zero_plus() {
@@ -1408,11 +1574,12 @@ void print_mem_size(struct fsm *net) {
     } else if (s >= 1024 && s < 1048576) {
         sprintf(size, "%.1f kB. ", sf/1024);
     } else if (s >= 1048576 && s < 1073741824) {
-        sprintf(size, "%.1f MB. ", sf/1048576);        
+        sprintf(size, "%.1f MB. ", sf/1048576);
     } else if (s >= 1073741824) {
         sprintf(size, "%.1f GB. ", sf/1073741824);        
     }
-    printf("%s", size);
+    fprintf(stdout, "%s", size);
+    fflush(stdout);
 }
 
 int print_stats(struct fsm *net) {
@@ -1459,7 +1626,6 @@ static int print_dot(struct fsm *net, char *filename) {
     int i, j, linelen;
     short *finals, *printed;
     
-    stateptr = net->states;
     fsm_count(net);
     
     finals = xxmalloc(sizeof(short)*net->statecount);

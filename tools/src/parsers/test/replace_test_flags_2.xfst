@@ -1,0 +1,2 @@
+regex [ a -> b || _ [%@P.FOO.FOO%@ | %@D.BAR.BAR%@ ]* [ .#. | ?:c - a:c ] ] ;
+write att

@@ -2,6 +2,14 @@
 
 %{
 
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #include <string.h>
 
@@ -9,7 +17,11 @@
 #include "HfstInputStream.h"
 #include "HfstXeroxRules.h"
 
-#include "xre_parse.hh"
+#ifdef YACC_USE_PARSER_H_EXTENSION
+  #include "xre_parse.h"
+#else
+  #include "xre_parse.hh"
+#endif
 #include "xre_utils.h"
 
 #undef YY_INPUT
@@ -102,6 +114,8 @@ BRACED      [{]([^}]|[\300-\337].|[\340-\357]..|[\360-\367]...)+[}]
 
 ".o." { CR; return COMPOSITION; }
 ".O." { CR; return LENIENT_COMPOSITION; }
+".m>." { CR; return MERGE_RIGHT_ARROW; }
+".<m." { CR; return MERGE_LEFT_ARROW; }
 ".x." { CR; return CROSS_PRODUCT; }
 ".P." { CR; return UPPER_PRIORITY_UNION; }
 ".p." { CR; return LOWER_PRIORITY_UNION; }
@@ -134,7 +148,7 @@ BRACED      [{]([^}]|[\300-\337].|[\340-\357]..|[\360-\367]...)+[}]
 
 "\\\\\\" { CR; return LEFT_QUOTIENT; }
 
-"^"({UINTEGER}|"0")","({UINTEGER}|"0") { 
+"^"{WSP}*({UINTEGER}|"0")","({UINTEGER}|"0") { 
     CR;
     yylval->values = hfst::xre::get_n_to_k(yytext);
     return CATENATE_N_TO_K;
@@ -146,19 +160,19 @@ BRACED      [{]([^}]|[\300-\337].|[\340-\357]..|[\360-\367]...)+[}]
     return CATENATE_N_TO_K;
 }
 
-"^>"({UINTEGER}|"0") { 
+"^>"{WSP}*({UINTEGER}|"0") { 
     CR;
     yylval->value = strtol(yytext + 2, 0, 10);
     return CATENATE_N_PLUS; 
 }
 
-"^<"({UINTEGER}|"0") { 
+"^<"{WSP}*({UINTEGER}|"0") { 
     CR;
     yylval->value = strtol(yytext + 2, 0, 10);
     return CATENATE_N_MINUS;
 }
 
-"^"({UINTEGER}|"0")                  { 
+"^"{WSP}*({UINTEGER}|"0")                  { 
     CR;
     yylval->value = strtol(yytext + 1, 0, 10);
     return CATENATE_N;
@@ -166,8 +180,8 @@ BRACED      [{]([^}]|[\300-\337].|[\340-\357]..|[\360-\367]...)+[}]
 
 ".r" { CR; return REVERSE; }
 ".i" { CR; return INVERT; }
-".u" { CR; return UPPER; }
-".l" { CR; return LOWER; }
+".u" { CR; return XRE_UPPER; }
+".l" { CR; return XRE_LOWER; }
 
 "@bin\""[^""]+"\""|"@\""[^""]+"\"" { 
     CR;
@@ -209,11 +223,6 @@ BRACED      [{]([^}]|[\300-\337].|[\340-\357]..|[\360-\367]...)+[}]
 "(" { CR; return LEFT_PARENTHESIS; }
 ")" { CR; return RIGHT_PARENTHESIS; }
 
-
-{LWSP}":"{LWSP} { CR; return PAIR_SEPARATOR_SOLE; }
-^":"$ { CR; return PAIR_SEPARATOR_SOLE; }
-{LWSP}":" { CR; return PAIR_SEPARATOR_WO_LEFT; }
-":"{LWSP} { CR; return PAIR_SEPARATOR_WO_RIGHT; }
 ":" { CR; return PAIR_SEPARATOR; }
 
 "::"{WEIGHT} {
@@ -269,18 +278,6 @@ BRACED      [{]([^}]|[\300-\337].|[\340-\357]..|[\360-\367]...)+[}]
     CR;
     yylval->label = yytext;
     return FUNCTION_NAME;
-}
-
-";\t"{WEIGHT} {
-    CR; 
-    yylval->weight = hfst::xre::get_weight(yytext + 2);
-    return END_OF_WEIGHTED_EXPRESSION;
-}
-
-";"" "+{WEIGHT} {
-    CR; 
-    yylval->weight = hfst::xre::get_weight(yytext + 2);
-    return END_OF_WEIGHTED_EXPRESSION;
 }
 
 ";" { 

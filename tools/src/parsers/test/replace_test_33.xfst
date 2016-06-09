@@ -2,4 +2,4 @@ set precision 1
 set print-weight ON
 
 regex a+ (->) x::1  || x x _ y y , y _ x ;
-apply up axxayyaax
+apply down axxayyaax

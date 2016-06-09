@@ -1,19 +1,13 @@
 ## Process this file with automake to produce Makefile.in
 
-## Copyright (C) 2010 University of Helsinki
-
-## This program is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-
-## This program is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU Genera7l Public License for more details.
-
-## You should have received a copy of the GNU General Public License
-## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2016 University of Helsinki                          
+#                                                                    
+# This library is free software; you can redistribute it and/or      
+# modify it under the terms of the GNU Lesser General Public         
+# License as published by the Free Software Foundation; either       
+# version 3 of the License, or (at your option) any later version.    
+# See the file COPYING included with this distribution for more      
+# information. 
 
 SUBDIRS=implementations parsers
 AUTOMAKE_OPTIONS=subdir-objects
@@ -29,7 +23,9 @@ HFST_SRCS=HfstApply.cc HfstInputStream.cc HfstTransducer.cc HfstOutputStream.cc\
 		  HfstFlagDiacritics.cc HfstExceptionDefs.cc \
 		  HarmonizeUnknownAndIdentitySymbols.cc \
 		  HfstLookupFlagDiacritics.cc \
-		  HfstEpsilonHandler.cc
+		  HfstEpsilonHandler.cc HfstStrings2FstTokenizer.cc \
+		  HfstPrintDot.cc HfstPrintPCKimmo.cc hfst-string-conversions.cc \
+		  string-utils.cc
 
 # libtool takes over
 libhfst_la_SOURCES = $(HFST_SRCS)
@@ -56,6 +52,11 @@ else
   libhfst_la_LIBADD += $(top_builddir)/back-ends/openfst/src/lib/libfst.la
 endif
 
+if WINDOWS
+  libhfst_la_LIBADD += -ldl
+endif
+
+
 # we only have one library target but would like a particular includedir
 # structure for various headers, so we do this
 hfstincludedir = $(includedir)/hfst
@@ -77,7 +78,6 @@ HFST_HDRS = \
 	implementations/HfstTransitionGraph.h \
 	implementations/HfstTransition.h \
 	implementations/HfstTropicalTransducerTransitionData.h \
-	implementations/HfstFastTransitionData.h \
 	implementations/compose_intersect/ComposeIntersectRulePair.h \
 	implementations/compose_intersect/ComposeIntersectLexicon.h \
 	implementations/compose_intersect/ComposeIntersectRule.h \
@@ -91,13 +91,19 @@ HFST_HDRS = \
 	HfstOutputStream.h \
 	HfstXeroxRules.h \
 	HfstLookupFlagDiacritics.h \
-	parsers/LexcCompiler.h parsers/XreCompiler.h parsers/PmatchCompiler.h
+	HfstStrings2FstTokenizer.h \
+	HfstPrintDot.h \
+	HfstPrintPCKimmo.h \
+	string-utils.h \
+	hfst-string-conversions.h \
+	parsers/LexcCompiler.h parsers/XreCompiler.h parsers/PmatchCompiler.h \
+	hfstdll.h
 ### Add your library here ###
 #	implementations/MyTransducerLibraryTransducer.h
 
 hfstinclude_HEADERS = $(HFST_HDRS)
 
-libhfst_la_LDFLAGS = -no-undefined -version-info 39:0:0
+libhfst_la_LDFLAGS = -no-undefined -version-info 45:0:0
 
 LIBHFST_TSTS=HfstApply HfstInputStream HfstTransducer \
 		HfstOutputStream HfstXeroxRules HfstRules HfstSymbolDefs \

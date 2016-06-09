@@ -1,0 +1,15 @@
+LEXICON Root
+Noun ;
+Verb ;
+
+LEXICON Noun
+cat #;
+dog #;
+
+LEXICON Verb
+mew #;
+bark #;
+
+LEXICON Noun
+cat #;
+dog #;

@@ -1,5 +1,5 @@
 /*     Foma: a finite-state toolkit and library.                             */
-/*     Copyright © 2008-2010 Mans Hulden                                     */
+/*     Copyright © 2008-2015 Mans Hulden                                     */
 
 /*     This file is part of foma.                                            */
 
@@ -49,8 +49,21 @@ char *trim(char *string) {
     return(string);
 }
 
+/* Reverses string in-place */
+char *xstrrev(char *str) {
+      char *p1, *p2;
+      if (! str || ! *str)
+            return str;
+      for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2) {
+            *p1 ^= *p2;
+            *p2 ^= *p1;
+            *p1 ^= *p2;
+      }
+      return str;
+}
+
 char *escape_string(char *string, char chr) {
-    int i,j;
+    size_t i,j;
     char *newstring;
     for (i=0,j=0; i < strlen(string); i++) {
         if (string[i] == chr) {
@@ -139,9 +152,9 @@ char *streqrep(char *s, char *oldstring, char *newstring) {
 int ishexstr (char *str) {
     int i;
     for (i=0; i<4; i++) {
-        if ((*(str+i) > 0x2f && *(str+i) < 0x3a) || (*(str+i) > 0x40 && *(str+i) < 0x47) || (*(str+i) > 0x60 && *(str+i) < 0x67))
-            continue;
-        return 0;
+	if ((*(str+i) > 0x2f && *(str+i) < 0x3a) || (*(str+i) > 0x40 && *(str+i) < 0x47) || (*(str+i) > 0x60 && *(str+i) < 0x67))
+	    continue;
+	return 0;
     }
     return 1;
 }
@@ -152,6 +165,42 @@ int utf8strlen(char *str) {
         i = i + utf8skip(str+i) + 1;
     }
     return j;
+}
+
+/* Checks if the next character in the string is a combining character     */
+/* according to Unicode 7.0                                                */
+/* i.e. codepoints 0300-036F  Combining Diacritical Marks                  */
+/*                 1AB0-1ABE  Combining Diacritical Marks Extended         */
+/*                 1DC0-1DFF  Combining Diacritical Marks Supplement       */
+/*                 20D0-20F0  Combining Diacritical Marks for Symbols      */
+/*                 FE20-FE2D  Combining Half Marks                         */
+/* Returns number of bytes of char. representation, or 0 if not combining  */
+
+int utf8iscombining(unsigned char *s) {
+    if (*s == '\0' || *(s+1) == '\0')
+	return 0;
+    if (!(*s == 0xcc || *s == 0xcd || *s == 0xe1 || *s == 0xe2 || *s == 0xef))
+	return 0;
+    /* 0300-036F */
+    if (*s == 0xcc && *(s+1) >= 0x80 && *(s+1) <= 0xbf)
+	return 2;
+    if (*s == 0xcd && *(s+1) >= 0x80 && *(s+1) <= 0xaf)
+	return 2;
+    if (*(s+2) == '\0')
+	return 0;
+    /* 1AB0-1ABE */
+    if (*s == 0xe1 && *(s+1) == 0xaa && *(s+2) >= 0xb0 && *(s+2) <= 0xbe)
+	return 3;
+    /* 1DC0-1DFF */
+    if (*s == 0xe1 && *(s+1) == 0xb7 && *(s+2) >= 0x80 && *(s+2) <= 0xbf)
+	return 3;
+    /* 20D0-20F0 */
+    if (*s == 0xe2 && *(s+1) == 0x83 && *(s+2) >= 0x90 && *(s+2) <= 0xb0)
+	return 3;
+    /* FE20-FE2D */
+    if (*s == 0xef && *(s+1) == 0xb8 && *(s+2) >= 0xa0 && *(s+2) <= 0xad)
+	return 3;
+    return 0;
 }
 
 int utf8skip(char *str) {

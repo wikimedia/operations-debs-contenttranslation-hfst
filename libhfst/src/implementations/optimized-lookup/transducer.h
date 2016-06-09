@@ -1,18 +1,21 @@
 // -*- mode: c++; -*-
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #ifndef _HFST_OL_TRANSDUCER_TRANSDUCER_H_
 #define _HFST_OL_TRANSDUCER_TRANSDUCER_H_
+
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include <io.h>
+#endif
 
 #include <vector>
 #include <set>
@@ -26,10 +29,17 @@
 #include <deque>
 #include <queue>
 #include <stdexcept>
+#include <time.h>
 
 #include "../../HfstExceptionDefs.h"
 #include "../../HfstFlagDiacritics.h"
 #include "../../HfstSymbolDefs.h"
+
+#ifdef _MSC_VER
+ #include <BaseTsd.h>
+ typedef SSIZE_T ssize_t;
+#endif
+
 
 /** \brief A namespace for optimized-lookup functions and datatypes.*/
 namespace hfst_ol {
@@ -75,9 +85,11 @@ struct TraversalState
 };
 typedef std::set<TraversalState> TraversalStates;
 
-const SymbolNumber NO_SYMBOL_NUMBER = std::numeric_limits<SymbolNumber>::max();
+  // parentheses avoid collision with windows macro 'max'
+  const SymbolNumber NO_SYMBOL_NUMBER = (std::numeric_limits<SymbolNumber>::max)();
 const TransitionTableIndex NO_TABLE_INDEX =
-    std::numeric_limits<TransitionTableIndex>::max();
+  (std::numeric_limits<TransitionTableIndex>::max)();
+  const unsigned long NO_COUNTER = (std::numeric_limits<unsigned long>::max)();
 const Weight INFINITE_WEIGHT = static_cast<float>(NO_TABLE_INDEX);
 
 enum HeaderFlag {Weighted, Deterministic, Input_deterministic, Minimized,
@@ -419,7 +431,9 @@ public:
         { return identity_symbol; }
     SymbolNumber get_orig_symbol_count(void) const
         { return orig_symbol_count; }
-    void add_symbol(char * symbol);
+    virtual void add_symbol(char * symbol);
+    virtual void add_symbol(const std::string & symbol);
+
     
 };
 
@@ -455,8 +469,8 @@ public:
     void write(std::ostream& os, bool weighted) const
         {
             os.write(reinterpret_cast<const char*>(&input_symbol),
-                     sizeof(input_symbol));
-            if(!weighted and input_symbol == NO_SYMBOL_NUMBER and
+                     sizeof(SymbolNumber));
+            if(!weighted && input_symbol == NO_SYMBOL_NUMBER &&
                first_transition_index != NO_TABLE_INDEX) {
                 // Make sure that we write the correct type of final index
                 unsigned int unweighted_final_index = 1;
@@ -641,6 +655,8 @@ public:
             return (i < TRANSITION_TARGET_TABLE_START) ? 
                 table[i] : table[i-TRANSITION_TARGET_TABLE_START];
         }
+
+    std::vector<T> get_vector(void) const { return std::vector<T>(table); } ;
   
     void display(bool transition_table) const
         {
@@ -729,7 +745,6 @@ public:
         { return index_table[i].final(); }
     Weight get_final_weight(TransitionTableIndex i) const
         { return index_table[i].final_weight(); }
-
   
     void display() const
         {
@@ -753,10 +768,17 @@ private:
     SymbolNumberVector symbols;
     
 public:
-    OlLetterTrie(void):
+    OlLetterTrie():
         letters(UCHAR_MAX, static_cast<OlLetterTrie*>(NULL)),
         symbols(UCHAR_MAX,NO_SYMBOL_NUMBER)
         {}
+
+    ~OlLetterTrie() {
+        for (size_t i=0 ; i<letters.size() ; ++i) {
+            delete letters[i];
+            letters[i] = 0;
+        }
+    }
     
     void add_string(const char * p,SymbolNumber symbol_key);
     bool has_key_starting_with(const char c) const;
@@ -832,6 +854,8 @@ protected:
 
     ssize_t max_lookups;
     unsigned int recursion_depth_left;
+    double max_time;
+    clock_t start_clock;
 
     void try_epsilon_transitions(unsigned int input_tape_pos,
                                  unsigned int output_tape_pos,
@@ -899,11 +923,11 @@ public:
     const SymbolTable& get_symbol_table() const
         { return alphabet->get_symbol_table(); }
 
-
     const TransitionIndex& get_index(TransitionTableIndex i) const
         { return tables->get_index(i); }
     const Transition& get_transition(TransitionTableIndex i) const
         { return tables->get_transition(i); }
+    
     bool final_index(TransitionTableIndex i) const
         {
             if (indexes_transition_table(i)) {
@@ -920,11 +944,11 @@ public:
     bool is_lookup_infinitely_ambiguous(const StringVector & s);
     bool is_lookup_infinitely_ambiguous(const std::string & input);
     
-    TransducerTable<TransitionWIndex> & copy_windex_table();
-    TransducerTable<TransitionW> & copy_transitionw_table();
-    TransducerTable<TransitionIndex> & copy_index_table();
-    TransducerTable<Transition> & copy_transition_table();
-
+    TransducerTable<TransitionWIndex> copy_windex_table();
+    TransducerTable<TransitionW> copy_transitionw_table();
+    TransducerTable<TransitionIndex> copy_index_table();
+    TransducerTable<Transition> copy_transition_table();
+    
     // state_index must be an index to a state which is defined as either:
     // (1) the start of a set of entries in the transition index table, or
     // (2) the boundary before a set of entries in the transition table, in
@@ -936,13 +960,17 @@ public:
 
 
     bool initialize_input(const char * input_str);
-    HfstOneLevelPaths * lookup_fd(const StringVector & s, ssize_t limit = -1);
+    void include_symbol_in_alphabet(const std::string & sym);
+    HfstOneLevelPaths * lookup_fd(const StringVector & s, ssize_t limit = -1,
+        double time_cutoff = 0.0);
     /* Tokenize and lookup, accounting for flag diacritics, the surface string
        \a s. The return value, a pointer to HfstOneLevelPaths
        (which is a set) of analyses, is newly allocated.
     */
-    HfstOneLevelPaths * lookup_fd(const std::string & s, ssize_t limit = -1);
-    HfstOneLevelPaths * lookup_fd(const char * s, ssize_t limit = -1);
+    HfstOneLevelPaths * lookup_fd(const std::string & s, ssize_t limit = -1,
+                                  double time_cutoff = 0.0);
+    HfstOneLevelPaths * lookup_fd(const char * s, ssize_t limit = -1,
+                                  double time_cutoff = 0.0);
     void note_analysis(void);
 
     // Methods for supporting ospell

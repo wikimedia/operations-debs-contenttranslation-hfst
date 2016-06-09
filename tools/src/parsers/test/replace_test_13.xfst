@@ -2,6 +2,6 @@ set precision 1
 set print-weight ON
 
 regex a -> b::1 || .#. _ c ;
-apply up .#.ac
-apply up ac
+apply down .#.ac
+apply down ac
 

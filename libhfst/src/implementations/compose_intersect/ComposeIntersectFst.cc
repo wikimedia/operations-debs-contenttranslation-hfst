@@ -1,3 +1,11 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 #include "ComposeIntersectFst.h"
 
 HFST_EXCEPTION_CHILD_DEFINITION(StateNotDefined);
@@ -9,7 +17,7 @@ namespace hfst
   namespace implementations
   {
 
-    const HfstState ComposeIntersectFst::START;
+    const HfstState ComposeIntersectFst::START = 0;
 
     template<> ComposeIntersectFst::CompareTransitions 
     ComposeIntersectFst::TransitionSet::comparator = 
@@ -39,9 +47,9 @@ namespace hfst
     (const ComposeIntersectFst::Transition &another) const
     {
       return 
-    ilabel == another.ilabel and
-    olabel == another.olabel and
-    weight == another.weight and
+    ilabel == another.ilabel &&
+    olabel == another.olabel &&
+    weight == another.weight &&
     target == another.target;
     }
     bool ComposeIntersectFst::CompareTransitions::operator()
@@ -115,7 +123,7 @@ namespace hfst
              (jt->get_output_symbol())].
             insert(*jt); }
         }
-      if (not identity_found)
+      if (! identity_found)
         { identity_transition_vector.push_back
         (Transition
          (0,
@@ -149,7 +157,7 @@ namespace hfst
       if (transition_map_vector.at(s).find(symbol) == 
       transition_map_vector.at(s).end())
     { 
-      if (is_known_symbol(symbol) or not has_identity_transition(s))
+      if (is_known_symbol(symbol) || ! has_identity_transition(s))
         { return transition_map_vector.at(s)[symbol] = TransitionSet(); }
       else
         { 

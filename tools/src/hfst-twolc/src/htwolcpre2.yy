@@ -237,20 +237,20 @@ void insert_alphabet_pairs(const HandyDeque<std::string> &symbol_queue,
        ++it)
     {
       //If we found a symbol pair, we insert it into symbol_pair_set.
-      if ((*it == "__HFST_TWOLC_0" or
-	   *it == "__HFST_TWOLC_.#." or
-	   *it == "__HFST_TWOLC_#" or
-	   *it == "__HFST_TWOLC_SPACE" or
-	   *it == "__HFST_TWOLC_TAB" or
+      if ((*it == "__HFST_TWOLC_0" ||
+	   *it == "__HFST_TWOLC_.#." ||
+	   *it == "__HFST_TWOLC_#" ||
+	   *it == "__HFST_TWOLC_SPACE" ||
+	   *it == "__HFST_TWOLC_TAB" ||
            it->find("__HFST_TWOLC_") == std::string::npos)  
-	  and
+	  &&
 	  *(it+1) == "__HFST_TWOLC_:" 
-	  and
-	  (*(it+2) == "__HFST_TWOLC_0" or
-	   *(it+2) == "__HFST_TWOLC_.#." or
-	   *(it+2) == "__HFST_TWOLC_#" or
-	   *(it+2) == "__HFST_TWOLC_SPACE" or
-	   *(it+2) == "__HFST_TWOLC_TAB" or
+	  &&
+	  (*(it+2) == "__HFST_TWOLC_0" ||
+	   *(it+2) == "__HFST_TWOLC_.#." ||
+	   *(it+2) == "__HFST_TWOLC_#" ||
+	   *(it+2) == "__HFST_TWOLC_SPACE" ||
+	   *(it+2) == "__HFST_TWOLC_TAB" ||
            (it+2)->find("__HFST_TWOLC_") == std::string::npos))
 	{	  
 	  std::string input_symbol = *it == "__HFST_TWOLC_#" ? "#" : *it;
@@ -304,7 +304,7 @@ int main(int argc, char * argv[])
 #endif
 
   CommandLine command_line(argc,argv);
-  if (command_line.help or command_line.usage or command_line.version)
+  if (command_line.help || command_line.usage || command_line.version)
     { exit(0); }
   //yydebug = 1;
   input_reader.set_input(std::cin);

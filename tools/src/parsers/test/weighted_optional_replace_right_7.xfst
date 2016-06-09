@@ -3,15 +3,15 @@ set precision 1
 set lookup-cycle-cutoff 5
 
 regex [a::1|b::2]+ (->) [C] || c[a|b]* __ [a|b]*c ;
-apply up cac
+apply down cac
 echo --
-apply up cbc
+apply down cbc
 echo --
-apply up caac
+apply down caac
 echo --
-apply up cbbc
+apply down cbbc
 echo --
-apply up cabc
+apply down cabc
 echo --
-apply up cbac
+apply down cbac
 

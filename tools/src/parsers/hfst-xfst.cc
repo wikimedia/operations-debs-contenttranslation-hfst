@@ -25,14 +25,19 @@
   #include <windows.h>
 #endif
 
-#include "../hfst-string-conversions.h"
+#include "hfst-string-conversions.h"
 
 #ifdef HAVE_READLINE
   #include <readline/readline.h>
   #include <readline/history.h>
 #endif
 
-#include <getopt.h>
+#ifdef _MSC_VER
+#  include "../hfst-getopt.h"
+#else
+#  include <getopt.h>
+#endif
+
 #include "hfst-commandline.h"
 #include "hfst-program-options.h"
 #include "hfst-tool-metadata.h"
@@ -43,8 +48,9 @@ static hfst::ImplementationType output_format = hfst::UNSPECIFIED_TYPE;
 static char* scriptfilename = NULL;
 static char* startupfilename = NULL;
 static std::vector<char*> execute_commands;
-static bool pipemode = false;
-static bool output_to_console = false;
+static bool pipe_input = false;
+static bool pipe_output = false; // this has no effect on non-windows platforms
+
 #ifdef HAVE_READLINE
   static bool use_readline = true;
 #else
@@ -69,16 +75,28 @@ print_usage()
           "  -f, --format=FMT         Write result using FMT as backend format\n"
           "  -F, --scriptfile=FILE    Read commands from FILE, and quit\n"
           "  -l, --startupfile=FILE   Read commands from FILE on startup\n"
-          "  -p, --pipe-mode          Read commands from standard input (non-interactive)\n"
+          "  -p, --pipe-mode[=STREAM] Control input and output streams\n"
           "  -r, --no-readline        Do not use readline library for input\n"
           "  -w, --print-weight       Print weights for each operation\n"
-          "  -k, --output-to-console  Output directly to console (Windows-specific)\n"
+          //          "  -k, --no-console         Do not output directly to console (Windows-specific)\n"
           "\n"
           "Option --execute can be invoked many times.\n"
           "If FMT is not given, OpenFst's tropical format will be used.\n"
           "The possible values for FMT are { foma, openfst-tropical, openfst-log, sfst }.\n"
           "Readline library, if enabled when configuring, is used for input by default.\n"
-          "Input files are always treated as UTF-8.\n");
+          "Input files are always treated as UTF-8.\n"
+          "\n"
+          "STREAM can be { input, output, both }. If not given, defaults to {both}.\n"
+#ifdef _MSC_VER
+          "If input file is not specified with -F, input is read interactively via the\n"
+          "console, i.e. line by line from the user. If you redirect input from a file,\n"
+          "use --pipe-mode=input. Output is by default printed to the console. If you\n"
+          "redirect output to a file, use --pipe-mode=output.\n");
+#else
+          "If input file is not specified with -F, input is read interactively line by\n"
+          "line from the user. If you redirect input from a file, use --pipe-mode=input.\n"
+          "--pipe-mode=output is ignored on non-windows platforms.\n");
+#endif
   fprintf(message_out, "\n");
   print_report_bugs();
   fprintf(message_out, "\n");
@@ -100,15 +118,15 @@ parse_options(int argc, char** argv)
             {"scriptfile", required_argument, 0, 'F'},
             {"execute", required_argument, 0, 'e'},
             {"startupfile", required_argument, 0, 'l'},
-            {"pipe-mode", no_argument, 0, 'p'},
+            {"pipe-mode", optional_argument, 0, 'p'},
             {"no-readline", no_argument, 0, 'r'},
             {"print-weight", no_argument, 0, 'w'},
-            {"output-to-console", no_argument, 0, 'k'},
+            //            {"no-console", no_argument, 0, 'k'},
             {0,0,0,0}
           };
         int option_index = 0;
         // add tool-specific options here
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT "f:F:e:l:prwk",
+        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT "f:F:e:l:p::rwk",
                              long_options, &option_index);
         if (-1 == c)
           {
@@ -144,16 +162,34 @@ parse_options(int argc, char** argv)
           case 'F':
             scriptfilename = hfst_strdup(optarg);
             break;
+            // todo: on windows getopt_long does not support unicode:
+            // e.g. option  -e 'regex U;'  where U is a unicode character is not possible
           case 'e':
             execute_commands.push_back(hfst_strdup(optarg));
             break;
           case 'l':
             startupfilename = hfst_strdup(optarg);
             break;
+
           case 'p':
-            pipemode = true;
-            use_readline = false;
+            if (optarg == NULL)
+              { pipe_input = true; pipe_output = true; }
+            else if (strcmp(optarg, "both") == 0 || strcmp(optarg, "BOTH") == 0)
+              { pipe_input = true; pipe_output = true; }
+            else if (strcmp(optarg, "input") == 0 || strcmp(optarg, "INPUT") == 0 ||
+                     strcmp(optarg, "in") == 0 || strcmp(optarg, "IN") == 0)
+              { pipe_input = true; }
+            else if (strcmp(optarg, "output") == 0 || strcmp(optarg, "OUTPUT") == 0 ||
+                     strcmp(optarg, "out") == 0 || strcmp(optarg, "OUT") == 0)
+              { pipe_output = true; }
+            else
+              { error(EXIT_FAILURE, 0, "--pipe-mode argument %s unrecognised", optarg); }
             break;
+
+            //          case 'p':
+            //pipe_input = true;
+            //use_readline = false;
+            //break;
           case 'r':
             use_readline = false;
             break;
@@ -161,7 +197,7 @@ parse_options(int argc, char** argv)
             print_weight = true;
             break;
           case 'k':
-            output_to_console = true;
+            pipe_output = true;
             break;
 #include "inc/getopt-cases-error.h"
           }
@@ -187,6 +223,7 @@ int parse_file(const char* filename, hfst::xfst::XfstCompiler &comp)
       error(EXIT_FAILURE, 0, "error when reading file %s\n", filename);
       return EXIT_FAILURE;
     }
+
   if (0 != comp.parse_line(line))
     {
       error(EXIT_FAILURE, 0, "error when parsing file %s\n", filename);
@@ -207,20 +244,26 @@ void insert_zeroes(char * array, unsigned int number)
 static bool expression_continues(std::string & expr)
 {
   size_t s = expr.size();
+
+  // get rid of extra newlines...
+  if (s > 0 && expr.at(s-1) == '\n')
+    {
+      expr.erase(s-1);
+    }
+  s = expr.size();
+  // and carriage returns
+  if (s > 0 && expr.at(s-1) == '\r')
+    {
+      expr.erase(s-1);
+    }
+  s = expr.size();
   if (s > 0 && expr.at(s-1) == '\\')
     {
       expr.at(s-1) = '\n';
       return true;
     }
-  if (s > 1 && expr.at(s-1) == '\r' && expr.at(s-2) == '\\')
-    {
-      expr.at(s-1) = '\n';
-      expr.at(s-2) = '\r';
-      return true;
-    }
   return false;
 }
-
 
 #ifdef HAVE_READLINE
 #include "cmd.h"
@@ -311,7 +354,7 @@ int main(int argc, char** argv)
       return EXIT_FAILURE;
     }
   
-  if (pipemode && (scriptfilename != NULL))
+  if (pipe_input && (scriptfilename != NULL))
     {
       error(EXIT_FAILURE, 0 , "--pipe-mode and --scriptfile cannot be used simultaneously\n");
       return EXIT_FAILURE;
@@ -340,7 +383,7 @@ int main(int argc, char** argv)
       comp.setPromptVerbosity(true);
     }
 
-  if (output_to_console)
+  if (!pipe_output)
     comp.setOutputToConsole(true);
 
   // If needed, execute scripts given in command line
@@ -364,7 +407,7 @@ int main(int argc, char** argv)
         }
     }
 
-  if (pipemode) 
+  if (pipe_input) 
     {
       verbose_printf("Reading from standard input...\n");
       comp.setReadInteractiveTextFromStdin(false);
@@ -395,19 +438,24 @@ int main(int argc, char** argv)
 
       std::string expression = "";
       //unsigned int lines = 0;
+      const unsigned int MAX_LINE_LENGTH = 1024;
 
 #ifdef WINDOWS
-      SetConsoleCP(65001);
+      /*SetConsoleCP(65001);
       const HANDLE stdIn = GetStdHandle(STD_INPUT_HANDLE);
       WCHAR buffer[0x1000];
       DWORD numRead = 0;
-      while (ReadConsoleW(stdIn, buffer, sizeof buffer, &numRead, NULL))
+      while (ReadConsoleW(stdIn, buffer, size_t((0x1000)/4), &numRead, NULL))
         {
           std::wstring wstr(buffer, numRead);
           std::string linestr = hfst::wide_string_to_string(wstr);
-          expression += linestr;
+          expression += linestr;*/
+      std::string str("");
+      while(hfst::get_line_from_console(str, MAX_LINE_LENGTH))
+        {
+          expression += str;
+          str = std::string("");
 #else
-      const unsigned int MAX_LINE_LENGTH = 1024;
       char line [MAX_LINE_LENGTH];
       insert_zeroes(line, MAX_LINE_LENGTH);
       while (cin.getline(line, MAX_LINE_LENGTH))
@@ -424,7 +472,22 @@ int main(int argc, char** argv)
 
           if (0 != comp.parse_line((expression + "\n").c_str()))
             {
-              fprintf(stderr, "expression '%s' could not be parsed\n", expression.c_str());
+#ifdef WINDOWS
+              if (!pipe_output)
+                hfst::hfst_fprintf_console(stderr, "expression '%s' could not be parsed\n", expression.c_str());
+              else
+#endif
+                fprintf(stderr, "expression '%s' could not be parsed\n", expression.c_str());
+              if (comp.get("quit-on-fail") == "ON")
+                {
+                  return EXIT_FAILURE;
+                }
+              if (!silent)
+                comp.prompt();
+            }
+          if (comp.quit_requested())
+            {
+              break;
             }
 
           expression = "";
@@ -464,7 +527,20 @@ int main(int argc, char** argv)
 
           if (0 != comp.parse_line((expression + "\n").c_str()))
             {
-              fprintf(stderr, "expression '%s' could not be parsed\n", expression.c_str());
+#ifdef WINDOWS
+              if (!pipe_output)
+                hfst::hfst_fprintf_console(stderr, "expression '%s' could not be parsed\n", expression.c_str());
+              else
+#endif
+                fprintf(stderr, "expression '%s' could not be parsed\n", expression.c_str());
+              if (comp.get("quit-on-fail") == "ON")
+                {
+                  return EXIT_FAILURE;
+                }
+            }
+          if (comp.quit_requested())
+            {
+              break;
             }
           
           expression = "";

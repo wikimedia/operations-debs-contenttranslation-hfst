@@ -1,28 +1,35 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 //! @file lexc-utils.h
 //!
 //! @brief Various string handling methods for HFST lexc.
-//! 
-//! @author Tommi A. Pirinen
-
-
-//   This program is free software: you can redistribute it and/or modify
-//   it under the terms of the GNU General Public License as published by
-//   the Free Software Foundation, version 3 of the License.
-//
-//   This program is distributed in the hope that it will be useful,
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//   GNU General Public License for more details.
-//
-//   You should have received a copy of the GNU General Public License
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef GUARD_lexc_utils_h
 #define GUARD_lexc_utils_h
 #if HAVE_CONFIG_H
 #  include <config.h>
 #endif
+
+
+#include <vector>
 #include <string>
+
+using namespace std;
+
+
+//for med alignment
+#define SUBSTITUTE 2 //diag
+#define DELETE 1 //left
+#define INSERT 0  //down
+#define EPSILON_ "@@ANOTHER_EPSILON@@"
+
 
 namespace hfst { namespace lexc {
 
@@ -104,6 +111,19 @@ char* strdup_nonconst_part(const char* token,
 //! @brief print error_at_line style error message for current token
 void error_at_current_token(int status, int errnum, const char* format);
 
+//! @brief Finds med alignment between two strings
+//! Given an upper-lower string lexicon entry, the upper-lower pair is aligned by minimum edit distance with the following costs:
+ //! x:x costs 0
+ //! x:y costs ∞
+ //! x:0 costs 1
+ //! 0:x costs 1
+//! This means that if we have a lexicon entry like:
+//! abc:bc
+//! As this is compiled into a transducer for the entry, we align it a:0 b:b c:c (instead of the default a:b b:c c:0).
+//! Additionally, if we have a lexicon entry like:
+//! abc:xyz
+//! we align it 0:x 0:y 0:z a:0 b:0 c:0 (instead of x:0 y:0 z:0 0:a 0:b 0:c)
+std::pair<vector<string>, vector<string> > find_med_alingment(const vector<string> &s1, const vector<string> &s2);
 
 } }
 // vim: set ft=cpp.doxygen:

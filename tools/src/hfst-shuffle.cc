@@ -107,18 +107,45 @@ parse_options(int argc, char** argv)
 }
 
 int
-shuffle_streams(HfstInputStream& firststream, HfstInputStream& secondstream,
-                    HfstOutputStream& outstream)
+shuffle_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
 {
-    // there must be at least one transducer in both input streams
-    bool continueReading = firststream.is_good() && secondstream.is_good();
+  // there must be at least one transducer in both input streams
+  bool continueReading = firststream.is_good() && secondstream.is_good();
 
-    if (firststream.get_type() != secondstream.get_type())
-      {
-        warning(0, 0, "Tranducer type mismatch in %s and %s; "
-              "using former type as output",
-              firstfilename, secondfilename);
-      }
+  hfst::ImplementationType type1 = firststream.get_type();
+  hfst::ImplementationType type2 = secondstream.get_type();
+  hfst::ImplementationType output_type = hfst::UNSPECIFIED_TYPE;
+  if (type1 != type2)
+    {
+      if (allow_transducer_conversion)
+        {
+          int ct = conversion_type(type1, type2);
+          std::string warnstr("Transducer type mismatch in " + std::string(firstfilename) + " and " + std::string(secondfilename) + "; ");
+          if (ct == 1)
+            { warnstr.append("using former type as output"); output_type = type1; }
+          else if (ct == 2)
+            { warnstr.append("using latter type as output"); output_type = type2; }
+          else if (ct == -1)
+            { warnstr.append("using former type as output, loss of information is possible"); output_type = type1; }
+          else /* should not happen */
+            { throw "Error: hfst-shuffle: conversion_type returned an invalid integer"; }
+          warning(0, 0, warnstr.c_str());
+        }
+      else
+        {
+          error(EXIT_FAILURE, 0, "Transducer type mismatch in %s and %s; "
+                "formats %s and %s are not compatible for shuffle (--do-not-convert was requested)",
+                firstfilename, secondfilename, hfst_strformat(type1), hfst_strformat(type2));
+        }
+    }
+  else
+    {
+      output_type = type1;
+    }
+
+  HfstOutputStream outstream = (outfile != stdout) ?
+    HfstOutputStream(outfilename, output_type) : HfstOutputStream(output_type);
+
     HfstTransducer * first=0;
     HfstTransducer * second=0;
     size_t transducer_n_first = 0; // transducers read from first stream
@@ -145,18 +172,29 @@ shuffle_streams(HfstInputStream& firststream, HfstInputStream& secondstream,
             verbose_printf("Shuffling %s and %s... " SIZE_T_SPECIFIER "\n",
                            firstname, secondname, transducer_n_first);
         }
-        try
-          {
-            first->shuffle(*second);
-          }
-        catch (TransducerTypeMismatchException ttme)
-          {
-            error(EXIT_FAILURE, 0, "Could not shuffle %s and %s [" SIZE_T_SPECIFIER "]\n"
-                  "formats %s and %s are not compatible for shuffling",
-                  firstname, secondname, transducer_n_first,
-                  hfst_strformat(firststream.get_type()),
-                  hfst_strformat(secondstream.get_type()));
-          }
+
+        try {
+          try
+            {
+              first->shuffle(*second /*, harmonize=true*/);
+            }
+          catch (TransducerTypeMismatchException ttme)
+            {
+              if (allow_transducer_conversion)
+                {
+                  convert_transducers(*first, *second);
+                  first->shuffle(*second/*, harmonize=true*/);
+                }
+              else
+                {
+                  error(EXIT_FAILURE, 0, "Could not shuffle %s and %s [" SIZE_T_SPECIFIER "]:\n"
+                        "formats %s and %s are not compatible for shuffling (--do-not-convert was requested)",
+                        firstname, secondname, transducer_n_first,
+                        hfst_strformat(firststream.get_type()),
+                        hfst_strformat(secondstream.get_type()));
+                }
+            }
+        }
         catch (TransducersAreNotAutomataException tanae)
           {
             error(EXIT_FAILURE, 0, "Could not shuffle %s and %s [" SIZE_T_SPECIFIER "]\n"
@@ -164,8 +202,8 @@ shuffle_streams(HfstInputStream& firststream, HfstInputStream& secondstream,
                   firstname, secondname, transducer_n_first);
           }
 
-        hfst_set_name(*first, *first, *second, "union");
-        hfst_set_formula(*first, *first, *second, "∪");
+        hfst_set_name(*first, *first, *second, "shuffle");
+        hfst_set_formula(*first, *first, *second, "shuffle");
         outstream << *first;
 
         continueReading = firststream.is_good() && 
@@ -253,9 +291,6 @@ int main( int argc, char **argv ) {
         error(EXIT_FAILURE, 0, "%s is not a valid transducer file",
               secondfilename);
     }
-    HfstOutputStream* outstream = (outfile != stdout) ?
-        new HfstOutputStream(outfilename, firststream->get_type()) :
-        new HfstOutputStream(firststream->get_type());
 
     if ( is_input_stream_in_ol_format(firststream, "hfst-shuffle") ||
          is_input_stream_in_ol_format(secondstream, "hfst-shuffle") )
@@ -263,10 +298,9 @@ int main( int argc, char **argv ) {
         return EXIT_FAILURE;
       }
 
-    retval = shuffle_streams(*firststream, *secondstream, *outstream);
+    retval = shuffle_streams(*firststream, *secondstream);
     delete firststream;
     delete secondstream;
-    delete outstream;
     free(firstfilename);
     free(secondfilename);
     free(outfilename);

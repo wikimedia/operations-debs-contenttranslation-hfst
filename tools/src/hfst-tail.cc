@@ -177,6 +177,7 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
               }
           }
       }
+    outstream.flush();
     instream.close();
     outstream.close();
     return EXIT_SUCCESS;

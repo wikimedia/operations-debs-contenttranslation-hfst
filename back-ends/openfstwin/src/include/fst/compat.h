@@ -25,24 +25,30 @@
 typedef SSIZE_T ssize_t;
 #define snprintf _snprintf
 #define strtoll _strtoi64
+
 #ifndef OPENFSTEXPORT
-        #ifdef _DEBUG
+#ifdef PRAGMA
+  #ifdef _DEBUG
     #ifdef _M_X64
-                  #pragma comment (lib, "openfst64-gd.lib")
+      #pragma comment (lib, "openfst64-gd.lib")
     #else
       #pragma comment (lib, "openfst-gd.lib")
     #endif
-        #else
+  #else
     #ifdef _M_X64
-                  #pragma comment (lib, "openfst64.lib")
+      #pragma comment (lib, "openfst64.lib")
     #else
       #pragma comment (lib, "openfst.lib")
     #endif              
-        #endif
+  #endif
 #endif
+#endif
+
 #else
-        #include <dlfcn.h>
+#ifdef DLFCN
+  #include <dlfcn.h>
 #endif
+#endif  // _MSC_VER
 
 #include <climits>
 #include <cstdlib>

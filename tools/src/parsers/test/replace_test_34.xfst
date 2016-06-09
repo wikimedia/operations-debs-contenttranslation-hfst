@@ -2,4 +2,4 @@ set precision 1
 set print-weight ON
 
 regex a (->) b::1 ;
-apply up xaxax
+apply down xaxax

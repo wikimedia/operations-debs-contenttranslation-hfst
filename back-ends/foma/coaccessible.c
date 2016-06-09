@@ -54,12 +54,12 @@ struct fsm *fsm_coaccessible(struct fsm *net) {
     if (t != -1 && s != t) {
       
       if (((inverses+t)->state) == -1) {
-        (inverses+t)->state = s;
+	(inverses+t)->state = s;
       } else {
         temp_i = xxmalloc(sizeof(struct invtable));
-        temp_i->next = (inverses+t)->next;
-        (inverses+t)->next = temp_i;
-        temp_i->state = s;
+	temp_i->next = (inverses+t)->next;
+	(inverses+t)->next = temp_i;
+	temp_i->state = s;
       }
     }
   }
@@ -81,9 +81,9 @@ struct fsm *fsm_coaccessible(struct fsm *net) {
     current_ptr = inverses+current_state;
     while(current_ptr != NULL && current_ptr->state != -1) {
       if (!*(coacc+(current_ptr->state))) {
-        *(coacc+(current_ptr->state)) = 1;
-        int_stack_push(current_ptr->state);
-        markcount++;
+	*(coacc+(current_ptr->state)) = 1;
+	int_stack_push(current_ptr->state);
+	markcount++;
       }
       current_ptr = current_ptr->next;
     }
@@ -101,35 +101,35 @@ struct fsm *fsm_coaccessible(struct fsm *net) {
     new_linecount = 0;
     for (i=1,j=0; i < (net->statecount);i++) {
       if (*(coacc+i) == 1) {
-        j++;
-        *(mapping+i) = j;
+	j++;
+	*(mapping+i) = j;
       }
     }
     
     for (i=0,j=0; (fsm+i)->state_no != -1; i++) {
       if (i > 0 && (fsm+i)->state_no != (fsm+i-1)->state_no && (fsm+i-1)->final_state && !*(added+((fsm+i-1)->state_no))) {
-        add_fsm_arc(fsm, j++, *(mapping+((fsm+i-1)->state_no)), -1, -1, -1, 1, (fsm+i-1)->start_state);
-        new_linecount++;
-        *(added+((fsm+i-1)->state_no)) = 1;
-        /* printf("addf ad %i\n",i); */
+	add_fsm_arc(fsm, j++, *(mapping+((fsm+i-1)->state_no)), -1, -1, -1, 1, (fsm+i-1)->start_state);
+	new_linecount++;
+	*(added+((fsm+i-1)->state_no)) = 1;
+	/* printf("addf ad %i\n",i); */
       }
       if (*(coacc+((fsm+i)->state_no)) && (((fsm+i)->target == -1) || *(coacc+((fsm+i)->target)))) {
-        (fsm+j)->state_no = *(mapping+((fsm+i)->state_no));
-        if ((fsm+i)->target == -1) {
-          (fsm+j)->target = -1;
-        } else {
-          (fsm+j)->target = *(mapping+((fsm+i)->target));
-        }
-        (fsm+j)->final_state = (fsm+i)->final_state;
-        (fsm+j)->start_state = (fsm+i)->start_state;
-        (fsm+j)->in = (fsm+i)->in;
-        (fsm+j)->out = (fsm+i)->out;
-        j++;
-        new_linecount++;
-        *(added+(fsm+i)->state_no) = 1;
-        if ((fsm+i)->target != -1) {
-          new_arccount++;
-        }       
+	(fsm+j)->state_no = *(mapping+((fsm+i)->state_no));
+	if ((fsm+i)->target == -1) {
+	  (fsm+j)->target = -1;
+	} else {
+	  (fsm+j)->target = *(mapping+((fsm+i)->target));
+	}
+	(fsm+j)->final_state = (fsm+i)->final_state;
+	(fsm+j)->start_state = (fsm+i)->start_state;
+	(fsm+j)->in = (fsm+i)->in;
+	(fsm+j)->out = (fsm+i)->out;
+	j++;
+	new_linecount++;
+	*(added+(fsm+i)->state_no) = 1;
+	if ((fsm+i)->target != -1) {
+	  new_arccount++;
+	}	
       }
     }
 

@@ -1,3 +1,12 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 #include "HfstLookupFlagDiacritics.h"
 
 DiacriticOperators FlagDiacriticTable::diacritic_operators;
@@ -37,8 +46,8 @@ bool FlagDiacriticTable::is_genuine_diacritic
     }
   if (diacritic_string.find_last_of('.') == 2)
     {
-      if ((diacritic_string.at(1) != 'R') and
-      (diacritic_string.at(1) != 'D') and
+      if ((diacritic_string.at(1) != 'R') &&
+      (diacritic_string.at(1) != 'D') &&
       (diacritic_string.at(1) != 'C'))
     { return false; }
     }
@@ -80,8 +89,8 @@ void FlagDiacriticTable::split_diacritic(const std::string &diacritic_string)
   size_t last_char_pos = diacritic_string.size() - 1;
   if (second_full_stop_pos == std::string::npos)
     {
-      assert((diacritic_operators[diacritic_string] == Cop) or
-         (diacritic_operators[diacritic_string] == Dop) or
+      assert((diacritic_operators[diacritic_string] == Cop) ||
+         (diacritic_operators[diacritic_string] == Dop) ||
          (diacritic_operators[diacritic_string] == Rop));
       diacritic_has_value[diacritic_string] = false;
       diacritic_features[diacritic_string] = 
@@ -130,7 +139,7 @@ void FlagDiacriticTable::disallow(std::string &feature,
   if (feature_values.find(feature) == feature_values.end())
     { return; }
   if (feature_values[feature] == value)
-    { error_flag = error_flag or feature_polarities[feature]; }
+    { error_flag = error_flag || feature_polarities[feature]; }
 }
 void FlagDiacriticTable::disallow(std::string &feature)
 {
@@ -148,7 +157,7 @@ void FlagDiacriticTable::require(std::string &feature,
   else if (feature_values[feature] != value)
     { error_flag = true; }
   else
-    { error_flag = error_flag or (not feature_polarities[feature]); }
+    { error_flag = error_flag || (! feature_polarities[feature]); }
 }
 void FlagDiacriticTable::require(std::string &feature)
 {
@@ -164,7 +173,7 @@ void FlagDiacriticTable::unify(std::string &feature,
   // If feature set to something else negatively, set it to value.
   else if (feature_values[feature] != value)
     { 
-      if (not feature_polarities[feature])
+      if (! feature_polarities[feature])
     { set_positive_value(feature,value); }
     }
   require(feature,value);
@@ -196,7 +205,7 @@ void FlagDiacriticTable::insert_symbol(const std::string &symbol)
                  diacritic_values[symbol]);
       break;
     case Dop:
-      if (not diacritic_has_value[symbol])
+      if (! diacritic_has_value[symbol])
         {
           disallow(diacritic_features[symbol]);
         }
@@ -207,7 +216,7 @@ void FlagDiacriticTable::insert_symbol(const std::string &symbol)
         }
       break;
     case Rop:
-      if (not diacritic_has_value[symbol])
+      if (! diacritic_has_value[symbol])
         {
           require(diacritic_features[symbol]);
         }
@@ -262,7 +271,7 @@ StringVector FlagDiacriticTable::filter_diacritics
        it != input_string.end();
        ++it)
     {
-      if (not is_diacritic(*it))
+      if (! is_diacritic(*it))
     { filtered.push_back(*it); }
     }
   return filtered;
@@ -313,54 +322,54 @@ int main(void)
 
   FlagDiacriticTable fdt;
   std::cout << "\"\" should pass:";
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
   std::cout << "\"a\" should pass:";
   fdt.insert_number(100);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
   std::cout << "\"@P.NeedNoun.ON@ @R.NeedNoun.ON@\" should pass:";
   fdt.insert_number(1);
   fdt.insert_number(3);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
   std::cout << "\"@P.NeedNoun.ON@ @D.NeedNoun.ON@\" should fail:";
   fdt.insert_number(1);
   fdt.insert_number(4);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == true);
   fdt.reset();
   std::cout << "\"@P.NeedNoun.ON@ a @R.NeedNoun.ON@\" should pass:";
   fdt.insert_number(1);
   fdt.insert_number(100);
   fdt.insert_number(3);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
   std::cout << "\"@N.NeedNoun.ON@ @D.NeedNoun.ON@\" should pass:";
   fdt.insert_number(2);
   fdt.insert_number(4);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
   std::cout << "\"@D.NeedNoun.ON@\" should pass:";
   fdt.insert_number(4);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
   std::cout << "\"@R.NeedNoun.ON@\" should fail:";
   fdt.insert_number(3);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == true);
   fdt.reset();
   std::cout << "\"@P.NeedNoun.ON@ @C.NeedNoun@ @D.NeedNoun.ON@\" should pass:";
   fdt.insert_number(1);
   fdt.insert_number(6);
   fdt.insert_number(4);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
   std::cout 
@@ -370,7 +379,7 @@ int main(void)
   fdt.insert_number(7);
   fdt.insert_number(6);
   fdt.insert_number(4);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
   std::cout 
@@ -381,7 +390,7 @@ int main(void)
   fdt.insert_number(6);
   fdt.insert_number(4);
   fdt.insert_number(8);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
   std::cout 
@@ -391,30 +400,30 @@ int main(void)
   fdt.insert_number(6);
   fdt.insert_number(4);
   fdt.insert_number(8);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == true);
   fdt.reset();
   std::cout << "\"@U.NeedNoun.ON@\" should pass:";
   fdt.insert_number(5);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
   std::cout << "\"@P.NeedNoun.ON@ @U.NeedNoun.ON@\" should pass:";
   fdt.insert_number(1);
   fdt.insert_number(5);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
   std::cout << "\"@N.NeedNoun.ON@ @U.NeedNoun.ON@\" should fail:";
   fdt.insert_number(2);
   fdt.insert_number(5);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == true);
   fdt.reset();
   std::cout << "\"@N.NeedNoun.foo@ @U.NeedNoun.ON@\" should pass:";
   fdt.insert_number(9);
   fdt.insert_number(5);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
   std::cout << "\"@N.NeedNoun.ON@ @C.NeedNoun@ @U.NeedNoun.ON@\""
@@ -422,7 +431,7 @@ int main(void)
   fdt.insert_number(2);
   fdt.insert_number(6);
   fdt.insert_number(5);
-  std::cout << " " << not fdt.fails() << std::endl;
+  std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
   short kv[3] = {2,6,5};

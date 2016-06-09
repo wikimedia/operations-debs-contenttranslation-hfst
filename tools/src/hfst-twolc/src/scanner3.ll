@@ -26,7 +26,12 @@
 
 #include "rule_src/TwolCGrammar.h"
 
-#include "htwolcpre3.hh"
+#ifdef YACC_USE_PARSER_H_EXTENSION
+  #include "htwolcpre3.h"
+#else
+  #include "htwolcpre3.hh"
+#endif
+
   /*
 #include "io_src/InputReader.h"
 

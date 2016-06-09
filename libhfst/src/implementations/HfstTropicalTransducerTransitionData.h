@@ -1,3 +1,12 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 #include <string>
 #include <map>
 #include <set>
@@ -6,6 +15,8 @@
 #include <iostream>
 #include <vector>
 #include "../HfstExceptionDefs.h"
+
+#include "../hfstdll.h"
 
 namespace hfst {
 
@@ -45,17 +56,17 @@ namespace hfst {
       typedef std::map<SymbolType, unsigned int, string_comparison> 
         Symbol2NumberMap;
 
-      static SymbolType get_epsilon()
+      HFSTDLL static SymbolType get_epsilon()
       {
         return SymbolType("@_EPSILON_SYMBOL_@");
       }
       
-      static SymbolType get_unknown()
+      HFSTDLL static SymbolType get_unknown()
       {
         return SymbolType("@_UNKNOWN_SYMBOL_@");
       }
       
-      static SymbolType get_identity()
+      HFSTDLL static SymbolType get_identity()
       {
         return SymbolType("@_IDENTITY_SYMBOL_@");
       }
@@ -63,13 +74,13 @@ namespace hfst {
     public: /* FIXME: Should be private. */
       /* Maps that contain information of the mappings between strings 
          and numbers */
-      static Number2SymbolVector number2symbol_map;
-      static Symbol2NumberMap symbol2number_map;
+      HFSTDLL static Number2SymbolVector number2symbol_map;
+      HFSTDLL static Symbol2NumberMap symbol2number_map;
       /* The biggest number in use. */
-      static unsigned int max_number;
+      HFSTDLL static unsigned int max_number;
 
       /* Get the biggest number used to represent a symbol. */
-      static unsigned int get_max_number() {
+      HFSTDLL static unsigned int get_max_number() {
         return max_number;
       }
 
@@ -172,7 +183,7 @@ namespace hfst {
       WeightType weight;
 
     public:
-      void print_transition_data() 
+      HFSTDLL void print_transition_data() 
       {
     fprintf(stderr, "%i:%i %f\n", 
         input_number, output_number, weight);
@@ -182,12 +193,12 @@ namespace hfst {
 
       /** @brief Create a HfstTropicalTransducerTransitionData with 
           epsilon input and output strings and weight zero. */
-    HfstTropicalTransducerTransitionData(): 
+    HFSTDLL HfstTropicalTransducerTransitionData(): 
       input_number(0), output_number(0), weight(0) {}
       
       /** @brief Create a deep copy of HfstTropicalTransducerTransitionData 
           \a data. */
-      HfstTropicalTransducerTransitionData
+      HFSTDLL HfstTropicalTransducerTransitionData
         (const HfstTropicalTransducerTransitionData &data) {
         input_number = data.input_number;
         output_number = data.output_number;
@@ -197,7 +208,7 @@ namespace hfst {
       /** @brief Create a HfstTropicalTransducerTransitionData with 
           input symbol \a isymbol, output symbol \a osymbol 
           and weight \a weight. */
-      HfstTropicalTransducerTransitionData(SymbolType isymbol,
+      HFSTDLL HfstTropicalTransducerTransitionData(SymbolType isymbol,
                        SymbolType osymbol,
                        WeightType weight) {
     if (isymbol == "" || osymbol == "")
@@ -211,7 +222,7 @@ namespace hfst {
         this->weight = weight;
       }
 
-      HfstTropicalTransducerTransitionData
+      HFSTDLL HfstTropicalTransducerTransitionData
         (unsigned int inumber,
          unsigned int onumber,
          WeightType weight) {
@@ -221,45 +232,51 @@ namespace hfst {
       }
 
       /** @brief Get the input symbol. */
-      const SymbolType &get_input_symbol() const {
+      HFSTDLL const SymbolType &get_input_symbol() const {
         return get_symbol(input_number);
       }
 
       /** @brief Get the output symbol. */
-      const SymbolType &get_output_symbol() const {
+      HFSTDLL const SymbolType &get_output_symbol() const {
         return get_symbol(output_number);
       }
 
-      unsigned int get_input_number() const {
+      HFSTDLL unsigned int get_input_number() const {
         return input_number;
       }
 
-      unsigned int get_output_number() const {
+      HFSTDLL unsigned int get_output_number() const {
         return output_number;
       }
       
       /** @brief Get the weight. */
-      WeightType get_weight() const {
+      HFSTDLL WeightType get_weight() const {
         return weight;
       }
 
+      /** @brief Set the weight. */
+      HFSTDLL void set_weight(WeightType w) {
+        weight = w;
+      }
+
+
       /* Are these needed? */
-      static bool is_epsilon(const SymbolType &symbol) {
+      HFSTDLL static bool is_epsilon(const SymbolType &symbol) {
         return (symbol.compare("@_EPSILON_SYMBOL_@") == 0);
       }
-      static bool is_unknown(const SymbolType &symbol) {
+      HFSTDLL static bool is_unknown(const SymbolType &symbol) {
         return (symbol.compare("@_UNKNOWN_SYMBOL_@") == 0);
       }
-      static bool is_identity(const SymbolType &symbol) {
+      HFSTDLL static bool is_identity(const SymbolType &symbol) {
         return (symbol.compare("@_IDENTITY_SYMBOL_@") == 0);
       }
-      static bool is_valid_symbol(const SymbolType &symbol) {
+      HFSTDLL static bool is_valid_symbol(const SymbolType &symbol) {
         if (symbol == "")
           return false;
         return true;
       }
 
-      static SymbolType get_marker(const SymbolTypeSet &sts) {
+      HFSTDLL static SymbolType get_marker(const SymbolTypeSet &sts) {
         (void)sts;
         return SymbolType("@_MARKER_SYMBOL_@");
       }
@@ -269,7 +286,7 @@ namespace hfst {
           
           /internal is it too slow if string comparison is used instead?
       */
-      bool operator<(const HfstTropicalTransducerTransitionData &another) 
+      HFSTDLL bool operator<(const HfstTropicalTransducerTransitionData &another) 
         const {
         if (input_number < another.input_number )
           return true;
@@ -283,7 +300,7 @@ namespace hfst {
       }
 
       // same as operator< but weight is ignored
-      bool less_than_ignore_weight(const HfstTropicalTransducerTransitionData &another) 
+      HFSTDLL bool less_than_ignore_weight(const HfstTropicalTransducerTransitionData &another) 
         const {
         if (input_number < another.input_number )
           return true;
@@ -296,7 +313,7 @@ namespace hfst {
         return false;
       }
       
-      void operator=(const HfstTropicalTransducerTransitionData &another)
+      HFSTDLL void operator=(const HfstTropicalTransducerTransitionData &another)
         {
           input_number = another.input_number;
           output_number = another.output_number;
@@ -318,7 +335,7 @@ namespace hfst {
     // HfstTropicalTransducerTransitionData..
     class Number2SymbolVectorInitializer {
     public:
-      Number2SymbolVectorInitializer
+      HFSTDLL Number2SymbolVectorInitializer
         (HfstTropicalTransducerTransitionData::Number2SymbolVector &vect) {
         vect.push_back(std::string("@_EPSILON_SYMBOL_@"));
         vect.push_back(std::string("@_UNKNOWN_SYMBOL_@"));
@@ -328,7 +345,7 @@ namespace hfst {
 
     class Symbol2NumberMapInitializer {
     public:
-      Symbol2NumberMapInitializer
+      HFSTDLL Symbol2NumberMapInitializer
         (HfstTropicalTransducerTransitionData::Symbol2NumberMap &map) {
         map["@_EPSILON_SYMBOL_@"] = 0;
         map["@_UNKNOWN_SYMBOL_@"] = 1;

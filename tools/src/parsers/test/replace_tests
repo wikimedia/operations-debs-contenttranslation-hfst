@@ -1,0 +1,347 @@
+
+--
+
+regex a -> b || ? - a _ ;
+apply up maa
+# mba
+
+--
+
+# empty language replacement
+regex a -> ~[?*] == [? - a]* 
+
+--
+
+# empty language replacement
+regex ~[?*] -> a == ?*
+
+--
+
+regex [ d <- ca || ca_c ] ;
+apply up cacacac
+# cad0d0c
+
+--
+
+regex [ b <- a ,, a <- b ] ;
+apply up abba
+# baab
+
+--
+
+regex ab (->) x  ab_a ;
+apply up abababa
+# abx0aba
+# ababx0a
+# abx0x0a
+
+--
+
+regex ab -> x  ab_a ;
+apply up abababa
+# abx0x0a
+
+--
+
+regex a (->) x ;
+apply up aaana
+# aaana
+# aaanx
+# aaxna
+# aaxnx
+# axana
+# axanx
+# axxna
+# axxnx
+# xaana
+# xaanx
+# xaxna
+# xaxnx
+# xxana
+# xxanx
+# xxxna
+# xxxnx
+
+--
+
+regex a -> x ;
+apply up aaana
+# xxxnx
+
+--
+
+regex a @-> x ;
+apply up aaana
+# xxxnx
+
+--
+
+regex a @> x ;
+apply up aaana
+# xxxnx
+
+--
+
+regex ? -> x ;
+apply up s
+# x
+
+--
+
+regex a -> b || .#. _ c ;
+apply up .#.ac
+# .#.ac
+apply up ac
+# ab
+
+--
+
+regex a+ (->) x || a _ a ;
+apply up aaaa
+# aaaa
+# ax0a
+# axaa
+# aaxa
+
+--
+
+regex a+ (->) x // a _ a ;
+apply up aaaa
+# aaaa
+# ax0a
+# axaa
+# aaxa
+# axxa
+
+--
+
+regex a+ (->) x \\ a _ a ;
+apply up aaaa
+# aaaa
+# ax0a
+# axaa
+# aaxa
+# axxa
+
+--
+
+regex a+ (->) x \/ a _ a ;
+apply up aaaa
+# aaaa
+# ax0a
+# axaa
+# aaxa
+# axxa
+
+--
+
+regex a+ -> x || a _ a ;
+apply up aaaa
+# ax0a
+# axxa
+
+--
+
+regex a+ -> x // a _ a ;
+apply up aaaa
+# ax0a
+# axaa
+
+--
+
+regex a+ -> x \\ a _ a ;
+apply up aaaa
+# ax0a
+# aaxa
+
+--
+
+regex a+ -> x \/ a _ a ;
+apply up aaaa
+# ax0a
+# axaa
+# aaxa
+
+--
+
+regex a+ @-> || a _ a ;
+
+--
+
+regex a+ @> || a _ a ;
+
+--
+
+input1 = "aaaa"
+input2 = "aaaaabaaaa"
+input3 = "aaaaabaaaacaaaa"
+
+result1 = aaaa:{aaaa,ax0a,axaa,aaxa,axxa}
+result2 = aaaa:{ax0a,axxa}
+result3 = aaaa:{ax0a}
+result4 = aaaaabaaaa:ax00abax0a
+result5 = aaaaabaaaa:axxxabaxxa
+result6 = aaaaabaaaacaaaa:ax00abax0acax0a
+result7 = aaaaabaaaacaaaa:axxxabaxxacaxxa
+result8 = aaaa:{aaaa,ax0a,axaa,aaxa}
+result9 = aaaa:{ax0a,axaa}
+result10 = aaaa:{ax0a,aaxa}
+result11 = aaaa:{ax0a,axaa,aaxa}
+
+replace_leftmost_longest_match UP: input1 -> result3, input2 -> result4, input3 -> result6
+replace_leftmost_shortest_match UP: input1 -> result4, input2 -> result5, input3 -> result7
+
+--
+
+longest & shortest, left & right
+regex a+ b+ | b+ a+ @-> x ;
+input aabbaa
+
+--
+
+regex [ a+ b+ | b+ a+ ] -> x ;
+
+--
+
+input1 = aabbaa
+result1 = x000aa
+result2 = aax000
+result3 = x00x0a
+result4 = ac0x00
+
+replace_leftmost_longest_match UP: input1 -> result1
+replace_rightmost_longest_match UP: input1 -> result2
+replce_leftmost_shortest_match UP: input1 -> result3
+replace_rightmost_shortest_match UP: input1 -> result4
+
+--
+
+regex [ a+ b+ | b+ a+ ] @-> x \/ _ x ;
+replace_leftmost_longest_match DOWN: aabbaax -> x00x00x
+
+--
+
+regex a+ @-> x || c _ ;
+replace_leftmost_longest_match UP: caav -> cx0v
+
+--
+
+regex ? @-> a ... b ;
+result: bb -> 0b00b0:abbabb 
+
+--
+
+regex a (->) b ||  x _ x ;
+xaxax:{xaxax,xbxax,xaxbx,xbxb}
+
+--
+
+regex a b (->) b ||  x_y, y_z ;
+axayaz:{axayaz,axbybz,axbyaz,axaybz}
+
+--
+
+regex a+ (->) x  || x x _ y y, y _ x ;
+axxayyaax:{axxayyax,axxayyxx,axxxyyax,axxxyyxx}
+
+--
+
+regex a (->) b ;
+xaxax:{xaxax,xbxax,xaxbx,xbxbx}
+
+--
+
+regex b -> a  || _a (r: bbaa) ;
+regex b -> a  \\ _a (r:aaaa) ;
+regex b -> a  _a (r:bbaa) ;
+regex b -> a  \/ _a (r:aaaa) ;
+input: bbba
+
+--
+
+regex b -> a  || a _ (r: aabb) ;
+regex b -> a  \\ a _ (r: aabb) ;
+regex b -> a  a _ (r: aaaa) ;
+regex b -> a  \/ a _ (r: aaaa) ;
+input: abbb
+
+--
+
+regex ab -> x || ab _ a (r: result4)
+regex ab -> x \\ ab _ a (r: result2)
+regex ab -> x ab _ a (r: result3)
+regex ab -> x \/ ab _ a (r: result4)
+regex ab (->) x || ab _ a (r: result3)
+regex ab (->) x \\ ab _ a (r: result2)
+regex ab (->) x ab _ a (r: result2)
+regex ab (->) x \/ ab _ a (r: result2)
+input: abababa
+result1 = abababa
+result2 = abababa,ababx0a,abx0aba
+result3 = abababa,ababx0a,abx0aba,abx0x0a
+result4 = ababx0a,abx0aba
+
+--
+
+regex [a|b] -> "[" ... "]" ;
+mba -> m[b][a]
+
+--
+
+0 -> m ;
+
+--
+
+a* -> p ;
+
+--
+
+0 -> b || _ a a
+
+--
+
+a -> b , b -> c
+
+--
+
+[. .] -> b , a -> c ;
+
+--
+
+a+ @-> x , b+ @-> y
+
+--
+
+a+ @> x , b+ @> y
+
+--
+
+a+ -> x \/ m _ ,, b+ -> y || x _
+
+--
+
+a -> x \/ m _ ,, b -> y || x _ ;
+
+--
+
+0 .o. [ [. 0 .] -> a \/ _ b a , a b _ ,, [. 0 .] -> b \/ a _ a ]
+
+--
+
+? -> x , a -> b
+
+--
+
+regex a::1 -> "[" ... "]", [a::2 a::1] -> "|" ... "|" ;
+
+--
+
+a -> b , b -> a
+
+--
+
+a -> b b, a -> b
+
+--
+
+[..] @-> a

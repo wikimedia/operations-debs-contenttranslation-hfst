@@ -91,7 +91,13 @@ hfst_twolc_system_SOURCES=hfst-twolc-system.cc
 # some systems might require all these
 BUILT_SOURCES=htwolcpre1.cc htwolcpre2.cc htwolcpre3.cc
 
-CLEANFILES=htwolcpre1.hh htwolcpre2.hh htwolcpre3.hh \
+if YACC_USE_PARSER_H_EXTENSION
+  HEADER=h
+else
+  HEADER=hh
+endif
+
+CLEANFILES=htwolcpre1.$(HEADER) htwolcpre2.$(HEADER) htwolcpre3.$(HEADER) \
 	   htwolcpre1.cc htwolcpre2.cc htwolcpre3.cc
 
 hfst-twolc$(EXEEXT): hfst-twolc.sh
@@ -105,11 +111,11 @@ hfst-twolc-loc$(EXEEXT): hfst-twolc.sh
 clean-local:
 	-rm -f hfst-twolc$(EXEEXT) hfst-twolc-loc$(EXEEXT) hfst-twolc-system$(EXEEXT)
 
-CLEANFILES+=htwolcpre1.hh htwolcpre2.hh htwolcpre3.hh
+CLEANFILES+=htwolcpre1.$(HEADER) htwolcpre2.$(HEADER) htwolcpre3.$(HEADER)
 
-scanner1.ll: htwolcpre1.hh
-scanner2.ll: htwolcpre2.hh
-scanner3.ll: htwolcpre3.hh
+scanner1.ll: htwolcpre1.$(HEADER)
+scanner2.ll: htwolcpre2.$(HEADER)
+scanner3.ll: htwolcpre3.$(HEADER)
 
 HFST_TWOLC_TESTS=string_manipulation InputReader Alphabet \
                  OtherSymbolTransducer Rule LeftArrowRule RightArrowRule \
@@ -211,6 +217,6 @@ TwolCGrammar_CXXFLAGS=-DTEST_TWOL_C_GRAMMAR
 
 TESTS=$(HFST_TWOLC_TESTS)
 
-EXTRA_DIST += htwolcpre1.hh htwolcpre2.hh htwolcpre3.hh \
+EXTRA_DIST += htwolcpre1.$(HEADER) htwolcpre2.$(HEADER) htwolcpre3.$(HEADER) \
 	   htwolcpre1.cc htwolcpre2.cc htwolcpre3.cc \
 	   scanner1.cc scanner2.cc scanner3.cc

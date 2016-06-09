@@ -1,5 +1,5 @@
 ^test/test+n$
-^Test/Test+nlp/Test+np$
+^Test/Test+np/Test+nlp$
 ^TEST/*TEST$
 ^TeSt/*TeSt$
 ^tesT/*tesT$

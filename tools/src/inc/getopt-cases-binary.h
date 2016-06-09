@@ -31,3 +31,6 @@ case '2':
   }
   secondNamed = true;
   break;
+case 'C':
+  allow_transducer_conversion=false;
+  break;

@@ -1,28 +1,28 @@
 regex [ {foo}:{bar} | {foo}:{baz} ];
-apply up
+apply down
 foo
 bar
 baz
 <ctrl-d>
 set print-space ON
-apply up
+apply down
 foo
 bar
 baz
 <ctrl-d>
 regex "@P.N.N@" foo "@U.N.N@";
-apply up
+apply down
 foo
 bar
 <ctrl-d>
 set show-flags ON
-apply up
+apply down
 foo
 bar
 <ctrl-d>
 ! test longest matching in tokenization
 regex {foo}:{bar} | foo:bar;
-apply up
+apply down
 foo
 <ctrl-d>
 exit

@@ -1,0 +1,1 @@
+cl /c /EHsc /I. /I..\..\.. /I..\..\..\libhfst\src /I..\..\..\libhfst\src\parsers /I..\..\..\back-ends\foma /I..\..\..\back-ends /I..\..\..\back-ends\openfstwin\src\include xre_lex.cpp xre_parse.cpp pmatch_parse.cpp pmatch_lex.cpp lexc-parser.cpp lexc-lexer.cpp LexcCompiler.cpp PmatchCompiler.cpp XreCompiler.cpp lexc-utils.cpp pmatch_utils.cpp xre_utils.cpp

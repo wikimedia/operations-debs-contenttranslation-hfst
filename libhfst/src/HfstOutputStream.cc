@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #include <string>
 
@@ -24,7 +21,7 @@ namespace hfst
   HfstOutputStream::HfstOutputStream(ImplementationType type, bool hfst_format):
     type(type), hfst_format(hfst_format), is_open(false)
   { 
-    if (not HfstTransducer::is_implementation_type_available(type)) {
+    if (! HfstTransducer::is_implementation_type_available(type)) {
       HFST_THROW(ImplementationTypeNotAvailableException);
     }
 
@@ -54,6 +51,12 @@ namespace hfst
           new hfst::implementations::FomaOutputStream();
         break;
 #endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        implementation.xfsm = 
+          new hfst::implementations::XfsmOutputStream(); // throws error, not implemented
+        break;
+#endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
       case MY_TRANSDUCER_LIBRARY_TYPE:
         implementation.my_transducer_library = 
@@ -74,13 +77,14 @@ namespace hfst
       }
     this->is_open=true;
   }
+
   // FIXME: HfstOutputStream takes a string parameter, 
   //        HfstInputStream a const char*
   HfstOutputStream::HfstOutputStream
-  (const std::string &filename,ImplementationType type, bool hfst_format):
-    type(type), hfst_format(hfst_format), is_open(false)
+  (const std::string &filename,ImplementationType type, bool hfst_format_):
+    type(type), hfst_format(hfst_format_), is_open(false)
   { 
-    if (not HfstTransducer::is_implementation_type_available(type)) {
+    if (! HfstTransducer::is_implementation_type_available(type)) {
       HFST_THROW(ImplementationTypeNotAvailableException);
     }
 
@@ -114,6 +118,15 @@ namespace hfst
       case FOMA_TYPE:
         implementation.foma = 
           new hfst::implementations::FomaOutputStream(filename);
+        break;
+#endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        /* XFSM api only offers a function that reads transducers that takes a filename argument. 
+           That is why we don't write an HFST header. */
+        hfst_format = false; 
+        implementation.xfsm = 
+          new hfst::implementations::XfsmOutputStream(filename);
         break;
 #endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
@@ -159,6 +172,11 @@ namespace hfst
 #if HAVE_FOMA
       case FOMA_TYPE:
         delete implementation.foma;
+        break;
+#endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        delete implementation.xfsm;
         break;
 #endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
@@ -218,6 +236,11 @@ namespace hfst
         implementation.foma->write(c);
         break;
 #endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        throw "operation XfsmOutputStream::write(const char &c) not supported";
+        break;
+#endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
       case MY_TRANSDUCER_LIBRARY_TYPE:
         implementation.my_transducer_library->write(c);
@@ -264,6 +287,11 @@ namespace hfst
         type_value=std::string("FOMA");
         break;
 #endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        type_value=std::string("XFSM");
+        break;
+#endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
       case MY_TRANSDUCER_LIBRARY_TYPE:
         type_value=std::string("MY_TRANSDUCER_LIBRARY");
@@ -307,6 +335,19 @@ HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
       }
   }
 
+  HfstOutputStream &HfstOutputStream::flush()
+  {
+    if (! this->is_open) {
+      HFST_THROW(StreamIsClosedException); }
+#if HAVE_XFSM
+    if (type == XFSM_TYPE)
+      {
+        implementation.xfsm->flush();
+      }
+#endif
+    return *this;
+  }
+
   HfstOutputStream &HfstOutputStream::redirect (HfstTransducer &transducer)
   {
     return this->operator<<(transducer);
@@ -314,7 +355,7 @@ HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
 
   HfstOutputStream &HfstOutputStream::operator<< (HfstTransducer &transducer)
   {
-    if (not this->is_open) {
+    if (! this->is_open) {
       HFST_THROW(StreamIsClosedException);
     }
       
@@ -355,8 +396,12 @@ HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
        HFST version 3.0 header must contain at least the attributes 'version', 
        'type' and 'name' and their values. Implementation-specific attributes
        can follow after these obligatory attributes.
+
+       Note: in XFSM format, we never write the HFST header. hfst_format is always
+       false if the stream is of XFSM format.
      */
     if (hfst_format) {
+
       const int MAX_HEADER_LENGTH=65535;
 
       // collect the header data here
@@ -385,8 +430,9 @@ HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
       // write header length using two bytes
       int header_length = (int)header.size();
       if (header_length > MAX_HEADER_LENGTH) {
-        fprintf(stderr, "ERROR: transducer header is too long\n");
-        exit(1);
+        //fprintf(stderr, "ERROR: transducer header is too long\n");
+        //exit(1);
+        HFST_THROW_MESSAGE(HfstFatalException, "transducer header is too long");
       }
 
       char first_byte = *((char*)(&header_length));
@@ -423,6 +469,13 @@ HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
       case FOMA_TYPE:
         implementation.foma->write_transducer
           (transducer.implementation.foma);
+        return *this;
+#endif
+#if HAVE_XFSM
+        /* This stores the transducer in a list that is written only when flush() is called. */
+      case XFSM_TYPE:
+        implementation.xfsm->write_transducer
+          (transducer.implementation.xfsm);
         return *this;
 #endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
@@ -462,6 +515,11 @@ HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
 #if HAVE_FOMA
       case FOMA_TYPE:
         implementation.foma->close();
+        break;
+#endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        implementation.xfsm->close();
         break;
 #endif
 #if HAVE_MY_TRANSDUCER_LIBRARY

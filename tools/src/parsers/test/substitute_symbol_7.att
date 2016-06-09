@@ -1,0 +1,8 @@
+0	1	bar	foo
+1	2	foo	foo
+2	3	foo	bar
+3
+--
+0	1	foo	foo
+0	1	bar	bar
+1

@@ -42,7 +42,7 @@ Rule::Rule(const std::string &name,
        it != v.end();
        ++it)
     {
-      if (not (*it)->empty())    
+      if (! (*it)->empty())    
     { 
       rule_transducer.apply
         (&HfstTransducer::intersect,(*it)->rule_transducer); 

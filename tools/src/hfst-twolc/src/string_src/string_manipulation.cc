@@ -77,7 +77,7 @@ std::string unescape_and_remove_white_space(std::string str)
 
 std::string unquote(const std::string &str) 
 { 
-  if (str.size() < 2 or str[0] != '"' or str[str.size()-1] != '"')
+  if (str.size() < 2 || str[0] != '"' || str[str.size()-1] != '"')
     { throw FaultyStringInput("unquote",str); }
   // Return the substring of str spanning from the 
   // second to the next to final character.  

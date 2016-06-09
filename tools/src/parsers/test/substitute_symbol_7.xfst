@@ -1,0 +1,7 @@
+# flag to normal symbol
+regex bar:"@U.FOO.ON@" "@U.FOO.ON@" "@U.FOO.ON@":bar ;
+substitute symbol foo for @U.FOO.ON@
+write att
+echo --
+sigma net
+write att

@@ -1,0 +1,2 @@
+regex [a | b] -> %[ ... %] ;
+write att

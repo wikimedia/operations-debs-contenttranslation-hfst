@@ -2,6 +2,6 @@ set precision 1
 set print-weight ON
 
 regex a -> x::2 ;
-apply up aaana
+apply down aaana
 
 

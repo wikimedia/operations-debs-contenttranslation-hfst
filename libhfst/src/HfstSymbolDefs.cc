@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #include "HfstSymbolDefs.h"
 #include "HfstFlagDiacritics.h"
@@ -118,6 +115,19 @@ bool is_default(const char * str)
       return result;
     }
 
+    StringVector to_string_vector(const StringPairVector & spv, bool input_side)
+    {
+      StringVector result;
+      for (StringPairVector::const_iterator it = spv.begin(); it != spv.end(); it++)
+        {
+          if (input_side)
+            result.push_back(it->first);
+          else
+            result.push_back(it->second);
+        }
+      return result;
+    }
+
     StringVector to_string_vector(const HfstTwoLevelPath & path)
     {
       StringVector result;
@@ -205,7 +215,7 @@ bool is_default(const char * str)
            it != v.end();
            ++it)
         {
-          if (not FdOperation::is_diacritic(*it))
+          if (! FdOperation::is_diacritic(*it))
             { v_wo_flags.push_back(*it); }
         }
       return v_wo_flags;
@@ -218,8 +228,8 @@ bool is_default(const char * str)
            it != v.end();
            ++it)
         {
-          if (not FdOperation::is_diacritic(it->first) &&
-              not FdOperation::is_diacritic(it->second))
+          if (! FdOperation::is_diacritic(it->first) &&
+              ! FdOperation::is_diacritic(it->second))
             { v_wo_flags.push_back(*it); }
         }
       return v_wo_flags;

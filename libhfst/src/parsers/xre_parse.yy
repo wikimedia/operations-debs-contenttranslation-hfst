@@ -1,4 +1,13 @@
 %{
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 #define YYDEBUG 1 
 
 #include <stdio.h>
@@ -47,7 +56,7 @@ using hfst::xre::harmonize_;
 using hfst::xre::harmonize_flags_;
 
 union YYSTYPE;
-class yy_buffer_state;
+struct yy_buffer_state;
 typedef yy_buffer_state * YY_BUFFER_STATE;
 typedef void * yyscan_t;
 
@@ -118,10 +127,10 @@ int xrelex ( YYSTYPE * , yyscan_t );
 %type <transducerVector> REGEXP_LIST   // function call
 %type <label> FUNCTION                 // function call
 
-%nonassoc <weight> WEIGHT END_OF_WEIGHTED_EXPRESSION
+%nonassoc <weight> WEIGHT
 %nonassoc <label> SYMBOL CURLY_BRACKETS
 
-%left  CROSS_PRODUCT COMPOSITION LENIENT_COMPOSITION INTERSECTION
+%left  CROSS_PRODUCT COMPOSITION LENIENT_COMPOSITION INTERSECTION MERGE_RIGHT_ARROW MERGE_LEFT_ARROW
 %left  CENTER_MARKER MARKUP_MARKER
 %left  SHUFFLE
 %right LEFT_RESTRICTION LEFT_ARROW RIGHT_ARROW LEFT_RIGHT_ARROW
@@ -147,7 +156,7 @@ int xrelex ( YYSTYPE * , yyscan_t );
 
 %nonassoc SUBSTITUTE_LEFT TERM_COMPLEMENT
 %nonassoc COMPLEMENT CONTAINMENT CONTAINMENT_ONCE CONTAINMENT_OPT
-%nonassoc REVERSE INVERT UPPER LOWER STAR PLUS
+%nonassoc REVERSE INVERT XRE_UPPER XRE_LOWER STAR PLUS
 %nonassoc <values> CATENATE_N_TO_K
 %nonassoc <value> CATENATE_N CATENATE_N_PLUS CATENATE_N_MINUS
 
@@ -155,11 +164,10 @@ int xrelex ( YYSTYPE * , yyscan_t );
 %nonassoc <label> FUNCTION_NAME   // function call
 %token LEFT_BRACKET RIGHT_BRACKET LEFT_PARENTHESIS RIGHT_PARENTHESIS
        LEFT_BRACKET_DOTTED RIGHT_BRACKET_DOTTED SUBVAL
-       PAIR_SEPARATOR_WO_RIGHT PAIR_SEPARATOR_WO_LEFT
 %token EPSILON_TOKEN ANY_TOKEN BOUNDARY_MARKER
 %token LEXER_ERROR
 %token END_OF_EXPRESSION
-%token PAIR_SEPARATOR PAIR_SEPARATOR_SOLE 
+%token PAIR_SEPARATOR 
 %nonassoc <label> QUOTED_LITERAL
 %%
 
@@ -181,17 +189,6 @@ REGEXP1: REGEXP2 END_OF_EXPRESSION {
        if (hfst::xre::allow_extra_text_at_end) {
          return 0;
        }
-   }
-   | REGEXP2 END_OF_WEIGHTED_EXPRESSION {
-        //std::cerr << "regexp1:regexp2 end of weighted expr \n"<< std::endl; 
-       // Symbols of form <foo> are not harmonized in xfst, that is why
-       // they are escaped as @_<foo>_@ and need to be unescaped finally.  
-        // hfst::xre::last_compiled = & hfst::xre::unescape_enclosing_angle_brackets($1)->minimize().set_final_weights($2, true);
-        hfst::xre::last_compiled = & $1->minimize().set_final_weights($2, true);
-        $$ = hfst::xre::last_compiled;
-        if (hfst::xre::allow_extra_text_at_end) {
-          return 0;
-        }
    }
    | REGEXP2 {
    
@@ -242,6 +239,23 @@ REGEXP2: REPLACE
             $$ = & $1->lenient_composition(*$3).minimize();
             delete $3;
         }
+       | REGEXP2 MERGE_RIGHT_ARROW REPLACE {
+          try {
+            $$ = hfst::xre::merge_first_to_second($1, $3);
+          }
+          catch (const TransducersAreNotAutomataException & e)
+          {
+            xreerror("Error: transducers must be automata in merge operation.");
+            delete $1;
+            delete $3;
+            YYABORT;
+          }
+          delete $1;
+       }
+       | REGEXP2 MERGE_LEFT_ARROW REPLACE {
+            $$ = hfst::xre::merge_first_to_second($3, $1);
+            delete $3;
+       }
         // substitute
        | SUB1 HALFARC PAIR_SEPARATOR HALFARC COMMA HALFARC PAIR_SEPARATOR HALFARC RIGHT_BRACKET {
             $1->substitute(StringPair($2,$4), StringPair($6,$8));
@@ -297,6 +311,18 @@ REGEXP2: REPLACE
                         Rule rule(mappingPairVector);
                         HfstTransducer replaceTr(hfst::xre::format);
                         replaceTr = replace(rule, false);
+
+                        // if we are replacing with flag diacritics, the rule must allow
+                        // flags to be replaced with themselves
+                        StringSet alpha = $3->get_alphabet();
+                        for (StringSet::const_iterator it = alpha.begin(); it != alpha.end(); it++)
+                        {
+                          if (FdOperation::is_diacritic(*it))
+                          {
+                            replaceTr.insert_freely(StringPair(*it, *it), false);
+                          }
+                        }
+                        replaceTr.minimize();
 
                         tmpTr->compose(replaceTr).minimize();
                         tmpTr->invert().compose(replaceTr).invert();
@@ -356,6 +382,7 @@ REPLACE : REGEXP3 { }
                case E_REPLACE_RIGHT_MARKUP:
                default:
                 xreerror("Unhandled arrow stuff I suppose");
+                YYABORT;
                 break;
             }
        
@@ -415,7 +442,7 @@ MAPPINGPAIR_VECTOR: MAPPINGPAIR_VECTOR COMMA MAPPINGPAIR
 
          if ($1->first != $3->first)
          {
-            xreerror("Replace arrows should be the same. Calculated as if all replacements had the first arrow.");
+            hfst::xre::warn("Replace arrows should be the same. Calculated as if all replacements had the first arrow.");
             //exit(1);
          }
  
@@ -533,8 +560,19 @@ CONTEXTS_VECTOR: CONTEXT
       ;
 CONTEXT: REPLACE CENTER_MARKER REPLACE 
          {
-             HfstTransducer t1(*$1);
-             HfstTransducer t2(*$3);
+            if (hfst::xre::has_non_identity_pairs($1)) // if non-identity symbols present..
+            {
+              xreerror("Contexts need to be automata");
+              YYABORT;
+            }
+            if (hfst::xre::has_non_identity_pairs($3)) // if non-identity symbols present..
+            {
+              xreerror("Contexts need to be automata");
+              YYABORT;
+            }
+            
+            HfstTransducer t1(*$1);
+            HfstTransducer t2(*$3); 
 
              if (hfst::xre::is_weighted())
              {
@@ -555,8 +593,14 @@ CONTEXT: REPLACE CENTER_MARKER REPLACE
          }
       | REPLACE CENTER_MARKER
          {
-            HfstTransducer t1(*$1);
+            if (hfst::xre::has_non_identity_pairs($1)) // if non-identity symbols present..
+            {
+              xreerror("Contexts need to be automata");
+              YYABORT;
+            }
 
+            HfstTransducer t1(*$1);
+            
             if (hfst::xre::is_weighted())
             {
               hfst::xre::has_weight_been_zeroed=false;
@@ -571,6 +615,13 @@ CONTEXT: REPLACE CENTER_MARKER REPLACE
          }
       | CENTER_MARKER REPLACE
          {
+
+            if (hfst::xre::has_non_identity_pairs($2)) // if non-identity symbols present..
+            {
+              xreerror("Contexts need to be automata");
+              YYABORT;
+            }
+            
             HfstTransducer t1(*$2);
 
             if (hfst::xre::is_weighted())
@@ -647,8 +698,9 @@ REPLACE_ARROW: REPLACE_RIGHT
 REGEXP3: REGEXP4 { }
        | REGEXP3 SHUFFLE REGEXP4 {
             xreerror("No shuffle");
-            $$ = $1;
+            //$$ = $1;
             delete $3;
+            YYABORT;
         }
        | REGEXP3 BEFORE REGEXP4 {
             $$ = new HfstTransducer( before (*$1, *$3) );
@@ -671,16 +723,18 @@ REGEXP4: REGEXP5 { }
        // doesn't exist in xfst
        | REGEXP4 LEFT_ARROW REGEXP5 CENTER_MARKER REGEXP5 {
             xreerror("No Arrows");
-            $$ = $1;
+            //$$ = $1;
             delete $3;
             delete $5;
+            YYABORT;
         }
        // doesn't exist in xfst
        | REGEXP4 LEFT_RIGHT_ARROW REGEXP5 CENTER_MARKER REGEXP5 {
             xreerror("No Arrows");
-            $$ = $1;
+            //$$ = $1;
             delete $3;
             delete $5;
+            YYABORT;
         }
        ;
 
@@ -746,13 +800,15 @@ REGEXP5: REGEXP6 { }
         }
        | REGEXP5 UPPER_MINUS REGEXP6 {
             xreerror("No upper minus");
-            $$ = $1;
+            //$$ = $1;
             delete $3;
+            YYABORT;
         }
        | REGEXP5 LOWER_MINUS REGEXP6 {
             xreerror("No lower minus");
-            $$ = $1;
+            //$$ = $1;
             delete $3;
+            YYABORT;
         }
        | REGEXP5 UPPER_PRIORITY_UNION REGEXP6 {
             $$ = & $1->priority_union(*$3);
@@ -782,13 +838,15 @@ REGEXP7: REGEXP8 { }
         }
        | REGEXP7 IGNORE_INTERNALLY REGEXP8 {
             xreerror("No ignoring internally");
-            $$ = $1;
+            //$$ = $1;
             delete $3;
+            YYABORT;
         }
        | REGEXP7 LEFT_QUOTIENT REGEXP8 {
             xreerror("No left quotient");
-            $$ = $1;
+            //$$ = $1;
             delete $3;
+            YYABORT;
         }
        ;
 
@@ -849,10 +907,10 @@ REGEXP9: REGEXP10 { }
        | REGEXP9 INVERT {
             $$ = & $1->invert();
         }
-       | REGEXP9 UPPER {
+       | REGEXP9 XRE_UPPER {
             $$ = & $1->input_project();
         }
-       | REGEXP9 LOWER {
+       | REGEXP9 XRE_LOWER {
             $$ = & $1->output_project();
         }
        | REGEXP9 CATENATE_N {
@@ -881,7 +939,8 @@ REGEXP10: REGEXP11 { }
         /*
        | SUBSTITUTE_LEFT REGEXP10 COMMA REGEXP10 COMMA REGEXP10 RIGHT_BRACKET {
             xreerror("no substitute");
-            $$ = $2;
+            //$$ = $2;
+            YYABORT;
         }
         */
        ;
@@ -1114,18 +1173,6 @@ LABEL: HALFARC {
         free($1);
         free($3);
      }
-     | HALFARC PAIR_SEPARATOR_WO_RIGHT {
-        $$ = hfst::xre::xfst_label_to_transducer($1,hfst::internal_unknown.c_str());
-        /*$$ = new HfstTransducer($1, hfst::internal_unknown, hfst::xre::format);*/
-        free($1);
-     }
-     | PAIR_SEPARATOR_WO_LEFT HALFARC {
-        $$ = hfst::xre::xfst_label_to_transducer(hfst::internal_unknown.c_str(),$2);
-        free($2);
-     }
-     | PAIR_SEPARATOR_SOLE {
-	$$ = hfst::xre::xfst_label_to_transducer(hfst::internal_unknown.c_str(), hfst::internal_unknown.c_str());
-     }
      | HALFARC PAIR_SEPARATOR CURLY_BRACKETS {
         $$ = hfst::xre::xfst_label_to_transducer($1,$1);
         free($1);
@@ -1163,7 +1210,11 @@ LABEL: HALFARC {
               YY_BUFFER_STATE bs = xre_scan_string(hfst::xre::get_function_xre($1),scanner);
 
               // define special variables so that function arguments get the values given in regexp list
-              hfst::xre::define_function_args($1, $2);
+              if (! hfst::xre::define_function_args($1, $2))
+              {
+                xreerror("Could not define function args.\n");  // TODO: more informative message
+                YYABORT;
+              }
 
               // if we are scanning a function definition for argument symbols, 
               // do not include the characters read when evaluating functions inside it 

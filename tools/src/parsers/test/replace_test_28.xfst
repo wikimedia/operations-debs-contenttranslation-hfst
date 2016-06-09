@@ -2,4 +2,4 @@ set precision 1
 set print-weight ON
 
 regex [ [a::1]+ [b::2]+ | [b::2]+ [a::1]+ ] @-> x \/ _ x ;
-apply up aabbaax
+apply down aabbaax

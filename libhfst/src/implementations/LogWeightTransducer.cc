@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #include "LogWeightTransducer.h"
 #include "HfstSymbolDefs.h"
@@ -72,7 +69,7 @@ namespace hfst { namespace implementations
     fst::SymbolTable st(t->InputSymbols()->Name());    
     for ( fst::SymbolTableIterator it 
             = fst::SymbolTableIterator(*(t->InputSymbols()));
-          not it.Done(); it.Next() ) {
+          ! it.Done(); it.Next() ) {
       if (it.Symbol() != symbol) {
     st.AddSymbol(it.Symbol(), it.Value());
       }
@@ -86,7 +83,7 @@ namespace hfst { namespace implementations
     StringSet s;
     for ( fst::SymbolTableIterator it 
             = fst::SymbolTableIterator(*(t->InputSymbols()));
-          not it.Done(); it.Next() ) {
+          ! it.Done(); it.Next() ) {
       s.insert( std::string(it.Symbol()) );
     }
     return s;
@@ -113,7 +110,7 @@ namespace hfst { namespace implementations
     // find the number-to-number mappings for transducer t1
     for ( fst::SymbolTableIterator it 
             = fst::SymbolTableIterator(*(t1->InputSymbols()));
-          not it.Done(); it.Next() ) {    
+          ! it.Done(); it.Next() ) {    
       km [ (unsigned int)it.Value() ] 
         = (unsigned int) t2->InputSymbols()->Find( it.Symbol() );
     }
@@ -125,7 +122,7 @@ namespace hfst { namespace implementations
     (LogFst *t, NumberNumberMap &km) 
   {
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next())
+         ! siter.Done(); siter.Next())
       {
         StateId s = siter.Value();
         for (fst::MutableArcIterator<LogFst> aiter(t,s); 
@@ -146,7 +143,7 @@ namespace hfst { namespace implementations
   LogFst * LogWeightTransducer::set_final_weights(LogFst * t, float weight)
   {
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next())
+         ! siter.Done(); siter.Next())
       {
         StateId s = siter.Value();
         if ( t->Final(s) != LogWeight::Zero() )
@@ -171,7 +168,7 @@ namespace hfst { namespace implementations
     (LogFst * t,float (*func)(float f))
   {
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next())
+         ! siter.Done(); siter.Next())
       {
         StateId s = siter.Value();
         if ( t->Final(s) != LogWeight::Zero() )
@@ -208,7 +205,7 @@ namespace hfst { namespace implementations
     }
       
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next()) 
+         ! siter.Done(); siter.Next()) 
       {
         StateId s = siter.Value();
         if (s == initial_state) {
@@ -241,7 +238,7 @@ namespace hfst { namespace implementations
       }
 
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next())
+         ! siter.Done(); siter.Next())
       {
         StateId s = siter.Value();
         if (s != initial_state) {
@@ -289,7 +286,7 @@ namespace hfst { namespace implementations
     }
       
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next()) 
+         ! siter.Done(); siter.Next()) 
       {
         StateId s = siter.Value();
         if (s == initial_state) {
@@ -321,7 +318,7 @@ namespace hfst { namespace implementations
       }
 
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next())
+         ! siter.Done(); siter.Next())
       {
         StateId s = siter.Value();
         if (s != initial_state) {
@@ -371,7 +368,7 @@ namespace hfst { namespace implementations
     }
       
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next()) 
+         ! siter.Done(); siter.Next()) 
       {
         StateId s = siter.Value();
         if (s == initial_state) {
@@ -406,7 +403,7 @@ namespace hfst { namespace implementations
       }
 
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next())
+         ! siter.Done(); siter.Next())
       {
         StateId s = siter.Value();
         if (s != initial_state) {
@@ -456,7 +453,7 @@ namespace hfst { namespace implementations
     }
       
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next()) 
+         ! siter.Done(); siter.Next()) 
       {
         StateId s = siter.Value();
         if (s == initial_state) {
@@ -491,7 +488,7 @@ namespace hfst { namespace implementations
       }
 
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next())
+         ! siter.Done(); siter.Next())
       {
         StateId s = siter.Value();
         if (s != initial_state) {
@@ -634,12 +631,12 @@ namespace hfst { namespace implementations
     LogFst * result = new LogFst();
 
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next())
+         ! siter.Done(); siter.Next())
       result->AddState();
 
     // go through all states in this
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next())
+         ! siter.Done(); siter.Next())
       {
         // create new state in result, if needed
         StateId s = siter.Value();
@@ -745,7 +742,7 @@ namespace hfst { namespace implementations
   {
     unsigned int retval=0;
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next())
+         ! siter.Done(); siter.Next())
       retval++;
     return retval;
   }
@@ -792,14 +789,14 @@ namespace hfst { namespace implementations
     LogFst *harmonized_t1;
     LogFst *harmonized_t2;
 
-    if (not unknown_symbols_in_use)
+    if (! unknown_symbols_in_use)
       harmonized_t1 = t1;
     else {
       harmonized_t1 = expand_arcs(t1, unknown_t1, unknown_symbols_in_use);
       harmonized_t1->SetInputSymbols(t1->InputSymbols());
     }
 
-    if (not unknown_symbols_in_use)
+    if (! unknown_symbols_in_use)
       harmonized_t2 = t2;
     else {
       harmonized_t2 = expand_arcs(t2, unknown_t2, unknown_symbols_in_use);
@@ -1115,7 +1112,7 @@ namespace hfst { namespace implementations
   bool LogWeightTransducer::is_automaton(LogFst * t)
   {
     for (fst::StateIterator<LogFst> siter(*t);
-         not siter.Done(); siter.Next())
+         ! siter.Done(); siter.Next())
       {
         StateId s = siter.Value();
         for (fst::ArcIterator<LogFst> aiter(*t,s);
@@ -1170,8 +1167,8 @@ namespace hfst { namespace implementations
     t->SetStart(s1);
     StateId s2=s1;               // final state
 
-    if (not sps.empty()) {
-      if (not cyclic)
+    if (! sps.empty()) {
+      if (! cyclic)
         s2 = t->AddState();
       for (StringPairSet::const_iterator it = sps.begin();
            it != sps.end();
@@ -1240,8 +1237,8 @@ namespace hfst { namespace implementations
     t->SetStart(s1);
     StateId s2=s1;               // final state
 
-    if (not nps.empty()) {
-      if (not cyclic)
+    if (! nps.empty()) {
+      if (! cyclic)
         s2 = t->AddState();
       for (NumberPairSet::const_iterator it = nps.begin();
            it != nps.end();
@@ -1312,7 +1309,7 @@ namespace hfst { namespace implementations
   void print_att_number(LogFst *t, FILE * ofile) {
     fprintf(ofile, "initial state: %i\n", t->Start());
     for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next()) 
+         ! siter.Done(); siter.Next()) 
       {
         StateId s = siter.Value();
         if ( t->Final(s) != LogWeight::Zero() )
@@ -1595,8 +1592,8 @@ namespace hfst { namespace implementations
   
   LogFst * LogWeightTransducer::substitute
   (LogFst * t,
-   pair<unsigned int, unsigned int> old_key_pair,
-   pair<unsigned int, unsigned int> new_key_pair)
+   NumberPair old_key_pair,
+   NumberPair new_key_pair)
   {
     EncodeMapper<LogArc> encode_mapper(0x0001,ENCODE);
     EncodeFst<LogArc> enc(*t,&encode_mapper);
@@ -1634,7 +1631,7 @@ namespace hfst { namespace implementations
     fst::SymbolTable * st = tc->InputSymbols()->Copy();
     assert(st != NULL);
     for (fst::StateIterator<LogFst> siter(*tc); 
-         not siter.Done(); siter.Next()) 
+         ! siter.Done(); siter.Next()) 
       {
         StateId s = siter.Value();
         for (fst::MutableArcIterator<LogFst> aiter(tc,s); 
@@ -1691,12 +1688,13 @@ namespace hfst { namespace implementations
   {
     assert(t->InputSymbols() != NULL);
     SymbolTable * st = t->InputSymbols()->Copy();
+    // TODO: cl.exe: conversion from 'int64' to 'unsigned int'
     pair<unsigned int, unsigned int> old_pair
-      (st->AddSymbol(old_symbol_pair.first),
-       st->AddSymbol(old_symbol_pair.second));
+      ((unsigned int)st->AddSymbol(old_symbol_pair.first),
+       (unsigned int)st->AddSymbol(old_symbol_pair.second));
     pair<unsigned int, unsigned int> new_pair
-      (st->AddSymbol(new_symbol_pair.first),
-       st->AddSymbol(new_symbol_pair.second));
+      ((unsigned int)st->AddSymbol(new_symbol_pair.first),
+       (unsigned int)st->AddSymbol(new_symbol_pair.second));
     LogFst * retval = substitute(t, old_pair, new_pair);
     retval->SetInputSymbols(st);
     delete st;
@@ -1715,7 +1713,7 @@ namespace hfst { namespace implementations
     for( int i = 0; i < states; ++i ) {
 
       for (fst::MutableArcIterator<LogFst> it(t,i);
-           not it.Done();
+           ! it.Done();
            it.Next()) {
 
         fst::LogArc arc = it.Value();
@@ -1799,7 +1797,7 @@ namespace hfst { namespace implementations
     for( int i = 0; i < states; ++i ) {
 
       for (fst::MutableArcIterator<LogFst> it(t,i);
-           not it.Done();
+           ! it.Done();
            it.Next()) {
 
         fst::LogArc arc = it.Value();
@@ -1938,7 +1936,7 @@ namespace hfst { namespace implementations
             }
           }
 
-        if (not transition_found) {
+        if (! transition_found) {
           StateId new_state = t->AddState();
           t->AddArc(s, LogArc(inumber,onumber,0,new_state));
           s = new_state;
@@ -1973,7 +1971,7 @@ namespace hfst { namespace implementations
             }
           }
 
-        if (not transition_found) {
+        if (! transition_found) {
           StateId new_state = t->AddState();
           t->AddArc(s, LogArc(inumber,onumber,0,new_state));
           s = new_state;
@@ -2063,7 +2061,7 @@ namespace hfst { namespace implementations
   {
     LogFst * t_copy = new LogFst(*t);
     for (fst::StateIterator<LogFst> iter(*t); 
-         not iter.Done(); iter.Next())
+         ! iter.Done(); iter.Next())
       {
         if (t_copy->Final(iter.Value()) != fst::LogWeight::Zero())
           { t_copy->SetFinal(iter.Value(),f); }
@@ -2083,7 +2081,7 @@ namespace hfst { namespace implementations
          !aiter.Done();
          aiter.Next())
       {
-        if ((aiter.Value().ilabel == ilabel) and 
+        if ((aiter.Value().ilabel == ilabel) && 
             (aiter.Value().olabel == olabel))
           { return aiter.Position(); }
       }

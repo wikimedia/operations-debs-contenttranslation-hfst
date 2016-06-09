@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #include "./transducer.h"
 
@@ -56,6 +53,11 @@ TransducerAlphabet::TransducerAlphabet(std::istream& is,
 }
 
 void TransducerAlphabet::add_symbol(char * symbol)
+{
+    symbol_table.push_back(symbol);
+}
+
+void TransducerAlphabet::add_symbol(const std::string & symbol)
 {
     symbol_table.push_back(symbol);
 }
@@ -262,13 +264,14 @@ bool Transducer::initialize_input(const char * input)
             if (bytes_to_tokenize == 0) {
                 return false; // tokenization failed
             }
-            char new_symbol[bytes_to_tokenize + 1];
+            char * new_symbol = new char[bytes_to_tokenize + 1];
             memcpy(new_symbol, *input_str_ptr, bytes_to_tokenize);
             new_symbol[bytes_to_tokenize] = '\0';
             (*input_str_ptr) += bytes_to_tokenize;
             alphabet->add_symbol(new_symbol);
             k = alphabet->get_symbol_table().size() - 1;
             encoder->read_input_symbol(new_symbol, k);
+            delete [] new_symbol;
         }
         input_tape.write(i, k);
         ++i;
@@ -277,18 +280,34 @@ bool Transducer::initialize_input(const char * input)
     return true;
 }
 
-HfstOneLevelPaths * Transducer::lookup_fd(const StringVector & s, ssize_t limit)
+void Transducer::include_symbol_in_alphabet(const std::string & sym)
+{
+    SymbolNumber key = alphabet->symbol_from_string(sym);
+    if (key != NO_SYMBOL_NUMBER) {
+        return;
+    }
+    key = alphabet->get_symbol_table().size();
+    alphabet->add_symbol(sym);
+    char * cstr_for_encoder = new char[sym.size() + 1];
+    std::strcpy(cstr_for_encoder, sym.c_str());
+    encoder->read_input_symbol(cstr_for_encoder, key);
+    delete[] cstr_for_encoder;
+}
+
+HfstOneLevelPaths * Transducer::lookup_fd(const StringVector & s, ssize_t limit,
+                                          double time_cutoff)
 {
     std::string input_str;
     for (StringVector::const_iterator it = s.begin(); it != s.end(); ++it) {
         input_str.append(*it);
     }
-    return lookup_fd(input_str, limit);
+    return lookup_fd(input_str, limit, time_cutoff);
 }
 
-HfstOneLevelPaths * Transducer::lookup_fd(const std::string & s, ssize_t limit)
+HfstOneLevelPaths * Transducer::lookup_fd(const std::string & s, ssize_t limit,
+                                          double time_cutoff)
 {
-    return lookup_fd(s.c_str(), limit);
+    return lookup_fd(s.c_str(), limit, time_cutoff);
 }
 
 bool Transducer::is_lookup_infinitely_ambiguous(const std::string & s)
@@ -317,9 +336,15 @@ bool Transducer::is_lookup_infinitely_ambiguous(const StringVector & s)
 }
 
 
-HfstOneLevelPaths * Transducer::lookup_fd(const char * s, ssize_t limit)
+HfstOneLevelPaths * Transducer::lookup_fd(const char * s, ssize_t limit,
+                                          double time_cutoff)
 {
     max_lookups = limit;
+    max_time = 0.0;
+    if (time_cutoff > 0.0) {
+        max_time = time_cutoff;
+        start_clock = clock();
+    }
     HfstOneLevelPaths * results = new HfstOneLevelPaths;
     lookup_paths = results;
     if (!initialize_input(s)) {
@@ -333,6 +358,7 @@ HfstOneLevelPaths * Transducer::lookup_fd(const char * s, ssize_t limit)
     lookup_paths = NULL;
     return results;
 }
+
 
 void Transducer::try_epsilon_transitions(unsigned int input_pos,
                                          unsigned int output_pos,
@@ -357,7 +383,6 @@ void Transducer::try_epsilon_transitions(unsigned int input_pos,
             if (flag_state.apply_operation(
                     *(alphabet->get_operation(input)))) {
                 // flag diacritic allowed
-
                 TraversalState flag_reachable(target, flags);
                 if (traversal_states.count(flag_reachable) == 1) {
                     // We've been here before at this input, back out
@@ -465,6 +490,12 @@ void Transducer::get_analyses(unsigned int input_pos,
     if (max_lookups >= 0 && lookup_paths->size() >= max_lookups) {
         // Back out because we have enough results already
         return;
+    }
+    if (max_time > 0.0) {
+        // quit if we've overspent our time
+        if ((((double) clock() - start_clock) / CLOCKS_PER_SEC) > max_time) {
+            return;
+        }
     }
     --recursion_depth_left;
     if (indexes_transition_table(i))
@@ -660,55 +691,53 @@ Transducer::~Transducer()
     delete encoder;
 }
 
-TransducerTable<TransitionWIndex> & Transducer::copy_windex_table()
+TransducerTable<TransitionWIndex> Transducer::copy_windex_table()
 {
     if (!header->probe_flag(Weighted)) {
         HFST_THROW(TransducerHasWrongTypeException);
     }
-    TransducerTable<TransitionWIndex> * another =
-        new TransducerTable<TransitionWIndex>;
+    TransducerTable<TransitionWIndex> another;
     for (unsigned int i = 0; i < header->index_table_size(); ++i) {
-        another->append(TransitionWIndex(tables->get_index_input(i),
+        another.append(TransitionWIndex(tables->get_index_input(i),
                                          tables->get_index_target(i)));
     }
-    return *another;
+    return another;
 }
-TransducerTable<TransitionW> & Transducer::copy_transitionw_table()
+TransducerTable<TransitionW> Transducer::copy_transitionw_table()
 {
     if (!header->probe_flag(Weighted)) {
         HFST_THROW(TransducerHasWrongTypeException);
     }
-    TransducerTable<TransitionW> * another = new TransducerTable<TransitionW>;
+    TransducerTable<TransitionW> another;
     for (unsigned int i = 0; i < header->target_table_size(); ++i) {
-        another->append(TransitionW(tables->get_transition_input(i),
+        another.append(TransitionW(tables->get_transition_input(i),
                                     tables->get_transition_output(i),
                                     tables->get_transition_target(i),
                                     tables->get_weight(i)));
     }
-    return *another;
+    return another;
 }
-TransducerTable<TransitionIndex> & Transducer::copy_index_table()
+TransducerTable<TransitionIndex> Transducer::copy_index_table()
 {
     if (header->probe_flag(Weighted)) {
         HFST_THROW(TransducerHasWrongTypeException);
     }
-    TransducerTable<TransitionIndex> * another =
-        new TransducerTable<TransitionIndex>;
+    TransducerTable<TransitionIndex> another;
     for (unsigned int i = 0; i < header->index_table_size(); ++i) {
-        another->append(tables->get_index(i));
+        another.append(tables->get_index(i));
     }
-    return *another;
+    return another;
 }
-TransducerTable<Transition> & Transducer::copy_transition_table()
+TransducerTable<Transition> Transducer::copy_transition_table()
 {
     if (header->probe_flag(Weighted)) {
         HFST_THROW(TransducerHasWrongTypeException);
     }
-    TransducerTable<Transition> * another = new TransducerTable<Transition>();
+    TransducerTable<Transition> another;
     for (unsigned int i = 0; i < header->target_table_size(); ++i) {
-        another->append(tables->get_transition(i));
+        another.append(tables->get_transition(i));
     }
-    return *another;
+    return another;
 }
 
 

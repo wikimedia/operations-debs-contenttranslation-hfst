@@ -1,0 +1,59 @@
+
+         ------------------------------------------------
+         *** THIS IS THE NEW PYTHON WRAPPER FOR HFST ***
+             *** IT IS STILL UNDER CONSTRUCTION ***
+         ------------------------------------------------
+
+This is the SWIG binding for using HFST library with python.
+
+Building and installation is done using the standard Python module distutils.
+Once you've successfully built libhfst, use the script setup.py to build the
+Python extension eg. like so:
+
+    python setup.py build_ext --inplace
+
+
+NOTE: if you already have hfst installed, it is possible that SWIG will use 
+the installed version of hfst library instead of the default located in
+"../libhfst/src/.libs/". To avoid this, add the full path to hfst library to
+LD_LIBRARY_PATH before building the Python extension, e.g. by executing
+
+    LD_LIBRARY_PATH="path/to/hfst-top-dir/libhfst/src/.libs/:"$LD_LIBRARY_PATH
+
+
+If you wish to install the extension, run
+
+    python setup.py install
+
+
+For further information, consult
+
+    python setup.py --help
+    python setup.py --help-commands
+
+and the distutils documentation.
+
+
+NOTE: Some version combinations of SWIG and Python make HFST exception classes
+subclasses of Python's _object instead of Exception. Then you will get an
+error like
+
+    TypeError: catching classes that do not inherit from BaseException is not allowed
+
+If this is the case, run
+
+    sed -i 's/class HfstException(_object):/class HfstException(Exception):/' libhfst.py
+
+after build/installation to be able to use HfstException and its subclasses in Python. 
+
+
+If you want to use Python bindings locally, add path/to/hfst-top-dir/python to
+PYTHONPATH, e.g. by executing
+
+    PYTHONPATH="path/to/hfst-top-dir/python:"$PYTHONPATH
+
+If this does not work, you can do the following in Python before importing libhfst:
+
+    import sys
+    sys.path.insert(1, 'path/to/hfst-top-dir/python')
+

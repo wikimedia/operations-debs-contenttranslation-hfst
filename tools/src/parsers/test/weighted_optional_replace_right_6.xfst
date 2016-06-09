@@ -3,8 +3,8 @@ set precision 1
 set lookup-cycle-cutoff 5
 
 regex [a::3]+ (->) A || c __ c ;
-apply up cac
+apply down cac
 echo --
-apply up caac
+apply down caac
 echo --
-apply up caaac
+apply down caaac

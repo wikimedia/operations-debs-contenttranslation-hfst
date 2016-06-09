@@ -1,0 +1,103 @@
+===================================================
+ This is a catchall file for all hfst-related bugs
+===================================================
+
+Most of the bugs in this file have been reported via official bug tracker,
+which currently is email box <hfst-bugs@helsinki.fi>. For full listing of fixed
+bugs and changes, see ChangeLog.
+
+Bugs w.r.t. supported Xerox tool idiosyncracies
+-----------------------------------------------
+
+The automatic handling of flag diacritics, i.e. parsing symbols of form
+@?.*@ as special epsilons with side effects is only implemented in
+hfst-compose-intersect, hfst-compose, hfst-lookup and hfst-optimized-lookup.
+Handling them as epsilons for other tools that may require them to be treated
+as epsilons does not work. Also, the support in hfst-compose and
+hfst-compose-intersect is only partial, as it only supports the use of
+flag diacritics on left hand side transducer or *lexicon*.
+
+The handling of # or .#. as automatic border of automaton symbol is only
+supported in hfst-twolc, hfst-lexc and hfst-compose-intersect. The support
+of # as special symbol in hfst-lexc only applies to using lexc transducers on
+left hand side of hfst-compose-intersect.
+
+Unresolved Bugs
+---------------
+
+- Library should provide package-config .pc-files and stable API and reliable
+  version numbering. (External library requirement, e.g. for Voikko)
+
+- Library headers should not reveal underlying variables or structures, nor
+  cause all compilations to report warnings from bugs of underlying libraries.
+
+- Transducer reading will segfault with files which have a header that is
+  potentially valid HFST, SFST or OpenFST transducer header but rest of the
+  file is faulty.
+
+- hfst-lookup tokenizes left-to-right longest match, hfst-optimized-lookup ditto
+  except with ASCII where all ASCII are one arc.
+
+Resolved bugs
+-------------
+
+Released 2.4 version
+''''''''''''''''''''
+
+- Swapped ? and ?:? parsing of xerox regular expressions in r266
+
+- Fixed handling of empty transducers in intersecting composition in r254
+
+- Multiple lookup formatting fixes and lookup input format for apertium in r242
+
+- Fixed multiple include bugs of hfst string parsers in r232
+
+Released 2.3 version
+''''''''''''''''''''
+
+- Fixed flag diacritic support in hfst-diff-test in r196
+
+- Fixed optimized lookup transducer not containing epsilons in r193
+
+- Fixed D.X in optimized lookup in r183
+
+- Fixed flag diacritic support in hfst-diff-test in r196
+
+- Fixed optimized lookup transducer not containing epsilons in r193
+
+- Fixed D.X in optimized lookup in r183
+- Better handling of R.X and D.X flag diacritics in r178
+
+- Fixed platform dependent end-state parsing bugs in r157
+
+- Possibility to treat flag diacritics as epsilons in hfst-compose partially in
+  r146
+
+- Handle # as special symbol in lexc and twolc, mostly fixed in r120
+
+- Mac OS X gettext / autopoint failures, resolved in r150 by removal of gettext
+
+- libtool version 1 vs. 2 macros, partially resolved in r127
+
+- hfst-twolc escaped and low ascii symbol issues, Resolved in r97, r125
+
+- hfst-lookup does not allow non-ascii in readline on Mac OS X, resolved in r85
+  by removal of readline
+
+- hfst-fst2string -u -n -w
+
+- hfst-lookup formats: Resolved in r63:69, r76:77
+
+- “hfst-optimized-lookup not accepting file input” Resolved in documentation
+
+- (FIXED in development branch)
+  The currently (elsewhere) distributed German transducer, german.hfst, fails
+  under hfst-lookup with
+
+  terminate called after throwing an instance of 'std::bad_alloc'
+    what():  std::bad_alloc
+  Aborted
+
+  The optimized lookup version, german.hfst.ol, works fine however.
+
+.. vim: set ft=rst:

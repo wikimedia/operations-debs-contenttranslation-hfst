@@ -4,6 +4,6 @@ set lookup-cycle-cutoff 5
 set encode-weights ON
 
 regex ? -> 0 ,, 0 -> ?::1 ;
-apply up 
+apply down 
 abba
 <ctrl-d>

@@ -34,7 +34,7 @@ hfst_tools=hfst-compare.1 hfst-compose.1 \
 	hfst-affix-guessify.1 hfst-edit-metadata.1 hfst-expand-equivalences.1 \
 	hfst-grep.1 hfst-guess.1 hfst-guessify.1 hfst-info.1 hfst-multiply.1 \
 	hfst-pair-test.1 hfst-prune-alphabet.1 hfst-reweight.1 hfst-shuffle.1 \
-	hfst-traverse.1 hfst-proc2.1 hfst-pmatch.1 hfst-pmatch2fst.1 \
+	hfst-traverse.1 hfst-tokenize.1 hfst-pmatch.1 hfst-pmatch2fst.1 \
 	hfst-optimized-lookup.1
 hfst_xfst=hfst-xfst.1 
 hfst_apertium_proc=hfst-apertium-proc.1 
@@ -50,7 +50,7 @@ hfst_twolc_subprograms= htwolcpre1.1 htwolcpre2.1 htwolcpre3.1 # hand-written
 aliases= hfst-determinise.1 hfst-expand.1 hfst-intersect.1 hfst-minimise.1 \
 	 hfst-minus.1 hfst-sfstpl2fst.1 hfst-summarise.1 hfst-union.1 hfst-proc.1 \
 	 hfst-optimised-lookup.1 hfst-train-tagger-loc.1 hfst-train-tagger-system.1 \
-	 hfst-twolc-loc.1 hfst-twolc-system.1
+	 hfst-twolc-loc.1 hfst-twolc-system.1 hfst-proc2.1 hfst-tokenise.1
 
 dist_man1_MANS=$(hfst_tools) $(hfst_xfst) $(hfst_apertium_proc) $(hfst_foma) $(hfst_foma_wrapper) \
 	$(hfst_tag_and_reweight) $(hfst_train_tagger) $(hfst_train_tagger_subprograms) $(hfst_twolc) \
@@ -99,6 +99,12 @@ hfst-twolc-system.1:
 
 hfst-union.1:
 	$(LN_S) hfst-disjunct.1 hfst-union.1
+
+hfst-proc2.1:
+	$(LN_S) hfst-tokenize.1 hfst-proc2.1
+
+hfst-tokenise.1:
+	$(LN_S) hfst-tokenize.1 hfst-tokenise.1
 
 
 # Generate man pages for all tools and their aliases

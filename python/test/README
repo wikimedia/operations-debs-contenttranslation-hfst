@@ -1,0 +1,7 @@
+
+This directory contains tests for HFST python bindings. The tests are
+still under construction, as are the python bindings.
+
+For the time being, run
+
+  ./test.sh

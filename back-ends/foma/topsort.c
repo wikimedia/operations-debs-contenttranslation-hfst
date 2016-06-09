@@ -53,11 +53,11 @@ struct fsm *fsm_topsort (struct fsm *net) {
     treated =  xxmalloc(sizeof(unsigned char)*net->statecount);
    
     for (i=0; i < net->statecount; i++) {
-        *(statemap+i) = -1;
-        *(invcount+i) = 0;
-        *(treated+i) = 0;
-        *(order+i) = 0;
-        *(pathcount+i) = 0;
+	*(statemap+i) = -1;
+	*(invcount+i) = 0;
+	*(treated+i) = 0;
+	*(order+i) = 0;
+	*(pathcount+i) = 0;
     }
 
     for (i=0, lc=0; (fsm+i)->state_no != -1; i++) {        
@@ -71,9 +71,9 @@ struct fsm *fsm_topsort (struct fsm *net) {
                 goto cyclic;
             }
         }
-        if (*(statemap+(fsm+i)->state_no) == -1) {
-            *(statemap+(fsm+i)->state_no) = i;
-        }
+	if (*(statemap+(fsm+i)->state_no) == -1) {
+	    *(statemap+(fsm+i)->state_no) = i;
+	}
     }
 
     treatcount = net->statecount;

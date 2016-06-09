@@ -1,0 +1,19 @@
+regex "@U.FOO.ON@" ?;
+regex "@U.FOO.ON@" ["@U.FOO.ON@"|?];
+equivalent
+clear stack
+
+regex ? "@U.FOO.ON@";
+regex ["@U.FOO.ON@"|?] "@U.FOO.ON@";
+equivalent
+clear stack
+
+regex "@U.FOO.ON@" ?:?;
+regex "@U.FOO.ON@" ["@U.FOO.ON@"|?:?|"@U.FOO.ON@":?|?:"@U.FOO.ON@"];
+equivalent
+clear stack
+
+regex ?:? "@U.FOO.ON@";
+regex ["@U.FOO.ON@"|?:?|"@U.FOO.ON@":?|?:"@U.FOO.ON@"] "@U.FOO.ON@";
+equivalent
+clear stack

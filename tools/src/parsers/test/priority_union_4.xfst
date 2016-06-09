@@ -1,0 +1,2 @@
+regex [a:A | b:B | 0:D ] .P. [b:K | c:K | 0:N ];
+write att

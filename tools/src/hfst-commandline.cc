@@ -19,6 +19,9 @@
 
 #if HAVE_CONFIG_H
 #  include <config.h>
+#else
+#  define PACKAGE_STRING ""
+#  define PACKAGE_BUGREPORT ""
 #endif
 
 #include <cassert>
@@ -28,7 +31,13 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
+
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include  <io.h>
+#endif
+
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -51,6 +60,12 @@
 #include "HfstOutputStream.h"
 #include "HfstTransducer.h"
 #include "HfstInputStream.h"
+
+// LLONG_MAX for 64-bit...
+#ifdef _MSC_VER
+#  define strcasecmp _stricmp
+#  define SSIZE_MAX LLONG_MAX
+#endif
 
 #ifndef HAVE_ERROR_AT_LINE
 void error_at_line(int status, int errnum, const char* filename, 
@@ -170,6 +185,52 @@ verbose_printf(const char* fmt, ...)
     }
 }
 
+int
+conversion_type(hfst::ImplementationType type1, hfst::ImplementationType type2)
+{
+  if (type1 == type2)
+    return 0;
+  if (hfst::HfstTransducer::is_safe_conversion(type2, type1))
+    return 1;
+  else if (hfst::HfstTransducer::is_safe_conversion(type1, type2))
+    return 2;
+  else
+    return -1;
+}
+
+void
+convert_transducers(hfst::HfstTransducer & first, hfst::HfstTransducer & second)
+{
+  hfst::ImplementationType type1 = first.get_type();
+  hfst::ImplementationType type2 = second.get_type();
+  int ct = conversion_type(type1, type2);
+
+  if (ct == 0)
+    return;
+  else if (ct == 1)
+    {
+      verbose_printf("warning: transducers have different types, converting to format %s\n", 
+                     hfst_strformat(type1));
+      second.convert(type1);
+    }
+  else if (ct == 2)
+    {
+      verbose_printf("warning: transducers have different types, converting to format %s\n", 
+                     hfst_strformat(type2));
+      first.convert(type2);
+    }
+  else if (ct == -1)
+    {
+      verbose_printf("warning: transducers have different types, converting to format %s,"
+                     " loss of information is possible\n", hfst_strformat(type1));
+      second.convert(type1);
+    }
+  else /* This should not happen. */
+    HFST_THROW_MESSAGE(HfstFatalException, "convert_transducers: conversion_type returned an invalid integer");
+
+  return;
+}
+
 bool
 is_input_stream_in_ol_format(const hfst::HfstInputStream * is, const char * program)
 {
@@ -209,12 +270,16 @@ hfst_strtonumber(const char *s, bool *infinite)
     double rv = strtod(s, &endptr); 
     if (*endptr == '\0')
       {
+#ifndef _MSC_VER
         if (std::isinf(rv) && infinite != NULL)
         {
             *infinite = true;
             return std::signbit(rv);
         }
         else if (rv > INT_MAX)
+#else
+        if (rv > INT_MAX)
+#endif
         {
             return INT_MAX;
         }
@@ -295,6 +360,10 @@ hfst_parse_format_name(const char* s)
       {
         rv = hfst::FOMA_TYPE;
       }
+    else if (strcasecmp(s, "xfsm") == 0)
+      {
+        rv = hfst::XFSM_TYPE;
+      }
     else if ((strcasecmp(s, "optimized-lookup-unweighted") == 0) ||
              (strcasecmp(s, "olu") == 0))
       {
@@ -338,6 +407,9 @@ hfst_strformat(hfst::ImplementationType format)
       break;
     case hfst::FOMA_TYPE:
       return strdup("foma");
+      break;
+    case hfst::XFSM_TYPE:
+      return strdup("xfsm");
       break;
     case hfst::HFST_OL_TYPE:
       return strdup("Hfst's lookup optimized, unweighted");
@@ -502,9 +574,10 @@ hfst_write(int fd, const void* buf, size_t count)
 int
 hfst_mkstemp(char* templ)
 {
-#ifdef WINDOWS
+#ifdef _WIN32
   error(EXIT_FAILURE, errno, 
         "'int hfst_mkstemp(char * temp1)' not implemented for windows");
+  return 1; // keep compiler happy
 #else 
   errno = 0;
   int rv = mkstemp(templ);
@@ -793,7 +866,7 @@ print_version()
 {
   // c.f. http://www.gnu.org/prep/standards/standards.html#g_t_002d_002dversion
     fprintf(message_out, "%s %s (" PACKAGE_STRING ")\n"
-             "Copyright (C) 2010 University of Helsinki,\n"
+             "Copyright (C) 2016 University of Helsinki,\n"
              "License GPLv3: GNU GPL version 3 "
              "<http://gnu.org/licenses/gpl.html>\n"
              "This is free software: you are free to change and "
@@ -807,7 +880,7 @@ print_report_bugs()
 {
   fprintf(message_out, "Report bugs to <" PACKAGE_BUGREPORT "> "
           "or directly to our bug tracker at:\n"
-          "<https://sourceforge.net/tracker/?atid=1061990&group_id=224521&func=browse>\n");
+          "<https://github.com/hfst/hfst/issues>\n");
 }
 
 

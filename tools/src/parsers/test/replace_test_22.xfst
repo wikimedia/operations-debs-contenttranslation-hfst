@@ -3,4 +3,4 @@ set print-weight ON
 
 regex [a::1]+ @-> x || a _ a ;
 
-apply up aaaa
+apply down aaaa

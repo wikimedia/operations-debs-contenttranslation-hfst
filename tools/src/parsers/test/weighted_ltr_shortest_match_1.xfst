@@ -3,9 +3,9 @@ set precision 1
 set lookup-cycle-cutoff 5
 
 regex [a::1]^{1,3} @> b::2 || c [a]* __ [a]* c ;
-apply up cac
+apply down cac
 echo --
-apply up caac
+apply down caac
 echo --
-apply up caaac
+apply down caaac
 

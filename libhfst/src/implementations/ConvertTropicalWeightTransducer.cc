@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #if HAVE_CONFIG_H
 #  include <config.h>
@@ -46,7 +43,7 @@ namespace hfst { namespace implementations
         if (inputsym != NULL) {
           for ( fst::SymbolTableIterator it = 
                   fst::SymbolTableIterator(*(inputsym));
-              not it.Done(); it.Next() ) {
+              ! it.Done(); it.Next() ) {
           assert(it.Symbol() != "");
 
           if (it.Value() != 0) // epsilon is not inserted
@@ -57,10 +54,10 @@ namespace hfst { namespace implementations
          symbol table. If the transducer is an HFST tropical transducer, it
          can have an output symbol table, but it is equivalent to the 
          input symbol table. */
-        if (not has_hfst_header && outputsym != NULL) {
+        if (! has_hfst_header && outputsym != NULL) {
           for ( fst::SymbolTableIterator it = 
                   fst::SymbolTableIterator(*(outputsym));
-                not it.Done(); it.Next() ) {
+                ! it.Done(); it.Next() ) {
             assert(it.Symbol() != "");
             if (it.Value() != 0) // epsilon is not inserted
               net->add_symbol_to_alphabet( it.Symbol() );
@@ -89,7 +86,7 @@ namespace hfst { namespace implementations
       {
         for ( fst::SymbolTableIterator it = 
                 fst::SymbolTableIterator(*(inputsym));
-              not it.Done(); it.Next() ) 
+              ! it.Done(); it.Next() ) 
           {
             assert(it.Symbol() != "");
             if (it.Value() != 0) // epsilon is not inserted
@@ -100,7 +97,7 @@ namespace hfst { namespace implementations
       {
         for ( fst::SymbolTableIterator it = 
                 fst::SymbolTableIterator(*(outputsym));
-              not it.Done(); it.Next() ) 
+              ! it.Done(); it.Next() ) 
           {
             assert(it.Symbol() != "");
             if (it.Value() != 0) // epsilon is not inserted
@@ -139,7 +136,7 @@ namespace hfst { namespace implementations
     
     /* Go through all states */
     for (fst::StateIterator<fst::StdVectorFst> siter(*t); 
-         not siter.Done(); siter.Next()) 
+         ! siter.Done(); siter.Next()) 
       {
         StateId s = siter.Value();
         
@@ -166,13 +163,17 @@ namespace hfst { namespace implementations
 
             if (arc.ilabel >= symbol_vector.size())
               {
-                std::cerr << "FATAL ERROR: input number " << arc.ilabel << " not in symbol_vector" << std::endl;
-                exit(1);
+                std::ostringstream oss;
+                oss << "FATAL ERROR: input number " << arc.ilabel << " not in symbol_vector" << std::endl;
+                HFST_THROW_MESSAGE(HfstFatalException, oss.str());
+                //exit(1);
               }
             if (arc.olabel >= symbol_vector.size())
               {
-                std::cerr << "FATAL ERROR: output number " << arc.olabel << " not in symbol_vector" << std::endl;
-                exit(1);
+                std::ostringstream oss;
+                oss << "FATAL ERROR: output number " << arc.olabel << " not in symbol_vector" << std::endl;
+                HFST_THROW_MESSAGE(HfstFatalException, oss.str());
+                //exit(1);
               }
 
             net->add_transition(origin, 
@@ -230,7 +231,7 @@ namespace hfst { namespace implementations
     for (HfstBasicTransducer::HfstTransitionGraphAlphabet::iterator it 
            = net->alphabet.begin();
          it != net->alphabet.end(); it++) {
-      assert(not it->empty());
+      assert(! it->empty());
       st.AddSymbol(*it, net->get_symbol_number(*it));
     }
 

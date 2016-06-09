@@ -23,7 +23,7 @@
 
 #include <algorithm>
 
-#ifdef USE_TR1_UNORDERED_MAP
+/*#ifdef USE_TR1_UNORDERED_MAP
 #include <tr1/unordered_map>
 using std::tr1::unordered_map;
 using std::tr1::unordered_multimap;
@@ -41,7 +41,7 @@ using std::tr1::unordered_multiset;
 #include <unordered_set>
 using std::unordered_set;
 using std::unordered_multiset;
-#endif
+#endif*/
 
 
 #include <string>

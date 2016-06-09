@@ -1,3 +1,12 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 //! @file XreCompiler.cc
 //!
 //! @brief Functions for building transducers from Xerox regexps
@@ -6,40 +15,162 @@
 #include "xre_utils.h"
 #include "HfstTransducer.h"
 
+#ifdef WINDOWS
+#include "hfst-string-conversions.h"
+#endif 
+
 #ifndef UNIT_TEST
 
 namespace hfst { namespace xre {
 
-    unsigned int cr=0;
+    unsigned int cr=0; // chars read from xre input
     std::set<unsigned int> positions;
     char * position_symbol = NULL;
-    std::string error_message;
+    std::ostream * error_(&std::cerr);
+#ifdef WINDOWS
+    std::ostringstream winoss_;
+    std::ostream * redirected_stream_ = NULL;
+    bool output_to_console_(false);
+#endif
+    bool verbose_(false);
 
 XreCompiler::XreCompiler() : 
     definitions_(),
     function_definitions_(),
     function_arguments_(),
-    format_(hfst::TROPICAL_OPENFST_TYPE)
+    list_definitions_(),
+    format_(hfst::TROPICAL_OPENFST_TYPE),
+    verbose_(false)
+#ifdef WINDOWS
+    , output_to_console_(false)
+#endif
 {}
 
 XreCompiler::XreCompiler(hfst::ImplementationType impl) :
     definitions_(),
     function_definitions_(),
     function_arguments_(),
-    format_(impl)
+    list_definitions_(),
+    format_(impl),
+    verbose_(false)
+#ifdef WINDOWS
+    , output_to_console_(false)
+#endif
 {}
 
-void
+    XreCompiler::XreCompiler(const struct XreConstructorArguments & args) :
+    definitions_(args.definitions),
+    function_definitions_(args.function_definitions),
+    function_arguments_(args.function_arguments),
+    list_definitions_(args.list_definitions),
+    format_(args.format),
+    verbose_(false)
+#ifdef WINDOWS
+    , output_to_console_(false)
+#endif
+{}
+
+
+    void XreCompiler::set_verbosity(bool verbose)
+    {
+      this->verbose_ = verbose;
+      hfst::xre::verbose_ = verbose; // TODO
+    }
+
+    bool XreCompiler::get_verbosity()
+    {
+      return this->verbose_;
+    }
+
+    // TODO: get rid of global variables
+    void XreCompiler::set_error_stream(std::ostream * os)
+    {
+      hfst::xre::error_ = os;
+    }
+
+    std::ostream * XreCompiler::get_error_stream()
+    {
+      return hfst::xre::error_;
+    }
+
+  XreCompiler&
+  XreCompiler::setOutputToConsole(bool value)
+  {
+#ifdef WINDOWS
+    output_to_console_ = value;
+    hfst::xre::output_to_console_ = value;
+#else
+    (void)value;
+#endif
+    //hfst::print_output_to_console(output_to_console_);
+    return *this;
+  }
+
+  bool
+  XreCompiler::getOutputToConsole()
+  {
+#ifdef WINDOWs
+    return output_to_console_;
+#else
+    return false;
+#endif
+  }
+
+    std::ostream * XreCompiler::get_stream(std::ostream * oss)
+    {
+#ifdef WINDOWS
+      if (hfst::xre::output_to_console_ && (oss == &std::cerr || oss == &std::cout))
+        {
+          hfst::xre::redirected_stream_ = oss;
+          return &hfst::xre::winoss_;
+        }
+#endif
+      return oss;
+    }
+
+    void XreCompiler::flush(std::ostream * oss)
+    {
+#ifdef WINDOWS
+      if (hfst::xre::output_to_console_ && (oss == &hfst::xre::winoss_))
+        {
+          if (hfst::xre::redirected_stream_ == &std::cerr)
+            hfst_fprintf_console(stderr, hfst::xre::winoss_.str().c_str());
+          else if (hfst::xre::redirected_stream_ == &std::cout)
+            hfst_fprintf_console(stdout, hfst::xre::winoss_.str().c_str());
+          else
+            ;
+          hfst::xre::redirected_stream_ = NULL;
+          hfst::xre::winoss_.str("");
+        }
+#endif
+    }
+
+
+bool
 XreCompiler::define(const std::string& name, const std::string& xre)
 {
   HfstTransducer* compiled = compile(xre);
   if (compiled == NULL)
     {
-      fprintf(stderr, "error in XreCompiler::define: xre '%s' could not be parsed, leaving %s undefined\n", 
-              xre.c_str(), name.c_str());
-      return;
+      //fprintf(stderr, "error in XreCompiler::define: xre '%s' could not be parsed, leaving %s undefined\n", 
+      //        xre.c_str(), name.c_str());
+      //*errorstream_ << "error in XreCompiler::define: xre '" << xre << "' could not be parsed, leaving " << name << "undefined" << std::endl;
+      if (this->verbose_)
+        {
+          std::ostream * err = get_stream(get_error_stream());
+          *err << "error: could not parse '" << xre << "', leaving '" << name << "' undefined" << std::endl; 
+          flush(err);
+        }
+      return false;
     }
   definitions_[name] = compiled;
+  return true;
+}
+
+void 
+XreCompiler::define_list(const std::string& name, const std::set<std::string>& symbol_list)
+{
+  list_definitions_[name] = symbol_list;
 }
 
 void
@@ -87,8 +218,8 @@ if (definitions_.find(name) != definitions_.end())
 extern bool expand_definitions;
 extern bool harmonize_;
 extern bool harmonize_flags_;
-extern bool verbose_;
-extern FILE * warning_stream;
+    //extern bool verbose_;
+    //extern FILE * warning_stream;
 
 void XreCompiler::set_expand_definitions(bool expand)
 {
@@ -105,21 +236,6 @@ void XreCompiler::set_flag_harmonization(bool harmonize_flags)
   harmonize_flags_=harmonize_flags;
 }
 
-void XreCompiler::set_verbosity(bool verbose, FILE * file)
-{
-  verbose_=verbose;
-  if (verbose)
-    {
-      warning_stream=file;
-    }
-}
-
-std::string 
-XreCompiler::get_error_message()
-{
-  return error_message;
-}
-
 bool
 XreCompiler::contained_only_comments()
 {
@@ -129,13 +245,26 @@ XreCompiler::contained_only_comments()
 HfstTransducer*
 XreCompiler::compile(const std::string& xre)
 {
-  return hfst::xre::compile(xre, definitions_, function_definitions_, function_arguments_, format_);
+  // debug
+  //std::cerr << "XreCompiler: " << this << " : compile(\"" << xre << "\")" << std::endl;
+  unsigned int cr_before = cr;
+  cr = 0;
+  HfstTransducer * retval = hfst::xre::compile(xre, definitions_, function_definitions_, function_arguments_, list_definitions_, format_);
+  cr = cr_before;
+  return retval;
 }
 
 HfstTransducer*
 XreCompiler::compile_first(const std::string& xre, unsigned int & chars_read)
 {
-  return hfst::xre::compile_first(xre, definitions_, function_definitions_, function_arguments_, format_, chars_read);
+  // debug
+  //std::cerr << "XreCompiler: " << this << " : compile_first(\"" << xre << "\"";
+  unsigned int cr_before = cr;
+  cr = 0;
+  HfstTransducer * retval = hfst::xre::compile_first(xre, definitions_, function_definitions_, function_arguments_, list_definitions_, format_, chars_read);
+  //std::cerr << ", " << chars_read << ")" << std::endl;
+  cr = cr_before;
+  return retval;
 }
 
 bool XreCompiler::get_positions_of_symbol_in_xre
@@ -143,9 +272,10 @@ bool XreCompiler::get_positions_of_symbol_in_xre
 {
   position_symbol = strdup(symbol.c_str());
   positions.clear();
-  cr=0;
+  unsigned int cr_before = cr;
+  cr = 0;
   HfstTransducer * compiled = 
-    hfst::xre::compile(xre, definitions_, function_definitions_, function_arguments_, format_);
+    hfst::xre::compile(xre, definitions_, function_definitions_, function_arguments_, list_definitions_, format_);
   free(position_symbol);
   position_symbol = NULL;
   if (compiled == NULL)
@@ -156,6 +286,7 @@ bool XreCompiler::get_positions_of_symbol_in_xre
       return false;
     }
   positions_ = positions;
+  cr = cr_before;
   return true;
 }
 

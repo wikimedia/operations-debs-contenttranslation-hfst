@@ -45,6 +45,8 @@ using std::map;
 #include "HfstTransducer.h"
 #include "HfstInputStream.h"
 #include "HfstOutputStream.h"
+#include "HfstPrintDot.h"
+#include "HfstPrintPCKimmo.h"
 
 #include "inc/globals-common.h"
 #include "inc/globals-unary.h"
@@ -83,7 +85,7 @@ print_usage()
         "  -D, --do-not-print-weights   If weights are not printed in any "
         "case\n"
         "  -f, --format=TFMT            Print output in TFMT format "
-        "[default=att]\n");
+            "[default=att]\n");
     fprintf(message_out, "\n");
     fprintf(message_out,
           "If OUTFILE or INFILE is missing or -, "
@@ -178,323 +180,6 @@ parse_options(int argc, char** argv)
     return EXIT_CONTINUE;
 }
 
-static
-void
-print_dot(FILE* out, HfstTransducer& t)
-  {
-    fprintf(out, "// This graph generated with hfst-fst2txt\n");
-    if (t.get_name() != "")
-      {
-        fprintf(out, "digraph \"%s\" {\n", t.get_name().c_str());
-      }
-    else
-      {
-        fprintf(out, "digraph H {\n");
-      }
-    fprintf(out, "charset = UTF8;\n");
-    fprintf(out, "rankdir = LR;\n");
-    fprintf(out, "node [shape=circle,style=filled,fillcolor=yellow]\n");
-    HfstBasicTransducer* mutt = new HfstBasicTransducer(t);
-    HfstState s = 0;
-    // for some reason, dot works nicer if I first have all nodes, then arcs
-    for (HfstBasicTransducer::const_iterator state = mutt->begin();
-         state != mutt->end();
-         ++state)
-      {
-        if (mutt->is_final_state(s))
-          {
-            if (mutt->get_final_weight(s) > 0)
-              {
-                fprintf(out, "q%d [shape=doublecircle,"
-                       "label=\"q%d/\\n%.2f\"] \n",
-                        s, s, mutt->get_final_weight(s));
-              }
-            else
-              {
-                fprintf(out, "q%d [shape=doublecircle,"
-                       "label=\"q%d\"] \n",
-                        s, s);
-              }
-          }
-        else
-          {
-            fprintf(out, "q%d [label=\"q%d\"] \n", 
-                    s, s);
-          }
-        ++s;
-      } // each state
-    s = 0;
-    for (HfstBasicTransducer::const_iterator state = mutt->begin();
-         state != mutt->end();
-         ++state)
-      {
-        map<HfstState, string> target_labels;
-        for (HfstBasicTransducer::HfstTransitions::const_iterator arc = 
-             state->begin();
-             arc != state->end();
-             ++arc)
-          {
-            string old_label = target_labels[arc->get_target_state()];
-            string first = arc->get_input_symbol();
-            string second = arc->get_output_symbol();
-            if (first == hfst::internal_epsilon)
-              {
-                first = string("00");
-              }
-            else if (first == hfst::internal_identity)
-              {
-                first = string("??");
-              }
-            else if (first == hfst::internal_unknown)
-              { 
-                first = string("?1");
-              }
-            if (second == hfst::internal_epsilon)
-              {
-                second = string("00");
-              }
-            else if (second == hfst::internal_identity)
-              {
-                second = string("??");
-              }
-            else if (second == hfst::internal_unknown)
-              {
-                second = string("?2");
-              }
-#define DOT_MAX_LABEL_SIZE 64
-            char* l = static_cast<char*>(malloc(sizeof(char) * 
-                                                DOT_MAX_LABEL_SIZE));
-            if (first == second)
-              {
-                if (arc->get_weight() > 0)
-                  {
-                    errno = 0;
-                    if (old_label != "")
-                      {
-                        if (snprintf(l, DOT_MAX_LABEL_SIZE,
-                             "%s, %s/%.2f", old_label.c_str(),
-                             first.c_str(),
-                             arc->get_weight()) < 0)
-                          {
-                            error(EXIT_FAILURE, errno, 
-                                 "sprinting dot arc label");
-                          }
-                      }
-                    else 
-                      {
-                        if (snprintf(l, DOT_MAX_LABEL_SIZE,
-                                     "%s/%.2f", first.c_str(),
-                                     arc->get_weight()) < 0)
-                          {
-                            error(EXIT_FAILURE, errno, 
-                                 "sprinting dot arc label");
-                          }
-                      }  // if old label empty
-                  } // if weighted
-                else
-                  {
-                    errno = 0;
-                    if (old_label != "")
-                      {
-                        if (snprintf(l, DOT_MAX_LABEL_SIZE,
-                             "%s, %s", old_label.c_str(),
-                             first.c_str()) < 0)
-                          {
-                            error(EXIT_FAILURE, errno, 
-                                 "sprinting dot arc label");
-                          }
-                      }
-                    else 
-                      {
-                        if (snprintf(l, DOT_MAX_LABEL_SIZE,
-                                     "%s", first.c_str()) < 0)
-                          {
-                            error(EXIT_FAILURE, errno, 
-                                 "sprinting dot arc label");
-                          }
-                      } // if old label empty
-                  } // if weighted 
-              } // if id pair
-            else
-              {
-                if (arc->get_weight() > 0)
-                  {
-                    errno = 0;
-                    if (old_label != "")
-                      {
-                        if (snprintf(l, DOT_MAX_LABEL_SIZE,
-                                     "%s, %s:%s/%.2f", old_label.c_str(),
-                                    first.c_str(), second.c_str(),
-                                    arc->get_weight()) < 0)
-                          {
-                            error(EXIT_FAILURE, errno, 
-                                  "sprinting dot arc label");
-                          }
-                      }
-                    else
-                      {
-                        if (snprintf(l, DOT_MAX_LABEL_SIZE,
-                                     "%s:%s/%.2f",
-                                    first.c_str(), second.c_str(),
-                                    arc->get_weight()) < 0)
-                          {
-                            error(EXIT_FAILURE, errno, 
-                                  "sprinting dot arc label");
-                          }
-                      }  // old label empty
-                  } // if weighted
-                else
-                  {
-                    errno = 0;
-                    if (old_label != "")
-                      {
-                        if (snprintf(l, DOT_MAX_LABEL_SIZE,
-                                     "%s, %s:%s", old_label.c_str(),
-                                    first.c_str(), second.c_str()) < 0)
-                          {
-                            error(EXIT_FAILURE, errno, 
-                                  "sprinting dot arc label");
-                          }
-                      }
-                    else
-                      {
-                        if (snprintf(l, DOT_MAX_LABEL_SIZE,
-                                     "%s:%s",
-                                    first.c_str(), second.c_str()) < 0)
-                          {
-                            error(EXIT_FAILURE, errno, 
-                                  "sprinting dot arc label");
-                          }
-                      } // if old label empty
-                  } // if weighted
-              } // if id pair
-            target_labels[arc->get_target_state()] = l;
-            free(l);
-          } // each arc
-        for (map<HfstState,string>::const_iterator tl = target_labels.begin();
-             tl != target_labels.end();
-             ++tl)
-          {
-            fprintf(out, "q%d -> q%d ", s, tl->first);
-            fprintf(out, "[label=\"%s \"];\n", tl->second.c_str());
-          }
-        ++s;
-      } // each state
-    fprintf(out, "}\n");
-  }
-
-static
-void
-print_pckimmo(FILE* out, HfstTransducer& t)
-  {
-    HfstBasicTransducer* mutt = new HfstBasicTransducer(t);
-    HfstState s = 0;
-    HfstState last = 0;
-    set<pair<string,string> > pairs;
-    for (HfstBasicTransducer::const_iterator state = mutt->begin();
-         state != mutt->end();
-         ++state)
-      {
-        for (HfstBasicTransducer::HfstTransitions::const_iterator arc = 
-             state->begin();
-             arc != state->end();
-             ++arc)
-          {
-            string first = arc->get_input_symbol();
-            string second = arc->get_output_symbol();
-            pairs.insert(pair<string,string>(first, second));
-          }
-        ++last;
-      }
-    // width of the first column
-    unsigned int numwidth = 0;
-    for (unsigned int i = 1; i < last; i *= 10, numwidth++)
-      {}
-    // first line is input symbols per pair 
-    // (left corner is digit width + 2)
-    fprintf(out, "%*s  ", numwidth, " ");
-    for (set<pair<string, string> >::const_iterator p = pairs.begin();
-         p != pairs.end();
-         ++p)
-      {
-        if (p->first == hfst::internal_epsilon)
-          {
-            fprintf(out, "%.*s ", numwidth, "0");
-          }
-        else if (p->first == hfst::internal_unknown)
-          {
-            fprintf(out, "%.*s ", numwidth, "@");
-          }
-        else
-          {
-            fprintf(out, "%.*s ", numwidth, p->first.c_str());
-          }
-      }
-    // second line is output symbols per pair
-    fprintf(out, "\n");
-    // (left corner is digit width + 2)
-    fprintf(out, "%*s  ", numwidth, " ");
-    for (set<pair<string, string> >::const_iterator p = pairs.begin();
-         p != pairs.end();
-         ++p)
-      {
-        if (p->second == hfst::internal_epsilon)
-          {
-            fprintf(out, "%.*s ", numwidth, "0");
-          }
-        else if (p->second == hfst::internal_unknown)
-          {
-            fprintf(out, "%.*s ", numwidth, "@");
-          }
-        else
-          {
-            fprintf(out, "%.*s ", numwidth, p->second.c_str());
-          }
-
-      }
-    // the transition table per state
-    fprintf(out, "\n");
-    for (HfstBasicTransducer::const_iterator state = mutt->begin();
-         state != mutt->end();
-         ++state)
-      {
-        if (mutt->is_final_state(s))
-          {
-            fprintf(out, "%.*d. ", numwidth, s + 1);
-          }
-        else
-          {
-            fprintf(out, "%.*d: ", numwidth, s + 1);
-          }
-        // map everything to sink state 0 first
-        map<pair<string,string>,HfstState> transitions;
-        for(set<pair<string,string> >::const_iterator p = pairs.begin();
-            p != pairs.end();
-            ++p)
-          {
-            transitions[*p] = -1;
-          }
-        for (HfstBasicTransducer::HfstTransitions::const_iterator arc = 
-             state->begin();
-             arc != state->end();
-             ++arc)
-          {
-            string first = arc->get_input_symbol();
-            string second = arc->get_output_symbol();
-            transitions[pair<string,string>(first,second)] = 
-                arc->get_target_state();
-          }
-        for(map<pair<string,string>,HfstState>::const_iterator trans = 
-            transitions.begin();
-            trans != transitions.end();
-            ++trans)
-          {
-            fprintf(out, "%.*d ", numwidth, trans->second + 1);
-          }
-        fprintf(out, "\n");
-        ++s;
-      } // for each state
-  }
 
 int
 process_stream(HfstInputStream& instream, FILE* outf)
@@ -524,6 +209,11 @@ process_stream(HfstInputStream& instream, FILE* outf)
         }
         else
         { 
+          if (instream.get_type() == hfst::XFSM_TYPE) {
+            error(EXIT_FAILURE, 0, "Writing more than one transducer in text format to file not supported for xfsm transducers,\n"
+                  "use [hfst-head|hfst-tail|hfst-split] to extract individual transducers from input");
+            return EXIT_FAILURE;             
+          }
           verbose_printf("Converting %s..." SIZE_T_SPECIFIER "\n", inputname,
                          transducer_n); 
         }
@@ -538,7 +228,7 @@ process_stream(HfstInputStream& instream, FILE* outf)
           printw=true;
         else if (do_not_print_weights)
           printw=false;
-        else if ( (type == hfst::SFST_TYPE || type == hfst::FOMA_TYPE) )
+        else if ( (type == hfst::SFST_TYPE || type == hfst::FOMA_TYPE || type == hfst::XFSM_TYPE) )
           printw = false;
         else if ( (type == hfst::TROPICAL_OPENFST_TYPE || type == hfst::LOG_OPENFST_TYPE) )
           printw = true;
@@ -547,24 +237,53 @@ process_stream(HfstInputStream& instream, FILE* outf)
     switch (format)
       {
       case ATT_TEXT:
-        if (use_numbers)
+        if (use_numbers) // xfsm case checked earlier
           t->write_in_att_format_number(outf,printw);
-        else
+        else { // xfsm not yet supported
+          //if (type == hfst::XFSM_TYPE) // weights are never printed
+          //  t->write_xfsm_transducer_in_att_format(outfilename);
+          //else
           t->write_in_att_format(outf,printw);
+        }
         break;
-      case DOT_TEXT:
-        print_dot(outf, *t);
+      case DOT_TEXT: // xfsm case checked earlier
+        fprintf(outf, "// This graph generated with hfst-fst2txt\n");
+        hfst::print_dot(outf, *t);
         break;
-      case PCKIMMO_TEXT:
-        print_pckimmo(outf, *t);
+      case PCKIMMO_TEXT: // xfsm case checked earlier
+        hfst::print_pckimmo(outf, *t);
         break;
       case PROLOG_TEXT:
         {
-          HfstBasicTransducer fsm(*t);
-          std::string namestr = t->get_name();
-          if (namestr == "")
-            namestr = "NO_NAME";
-          fsm.write_in_prolog_format(outf,namestr,printw);
+          try 
+            {
+              if (type == hfst::XFSM_TYPE) {
+                t->write_xfsm_transducer_in_prolog_format(outfilename); // no name or weights printed
+              }
+              else {
+                std::string namestr = t->get_name();
+                std::ostringstream ostr;
+                ostr << transducer_n;
+                std::string alt_namestr = "NO_NAME_" + ostr.str();
+
+                if (namestr == "") {
+                  namestr = alt_namestr;
+                  if (!silent) {
+                    fprintf(stderr, "Transducer has no name, giving it a name '%s'...\n", namestr.c_str()); }
+                }
+                else {
+                  namestr = alt_namestr;
+                  if (!silent) {
+                    fprintf(stderr, "Renaming transducer into '%s'...\n", namestr.c_str()); }
+                }
+
+                t->write_in_prolog_format(outf,namestr,printw);
+              }
+            }
+          catch (const HfstException & e)
+            {
+              error(EXIT_FAILURE, 0, "Error encountered when writing in prolog format: %s", e.name.c_str());
+            }
           break;
         }
       default:
@@ -611,6 +330,36 @@ int main( int argc, char **argv )
               inputfilename);
         return EXIT_FAILURE;
     }
+
+    if (instream->get_type() == hfst::XFSM_TYPE)
+      {
+        if (format == DOT_TEXT) {
+          error(EXIT_FAILURE, 0, "Output format 'dot' not supported for xfsm transducers, use 'prolog'");
+          return EXIT_FAILURE; 
+        }
+        if (format == PCKIMMO_TEXT) {
+          error(EXIT_FAILURE, 0, "Output format 'pckimmo' not supported for xfsm transducers, use 'prolog'");
+          return EXIT_FAILURE; 
+        }
+        if (format == ATT_TEXT) {
+          error(EXIT_FAILURE, 0, "Output format 'att' not supported for xfsm transducers, use 'prolog'");
+          return EXIT_FAILURE; 
+        }
+        if (use_numbers) {
+          error(EXIT_FAILURE, 0, "Option '--use-numbers' not supported for xfsm transducers");
+          return EXIT_FAILURE; 
+        }
+        if (strcmp(inputfilename, "<stdin>") == 0) {
+          error(EXIT_FAILURE, 0, "Reading from standard input not supported for xfsm transducers,\n"
+                "use 'hfst-fst2txt [--input|-i] INFILE' instead");
+          return EXIT_FAILURE; 
+        }
+        if (strcmp(outfilename, "<stdout>") == 0) {
+          error(EXIT_FAILURE, 0, "Writing to standard output not supported for xfsm transducers,\n"
+                "use 'hfst-fst2txt [--output|-o] OUTFILE' instead");
+          return EXIT_FAILURE; 
+        }
+      }
     
     retval = process_stream(*instream, outfile);
 

@@ -31,7 +31,7 @@ std::string RuleSymbolVector::replace_variables(void)
       std::string symbol = *it;
       if (symbol.find("__HFST_TWOLC_RULE_NAME") != std::string::npos)
     {
-      if (not vvm.empty())
+      if (! vvm.empty())
         {
           symbol.insert
         (symbol.size()-1,
@@ -61,7 +61,7 @@ std::string RuleSymbolVector::replace_variables(const RuleCenter &center)
       std::string symbol = *it;
       if (symbol.find("__HFST_TWOLC_RULE_NAME") != std::string::npos)
     {
-      if (not vvm.empty())
+      if (! vvm.empty())
         {
           symbol.insert
         (symbol.size()-1,

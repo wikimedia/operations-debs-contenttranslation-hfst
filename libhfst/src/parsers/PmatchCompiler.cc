@@ -1,3 +1,12 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 //! @file PmatchCompiler.cc
 //!
 //! @brief Functions for building transducers from Xerox regexps
@@ -28,7 +37,7 @@ PmatchCompiler::define(const std::string& name, const std::string& pmatch)
 {
   compile(pmatch);
   if (definitions.count(name) != 0) {
-      definitions_[name] = definitions[name];
+      definitions_[name] = definitions[name]->evaluate();
   }
 }
 

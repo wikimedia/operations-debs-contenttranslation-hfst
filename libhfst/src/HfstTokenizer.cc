@@ -1,17 +1,16 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #include "HfstTokenizer.h"
+#include "HfstFlagDiacritics.h"
 #include <string>
+#include <cassert>
 
 #ifndef MAIN_TEST
 
@@ -86,7 +85,7 @@ namespace hfst
 int HfstTokenizer::get_next_symbol_size(const char * symbol)
 const
 {
-  if (not *symbol)
+  if (! *symbol)
     { return 0; }
 
   const char * multi_char_symbol_end = multi_char_symbols.find(symbol);  
@@ -107,11 +106,13 @@ const
 }
 
   bool HfstTokenizer::is_skip_symbol(hfst::String &s) const
-{ return (s == "") or (skip_symbol_set.find(s) != skip_symbol_set.end()); }
+{ return (s == "") || (skip_symbol_set.find(s) != skip_symbol_set.end()); }
 
 void
-HfstTokenizer::add_multichar_symbol(const string& symbol)
-{  multi_char_symbols.add(symbol.c_str()); }
+HfstTokenizer::add_multichar_symbol(const std::string& symbol)
+{  if (symbol == "")
+    { return; }
+  multi_char_symbols.add(symbol.c_str()); }
 
 void
 HfstTokenizer::add_skip_symbol(const std::string &symbol)
@@ -121,7 +122,7 @@ HfstTokenizer::add_skip_symbol(const std::string &symbol)
   skip_symbol_set.insert(symbol.c_str()); }
 
 StringPairVector HfstTokenizer::tokenize
-(const string& input_string) const
+(const std::string& input_string) const
 {
   check_utf8_correctness(input_string);
   StringPairVector spv;
@@ -139,7 +140,7 @@ StringPairVector HfstTokenizer::tokenize
 }
 
 StringVector HfstTokenizer::tokenize_one_level
-(const string& input_string) const
+(const std::string& input_string) const
 {
   check_utf8_correctness(input_string);
 
@@ -196,7 +197,7 @@ StringPairVector HfstTokenizer::tokenize_space_separated(const std::string & str
 }
 
 StringPairVector HfstTokenizer::tokenize
-(const string& input_string,const string& output_string) const
+(const std::string& input_string,const std::string& output_string) const
 {
   check_utf8_correctness(input_string);
   check_utf8_correctness(output_string);
@@ -232,6 +233,130 @@ StringPairVector HfstTokenizer::tokenize
     }
   return spv;
 }
+
+StringPairVector HfstTokenizer::tokenize
+(const std::string& input_string,const std::string& output_string,
+ void (*warn_about_pair)(const std::pair<std::string, std::string> &symbol_pair)) const
+{
+  check_utf8_correctness(input_string);
+  check_utf8_correctness(output_string);
+
+  StringPairVector spv;
+  
+  StringPairVector input_spv = tokenize(input_string.c_str());
+  StringPairVector output_spv = tokenize(output_string.c_str());
+
+  if (input_spv.size() < output_spv.size())
+    {
+      StringPairVector::iterator jt = output_spv.begin();
+      for (StringPairVector::iterator it = input_spv.begin();
+           it != input_spv.end();
+           ++it)
+        { 
+          StringPair sp(it->first, jt->first);
+          warn_about_pair(sp);
+          spv.push_back(sp);
+          ++jt; }
+      for ( ; jt != output_spv.end(); ++jt)
+        { StringPair sp(internal_epsilon,jt->first);
+          warn_about_pair(sp);
+          spv.push_back(sp); }
+    }
+  else
+    {
+      StringPairVector::iterator it = input_spv.begin();
+      for (StringPairVector::iterator jt = output_spv.begin();
+           jt != output_spv.end();
+           ++jt)
+        { StringPair sp(it->first, jt->first);
+          warn_about_pair(sp);
+          spv.push_back(sp);
+          ++it; }
+      for ( ; it != input_spv.end(); ++it)
+        { StringPair sp(it->first,internal_epsilon);
+          warn_about_pair(sp);
+          spv.push_back(sp); }
+    }
+  return spv;
+}
+
+StringPairVector HfstTokenizer::tokenize_and_align_flag_diacritics
+(const std::string& input_string,const std::string& output_string,
+ void (*warn_about_pair)(const std::pair<std::string, std::string> &symbol_pair)) const
+{
+  check_utf8_correctness(input_string);
+  check_utf8_correctness(output_string);
+
+  StringPairVector spv;
+  
+  StringPairVector input_spv = tokenize(input_string.c_str());
+  StringPairVector output_spv = tokenize(output_string.c_str());
+  
+  assert(input_spv.size() > 0 && output_spv.size() > 0);
+  StringPairVector::const_iterator it = input_spv.begin();
+  StringPairVector::const_iterator jt = output_spv.begin();
+
+  // proceed until both token vectors are exhausted
+  while(it != input_spv.end() || jt != output_spv.end())
+    {
+      StringPair sp("", "");  // string pair to push back to the result
+      StringPair sp_cont("", "");  // possible continuation in case of missaligned flags
+
+      if (it == input_spv.end()) 
+        {
+          if (FdOperation::is_diacritic(jt->first)) // copy diacritic to other side
+            {
+              sp = StringPair(jt->first, jt->first);
+            }
+          else // pad input with epsilons
+            {
+              sp = StringPair(internal_epsilon, jt->first);
+            }
+          jt++;
+        }
+      else if (jt == output_spv.end()) 
+        {
+          if (FdOperation::is_diacritic(it->first)) // copy diacritic to other side
+            {
+              sp = StringPair(it->first, it->first);
+            }
+          else // pad output with epsilons
+            {
+              sp = StringPair(it->first, internal_epsilon);
+            }
+          it++;
+        }
+      else
+        {
+          // take from both vectors (cases foo:bar, foo:foo, flag1:flag1)
+          if ((!FdOperation::is_diacritic(it->first) && !FdOperation::is_diacritic(jt->first)) || 
+              *it == *jt)
+            {
+              sp = StringPair(it->first, jt->first);
+            }
+          // take first from first vector and then from second
+          // (cases flag1:flag2, flag1::bar, foo:flag2)
+          else
+            {
+              StringPair wrong_pair(it->first, jt->first);
+              warn_about_pair(wrong_pair);
+              sp = StringPair(it->first, it->first);
+              sp_cont = StringPair(jt->first, jt->first);
+            }
+          it++;
+          jt++;
+        }
+      
+      spv.push_back(sp);      
+      if (sp_cont.first.size() != 0 && sp_cont.second.size() != 0)
+        {
+          spv.push_back(sp_cont);
+        }      
+    }
+
+  return spv;
+}
+
   
   void 
   HfstTokenizer::check_utf8_correctness(const std::string &input_string)
@@ -246,8 +371,8 @@ StringPairVector HfstTokenizer::tokenize
       size_t additional_chars = 0;
   
       // The bytes 192, 193, 245, 246 and 247 are invalid in utf8.
-      if (initial_char == 192 or initial_char == 193 or
-      initial_char == 245 or initial_char == 246 or initial_char == 247)
+      if (initial_char == 192 || initial_char == 193 ||
+      initial_char == 245 || initial_char == 246 || initial_char == 247)
     { HFST_THROW_MESSAGE(IncorrectUtf8CodingException, 
                          "leading octet in [192, 193, 245, 246, 247]"); }
       // Case 0xxxxxxx, i.e. ASCII byte.
@@ -281,7 +406,7 @@ StringPairVector HfstTokenizer::tokenize
                              "eos in multioctet sequence"); }
       unsigned char byte = *it;
       // All continuation bytes look like 10xxxxxx.
-      if (not (128 & byte and 64 ^ byte))
+      if (! (128 & byte && 64 ^ byte))
         { HFST_THROW_MESSAGE(IncorrectUtf8CodingException,
                              "not continuation octet & 100000000b"); }
     }

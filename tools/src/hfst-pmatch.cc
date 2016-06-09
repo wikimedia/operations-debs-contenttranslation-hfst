@@ -36,10 +36,18 @@ using std::pair;
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <getopt.h>
+
+#ifdef _MSC_VER
+#  include "hfst-getopt.h"
+#  include "hfst-string-conversions.h"
+#else
+#  include <getopt.h>
+#endif
+
 #include <math.h>
 #include <errno.h>
 
+#include "HfstExceptionDefs.h"
 #include "hfst-commandline.h"
 #include "hfst-program-options.h"
 #include "hfst-tool-metadata.h"
@@ -48,9 +56,11 @@ using std::pair;
 #include "inc/globals-common.h"
 #include "inc/globals-unary.h"
 
-bool blankline_separated = true;
-bool extract_tags = false;
-bool locate_mode = false;
+static bool blankline_separated = true;
+static bool extract_tags = false;
+static bool locate_mode = false;
+static double time_cutoff = 0.0;
+static bool profile = false;
 std::string pmatch_filename;
 
 void
@@ -64,7 +74,9 @@ print_usage()
     fprintf(message_out,
             "  -n  --newline          Newline as input separator (default is blank line)\n"
             "  -x  --extract-tags     Only print tagged parts in output\n"
-            "  -l  --locate           Only print locations of matches\n");
+            "  -l  --locate           Only print locations of matches\n"
+            "  -t, --time-cutoff=S    Limit search after having used S seconds per input\n"
+            "  -p  --profile          Produce profiling data\n");
     fprintf(message_out, 
             "Use standard streams for input and output.\n"
             "\n"
@@ -85,17 +97,28 @@ void match_and_print(hfst_ol::PmatchContainer & container,
         input_text.erase(input_text.size() -1, 1);
     }
     if (!locate_mode) {
-        outstream << container.match(input_text);
+#ifndef _MSC_VER
+        outstream << container.match(input_text, time_cutoff);
+#else
+        hfst::hfst_fprintf_console(stdout, "%s", container.match(input_text, time_cutoff).c_str());
+#endif
     } else {
-        hfst_ol::LocationVectorVector locations = container.locate(input_text);
+        hfst_ol::LocationVectorVector locations = container.locate(input_text, time_cutoff);
         for(hfst_ol::LocationVectorVector::const_iterator it = locations.begin();
             it != locations.end(); ++it) {
-            outstream << it->at(0).start << "|" << it->at(0).length << "|"
-                      << it->at(0).output << "|" << it->at(0).tag << std::endl;
+            if (it->at(0).output.compare("@_NONMATCHING_@") != 0) {
+#ifndef _MSC_VER
+              outstream << it->at(0).start << "|" << it->at(0).length << "|"
+                          << it->at(0).output << "|" << it->at(0).tag << std::endl;
+#else
+              hfst::hfst_fprintf_console(stdout, "%i|%i|%s|%s\n", it->at(0).start, it->at(0).length, it->at(0).output.c_str(), it->at(0).tag.c_str());
+#endif
+            }
         }
     }
     outstream << std::endl;
 }
+
 
 int process_input(hfst_ol::PmatchContainer & container,
                   std::ostream & outstream)
@@ -103,7 +126,19 @@ int process_input(hfst_ol::PmatchContainer & container,
     std::string input_text;
     char * line = NULL;
     size_t len = 0;
-    while (hfst_getline(&line, &len, inputfile) > 0) {
+    while (true) {
+
+#ifndef _MSC_VER
+      if (!(hfst_getline(&line, &len, inputfile) > 0))
+        break;
+#else
+      std::string linestr("");
+      size_t bufsize = 1000;
+      if (! hfst::get_line_from_console(linestr, bufsize, true /* keep newlines */))
+        break;
+      line = strdup(linestr.c_str());
+#endif
+
         if (!blankline_separated) {
             // newline separated
             input_text = line;
@@ -121,6 +156,9 @@ int process_input(hfst_ol::PmatchContainer & container,
     if (blankline_separated && !input_text.empty()) {
         match_and_print(container, outstream, input_text);
     }
+    if (profile) {
+        outstream << "\n" << container.get_profiling_info() << "\n";
+    }
     return EXIT_SUCCESS;
 }
 
@@ -137,10 +175,12 @@ int parse_options(int argc, char** argv)
                 {"newline", no_argument, 0, 'n'},
                 {"extract-tags", no_argument, 0, 'x'},
                 {"locate", no_argument, 0, 'l'},
+                {"time-cutoff", required_argument, 0, 't'},
+                {"profile", no_argument, 0, 'p'},
                 {0,0,0,0}
             };
         int option_index = 0;
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT "nxl",
+        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT "nxlt:p",
                              long_options, &option_index);
         if (-1 == c)
         {
@@ -159,6 +199,17 @@ int parse_options(int argc, char** argv)
             break;
         case 'l':
             locate_mode = true;
+            break;
+        case 't':
+            time_cutoff = atof(optarg);
+            if (time_cutoff < 0.0)
+            {
+                std::cerr << "Invalid argument for --time-cutoff\n";
+                return EXIT_FAILURE;
+            }
+            break;
+        case 'p':
+            profile = true;
             break;
 #include "inc/getopt-cases-error.h"
         }
@@ -212,7 +263,20 @@ int main(int argc, char ** argv)
         std::cerr << "Could not open file " << pmatch_filename << std::endl;
         return EXIT_FAILURE;
     }
-    hfst_ol::PmatchContainer container(instream, verbose, extract_tags);
+    try {
+        hfst_ol::PmatchContainer container(instream);
+        container.set_verbose(verbose);
+        container.set_extract_tags_mode(extract_tags);
+        container.set_profile(profile);
+#ifdef _MSC_VER
+        //hfst::print_output_to_console(true);
+#endif
+    return process_input(container, std::cout);
+    } catch(HfstException & e) {
+        std::cerr << "The archive in " << pmatch_filename << " doesn't look right."
+            "\nDid you make it with hfst-pmatch2fst or make sure it's in weighted optimized-lookup format?\n";
+        return 1;
+    }
 //     if (outfile != stdout) {
 //         std::filebuf fb;
 // fb.open(outfilename, std::ios::out);
@@ -220,5 +284,5 @@ int main(int argc, char ** argv)
 // return process_input(container, outstream);
 // fb.close();
 //     } else {
-    return process_input(container, std::cout);
+
 }

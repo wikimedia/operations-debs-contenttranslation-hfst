@@ -97,7 +97,7 @@ template <class T> class ConstContainerIterator
 
   //! @brief Test inequality with @another.
   bool operator!=(const ConstContainerIterator &another) const
-  { return not (*this == another); };
+  { return ! (*this == another); };
 
   //! @brief Increment.
   virtual int operator++(void)
@@ -114,7 +114,7 @@ template <class T> class ConstContainerIterator
          break;
        }
        }
-     if (not found_a_non_final_iterator)
+     if (! found_a_non_final_iterator)
        { iterator_vector = end_iterator_vector; }
      return 1;
    };

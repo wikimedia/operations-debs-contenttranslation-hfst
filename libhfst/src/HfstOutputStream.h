@@ -1,14 +1,12 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 #ifndef _HFST_OUTPUTSTREAM_H_
 #define _HFST_OUTPUTSTREAM_H_
 
@@ -17,6 +15,8 @@
 #endif
 
 #include "HfstDataTypes.h"
+
+#include "hfstdll.h"
 
 /** @file HfstOutputStream.h
     \brief Declaration of class HfstOutputStream. */
@@ -36,6 +36,9 @@ namespace hfst
 #endif
 #if HAVE_FOMA
     class FomaOutputStream;
+#endif    
+#if HAVE_XFSM
+    class XfsmOutputStream;
 #endif    
 #if HAVE_MY_TRANSDUCER_LIBRARY
     class MyTransducerLibraryOutputStream;
@@ -81,6 +84,9 @@ For more information on HFST transducer structure, see
 #if HAVE_FOMA
       hfst::implementations::FomaOutputStream * foma;
 #endif
+#if HAVE_XFSM
+      hfst::implementations::XfsmOutputStream * xfsm;
+#endif
 
 #if HAVE_MY_TRANSDUCER_LIBRARY
       hfst::implementations::MyTransducerLibraryOutputStream * 
@@ -120,7 +126,7 @@ For more information on HFST transducer structure, see
         \a hfst_format defines whether transducers are written 
         in hfst format or as such in their backend format. 
     */
-    HfstOutputStream(ImplementationType type, bool hfst_format=true);
+    HFSTDLL HfstOutputStream(ImplementationType type, bool hfst_format=true);
 
     /** \brief Open a stream to file \a filename for writing binary transducers
         of type \a type. 
@@ -129,10 +135,16 @@ For more information on HFST transducer structure, see
 
         If the file exists, it is overwritten. 
     */
-    HfstOutputStream(const std::string &filename, ImplementationType type, bool hfst_format=true);
+    HFSTDLL HfstOutputStream(const std::string &filename, ImplementationType type, bool hfst_format=true);
 
     /** \brief Destructor. */
-    ~HfstOutputStream(void);  
+    HFSTDLL ~HfstOutputStream(void);  
+
+    /** \brief Flush the stream.
+
+     If the stream is of XFSM_TYPE, all transducers inserted with the operator<<
+     are actually written to the stream. Else, does nothing. */
+    HFSTDLL HfstOutputStream &flush();
 
     /** \brief Write the transducer \a transducer in binary format 
         to the stream. 
@@ -140,19 +152,22 @@ For more information on HFST transducer structure, see
         All transducers must have the same type as the stream, else a
         TransducerTypeMismatchException is thrown. 
 
+        If the stream is of XFSM_TYPE, \a transducer is stored to a list
+        and written when flush() is called for the stream.
+
         @throws TransducerTypeMismatchException
     */
-    HfstOutputStream &operator<< (HfstTransducer &transducer);
+    HFSTDLL HfstOutputStream &operator<< (HfstTransducer &transducer);
 
     /** @brief An alias for operator<<. 
 
      @see operator<< */
-    HfstOutputStream& redirect (HfstTransducer &transducer);
+    HFSTDLL HfstOutputStream& redirect (HfstTransducer &transducer);
 
     /** \brief Close the stream. 
 
         If the stream points to standard output, nothing is done. */
-    void close(void);
+    HFSTDLL void close(void);
   };
 
 

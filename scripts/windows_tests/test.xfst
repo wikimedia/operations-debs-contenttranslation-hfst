@@ -1,0 +1,5 @@
+regex föö:bär::1.5;
+save stack foobar.hfst
+lookup-optimize
+save stack foobar.olw
+exit

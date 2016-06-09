@@ -242,7 +242,7 @@ ProcTransducerAlphabet::check_for_overlapping() const
   
   if(!overlapping.empty())
   {
-      if (not silentFlag)
+      if (! silentFlag)
       {
           std::cerr << "!! Warning: Transducer contains one or more multi-character symbols made up of\n"
                     << "ASCII characters which are also available as single-character symbols. The\n"

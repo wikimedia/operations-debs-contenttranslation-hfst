@@ -1,5 +1,5 @@
 /*     Foma: a finite-state toolkit and library.                             */
-/*     Copyright © 2008-2011 Mans Hulden                                     */
+/*     Copyright © 2008-2015 Mans Hulden                                     */
 
 /*     This file is part of foma.                                            */
 
@@ -20,6 +20,9 @@
 #include <string.h>
 
 /* Global variables */
+// HFST MODIFICATIONS: Defined here, declared extern in foma.h
+struct defined_networks   *g_defines;
+struct defined_functions  *g_defines_f;
 int g_show_flags = 0;
 int g_obey_flags = 1;
 int g_flag_is_epsilon = 0;
@@ -39,6 +42,7 @@ int g_list_limit = 100;
 int g_list_random_limit = 15;
 int g_med_limit  = 3;
 int g_med_cutoff = 15;
+int g_lexc_align = 0;
 char *g_att_epsilon = "@0@";
 
 char *xxstrndup(const char *s, size_t n) {
@@ -72,11 +76,11 @@ unsigned int round_up_to_power_of_two(unsigned int v) {
     return(v);
 }
 
-inline void *xxmalloc(size_t size) {
+INLINE void *xxmalloc(size_t size) {
     return(malloc(size));
 }
 
-inline void xxfree(void *ptr) {
+INLINE void xxfree(void *ptr) {
     free(ptr);
 }
 
@@ -84,11 +88,11 @@ void *xxrealloc(void *ptr, size_t size) {
     return(realloc(ptr, size));
 }
 
-inline void *xxcalloc(size_t nmemb, size_t size) {
+INLINE void *xxcalloc(size_t nmemb, size_t size) {
     return(calloc(nmemb,size));
 }
 
-inline char *xxstrdup(const char *s) {
+INLINE char *xxstrdup(const char *s) {
     return(strdup(s));
 }
 

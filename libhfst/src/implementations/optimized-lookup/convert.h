@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #ifndef _HFST_OL_CONVERT_H_
 #define _HFST_OL_CONVERT_H_
@@ -27,25 +24,32 @@ namespace hfst_ol {
 
 struct TransitionPlaceholder {
     unsigned int target;
+    SymbolNumber input;
     SymbolNumber output;
     float weight;
 
-TransitionPlaceholder(unsigned int t, SymbolNumber o, float w):
+    TransitionPlaceholder(unsigned int t, SymbolNumber i, SymbolNumber o, float w):
     target(t),
+    input(i),
     output(o),
     weight(w)
     {}
 };
 
-typedef std::map<SymbolNumber, std::vector<TransitionPlaceholder> >
-    SymbolTransitionsMap;
+//typedef std::map<SymbolNumber, std::vector<TransitionPlaceholder> >
+//    SymbolTransitionsMap;
 
 
 struct StatePlaceholder {
+    enum indexing_type {empty, simple_zero_index, simple_nonzero_index, nonsimple};
+    
     unsigned int state_number;
     unsigned int start_index;
     unsigned int first_transition;
-    SymbolTransitionsMap inputs;
+    std::vector<unsigned int> symbol_to_transition_placeholder_v;
+    std::vector<std::vector<TransitionPlaceholder> > transition_placeholders;
+    indexing_type type;
+    SymbolNumber inputs;
     bool final;
     float final_weight;
     StatePlaceholder (unsigned int state, bool finality, unsigned int first,
@@ -54,101 +58,136 @@ struct StatePlaceholder {
     start_index(UINT_MAX),
     first_transition(first),
     final(finality),
-    final_weight(final_weight)
-    {}
+    final_weight(final_weight),
+    type(state == 0 ? nonsimple: empty),
+    inputs(0)
+        { }
     StatePlaceholder ():
     state_number(UINT_MAX),
     start_index(UINT_MAX),
     first_transition(UINT_MAX),
     final(false),
-    final_weight(0.0)
+    final_weight(0.0),
+    type(empty),
+    inputs(0)
     { }
     
-    bool is_simple(std::set<SymbolNumber> const & flag_symbols) const
+    bool is_simple(void) const
     {
-        if (state_number == 0) {
-        return false;
-        }
-        if (flag_symbols.size() == 0) {
-        return inputs.size() < 2;
-        }
-        bool have_zero = false;
-        SymbolNumber input_symbols = 0;
-        for(SymbolTransitionsMap::const_iterator it = inputs.begin();
-        it != inputs.end(); ++it) {
-        if ((it->first == 0) or (flag_symbols.count(it->first) != 0)) {
-            if (!have_zero) {
-            have_zero = true;
-            ++input_symbols;
-            }
-        } else {
-            ++input_symbols;
-        }
-        if (input_symbols > 1) {
-            return false;
-        }
-        }
-        return true;
+        return type != nonsimple;
     }
     
     unsigned int number_of_transitions(void) const {
-    unsigned int count = 0;
-    for(SymbolTransitionsMap::const_iterator it = inputs.begin();
-        it != inputs.end(); ++it) {
-        count += it->second.size();
+        unsigned int count = 0;
+        for(std::vector<std::vector<TransitionPlaceholder> >::const_iterator it
+                = transition_placeholders.begin();
+            it != transition_placeholders.end(); ++it) {
+            count += it->size();
+        }
+        return count;
     }
-    return count;
+
+    bool input_present(SymbolNumber input) const {
+        return input < symbol_to_transition_placeholder_v.size() &&
+                       symbol_to_transition_placeholder_v[input] != UINT_MAX;
     }
+
+    void add_input(SymbolNumber input, std::set<SymbolNumber> const & flag_symbols)
+        {
+            if (input_present(input)) {
+                return;
+            }
+            while (symbol_to_transition_placeholder_v.size() <= input) {
+                symbol_to_transition_placeholder_v.push_back(UINT_MAX);
+            }
+            symbol_to_transition_placeholder_v[input] = transition_placeholders.size();
+            transition_placeholders.push_back(std::vector<TransitionPlaceholder>());
+            ++inputs;
+            if (type != nonsimple) {
+                // Depending on what type of inputs we now have, adjust the index type.
+                // Epsilons and flags both index to 0. If we have only one input symbol,
+                // we're simple.
+                if (type == empty) {
+                    if (input == 0 || flag_symbols.count(input) == 1) {
+                        type = simple_zero_index;
+                    } else {
+                        type = simple_nonzero_index;
+                    }
+                } else if (type == simple_zero_index) {
+                    if (input != 0 && flag_symbols.count(input) == 0) {
+                        type = nonsimple;
+                    }
+                } else { // simple_nonzero_index
+                    if (inputs > 1 || input == 0 || flag_symbols.count(input) == 1) {
+                        type = nonsimple;
+                    }
+                }
+            }
+        }
+
+    SymbolNumber get_largest_index(void)
+        {
+            return transition_placeholders[symbol_to_transition_placeholder_v.back()][0].input;
+        }
+
+    void add_transition(TransitionPlaceholder & trans)
+        {
+            transition_placeholders[symbol_to_transition_placeholder_v[trans.input]].push_back(trans);
+        }
+
+    std::vector<TransitionPlaceholder> & get_transition_placeholders(SymbolNumber input)
+        {
+            return transition_placeholders[symbol_to_transition_placeholder_v[input]];
+        }
     
     unsigned int symbol_offset(
         SymbolNumber const symbol,
-        std::set<SymbolNumber> const & flag_symbols) const {
+        std::set<SymbolNumber> const & flag_symbols) {
         if (symbol == 0) {
             return 0;
         }
         unsigned int offset = 0;
-        if (flag_symbols.size() == 0) {
-            for(SymbolTransitionsMap::const_iterator it = inputs.begin();
-                it!= inputs.end(); ++it) {
-                if (symbol == it->first) {
-                    return offset;
+        // if (flag_symbols.size() == 0) {
+        //     for(int i = 0; i < symbol_to_transition_placeholder_v.size(); ++i) {
+        //         if (symbol_to_transition_placeholder_v[i] != UINT_MAX) {
+        //             if (symbol == i) {
+        //                 return offset;
+        //             }
+        //             offset += get_transition_placeholders(i).size();
+        //         }
+        //     }
+        // } else {
+        if (input_present(0)) { // if there are epsilons
+            offset = get_transition_placeholders(0).size();
+        }
+        for(std::set<SymbolNumber>::iterator flag_it = flag_symbols.begin();
+            flag_it != flag_symbols.end(); ++flag_it) {
+            if (input_present(*flag_it)) {
+                if (symbol == *flag_it) {
+                    // Flags go to 0 (even if there's no epsilon)
+                    return 0;
                 }
-                offset += it->second.size();
+                offset += get_transition_placeholders(*flag_it).size();
             }
-            
-        } else {
-            if (inputs.count(0) != 0) { // if there are epsilons
-                offset = inputs.find(0)->second.size();
-            }
-            for(std::set<SymbolNumber>::iterator flag_it = flag_symbols.begin();
-                flag_it != flag_symbols.end(); ++flag_it) {
-                if (inputs.count(*flag_it) != 0) { // if this flag is present
-                    if (symbol == *flag_it) {
-                        // Flags go to 0 (even if there's no epsilon)
-                        return 0;
-                    }
-                    offset += inputs.find(*flag_it)->second.size();
-                }
-            }
-            for(SymbolTransitionsMap::const_iterator it = inputs.begin();
-                it!= inputs.end(); ++it) {
-                if (it->first == 0 || flag_symbols.count(it->first) != 0) {
+        }
+        for(unsigned int i = 1; i < symbol_to_transition_placeholder_v.size(); ++i) {
+            if (input_present(i)) {
+                if (flag_symbols.count(i) != 0) {
+                    // already counted
                     continue;
                 }
-                if (symbol == it->first) {
+                if (symbol == i) {
                     return offset;
                 }
-                offset += it->second.size();
+                offset += get_transition_placeholders(i).size();
             }
-            std::string message("error in conversion between optimized lookup "
-                                "format and HfstTransducer;\ntried to calculate "
-                                "symbol_offset for symbol not present in state");
-            HFST_THROW_MESSAGE
-                (HfstFatalException,
-                 message);
         }
-        std::string message("error in function StatePlaceholder::symbol_offset");
-        HFST_THROW_MESSAGE(HfstFatalException, message);
+        std::string message("error in conversion between optimized lookup "
+                            "format and HfstTransducer;\ntried to calculate "
+                            "symbol_offset for symbol not present in state");
+        HFST_THROW_MESSAGE
+            (HfstFatalException,
+             message);
     }
 };
 
@@ -157,35 +196,55 @@ bool compare_states_by_input_size(
 bool compare_states_by_state_number(
     const StatePlaceholder & lhs, const StatePlaceholder & rhs);
 
-class IndexPlaceholders: public std::map<unsigned int,
-        std::pair<unsigned int, SymbolNumber> >
+struct IndexPlaceholders
 {
-public:
+    std::vector<unsigned int> indices;
+    std::vector<std::pair<unsigned int, SymbolNumber> > targets;
+
+    bool used(unsigned int const position) const
+        {
+            return position < indices.size() && indices[position] != NO_TABLE_INDEX;
+        }
+
+    void assign(unsigned int const position, unsigned int target, SymbolNumber sym)
+        {
+            while (position >= indices.size()) {
+                indices.push_back(NO_TABLE_INDEX);
+            }
+            indices[position] = targets.size();
+            targets.push_back(std::pair<unsigned int, SymbolNumber>(target, sym));
+        }
+
+    std::pair<unsigned int, SymbolNumber> get_target(unsigned int index)
+        {
+            return targets[indices[index]];
+        }
+    
     bool fits(StatePlaceholder const & state,
               std::set<SymbolNumber> const & flag_symbols,
               unsigned int const position) const
-    {
-    if (count(position) != 0) {
-        return false;
-    }
-    for (SymbolTransitionsMap::const_iterator it = state.inputs.begin();
-         it != state.inputs.end(); ++it) {
-        SymbolNumber index_offset = it->first;
-        if (flag_symbols.count(index_offset) != 0) {
-        index_offset = 0;
+        {
+            if (used(position)) {
+                return false;
+            }
+            for (std::vector<std::vector<TransitionPlaceholder> >::const_iterator it = state.transition_placeholders.begin();
+                 it != state.transition_placeholders.end(); ++it) {
+                SymbolNumber index_offset = it->at(0).input;
+                if (flag_symbols.count(index_offset) != 0) {
+                    index_offset = 0;
+                }
+                if (used(index_offset + position + 1)) {
+                    return false;
+                }
+            }
+            return true;
         }
-        if (count(index_offset + position + 1) != 0) {
-        return false;
-        }
-    }
-    return true;
-    }
 
     bool unsuitable(unsigned int const index,
                     SymbolNumber const symbols,
                     float const packing_aggression) const
     {
-    if (count(index) != 0) {
+    if (used(index)) {
         return true;
     }
     
@@ -200,9 +259,9 @@ public:
 
     unsigned int filled = 0;
     for (unsigned int i = 0; i < symbols; ++i) {
-        filled += count(index + i + 1);
+        filled += used(index + i + 1);
         if (filled >= (packing_aggression*symbols)) {
-        return true; // too full
+            return true; // too full
         }
     }
     return false;

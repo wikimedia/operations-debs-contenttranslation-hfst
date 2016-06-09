@@ -19,4 +19,4 @@
   FILE *secondfile = stdin;
   bool secondNamed = false;
   bool is_input_stdin = true;
-  
+  bool allow_transducer_conversion = true;
