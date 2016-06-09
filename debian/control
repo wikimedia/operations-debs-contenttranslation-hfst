@@ -2,7 +2,7 @@ Source: hfst
 Section: science
 Priority: optional
 Maintainer: Debian Science Team <debian-science-maintainers@lists.alioth.debian.org>
-Uploaders: Tino Didriksen <mail@tinodidriksen.com>,
+Uploaders: Tino Didriksen <tino@didriksen.cc>,
            Kartik Mistry <kartik@debian.org>
 Build-Depends: autoconf,
                automake,
@@ -10,43 +10,86 @@ Build-Depends: autoconf,
                bison,
                debhelper (>= 9.0),
                dh-autoreconf,
+               dh-python,
+               dpkg-dev (>= 1.16.1~),
                flex,
                libicu-dev,
                libreadline-dev,
                libtool,
-               python,
                python-dev,
+               python3-all-dev,
+               swig,
                zlib1g-dev
-Standards-Version: 3.9.6
+Standards-Version: 3.9.8
 Homepage: http://www.ling.helsinki.fi/kieliteknologia/tutkimus/hfst/
-Vcs-Git: git://anonscm.debian.org/debian-science/packages/hfst.git
+Vcs-Git: https://anonscm.debian.org/cgit/debian-science/packages/hfst.git
 Vcs-Browser: https://anonscm.debian.org/cgit/debian-science/packages/hfst.git
 
 Package: hfst
 Architecture: any
-Provides: hfst
-Depends: libhfst39 (= ${binary:Version}),
-         python,
+Depends: libhfst45 (= ${binary:Version}),
          ${misc:Depends},
+         ${python:Depends},
          ${shlibs:Depends}
 Description: Helsinki Finite-State Transducer Technology
  The Helsinki Finite-State Transducer software is intended for the
  implementation of morphological analysers and other tools which are
  based on weighted and unweighted finite-state transducer technology.
 
-Package: libhfst39
+Package: libhfst45
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}
-Provides: libhfst3
-Conflicts: libhfst3
+Provides: libhfst
+Conflicts: libhfst, libhfst3
+Replaces: libhfst, libhfst3
 Description: Helsinki Finite-State Transducer Technology Libraries
- Runtime libraries for HFST
+ The Helsinki Finite-State Transducer software is intended for the
+ implementation of morphological analysers and other tools which are
+ based on weighted and unweighted finite-state transducer technology.
+ .
+ This package provides runtime libraries for HFST.
 
-Package: libhfst39-dev
+Package: libhfst45-dev
 Architecture: any
 Section: libdevel
-Depends: libhfst39 (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
-Provides: libhfst3-dev
-Conflicts: libhfst3-dev
+Depends: hfst (= ${binary:Version}),
+         libhfst45 (= ${binary:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Provides: libhfst-dev
+Conflicts: libhfst-dev, libhfst3-dev
+Replaces: libhfst-dev, libhfst3-dev
 Description: Helsinki Finite-State Transducer Technology Development files
- Development headers and libraries for HFST
+ The Helsinki Finite-State Transducer software is intended for the
+ implementation of morphological analysers and other tools which are
+ based on weighted and unweighted finite-state transducer technology.
+ .
+ This package provides development headers and libraries for HFST
+
+Package: python-libhfst
+Architecture: any
+Section: python
+Depends: libhfst45 (= ${binary:Version}),
+         ${misc:Depends},
+         ${python:Depends},
+         ${shlibs:Depends}
+Description: Helsinki Finite-State Transducer Technology (Python2 module)
+ The Helsinki Finite-State Transducer software is intended for the
+ implementation of morphological analysers and other tools which are
+ based on weighted and unweighted finite-state transducer technology.
+ .
+ This package provides Python2 module for libhfst.
+
+Package: python3-libhfst
+Architecture: any
+Section: python
+Depends: libhfst45 (= ${binary:Version}),
+         ${misc:Depends},
+         ${python3:Depends},
+         ${shlibs:Depends}
+Description: Helsinki Finite-State Transducer Technology (Python3 module)
+ The Helsinki Finite-State Transducer software is intended for the
+ implementation of morphological analysers and other tools which are
+ based on weighted and unweighted finite-state transducer technology.
+ .
+ This package provides Python3 module for libhfst.

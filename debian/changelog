@@ -1,16 +1,67 @@
-hfst (3.8.1~r4088-1) trusty; urgency=low
+hfst (3.10.0~r2798-1+wmf1) jessie; urgency=low
 
-  [ Kartik Mistry ]
-  * Rebuild for Trusty.
-  * Removed patches/hfst_02_notimestamp.diff, not needed.
+  * Rebuild for Jessie.
+
+ -- Kartik Mistry <kartik@debian.org>  Thu, 09 Jun 2016 17:53:21 +0530
+
+hfst (3.10.0~r2798-1) unstable; urgency=low
 
   [ Tino Didriksen ]
-  * New upstream release
+  * Update to latest upstream release.
 
- -- Kartik Mistry <kartik@debian.org>  Sat, 13 Dec 2014 11:21:13 +0530
+  [ Kartik Mistry ]
+  * debian/control:
+    + Updated Standards-Version to 3.9.8
 
-hfst (3.8.0~r4029-1) experimental; urgency=low
+ -- Kartik Mistry <kartik@debian.org>  Mon, 06 Jun 2016 18:33:47 +0530
 
-  * Initial release
+hfst (3.9.0~r4595-3) unstable; urgency=medium
 
- -- Tino Didriksen <mail@tinodidriksen.com>  Fri, 3 Oct 2014 13:13:49 +0000
+  * Update package to generate appropriate dependencies for python bindings
+    as well as building for all supported python3 versions. Patch was not added
+    in last update by mistake (Closes: #809446)
+
+ -- Kartik Mistry <kartik@debian.org>  Wed, 10 Feb 2016 10:59:55 +0530
+
+hfst (3.9.0~r4595-2) unstable; urgency=low
+
+  [ Tino Didriksen ]
+  * Removed old-style hardening support.
+  * Added overrides.
+
+ -- Kartik Mistry <kartik@debian.org>  Tue, 02 Feb 2016 17:41:03 +0530
+
+hfst (3.9.0~r4595-1) unstable; urgency=low
+
+  [ Tino Didriksen ]
+  * Update to latest upstream release.
+
+  [ Kartik Mistry ]
+  * debian/control:
+    + Fixed Vcs-* URLs.
+  * debian/copyright:
+    + Updated SFST and Foma upstream URLs.
+  * debian/rules:
+    + Added hardening support.
+
+ -- Kartik Mistry <kartik@debian.org>  Tue, 02 Feb 2016 11:49:33 +0530
+
+hfst (3.8.3~r4409-1) unstable; urgency=low
+
+  * Update to latest upstream release.
+
+ -- Tino Didriksen <mail@tinodidriksen.com>  Mon, 03 Aug 2015 06:53:49 +0000
+
+hfst (3.8.2~r4145-1) unstable; urgency=low
+
+  [ Tino Didriksen ]
+  * Initial release (Closes: #781759).
+  * Add Python and Python3 modules.
+  * Fix some Lintian errors.
+  * Disable static libraries.
+
+  [ Kartik Mistry ]
+  * Added hardening support.
+  * Added patch description.
+
+ -- Kartik Mistry <kartik@debian.org>  Wed, 22 Jul 2015 17:46:52 -0500
