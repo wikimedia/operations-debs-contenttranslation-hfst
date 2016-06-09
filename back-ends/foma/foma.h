@@ -1,5 +1,5 @@
 /*     Foma: a finite-state toolkit and library.                             */
-/*     Copyright © 2008-2012 Mans Hulden                                     */
+/*     Copyright © 2008-2015 Mans Hulden                                     */
 
 /*     This file is part of foma.                                            */
 
@@ -24,27 +24,9 @@
 #define PROMPT_MAIN 0 /* Regular prompt */
 #define PROMPT_A 1    /* Apply prompt   */
 
-/* Defined networks */
-
-struct defined {
-  char *name;
-  struct fsm *net;
-  struct defined *next;
-};
-
-/* Defined functions */
-
-struct definedf {
-    char *name;
-    char *regex;
-    int numargs;
-    struct definedf *next;
-};
-
-struct defined_quantifiers {
-    char *name;
-    struct defined_quantifiers *next;
-};
+// HFST MODIFICATIONS: Add extern here, define in mem.c
+extern struct defined_networks   *g_defines;
+extern struct defined_functions  *g_defines_f;
 
 /** User stack */
 struct stack_entry {
@@ -55,15 +37,6 @@ struct stack_entry {
   struct stack_entry *next;
   struct stack_entry *previous;    
 };
-
-/* Define functions */
-struct fsm *find_defined (char *string);
-char *find_defined_function(char *name, int numargs);
-int add_defined (struct fsm *net, char *string);
-int add_defined_function (char *name, char *regex, int numargs);
-int remove_defined (char *string);
-struct defined *get_defines();
-struct definedf *get_defines_f();
 
 /* Quantifier & Logic-related */
 char *find_quantifier(char *string);
@@ -97,6 +70,7 @@ void iface_apply_med(char *word);
 void iface_apply_set_params(struct apply_handle *h);
 void iface_apply_up(char *word);
 void iface_apropos(char *s);
+void iface_close(void);
 void iface_compact(void);
 void iface_complete(void);
 void iface_compose(void);
@@ -138,6 +112,9 @@ void iface_apply_random(char *(*applyer)(), int limit);
 void iface_random_lower(int limit);
 void iface_random_upper(int limit);
 void iface_random_words(int limit);
+void iface_pairs(int limit);
+void iface_pairs_file(char *filename);
+void iface_random_pairs(int limit);
 void iface_print_sigma(void);
 void iface_print_stats(void);
 void iface_shuffle(void);

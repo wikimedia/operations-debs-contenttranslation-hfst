@@ -3,20 +3,20 @@ set print-weight ON
 
 regex [a::1]+ @-> x::1 || a _ a ;
 
-apply up aaaa
+apply down aaaa
 # axa
-apply up aaaaabaaaa
+apply down aaaaabaaaa
 # axabaxa
-apply up aaaaabaaaacaaaa
+apply down aaaaabaaaacaaaa
 # axabaxacaxa
 
 echo --
 
 regex [a::1]+ @> x::1 || a _ a ;
 
-apply up aaaa
+apply down aaaa
 # axabaxa
-apply up aaaaabaaaa
+apply down aaaaabaaaa
 # axxxabaxxa
-apply up aaaaabaaaacaaaa
+apply down aaaaabaaaacaaaa
 # axxxabaxxacaxxa

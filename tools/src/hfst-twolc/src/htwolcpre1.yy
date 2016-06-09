@@ -549,7 +549,7 @@ void reduce_symbol_pair(bool no_definitions)
 // encountered.
 void increase_line_counter(void)
 {
-  while (not symbol_queue.empty() && 
+  while (! symbol_queue.empty() && 
 	 symbol_queue.front() == "__HFST_TWOLC_\\n")
     {
       ++line_number;
@@ -600,9 +600,9 @@ void reduce_queue(bool variable_symbol)
   //    string representations of rules.
   // 3. We push back variable symbols into rule_symbol_vector, which stores 
   //    rule-variable names and values.
-  if (not variable_symbol)
+  if (! variable_symbol)
     {
-      if (not rules_start)
+      if (! rules_start)
 	{ 
 	  std::cout << get_symbol_queue_front() << " "; 
 	  pop_symbol_queue();
@@ -629,7 +629,7 @@ int main(int argc, char * argv[])
 
   CommandLine command_line(argc,argv);
 
-  if (command_line.help or command_line.version)
+  if (command_line.help || command_line.version)
     {
       if (command_line.version)
 	{ command_line.print_version(); }
@@ -642,14 +642,14 @@ int main(int argc, char * argv[])
       command_line.print_usage();
       exit(0);
     }
-  if (not command_line.be_quiet)
+  if (! command_line.be_quiet)
     {
-      if (not command_line.has_input_file)
+      if (! command_line.has_input_file)
 	{ std::cerr << "Reading input from STDIN." << std::endl; }
       else
 	{ std::cerr << "Reading input from " << command_line.input_file_name
 		    << "." << std::endl; }
-      if (not command_line.has_output_file)
+      if (! command_line.has_output_file)
 	{ std::cerr << "Writing output to STDOUT." << std::endl; }
       else
 	{ std::cerr << "Writing output to " << command_line.output_file_name

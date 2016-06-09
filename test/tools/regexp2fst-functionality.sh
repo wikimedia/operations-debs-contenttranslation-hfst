@@ -48,6 +48,29 @@ for i in sfst openfst-tropical foma; do
         exit 1
     fi
 
+    # Empty input and input containing only comments
+    if (echo "" | $TOOLDIR/hfst-regexp2fst -f $i > test.fst 2> /dev/null) ; then
+        exit 1
+    fi
+    if (echo "" | $TOOLDIR/hfst-regexp2fst -S -f $i > test.fst 2> /dev/null) ; then
+        exit 1
+    fi
+    if (echo ";" | $TOOLDIR/hfst-regexp2fst -S -f $i > test.fst 2> /dev/null) ; then
+        exit 1
+    fi
+    if (echo "! A comment" | $TOOLDIR/hfst-regexp2fst -S -f $i > test.fst 2> /dev/null) ; then
+        exit 1
+    fi
+    if (echo "  ! A comment" | $TOOLDIR/hfst-regexp2fst -S -f $i > test.fst 2> /dev/null) ; then
+        exit 1
+    fi
+    if (echo "! A comment" | $TOOLDIR/hfst-regexp2fst -f $i > test.fst 2> /dev/null) ; then
+        exit 1
+    fi
+    if (echo "  ! A comment" | $TOOLDIR/hfst-regexp2fst -f $i > test.fst 2> /dev/null) ; then
+        exit 1
+    fi
+
 done
 
 rm -f test.fst

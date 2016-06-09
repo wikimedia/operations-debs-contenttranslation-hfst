@@ -18,8 +18,8 @@
 # Information on package
 HFST_NAME=hfst
 HFST_MAJOR=3
-HFST_MINOR=8
-HFST_EXTENSION=1
+HFST_MINOR=10
+HFST_EXTENSION=0
 HFST_VERSION=$HFST_MAJOR.$HFST_MINOR.$HFST_EXTENSION
 
 ### When the VERSION is INCREMENTED, REMEMBER to increment the LONGVERSION too.
@@ -27,11 +27,11 @@ HFST_VERSION=$HFST_MAJOR.$HFST_MINOR.$HFST_EXTENSION
 # for package-config pc file
 LIBHFST_NAME=hfst
 LIBHFST_MAJOR=3
-LIBHFST_MINOR=8
-LIBHFST_EXTENSION=1
+LIBHFST_MINOR=10
+LIBHFST_EXTENSION=0
 LIBHFST_VERSION=$LIBHFST_MAJOR.$LIBHFST_MINOR.$LIBHFST_EXTENSION
 
-AC_INIT([hfst], [3.8.1], [hfst-bugs@helsinki.fi], [hfst])
+AC_INIT([hfst], [3.10.0], [hfst-bugs@helsinki.fi], [hfst])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([-Wall std-options foreign check-news])
 
@@ -43,9 +43,9 @@ AC_CONFIG_SRCDIR([libhfst/src/HfstTransducer.h])
 AC_CONFIG_HEADERS([config.h libhfst/src/hfst.hpp])
 
 AC_SUBST([LIBHFST_MAJOR],     [3])
-AC_SUBST([LIBHFST_MINOR],     [8])
-AC_SUBST([LIBHFST_EXTENSION], [1])
-AC_SUBST([LIBHFST_VERSION],   [3.8.1])
+AC_SUBST([LIBHFST_MINOR],     [10])
+AC_SUBST([LIBHFST_EXTENSION], [0])
+AC_SUBST([LIBHFST_VERSION],   [3.10.0])
 AC_SUBST([LIBHFST_NAME],      [hfst])
 
 # long version = version vector cast in base 10000, for automatic comparisons
@@ -56,9 +56,9 @@ AC_SUBST([LIBHFST_NAME],      [hfst])
 # $LIBHFST_MINOR * 10000 + $LIBHFST_EXTENSION + "L"
 # NB! It turned out to be not portable, and can't be used!
 
-AC_DEFINE([HFST_LONGVERSION], [300080001L],
+AC_DEFINE([HFST_LONGVERSION], [300100000L],
           [Define to hfst version vector as long in base 10000])
-AC_DEFINE([HFST_REVISION], ["$Revision: 4088 $"],
+AC_DEFINE([HFST_REVISION], ["$Revision$"],
           [Automatically substitute to configure.ac revision])
 AC_DEFINE_UNQUOTED([HFST_STRING], ["$PACKAGE_STRING"],
                    [Define to libhfst pretty name for programs to print])
@@ -96,6 +96,21 @@ AC_ARG_WITH([foma],
 AS_IF([test "x$with_foma" != xno], [AC_DEFINE([HAVE_FOMA], [1],
                                               [Define to compile foma support in HFST])])
 AM_CONDITIONAL([WANT_FOMA], [test x$with_foma != xno])
+
+AC_ARG_WITH([xfsm],
+            [AS_HELP_STRING([--with-xfsm],
+                            [process unweighted fsts with xfsm @<:@default=no@:>@])],
+            [],
+            [with_xfsm=no])
+AS_IF([test "x$with_xfsm" != xno], [AC_DEFINE([HAVE_XFSM], [1],
+                                              [Define to compile xfsm support in HFST])])
+AM_CONDITIONAL([WANT_XFSM], [test x$with_xfsm != xno])
+
+AS_IF([test "x$with_xfsm" != "xno"], 
+[AC_CHECK_LIB([xfsm], [main], [], AC_MSG_ERROR([xfsm back-end requested but libxfsm not found]))])
+
+AS_IF([test "x$with_xfsm" != "xno"], 
+[AC_CHECK_HEADER([xfsm/xfsm_api.h], [xfsmheader_exists=yes], AC_MSG_ERROR([xfsm back-end requested but libxfsm header not found]))])
 
 ### Add here your library ###
 #AC_ARG_WITH([my_transducer_library],
@@ -308,6 +323,12 @@ AC_ARG_ENABLE([lookup],
 			  [enable_lookup=$enableval],
 			  [if test x$enable_no_tools != xno; then enable_lookup=no; else enable_lookup=yes; fi])
 AM_CONDITIONAL([WANT_LOOKUP], [test x$enable_lookup != xno])
+AC_ARG_ENABLE([flookup],
+			  [AS_HELP_STRING([--enable-flookup],
+							  [build flookup tool @<:@default=yes@:>@])],
+			  [enable_flookup=$enableval],
+			  [if test x$enable_no_tools != xno; then enable_flookup=no; else enable_flookup=yes; fi])
+AM_CONDITIONAL([WANT_FLOOKUP], [test x$enable_flookup != xno])
 AC_ARG_ENABLE([pair-test],
 			  [AS_HELP_STRING([--enable-pair-test],
 							  [build pair-test tool @<:@default=yes@:>@])],
@@ -338,12 +359,12 @@ AC_ARG_ENABLE([pmatch],
 			  [enable_pmatch=$enableval],
 			  [if test x$enable_no_tools != xno; then enable_pmatch=no; else enable_pmatch=yes; fi])
 AM_CONDITIONAL([WANT_PMATCH], [test x$enable_pmatch != xno])
-AC_ARG_ENABLE([proc2],
-			  [AS_HELP_STRING([--enable-proc2],
-							  [build proc2 tokenizing tool @<:@default=yes@:>@])],
-			  [enable_proc2=$enableval],
-			  [if test x$enable_no_tools != xno; then enable_proc2=no; else enable_proc2=yes; fi])
-AM_CONDITIONAL([WANT_PROC2], [test x$enable_proc2 != xno])
+AC_ARG_ENABLE([tokenize],
+			  [AS_HELP_STRING([--enable-tokenize],
+							  [build tokenizing tool @<:@default=yes@:>@])],
+			  [enable_tokenize=$enableval],
+			  [if test x$enable_no_tools != xno; then enable_tokenize=no; else enable_tokenize=yes; fi])
+AM_CONDITIONAL([WANT_TOKENIZE], [test x$enable_tokenize != xno])
 AC_ARG_ENABLE([project],
 			  [AS_HELP_STRING([--enable-project],
 							  [build project tool @<:@default=yes@:>@])],
@@ -489,20 +510,20 @@ AC_ARG_ENABLE([xfst],
 			  [enable_xfst=$enable_all_tools])
 AM_CONDITIONAL([WANT_XFST], [test x$enable_xfst != xno])
 
-
 # Check if zlib is available
 AC_CHECK_LIB([z], [main], [zlib_exists=yes], [zlib_exists=no])
-# Check if foma wrapper is wanted and possible to generate 
+# Check if foma and lexc wrappers are wanted and possible to generate 
 AM_CONDITIONAL([GENERATE_FOMA_WRAPPER], [test "x$enable_foma_wrapper" != "xno" -a "x$with_foma" != "xno" -a "x$zlib_exists" != "xno"])
-# The same as a variable..
+AM_CONDITIONAL([GENERATE_LEXC_WRAPPER], [test "x$enable_lexc_wrapper" != "xno" -a "x$with_foma" != "xno" -a "x$zlib_exists" != "xno"])
+# The same as variables..
 AS_IF([test "x$enable_foma_wrapper" != "xno" -a "x$with_foma" != "xno" -a "x$zlib_exists" != "xno"], [generate_foma_wrapper=yes], [generate_foma_wrapper=no])
-
-# Check if we have to warn the user for missing foma wrapper because zlib is not available 
-AS_IF([test "x$enable_foma_wrapper" != "xno" -a "x$with_foma" != "xno" -a "x$zlib_exists" == "xno"], [warn_about_missing_zlib=yes], [warn_about_missing_zlib=no])
+AS_IF([test "x$enable_lexc_wrapper" != "xno" -a "x$with_foma" != "xno" -a "x$zlib_exists" != "xno"], [generate_lexc_wrapper=yes], [generate_lexc_wrapper=no])
 
 # If foma wrapper is not wanted or possible to generate, set these conditionals/variables to 'no'
 AM_COND_IF([GENERATE_FOMA_WRAPPER], [], [AM_CONDITIONAL([WANT_FOMA_WRAPPER], [false])])
 AM_COND_IF([GENERATE_FOMA_WRAPPER], [], [enable_foma_wrapper=no])
+AM_COND_IF([GENERATE_LEXC_WRAPPER], [], [AM_CONDITIONAL([WANT_LEXC_WRAPPER], [false])])
+AM_COND_IF([GENERATE_LEXC_WRAPPER], [], [enable_lexc_wrapper=no])
 
 # Disable stress tests by default
 AC_ARG_ENABLE([stress-tests],
@@ -516,7 +537,7 @@ AM_CONDITIONAL([WANT_STRESSTESTS], [test x$enable_stress_tests != xno])
 AC_ARG_ENABLE([mingw],
 		[AS_HELP_STRING([--enable-mingw],
 				[compile on MinGW @<:@default=no@:>@])],
-				mingw_mingw=$enableval],
+				[mingw_mingw=$enableval],
 				[enable_mingw=no])
 AM_CONDITIONAL([WANT_MINGW], [test x$enable_mingw != xno])
 
@@ -532,9 +553,6 @@ AM_CONDITIONAL([WANT_FSMBOOK_TESTS], [test x$enable_fsmbook_tests != xno])
 AS_IF([test "x$enable_fsmbook_tests" != "xno" -a "x$enable_xfst" == "xno"],
       [AC_MSG_FAILURE([fsmbook tests are not supported if hfst-xfst is disabled; enable hfst-xfst (with --enable-xfst) when using --enable-fsmbook-tests])])
 
-#AS_IF([test "x$enable_mingw" != "xno" -a "x$enable_tagger" != "xno"],
-#      [AC_MSG_FAILURE([hfst-train-tagger and hfst-tag are not supported in MinGW environment; disable tagger tools (with --disable-tagger) when using --enable-mingw])])
-
 # Checks for programs
 AC_PROG_CC
 AC_PROG_CXX
@@ -542,19 +560,34 @@ LT_INIT
 AC_PROG_AWK
 AC_PROG_CPP
 AC_PROG_YACC
+
+#Do not use *.h extension for parser header files, use newer *.hh
+yacc_use_parser_h_extension=false
+
+#Verify automake version 1.11 headers for yy files are .h, >= 1.12 uses .hh
+automake_version=`automake --version | head -n 1 | cut '-d ' -f 4`
+AC_DEFINE_UNQUOTED([AUTOMAKE_VERSION], [$automake_version], [Defines automake version])
+
+if test "$automake_version" \< "1.12" ; then
+      #Use *.h extension for parser header file
+      yacc_use_parser_h_extension=true
+      echo "automake version < 1.12, using .h extension for yacc/bison generated header files"
+      AC_DEFINE([YACC_USE_PARSER_H_EXTENSION], [1], [Use *.h extension for parser header file])
+else
+      echo "automake version >= 1.12, using .hh extension for yacc/bison generated header files"
+fi
+
+AM_CONDITIONAL([YACC_USE_PARSER_H_EXTENSION], [test x$yacc_use_parser_h_extension = xtrue])
+
 AC_PROG_LEX
-#AC_PATH_PROG([FOMACLI], [foma], [false])
+
 AC_PATH_PROG([GETOPT], [getopts], [false])
-#AM_CONDITIONAL([CAN_FOMAWRAP], [test x$FOMACLI != xfalse])
-#AM_CONDITIONAL([CAN_FOMAWRAP], [true])
+
 AM_PATH_PYTHON([2.4],[],[false])
 # if flex 3.X ever comes out, this breaks :)
 LEX_VERSION=`$LEX --version`
 AS_IF([test -z "`echo "$LEX_VERSION" | grep 'flex 2\.[[5-9]]\.[[3-9][4-9]]'`"],
       [AC_MSG_WARN([Building hfst successfully requires flex newer than 2.5.33 on some platforms. Unless you are building with pre-flex-generated sources, building will probably fail.])])
-
-# if automake is >= 1.12
-#AM_CONDITIONAL([HH_EXTENSION_USED], [test "`automake --version | head -1 | grep ' 1\.1[2-9]'`" = ""])
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -562,32 +595,23 @@ AC_PROG_MAKE_SET
 AC_PATH_PROG([DOXYGEN], [doxygen], [no])
 AM_CONDITIONAL([CAN_DOXYGEN], [test x$DOXYGEN != xno])
 
-#AC_MSG_CHECKING([for bison])
-#YACC_VERSION=$($YACC --version | grep 'bison' | cut -d' ' -f4 | cut -d'.' -f1-2)
-#YACC_VERSION=$(echo "$YACC_VERSION*100" | bc | cut -d'.' -f1)
-#AC_PATH_PROGS_FEATURE_CHECK(BISON, [bison], [[test $YACC_VERSION -gt 260 && ac_cv_path_BISON=$ac_path_BISON ac_path_BISON_found=: ]], [AC_MSG_ERROR([Hfst requires bison version 2.6 or newer.])])
-#AC_MSG_RESULT([$ac_cv_path_BISON])
-
 # Checks for libraries
 
-AC_CHECK_LIB([xml2], [main])
 AC_LANG_PUSH([C++])
 AS_IF([test "x$with_openfst" != "xno" -a "x$enable_mingw" == "xno"], 
       [AC_CHECK_LIB([dl], [main])])
-#      [AC_CHECK_LIB([fst], [main], [],
-#                 [AC_MSG_FAILURE([openfst test failed (--without-openfst to disable)])])])
+
 AS_IF([test "x$with_openfst" != "xno"], 
       [AC_CHECK_LIB([pthread], [main])]
       [AC_CHECK_LIB([m], [main])])
-#AS_IF([test "x$with_sfst" != "xno" -a "x$enable_windows" == "xno"],
-#      [AC_CHECK_LIB([sfst], [main])]
-#      [AC_CHECK_LIB([sfst1], [main])])
+
 AS_IF([test "x$ac_cv_lib_sfst_main" == xno -a "x$ac_cv_lib_sfst1_main" == xno],
       [AC_MSG_FAILURE([sfst tests failed (--without-sfst to disable)])])
 AC_LANG_POP
 AC_LANG_PUSH([C])
 
 AM_COND_IF([GENERATE_FOMA_WRAPPER], [AC_CHECK_LIB([z], [main], [], [AC_MSG_FAILURE([foma test failed because zlib.h was not found (--without-foma to disable)])])])
+AM_COND_IF([GENERATE_LEXC_WRAPPER], [AC_CHECK_LIB([z], [main], [], [AC_MSG_FAILURE([foma test failed because zlib.h was not found (--without-foma to disable)])])])
 
 AM_CONDITIONAL(HAVE_NCURSES,[false])
 AM_CONDITIONAL(HAVE_CURSES,[false])
@@ -601,12 +625,6 @@ if test x$ac_cv_lib_ncurses_tgetent != xyes ; then
    fi
 fi
 
-#AS_IF([test "x$with_foma" != "xno" -a "x$enable_windows" == "xno"],
-#      [AC_CHECK_LIB([z], [main], [], [AC_MSG_FAILURE([foma test failed because zlib.h was not found (--without-foma to disable)])])])
-#AS_IF([test "x$enable_hfst_xfst" != "xno" -a "x$enable_windows" == "xno"],
-#      [AC_CHECK_LIB([z], [main], [], [AC_MSG_FAILURE([foma test failed because zlib.h was not found (--enable-hfst-xfst=no to disable)])])])
-#      [AC_CHECK_LIB([foma], [main], [],
-#                    [AC_MSG_FAILURE([foma test failed (--without-foma to disable)])])])
 AC_LANG_POP
 
 AS_IF([test "x$with_unicode_handler" = "xglib"],
@@ -626,22 +644,11 @@ AS_IF([test "x$with_readline" = "xyes"],
 
 # Checks for header files
 AC_CHECK_HEADERS([limits.h stdlib.h string.h error.h glob.h locale.h langinfo.h])
-AC_CHECK_HEADERS([libxml/tree.h libxml/mem.h])
+
 AC_LANG_PUSH([C++])
 
-# Whether std::unordered_map and std::unordered_set should be used
-AS_IF([echo "$CXXFLAGS" | grep '\-std' | grep -E '((gnu\+\+)|(c\+\+))((11)|(0x)|(14)|(1y)|(17)|(1z))' > /dev/null 2> /dev/null], [std_xx_11_requested=yes])
-
-AC_CHECK_HEADERS([tr1/unordered_map], [], [],
-[#ifdef HAVE_TR1_UNORDERED_MAP
-#include <tr1/unordered_map>
-#endif
-])
-AC_CHECK_HEADERS([tr1/unordered_set], [], [],
-[#ifdef HAVE_TR1_UNORDERED_SET
-#include <tr1/unordered_set>
-#endif
-])
+# Always use c++11 (flag 'c++0x' is understood also by older compilers)
+AS_IF([echo "$CXXFLAGS" | grep '\-std' | grep -E '((gnu\+\+)|(c\+\+))((11)|(0x)|(14)|(1y)|(17)|(1z))' > /dev/null 2> /dev/null], [], [CXXFLAGS="$CXXFLAGS -std=c++0x"])
 
 AC_CHECK_HEADERS([unordered_map], [], [],
 [#ifdef HAVE_UNORDERED_MAP
@@ -654,34 +661,20 @@ AC_CHECK_HEADERS([unordered_set], [], [],
 #endif
 ])
 
-AS_IF([test "$std_xx_11_requested" = "yes" -a "x$ac_cv_header_unordered_map" = "xno"],
-            [AC_MSG_ERROR(["<unordered_map> not found, it is needed in c++ standard 11"])])
-AS_IF([test "$std_xx_11_requested" = "yes" -a "x$ac_cv_header_unordered_set" = "xno"],
-            [AC_MSG_ERROR(["<unordered_set> not found, it is needed in c++ standard 11"])])
-
-AS_IF([test "x$ac_cv_header_tr1_unordered_map" = "xno" -a "x$ac_cv_header_unordered_map" = "xno"],
-            [AC_MSG_ERROR(["unordered_map not found"])])
-AS_IF([test "x$ac_cv_header_tr1_unordered_set" = "xno" -a "x$ac_cv_header_unordered_set" = "xno"],
-            [AC_MSG_ERROR(["unordered_set not found"])])
-
-# Define if tr1/unordered_maps and _sets should be used
-AS_IF([test "$std_xx_11_requested" != "yes" -a "x$ac_cv_header_tr1_unordered_map" != "xno"], AC_DEFINE([USE_TR1_UNORDERED_MAP], [1], [Use tr1/unordered_map]))
-AS_IF([test "$std_xx_11_requested" != "yes" -a "x$ac_cv_header_tr1_unordered_set" != "xno"], AC_DEFINE([USE_TR1_UNORDERED_SET], [1], [Use tr1/unordered_set]))
-
+AS_IF([test "x$ac_cv_header_unordered_map" = "xno"],
+            [AC_MSG_ERROR(["<unordered_map> not found, it is needed in c++ standard 11 (or higher)"])])
+AS_IF([test "x$ac_cv_header_unordered_set" = "xno"],
+            [AC_MSG_ERROR(["<unordered_set> not found, it is needed in c++ standard 11 (or higher)"])])
 
 AC_CHECK_HEADERS([ext/slist])
 
-#AS_IF([test "x$with_sfst" != "xno" -a "x$enable_windows" == "xno"],
-#      [AC_CHECK_HEADERS([sfst/fst.h sfst1/fst.h])])
 AS_IF([test "x$with_sfst" != "xno"],
       [AC_CHECK_HEADERS([backward/hash_set ext/hash_set hash_set])]
       [AC_CHECK_HEADERS([backward/hash_map ext/hash_map hash_map])])
-#AS_IF([test "x$with_openfst" != "xno" -a "x$enable_windows" == "xno"],
-#      [AC_CHECK_HEADERS([fst/fstlib.h])])
+
 AC_LANG_POP
 AC_LANG_PUSH([C])
-#AS_IF([test "x$with_foma" != "xno" -a "x$enable_windows" == "xno"],
-#      [AC_CHECK_HEADERS([fomalib.h])])
+
 AC_LANG_POP
 AC_LANG_PUSH([C])
 AS_IF([test "x$with_readline" = "xyes"],
@@ -707,6 +700,7 @@ AC_CHECK_DECLS([program_name, program_invocation_name, program_invocation_short_
 AC_CHECK_DECLS([rl_completion_suppress_append, rl_completion_matches])
 AC_CHECK_FUNCS([floor strchr strdup strerror strncasecmp strcspn strtol strtoul error error_at_line strndup getline getdelim getopt_long strtod xstrdup set_program_name setprogname setlocale nl_langinfo])
 
+AM_CONDITIONAL([WINDOWS], [test x$version_type = xwindows])
 
 # Checks for system services
 
@@ -738,8 +732,8 @@ AC_CONFIG_FILES([Makefile doc/Makefile test/Makefile
 		 back-ends/foma/Makefile
 		 back-ends/sfst/Makefile
 		 man/Makefile
-		 swig/Makefile
-		 swig/test/Makefile
+		 python/Makefile
+		 python/test/Makefile
 		 scripts/Makefile])
 AC_CONFIG_FILES([scripts/hfst-foma-wrapper.sh], [chmod +x scripts/hfst-foma-wrapper.sh])
 AC_CONFIG_FILES([scripts/hfst-foma], [chmod +x scripts/hfst-foma])
@@ -784,7 +778,7 @@ cat <<EOF
     *                 name: $enable_name
     *                 optimized-lookup: $enable_optimized_lookup
     *                 pmatch: $enable_pmatch
-    *                 proc2: $enable_proc2
+    *                 tokenize: $enable_tokenize
     *                 proc: $enable_proc
     *                 project: $enable_project
     *                 prune-alphabet: $enable_prune_alphabet
@@ -811,14 +805,9 @@ EOF
 dnl stick important warnings to bottom
 dnl important licensing information
 dnl according to GNU GPLv2 strict (not plus) is incompatible with Apache
-AS_IF([test "x$with_foma" != "xno" -a "x$with_openfst" != "xno"],
-      [AC_MSG_WARN([foma licensing exception is limited to HFST team’s redistribution; if you consider GPLv2 strict and Apache licence conflicting you may not _redistribute_ your binaries])])
 dnl hope end users never disable ofst 
 AS_IF([test "x$with_openfst" == "xno"],
       [AC_MSG_WARN([Disabling openfst backend will severely cripple libhfst])])
-dnl without foma, foma-based scripts cannot work
-#AS_IF([test "x$FOMACLI" = "xfalse"],
-#      [AC_MSG_WARN([using hfst-xfst is disabled because foma binary was not found])])
 dnl HFST's case mapping in corpus tools is mainly MES-2 set with other characters
 dnl added as we go
 AS_IF([test "x$with_unicode_handler" = "xhfst"],
@@ -829,14 +818,10 @@ AS_IF([test "x$enable_lexc" == "xno"],
 AS_IF([test "x$enable_twolc" == "xno"],
       [AC_MSG_WARN([hfst-twolc is not enabled; you will not be able to compile xerox twolc grammars; enable using --enable-twolc])])
 
- # -a "x$enable_mingw" == "xno"],
 AS_IF([test "x$enable_tagger" == "xno"],
       [AC_MSG_WARN([hfst-train-tagger and hfst-tag are not enabled; you will not be able to train and use taggers; enable using --enable-tagger])])
 AS_IF([test "x$enable_calculate" == "xno"],
       [AC_MSG_WARN([hfst-calculate is not enabled; you will not be able to compile SFST-PL scripts; enable using --enable-calculate])])
 AS_IF([test "x$enable_xfst" == "xno"],
       [AC_MSG_WARN([hfst-xfst is not enabled; you will not be able to compile XFST scripts; enable using --enable-xfst])])
-#AS_IF([test "x$warn_about_missing_zlib" != "xno"],
-#      [AC_MSG_WARN([hfst-foma was disabled because zlib was not found; you will not be able to compile XFST scripts with foma wrapper])])
-#AS_IF([test "x$generate_foma_wrapper" == "xno" -a "x$warn_about_missing_zlib" == "xno"], 
-#      [AC_MSG_WARN([hfst-foma is not enabled; you will not be able to compile XFST scripts with foma wrapper; enable using --with-foma (--enable-foma-wrapper)])])
+AC_MSG_WARN([Python bindings for HFST are not under autotools; see python/README for instructions about how to build and install them])

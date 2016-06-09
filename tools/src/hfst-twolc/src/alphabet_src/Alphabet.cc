@@ -1,4 +1,4 @@
-//! @file Alphabet.cc
+ //! @file Alphabet.cc
 //!
 //! @author Miikka Silfverberg
 //!
@@ -18,6 +18,10 @@
 
 #include "Alphabet.h"
 
+#ifdef HAVE_XFSM
+  #define Alphabet TwolCAlphabet
+#endif
+
 void Alphabet::define_set(const std::string &name,const SymbolRange &elements)
 { sets[name] = elements; }
 
@@ -34,11 +38,11 @@ const OtherSymbolTransducer &Alphabet::get_transducer(const SymbolPair &pair)
 
 bool Alphabet::is_pair(const std::string &input,const std::string &output)
 {
-  if (input == "__HFST_TWOLC_?" and output == "__HFST_TWOLC_?")
+  if (input == "__HFST_TWOLC_?" && output == "__HFST_TWOLC_?")
     { return true; }
-  if (diacritics.has_element(input) and input == output)
+  if (diacritics.has_element(input) && input == output)
     { return true; }
-  if (diacritics.has_element(input) and output == "__HFST_TWOLC_?")
+  if (diacritics.has_element(input) && output == "__HFST_TWOLC_?")
     { return true; }
   if (input == "__HFST_TWOLC_?")
     { return output_symbols.has_element(output); }
@@ -60,15 +64,15 @@ void Alphabet::define_singleton_set(const std::string &name)
 bool Alphabet::is_set_pair(const SymbolPair &pair) const
 {
   return 
-    pair.first.find("__HFST_TWOLC_SET_NAME=") != std::string::npos or 
+    pair.first.find("__HFST_TWOLC_SET_NAME=") != std::string::npos || 
     pair.second.find("__HFST_TWOLC_SET_NAME=") != std::string::npos;
 }
 
 const OtherSymbolTransducer &Alphabet::compute(const SymbolPair &pair)
 {
-  if (not sets.has_key(pair.first))
+  if (! sets.has_key(pair.first))
     { define_singleton_set(pair.first); }
-  if (not sets.has_key(pair.second))
+  if (! sets.has_key(pair.second))
     { define_singleton_set(pair.second); }
 
   const std::string &input = pair.first;
@@ -80,26 +84,26 @@ const OtherSymbolTransducer &Alphabet::compute(const SymbolPair &pair)
     { 
       pair_transducer.apply(&HfstTransducer::disjunct,
                 OtherSymbolTransducer(input,input)); 
-      if (input != output and output != TWOLC_EPSILON and 
+      if (input != output && output != TWOLC_EPSILON && 
       output != TWOLC_UNKNOWN)
     { std::cerr << "Warning: Diacritic " << input << " in pair "
             << input << ":" << output << " will correspond 0."
             << std::endl; }
     }
-  else if (input == TWOLC_UNKNOWN and output == TWOLC_UNKNOWN)
+  else if (input == TWOLC_UNKNOWN && output == TWOLC_UNKNOWN)
     { 
       for (HandySet<SymbolPair>::const_iterator it = alphabet_set.begin();
        it != alphabet_set.end();
        ++it)
-	{
-	  if (is_set_pair(*it))
-	    { continue; }
+        {
+          if (is_set_pair(*it))
+            { continue; }
 
-	  pair_transducer.apply(&HfstTransducer::disjunct,
-				OtherSymbolTransducer(it->first,it->second));
-	}
+          pair_transducer.apply(&HfstTransducer::disjunct,
+                                OtherSymbolTransducer(it->first,it->second));
+        }
       pair_transducer.apply(&HfstTransducer::disjunct,
-      			    OtherSymbolTransducer(TWOLC_UNKNOWN));
+                            OtherSymbolTransducer(TWOLC_UNKNOWN));
     }
   else if (input == TWOLC_UNKNOWN)
     {
@@ -113,14 +117,14 @@ const OtherSymbolTransducer &Alphabet::compute(const SymbolPair &pair)
            jt != alphabet_set.end();
            ++jt)
         {
-	  if (is_set_pair(*jt))
-	    { continue; }
+          if (is_set_pair(*jt))
+            { continue; }
 
           if (*it == jt->second)
-	    { 
-	      pair_transducer.apply(&HfstTransducer::disjunct,
-				    OtherSymbolTransducer
-				    (jt->first,jt->second)); }
+            { 
+              pair_transducer.apply(&HfstTransducer::disjunct,
+                                    OtherSymbolTransducer
+                                    (jt->first,jt->second)); }
         }
     }
     }
@@ -136,14 +140,14 @@ const OtherSymbolTransducer &Alphabet::compute(const SymbolPair &pair)
            jt != alphabet_set.end();
            ++jt)
         {
-	  if (is_set_pair(*jt))
-	    { continue; }
-	  
+          if (is_set_pair(*jt))
+            { continue; }
+          
           if (*it == jt->first)
-	    { 
-	      pair_transducer.apply(&HfstTransducer::disjunct,
-				    OtherSymbolTransducer
-				    (jt->first,jt->second)); }
+            { 
+              pair_transducer.apply(&HfstTransducer::disjunct,
+                                    OtherSymbolTransducer
+                                    (jt->first,jt->second)); }
         }
     }
     }
@@ -161,10 +165,10 @@ const OtherSymbolTransducer &Alphabet::compute(const SymbolPair &pair)
            ++jt)
         {
           if (is_pair(*it,*jt))
-	    { 
-	      pair_transducer.apply(&HfstTransducer::disjunct,
-				    OtherSymbolTransducer(*it,*jt));
-	    }
+            { 
+              pair_transducer.apply(&HfstTransducer::disjunct,
+                                    OtherSymbolTransducer(*it,*jt));
+            }
         }
     }
     }

@@ -1,5 +1,5 @@
 /*     Foma: a finite-state toolkit and library.                             */
-/*     Copyright © 2008-2011 Mans Hulden                                     */
+/*     Copyright © 2008-2014 Mans Hulden                                     */
 
 /*     This file is part of foma.                                            */
 
@@ -26,7 +26,11 @@
 #define WORD_ENTRY 1
 #define REGEX_ENTRY 2
 
+#ifndef ORIGINAL
 extern int verbose_lexc_;
+#endif
+
+extern int g_lexc_align;
 
 struct multichar_symbols {
     char *symbol;
@@ -80,13 +84,14 @@ static struct sigma *lexsigma = NULL;
 static struct lexc_hashtable *hashtable;
 static struct fsm *current_regex_network;
 
-static int cwordin[1000], cwordout[1000], carity, lexc_statecount, maxlen, hasfinal, current_entry, net_has_unknown;
+static int cwordin[1000], cwordout[1000], medcwordin[2000], medcwordout[2000], carity, lexc_statecount, maxlen, hasfinal, current_entry, net_has_unknown;
 static _Bool *mchash;
 static struct lexstates *clexicon, *ctarget;
 
 static char *mystrncpy(char *dest, char *src, int len);
 static void lexc_string_to_tokens(char *string, int *intarr);
 static void lexc_pad();
+static void lexc_medpad();
 static void lexc_number_states();
 static void lexc_cleanup();
 static unsigned int lexc_suffix_hash(int offset);
@@ -109,11 +114,10 @@ static unsigned int lexc_suffix_hash(int offset) {
 
 static unsigned int lexc_symbol_hash(char *s) {
     register unsigned int hash;
-    hash = 0;
-
-    while (*s != '\0') {
-        hash = hash * 101  +  *s++;
-    }
+    int c;
+    hash = 5381;
+    while ((c = *s++))
+	hash = ((hash << 5) + hash) + c;
     return (hash % SIGMA_HASH_TABLESIZE);
 }
 
@@ -229,16 +233,15 @@ void lexc_add_network() {
     struct states **slist, *sourcestate, *deststate, *newstate;
     struct statelist *s;
     struct trans *newtrans;
-    int i, j, *sigreplace, signumber, maxstate, *finals, maxsigma, unknown_symbols, first_new_sigma, last_new_sigma, *unk = NULL;
+    int i, j, *sigreplace, signumber, maxstate, *finals, unknown_symbols, first_new_sigma, *unk = NULL;
 
     unknown_symbols = 0;
-    first_new_sigma = last_new_sigma = 0;
+    first_new_sigma = 0;
     sourcestate = clexicon->state;
     deststate = ctarget->state;
 
     net = current_regex_network;
     fsm = net->states;
-    maxsigma = sigma_max(net->sigma);
 
     sigreplace = xxcalloc(sigma_max(net->sigma)+1,sizeof(int));
 
@@ -247,7 +250,6 @@ void lexc_add_network() {
             /* Add to existing lexc sigma */
             signumber = sigma_add(sigma->symbol, lexsigma);
             first_new_sigma = first_new_sigma > 0 ? first_new_sigma : signumber;
-            last_new_sigma = signumber;
             lexc_add_sigma_hash(sigma->symbol, signumber);
             *(sigreplace+sigma->number) = signumber;
         } else {
@@ -365,11 +367,11 @@ void lexc_set_current_lexicon(char *name, int which) {
     for (l = lexstates; l != NULL; l = l->next) {
         if (strcmp(name,l->name) == 0) {
             if (which == 0) {
-                l->has_outgoing = 1;
+		l->has_outgoing = 1;
                 clexicon = l;
-            } else {
+	    } else {
                 ctarget = l;
-            }
+	    }
             return;
         }
     }
@@ -388,7 +390,7 @@ void lexc_set_current_lexicon(char *name, int which) {
     l->state = newstate;
     if (which == 0) {
         clexicon = l;
-        l->has_outgoing = 1;
+	l->has_outgoing = 1;
     } else { 
         ctarget = l;
     }
@@ -397,10 +399,10 @@ void lexc_set_current_lexicon(char *name, int which) {
 char *lexc_find_delim(char *name, char delimiter, char escape) {
     int i;
     for (i=0; *(name+i) != '\0'; i++) {
-        if (*(name+i) == escape && *(name+i+1) != '\0') {
-            i++;
-            continue;
-        }
+	if (*(name+i) == escape && *(name+i+1) != '\0') {
+	    i++;
+	    continue;
+	}
         if (*(name+i) == delimiter) {
             return name+i;
         }
@@ -418,12 +420,12 @@ void lexc_deescape_string(char *name, char escape, int mode) {
             i++;
             continue;
         }
-        else if (mode == 1 && *(name+i) == '0') {
-            /* Marks alignment EPSILON */
-            *(name+j) = (unsigned char) 0xff;
-            j++;
-            continue;
-        }
+	else if (mode == 1 && *(name+i) == '0') {
+	    /* Marks alignment EPSILON */
+	    *(name+j) = (unsigned char) 0xff;
+	    j++;
+	    continue;
+	}
         else if (*(name+i) != escape && *(name+i) != '0') {
             j++;
             continue;
@@ -454,25 +456,123 @@ void lexc_set_current_word(char *name) {
     lexc_string_to_tokens(instring, cwordin);
     if (carity == 2) {
         lexc_string_to_tokens(outstring, cwordout);
-        lexc_pad();
+	if (g_lexc_align)
+	    lexc_medpad();
+	else
+	    lexc_pad();
     } else {
         for (i=0; *(cwordin+i) != -1; i++) {
             *(cwordout+i) = *(cwordin+i);
         }
         *(cwordout+i) = -1;
+
     }
     current_entry = WORD_ENTRY;
+}
+
+
+#define LEV_DOWN 0
+#define LEV_LEFT 1
+#define LEV_DIAG 2
+    
+void lexc_medpad() {
+    int i, j, x, y, s1len, s2len, left, down, diag, dir;
+
+    if (*cwordin == -1 && *cwordout == -1) {
+	*cwordin = *cwordout = EPSILON;
+	*(cwordin+1) = *(cwordout+1) = -1;
+	return;
+    }
+    
+    for (i = 0, j = 0; cwordin[i] != -1; i++) {
+    	if (cwordin[i] == EPSILON) {
+    	    continue;
+    	}
+    	cwordin[j] = cwordin[i];
+    	j++;
+    }
+    cwordin[j] = -1;
+
+    for (i = 0, j = 0; cwordout[i] != -1; i++) {
+    	if (cwordout[i] == EPSILON) {
+    	    continue;
+    	}
+    	cwordout[j] = cwordout[i];
+    	j++;
+    }
+    cwordout[j] = -1;
+    
+    for (i = 0; cwordin[i] != -1; i++) { }
+    s1len = i;
+    for (i = 0; cwordout[i] != -1; i++) { }
+    s2len = i;
+    
+    int matrix[s1len+2][s2len+2];
+    int dirmatrix[s1len+2][s2len+2];
+
+    matrix[0][0] = 0;
+    dirmatrix[0][0] = 0;
+    for (x = 1; x <= s1len; x++) {
+        matrix[x][0] = matrix[x-1][0] + 1;
+	dirmatrix[x][0] = LEV_LEFT;
+    }
+    for (y = 1; y <= s2len; y++) {
+        matrix[0][y] = matrix[0][y-1] + 1;
+	dirmatrix[0][y] = LEV_DOWN;
+    }
+    for (x = 1; x <= s1len; x++) {
+        for (y = 1; y <= s2len; y++) {
+    	    diag = matrix[x-1][y-1] + (cwordin[x-1] == cwordout[y-1] ? 0 : 100);
+    	    down =  matrix[x][y-1] + 1;
+    	    left = matrix[x-1][y] + 1;
+    	    if (diag <= left && diag <= down) {
+    		matrix[x][y] = diag;
+    		dirmatrix[x][y] = LEV_DIAG;
+    	    } else if (left <= diag && left <= down) {
+    		matrix[x][y] = left;
+    		dirmatrix[x][y] = LEV_LEFT;
+    	    } else {
+    		matrix[x][y] = down ;
+    		dirmatrix[x][y] = LEV_DOWN;
+    	    }
+    	}
+    }
+
+    for (x = s1len, y = s2len, i = 0; (x > 0) || (y > 0); i++) {
+	dir = dirmatrix[x][y];
+    	if (dir == LEV_DIAG) {
+    	    medcwordin[i] = cwordin[x-1];
+    	    medcwordout[i] = cwordout[y-1];
+    	    x--;
+    	    y--;
+    	}
+    	else if (dir == LEV_DOWN) {
+    	    medcwordin[i] = EPSILON;
+    	    medcwordout[i] = cwordout[y-1];
+    	    y--;
+    	}
+    	else {
+    	    medcwordin[i] = cwordin[x-1];
+	    medcwordout[i] = EPSILON;
+    	    x--;
+    	}
+    }
+    for (j = 0, i-= 1; i >= 0; j++, i--) {
+    	cwordin[j] = medcwordin[i];
+    	cwordout[j] = medcwordout[i];
+    }
+    cwordin[j] = -1;
+    cwordout[j] = -1;
 }
 
 void lexc_pad() {
     int i, pad;
     /* Pad the shorter of current in, out words in cwordin, cwordout with EPSILON */
-    /* A MED option would be nice here to minimize different symbol pairs */
 
     if (*cwordin == -1 && *cwordout == -1) {
-        *cwordin = *cwordout = EPSILON;
-        *(cwordin+1) = *(cwordout+1) = -1;
-        return;
+	*cwordin = *cwordout = EPSILON;
+	*(cwordin+1) = *(cwordout+1) = -1;
+	return;
     }
 
     for (i=0, pad = 0; ;i++) {
@@ -509,13 +609,13 @@ void lexc_string_to_tokens(char *string, int *intarr) {
     len = strlen(string);
     for (i=0, pos = 0; i < len; ) {
 
-        /* EPSILON for alignment is marked as 0xff */
-        if ((unsigned char) string[i] == 0xff) {
-            *(intarr+pos) = EPSILON;
-            pos++;
-            i++;
-            continue;
-        }
+	/* EPSILON for alignment is marked as 0xff */
+	if ((unsigned char) string[i] == 0xff) {
+	    *(intarr+pos) = EPSILON;
+	    pos++;
+	    i++;
+	    continue;
+	}
 
         multi = 0;
         mchashval = (unsigned int) ((unsigned char) *(string+i)) * 256 + (unsigned int) ((unsigned char) *(string+i+1));
@@ -698,7 +798,15 @@ void lexc_number_states() {
         for (s = statelist; s != NULL; s = s->next) {        
             if (s->next == NULL) {
                 s->state->number = 0;
-                fprintf(stderr, "*Warning: no Root lexicon, using '%s' as Root.\n",s->state->lexstate->name); // HFST changed from stdout to stderr
+#ifdef ORIGINAL 
+                fprintf(stderr,"*Warning: no Root lexicon, using '%s' as Root.\n",s->state->lexstate->name);
+#else
+                if (verbose_lexc_ == 1)
+                  {
+                    fprintf(stderr,"*Warning: no Root lexicon, using '%s' as Root.\n",s->state->lexstate->name);
+                    fflush(stderr);
+                  }
+#endif
                 s->start = 1;
                 n++;
             }
@@ -711,9 +819,9 @@ void lexc_number_states() {
             s->final = 1;
             hasfinal = 1;
         } else if (s->state->lexstate != NULL && strcmp(s->state->lexstate->name, "#") != 0 && s->state->lexstate->has_outgoing == 0) {
-            /* Also mark uncontinued states as final (this is warned about elsewhere) */
+	    /* Also mark uncontinued states as final (this is warned about elsewhere) */
             s->final = 1;
-        }
+	}
     }
 
     for (s = statelist; s != NULL; s = s->next) { 
@@ -725,12 +833,29 @@ void lexc_number_states() {
     lexc_statecount = n+1;
     for (l = lexstates; l != NULL ; l = l->next) {
         if (l->targeted == 0 && l->state->number != 0) {
-	  fprintf(stderr, "*Warning: lexicon '%s' defined but not used\n",l->name);  // HFST changed from stdout to stderr
-            fflush(stderr);
+#ifdef ORIGINAL
+	    fprintf(stderr,"*Warning: lexicon '%s' defined but not used\n",l->name);
+            fflush(stdout);
+#else
+            if (verbose_lexc_) 
+              {
+                fprintf(stderr,"*Warning: lexicon '%s' defined but not used\n",l->name);
+                fflush(stderr);
+              }            
+#endif
         }
         if (l->has_outgoing == 0 && strcmp(l->name, "#") != 0) {
-	  fprintf(stderr, "***Warning: lexicon '%s' used but never defined\n",l->name);  // HFST changed from stdout to stderr
-            fflush(stderr);
+#ifdef ORIGINAL
+	    fprintf(stderr,"***Warning: lexicon '%s' used but never defined\n",l->name);
+            fflush(stdout);
+#else
+            if (verbose_lexc_)
+              {
+            fprintf(stderr,"***Warning: lexicon '%s' used but never defined\n",l->name);
+                fflush(stderr);
+              }
+
+#endif
         }
     }
 }
@@ -890,18 +1015,32 @@ struct fsm *lexc_to_fsm() {
     struct trans *t;
     int i, j,  linecount;
 
-    if (verbose_lexc_ == 1) {
-      fprintf(stderr, "Building lexicon...\n");  // HFST changed from stdout to stderr
-      fflush(stderr);
-    }
+#ifdef ORIGINAL
+    fprintf(stderr,"Building lexicon...\n");
+    fflush(stdout);
+#else
+    if (verbose_lexc_) 
+      {
+        fprintf(stderr,"Building lexicon...\n");
+        fflush(stderr);
+      }
+#endif
     lexc_merge_states();
     net = fsm_create("");
     xxfree(net->sigma);
     net->sigma = lexsigma;
     lexc_number_states();
     if (hasfinal == 0) {
-      fprintf(stderr, "Warning: # is never reached!!!\n");  // HFST changed from stdout to stderr
-      return(fsm_empty_set());
+#ifdef ORIGINAL
+        fprintf(stderr,"Warning: # is never reached!!!\n");
+#else
+        if (verbose_lexc_)
+          {
+            fprintf(stderr,"Warning: # is never reached!!!\n");
+            fflush(stderr);
+          }
+#endif
+        return(fsm_empty_set());
     }
     sa = xxmalloc(sizeof(struct statelist)*lexc_statecount);
     for (s = statelist; s != NULL; s = s->next) {
@@ -938,19 +1077,37 @@ struct fsm *lexc_to_fsm() {
     sigma_cleanup(net,0);
     sigma_sort(net);
     
-    if (verbose_lexc_ == 1) {
-      fprintf(stderr, "Determinizing...\n"); // HFST changed from stdout to stderr
-      fflush(stderr);
-    }
+#ifdef ORIGINAL
+    fprintf(stderr,"Determinizing...\n");
+    fflush(stdout);
+#else
+    if (verbose_lexc_)
+      {
+        fprintf(stderr,"Determinizing...\n");
+        fflush(stderr);
+      }
+#endif
     net = fsm_determinize(net);
-    if (verbose_lexc_ == 1) {
-      fprintf(stderr, "Minimizing...\n"); // HFST changed from stdout to stderr
-      fflush(stderr);
-    }
+#ifdef ORIGINAL
+    fprintf(stderr,"Minimizing...\n");
+    fflush(stdout);
+#else
+    if (verbose_lexc_)
+      {
+        fprintf(stderr,"Minimizing...\n");
+        fflush(stderr);
+      }
+#endif
     net = fsm_topsort(fsm_minimize(net));
-    if (verbose_lexc_ == 1) {
-      fprintf(stderr, "Done!\n"); // HFST changed from stdout to stderr
-    }
+#ifdef ORIGINAL
+    fprintf(stderr,"Done!\n");
+#else
+    if (verbose_lexc_)
+      {
+        fprintf(stderr,"Done!\n");
+        fflush(stderr);
+      }
+#endif
     return(net);
 }
 
@@ -975,7 +1132,7 @@ void lexc_cleanup() {
     xxfree(hashtable);
     for (mcs = mc ; mcs != NULL ; mcs = mcsn) {
         mcsn = mcs->next;
-        xxfree(mcs->symbol);
+	xxfree(mcs->symbol);
         xxfree(mcs);
     }
     for (l = lexstates ; l != NULL ; l = ln) {

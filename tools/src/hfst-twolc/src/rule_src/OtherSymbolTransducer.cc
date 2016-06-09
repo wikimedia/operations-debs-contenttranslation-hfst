@@ -191,7 +191,7 @@ OtherSymbolTransducer &OtherSymbolTransducer::harmonize_diacritics
        it != diacritics.end();
        ++it)
     {
-      if (t_alphabet.find(*it) != t_alphabet.end() and
+      if (t_alphabet.find(*it) != t_alphabet.end() &&
       alphabet.find(*it) == alphabet.end())
     { missing_diacritics.insert(*it); }
     }
@@ -277,31 +277,31 @@ void OtherSymbolTransducer::check_pair(const std::string &input_symbol,
   if (input_symbol == TWOLC_IDENTITY)
     { is_broken = false; }
   // other:other is a valid pair.
-  else if (input_symbol == HFST_UNKNOWN and output_symbol == HFST_UNKNOWN)
+  else if (input_symbol == HFST_UNKNOWN && output_symbol == HFST_UNKNOWN)
     { is_broken = false; }
   // eps:eps is valid
-  else if (input_symbol == TWOLC_EPSILON and output_symbol == TWOLC_EPSILON)
+  else if (input_symbol == TWOLC_EPSILON && output_symbol == TWOLC_EPSILON)
     { is_broken = false; }
   // 0:0 is a valid pair.
-  else if (input_symbol == HFST_EPSILON and output_symbol == HFST_EPSILON)
+  else if (input_symbol == HFST_EPSILON && output_symbol == HFST_EPSILON)
     { is_broken = false; }
   // diamond:diamond is a valid pair.
   else if (input_symbol == TWOLC_DIAMOND)
     { is_broken = false; }
   // other:X is valid, iff X is an output symbol or 0.
   else if (input_symbol == HFST_UNKNOWN)
-    { is_broken = not (output_symbol == TWOLC_EPSILON or 
+    { is_broken = ! (output_symbol == TWOLC_EPSILON || 
                output_symbols.has_element(output_symbol)); } 
   // X:other is valid, iff X is an input symbol or 0.
   else if (output_symbol == HFST_UNKNOWN)
-    { is_broken = not (input_symbol == TWOLC_EPSILON or 
+    { is_broken = ! (input_symbol == TWOLC_EPSILON || 
                input_symbols.has_element(input_symbol)); } 
   // 0:X is valid, iff X is an output symbol.
   else if (input_symbol == TWOLC_EPSILON)
-    { is_broken = not output_symbols.has_element(output_symbol); }
+    { is_broken = ! output_symbols.has_element(output_symbol); }
   // X:0 is valid, iff X is an input symbol or a diacritic.
   else if (output_symbol == TWOLC_EPSILON)
-    { is_broken = not input_symbols.has_element(input_symbol); }
+    { is_broken = ! input_symbols.has_element(input_symbol); }
   // X:X is valid if X is a diacritic.
   else if (diacritics.has_element(input_symbol) /*and 
                           input_symbol == output_symbol*/)
@@ -309,7 +309,7 @@ void OtherSymbolTransducer::check_pair(const std::string &input_symbol,
   // X:Y is valid iff it has been declared in the alphabet.  
   else
     { is_broken = 
-    not symbol_pairs.has_element(SymbolPair(input_symbol,output_symbol)); }
+    ! symbol_pairs.has_element(SymbolPair(input_symbol,output_symbol)); }
   if (is_broken)
     { std::cerr << "Unknown pair: "
         << input_symbol << " " << output_symbol << std::endl; }
@@ -347,7 +347,7 @@ OtherSymbolTransducer &OtherSymbolTransducer::apply
   if (another.is_broken)
     { throw UndefinedSymbolPairsFound(); }
   OtherSymbolTransducer another_copy(another);
-  if (not diacritics.empty())
+  if (! diacritics.empty())
     {
       harmonize_diacritics(another_copy);
       another_copy.harmonize_diacritics(*this);
@@ -367,7 +367,7 @@ OtherSymbolTransducer &OtherSymbolTransducer::apply
   if (another.is_broken)
     { throw UndefinedSymbolPairsFound(); }
   OtherSymbolTransducer another_copy(another);
-  if (not diacritics.empty())
+  if (! diacritics.empty())
     {
       harmonize_diacritics(another_copy);
       another_copy.harmonize_diacritics(*this);
@@ -556,7 +556,7 @@ OtherSymbolTransducer OtherSymbolTransducer::get_inverse_of_upper_projection
              symbol_pairs.begin();
            kt != symbol_pairs.end(); ++kt)
         {
-          if (kt->first == input and has_symbol(fst,kt->second))
+          if (kt->first == input && has_symbol(fst,kt->second))
             { add_transition(new_fst,state,target,input,kt->second); }
         }     
           if (input == TWOLC_EPSILON)
@@ -653,7 +653,7 @@ bool have_common_string(HfstState state1,HfstState state2,
             HandySet<StatePair> &visited_pairs,
             StringVector &v)
 {
-  if (fst1.is_final_state(state1) and fst2.is_final_state(state2))
+  if (fst1.is_final_state(state1) && fst2.is_final_state(state2))
     { return true; }
 
   const HfstBasicTransducer::HfstTransitions &fst1_transitions = fst1[state1];
@@ -679,7 +679,7 @@ bool have_common_string(HfstState state1,HfstState state2,
     {
       StatePair state_pair(fst1_transition_map[symbol_pair],
                    it->get_target_state());
-      if (not visited_pairs.has_element(state_pair))
+      if (! visited_pairs.has_element(state_pair))
         {
           v.push_back(symbol_pair.first + ":" + symbol_pair.second);
           visited_pairs.insert(state_pair);
@@ -701,7 +701,7 @@ bool OtherSymbolTransducer::is_empty_intersection
   HfstBasicTransducer another_fst(another.transducer);
   HandySet<StatePair> visited_pairs;
   visited_pairs.insert(StatePair(0,0));
-  return not have_common_string(0,0,this_fst,another_fst,visited_pairs,v);
+  return ! have_common_string(0,0,this_fst,another_fst,visited_pairs,v);
 }
 
 bool OtherSymbolTransducer::is_subset(const OtherSymbolTransducer &another)

@@ -185,7 +185,7 @@ Define TOP [ [T1 | T2] LC({ }) ] ;' \
 
 check_compile_run \
     --codetempl 'Define T [ Alpha+ EndTag(A) ] ;
-Define TOP [ T | [T @1@] ] ;' \
+Define TOP [ T::1 | [T @1@] ] ;' \
     --templargs 'LC before EndTag' 'LC({ }) EndTag(B)' \
     --templargs 'LC after EndTag' 'EndTag(B) LC({ })' \
     --inout 'Three-character match' 'abc' '<A>abc</A>' \

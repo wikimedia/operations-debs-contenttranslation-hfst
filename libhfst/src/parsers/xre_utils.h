@@ -1,3 +1,12 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 /**
  * @file xre_utils.h
  *
@@ -19,6 +28,7 @@ extern size_t len;
 extern std::map<std::string,hfst::HfstTransducer*> definitions;
 extern std::map<std::string,std::string> function_definitions;
 extern std::map<std::string,unsigned int> function_arguments;
+extern std::map<std::string, std::set<std::string> > symbol_lists;
 extern HfstTransducer* last_compiled;
 extern bool contains_only_comments;
 extern ImplementationType format;
@@ -79,6 +89,7 @@ HfstTransducer* compile(const std::string& xre,
                         std::map<std::string,hfst::HfstTransducer*>& defs,
                         std::map<std::string,std::string>& func_defs,
                         std::map<std::string,unsigned int> func_args,
+                        std::map<std::string, std::set<std::string> >& lists,
                         hfst::ImplementationType type);
 
 /**
@@ -88,6 +99,7 @@ HfstTransducer* compile_first(const std::string& xre,
                               std::map<std::string,hfst::HfstTransducer*>& defs,
                               std::map<std::string,std::string>& func_defs,
                               std::map<std::string,unsigned int> func_args,
+                              std::map<std::string, std::set<std::string> >& lists,
                               hfst::ImplementationType type,
                               unsigned int & chars_read);
 
@@ -100,7 +112,7 @@ HfstTransducer* expand_definition(HfstTransducer* tr, const char* symbol);
 // the same but simpler..
 HfstTransducer* expand_definition(const char* symbol);
 
- void define_function_args(const char * name, const std::vector<HfstTransducer> * args);
+ bool define_function_args(const char * name, const std::vector<HfstTransducer> * args);
  void undefine_function_args(const char * name);
 
  const char * get_function_xre(const char * name);
@@ -124,6 +136,8 @@ bool is_valid_function_call(const char * name, const std::vector<HfstTransducer>
  HfstTransducer * contains_once(const HfstTransducer * t);
 
  HfstTransducer * contains_once_optional(const HfstTransducer * t);
+
+ HfstTransducer * merge_first_to_second(HfstTransducer * tr1, HfstTransducer * tr2);
 
  void warn(const char * msg);
  void warn_about_special_symbols_in_replace(HfstTransducer *t);

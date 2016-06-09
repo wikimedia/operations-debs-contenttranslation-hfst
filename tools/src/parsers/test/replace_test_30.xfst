@@ -2,4 +2,4 @@ set precision 1
 set print-weight ON
 
 regex ? @-> a::1 ... b::2 ;
-apply up bb
+apply down bb

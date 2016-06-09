@@ -2,17 +2,17 @@ set precision 1
 set print-weight ON
 
 regex b -> a::1  || _a ;
-apply up bbba
+apply down bbba
 echo --
 
 regex b -> a::1  \\ _a ;
-apply up bbba
+apply down bbba
 echo --
 
 regex b -> a::1  // _a ;
-apply up bbba
+apply down bbba
 echo --
 
 regex b -> a::1  \/ _a ;
-apply up bbba
+apply down bbba
 

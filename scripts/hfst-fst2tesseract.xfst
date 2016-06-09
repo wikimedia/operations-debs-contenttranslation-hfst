@@ -1,0 +1,10 @@
+!!! hfst-xfst script for converting a morphological analyzer to a Tesseract !!!
+!!! OCR word model                                                          !!!
+
+!!! USAGE: hfst-xfst -e "load <analyzer name>" -F hfst-fst2tesseract.xfst   !!!
+
+set quit-on-fail ON
+upper-side
+eliminate flags
+lookup-optimize
+save LAN.word-hfst-fsm

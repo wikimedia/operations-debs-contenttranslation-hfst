@@ -1,15 +1,14 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki
 
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more
+// information.
+
+#ifndef GUARD_hfst_xerox_rules_h
+#define GUARD_hfst_xerox_rules_h
 
 //#include "HfstDataTypes.h"
 //#include "HfstSymbolDefs.h"
@@ -26,23 +25,18 @@ namespace hfst
     {
         enum ReplaceType {REPL_UP, REPL_DOWN, REPL_RIGHT, REPL_LEFT};
 
-
-
-
-
-
         // this enum is used in xre_parse.yy for the regex2pfst tool
         // it is not in the xre_parse.yy file because we couldn't make it work there
-        enum ReplaceArrow {    E_REPLACE_RIGHT,
-                            E_OPTIONAL_REPLACE_RIGHT,
-                            E_REPLACE_LEFT,
-                            E_OPTIONAL_REPLACE_LEFT,
-                            E_REPLACE_RIGHT_MARKUP,
-                            E_RTL_LONGEST_MATCH,
-                            E_RTL_SHORTEST_MATCH,
-                            E_LTR_LONGEST_MATCH,
-                            E_LTR_SHORTEST_MATCH
-                        };
+    enum ReplaceArrow {    E_REPLACE_RIGHT,
+                           E_OPTIONAL_REPLACE_RIGHT,
+                           E_REPLACE_LEFT,
+                           E_OPTIONAL_REPLACE_LEFT,
+                           E_REPLACE_RIGHT_MARKUP,
+                           E_RTL_LONGEST_MATCH,
+                           E_RTL_SHORTEST_MATCH,
+                           E_LTR_LONGEST_MATCH,
+                           E_LTR_SHORTEST_MATCH
+    };
         /**
          * \brief A rule that contains mapping and context and replace type (if any).
          * If rule is A -> B || L _ R , than mapping is cross product of transducers A and B,
@@ -58,40 +52,43 @@ namespace hfst
             ReplaceType replType;
 
           public:
-        //    Rule ( const HfstTransducer& ); // mapping
-        //    Rule ( const HfstTransducer&, const HfstTransducerPairVector&, ReplaceType); // mapping, context
             Rule ( const HfstTransducerPairVector& );
             Rule ( const HfstTransducerPairVector&, const HfstTransducerPairVector&, ReplaceType );
+            
+            //copy
+            Rule ( const Rule& );
 
             HfstTransducerPairVector get_mapping() const;
             HfstTransducerPairVector get_context() const;
             ReplaceType get_replType() const;
+            
+            void encodeFlags();
+             
             friend std::ostream& operator<<(std::ostream &out, const Rule &r);
         };
 
         /**
-         * \brief Mark up rule has two markers on the right side of the mapping.
-         * Mapping is only left side of the mapping.
-         */
-        class MarkUpRule : public Rule
-        {
-            StringPair marks;
-
-          public:
-            // for mark up replace
-
-        //    MarkUpRule ( const HfstTransducer&, StringPair ); // mapping
-        //    MarkUpRule ( const HfstTransducer&,  const HfstTransducerPairVector&, ReplaceType, StringPair); // mapping, context
-            MarkUpRule ( const HfstTransducerPairVector&, StringPair );
-            MarkUpRule ( const HfstTransducerPairVector&, const HfstTransducerPairVector&, ReplaceType, StringPair );
-            StringPair get_marks() const;
-        };
-
+         *  \brief  In the transducer \tr, change all flag diacritics to "non-special" multichar symbols
+         *  It means that @ sign will be changed to $ sign
+         *  ie. @P.FOO.BAR@ will be changed into $P.FOO.BAR$
+         *  */
+         HfstTransducer encodeFlagDiacritics( const HfstTransducer &tr );
+         
+         /**
+         *  \brief  In the transducer \tr, change back all "non-special" flag diacritics to normal, 
+         * functional flag diacritics
+         *  It means that $ sign will be changed to @ sign
+         *  ie. $P.FOO.BAR$ will be changed into @P.FOO.BAR@
+         *  */
+        HfstTransducer decodeFlagDiacritics( const HfstTransducer &tr );
+         
+         
         // Disjunct all transducers from TransducerVector
         HfstTransducer disjunctVectorMembers( const HfstTransducerVector &trVector );
 
         /**
          *  \brief Remove makers used in replace functions from a \a tr.
+         *  Additionally, decode flag diacritics.
          *  */
         HfstTransducer removeMarkers( const HfstTransducer &tr );
 
@@ -137,7 +134,6 @@ namespace hfst
 
         /**  \brief Bracketed replace for parallel rules */
         HfstTransducer parallelBracketedReplace( const std::vector<Rule> &ruleVector, bool optional);
-
 
 
 
@@ -220,11 +216,11 @@ namespace hfst
         //used by hfst-regexp parser
         HfstTransducerPair create_mapping_for_mark_up_replace( const HfstTransducerPair &mappingPair,
                                                           const HfstTransducerPair &marks );
-        HfstTransducerPairVector create_mapping_for_mark_up_replace( const HfstTransducerPairVector &mappingPairVector,
-                                                                                        const StringPair &marks );
+        // HfstTransducerPairVector create_mapping_for_mark_up_replace( const HfstTransducerPairVector &mappingPairVector,
+                                                                                        // const StringPair &marks );
 
-        HfstTransducerPairVector create_mapping_for_mark_up_replace( const HfstTransducerPairVector &mappingPairVector,
-                                                                                             const HfstTransducerPair &marks );
+        // HfstTransducerPairVector create_mapping_for_mark_up_replace( const HfstTransducerPairVector &mappingPairVector,
+                                                                                             // const HfstTransducerPair &marks );
         //---------------------------------
         //    REPLACE FUNCTIONS - INTERFACE
         //---------------------------------
@@ -254,19 +250,21 @@ namespace hfst
         HfstTransducer replace_rightmost_shortest_match( const std::vector<Rule> &ruleVector );
 
 
+        // the problem is that the mark-up rules can be mixed with ordinary rules
+        // ie a -> b ... c , a -> d ; 
+        // this is why each markup mapping should be accessed seperratly
+        // HfstTransducer mark_up_replace(    const Rule &rule,
+                                // const StringPair &marks,
+                                // bool optional);
 
-        HfstTransducer mark_up_replace(    const Rule &rule,
-                                const StringPair &marks,
-                                bool optional);
+        // HfstTransducer mark_up_replace(const Rule &rule,
+                                           // const HfstTransducerPair &marks,
+                                           // bool optional);
 
-        HfstTransducer mark_up_replace(const Rule &rule,
-                                           const HfstTransducerPair &marks,
-                                           bool optional);
 
-/*
-        HfstTransducer mark_up_replace(    const std::vector<MarkUpRule> &markUpRuleVector,
-                                bool optional);
-*/
+        // HfstTransducer mark_up_replace(    const std::vector<MarkUpRule> &markUpRuleVector,
+                                // bool optional);
+
         // replace up, left, right, down
         HfstTransducer replace_epenthesis(    const Rule &rule, bool optional);
         // replace up, left, right, down
@@ -301,3 +299,6 @@ namespace hfst
         HfstTransducer after( const HfstTransducer &left, const HfstTransducer &right);
     }
 }
+
+// define guard
+#endif

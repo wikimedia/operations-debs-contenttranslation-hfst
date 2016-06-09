@@ -18,7 +18,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/time.h>
+#if defined(ORIGINAL) || ! defined(_MSC_VER)
+  #include <sys/time.h>
+#endif
 #include "foma.h"
 
 static struct defined_quantifiers *quantifiers;
@@ -29,6 +31,7 @@ char *fsm_get_library_version_string() {
     return(s);
 }
 
+#ifdef ORIGINAL
 int linesortcompin(struct fsm_state *a, struct fsm_state *b) {
     return (a->in - b->in);
 }
@@ -36,45 +39,59 @@ int linesortcompin(struct fsm_state *a, struct fsm_state *b) {
 int linesortcompout(struct fsm_state *a, struct fsm_state *b) {
     return (a->out - b->out);
 }
+#else
+  int linesortcompin(const void *a, const void *b) {
+      return (((struct fsm_state*)a)->in - ((struct fsm_state*)b)->in);
+    }
+  int linesortcompout(const void *a, const void *b) {
+      return (((struct fsm_state*)a)->out - ((struct fsm_state*)b)->out);
+    }
+#endif
+
 
 void fsm_sort_arcs(struct fsm *net, int direction) {
     /* direction 1 = in, direction = 2, out */
     struct fsm_state *fsm;
     int i, lasthead, numlines;
+#ifdef ORIGINAL
     int(*scin)() = linesortcompin;
     int(*scout)() = linesortcompout;
+#else
+    int(*scin)(const void*, const void*) = linesortcompin;
+    int(*scout)(const void*, const void*) = linesortcompout;
+#endif
     fsm = net->states;
     for (i=0, numlines = 0, lasthead = 0 ; (fsm+i)->state_no != -1; i++) {
-        if ((fsm+i)->state_no != (fsm+i+1)->state_no || (fsm+i)->target == -1) {
-            numlines++;
-            if ((fsm+i)->target == -1) {
-                numlines--;
-            }
-            if (numlines > 1) {
-                /* Sort, set numlines = 0 */
-                if (direction == 1)
-                    qsort(fsm+lasthead, numlines, sizeof(struct fsm_state), scin);
-                else
-                    qsort(fsm+lasthead, numlines, sizeof(struct fsm_state), scout);             
-            }
-            numlines = 0;
-            lasthead = i + 1;
-            continue;
-        }
-        numlines++;
+	if ((fsm+i)->state_no != (fsm+i+1)->state_no || (fsm+i)->target == -1) {
+	    numlines++;
+	    if ((fsm+i)->target == -1) {
+		numlines--;
+	    }
+	    if (numlines > 1) {
+		/* Sort, set numlines = 0 */
+		if (direction == 1)
+		    qsort(fsm+lasthead, numlines, sizeof(struct fsm_state), scin);
+		else
+		    qsort(fsm+lasthead, numlines, sizeof(struct fsm_state), scout);		
+	    }
+	    numlines = 0;
+	    lasthead = i + 1;
+	    continue;
+	}
+	numlines++;
     }
     if (net->arity == 1) {
-        net->arcs_sorted_in = 1;
-        net->arcs_sorted_out = 1;
-        return;
+	net->arcs_sorted_in = 1;
+	net->arcs_sorted_out = 1;
+	return;
     }
     if (direction == 1) {
-        net->arcs_sorted_in = 1;
-        net->arcs_sorted_out = 0;
+	net->arcs_sorted_in = 1;
+	net->arcs_sorted_out = 0;
     }
     if (direction == 2) {
-        net->arcs_sorted_out = 1;
-        net->arcs_sorted_in = 0;
+	net->arcs_sorted_out = 1;
+	net->arcs_sorted_in = 0;
     }    
 }
 
@@ -108,11 +125,10 @@ struct fsm *fsm_sigma_net(struct fsm *net) {
     int pathcount;
 
     if (sigma_size(net->sigma) == 0) {
-        fsm_destroy(net);
+	fsm_destroy(net);
         return(fsm_empty_set());
     }
     
-    sig = net->sigma;
     fsm_state_init(sigma_max(net->sigma));
     fsm_state_set_current_state(0, 0, 1);
     pathcount = 0;
@@ -180,12 +196,12 @@ struct fsm *fsm_sigma_pairs_net(struct fsm *net) {
 int fsm_sigma_destroy(struct sigma *sigma) {
     struct sigma *sig, *sigp;
     for (sig = sigma, sigp = NULL; sig != NULL; sig = sigp) {
-        sigp = sig->next;
-        if (sig->symbol != NULL) {
-            xxfree(sig->symbol);
-            sig->symbol = NULL;
-        }
-        xxfree(sig);
+	sigp = sig->next;
+	if (sig->symbol != NULL) {
+	    xxfree(sig->symbol);
+	    sig->symbol = NULL;
+	}
+	xxfree(sig);
     }
     return 1;
 }
@@ -196,17 +212,17 @@ int fsm_destroy(struct fsm *net) {
     }
     if (net->medlookup != NULL && net->medlookup->confusion_matrix != NULL) {
         xxfree(net->medlookup->confusion_matrix);
-        net->medlookup->confusion_matrix = NULL;
+	net->medlookup->confusion_matrix = NULL;
     }
     if (net->medlookup != NULL) {
         xxfree(net->medlookup);
-        net->medlookup = NULL;
+	net->medlookup = NULL;
     }
     fsm_sigma_destroy(net->sigma);
     net->sigma = NULL;
     if (net->states != NULL) {
         xxfree(net->states);
-        net->states = NULL;
+	net->states = NULL;
     }
     xxfree(net);
     return(1);
@@ -320,38 +336,38 @@ int fsm_issequential(struct fsm *net) {
     struct fsm_state *fsm;
     sigtable = xxcalloc(sigma_max(net->sigma)+1,sizeof(int));
     for (i = 0 ; i < sigma_max(net->sigma)+1; i++) {
-        sigtable[i] = -2;
+	sigtable[i] = -2;
     }
     fsm = net->states;
     seentrans = epstrans = 0;
     laststate = -1;
     for (sequential = 1, i = 0; (fsm+i)->state_no != -1 ; i++) {
-        insym = (fsm+i)->in;
-        if (insym < 0) {
-            continue;
-        }
-        if ((fsm+i)->state_no != laststate) {
-            laststate = (fsm+i)->state_no;
-            epstrans = 0;
-            seentrans = 0;
-        }
-        if (*(sigtable+insym) == laststate || epstrans == 1) {
-            sequential = 0;
-            break;
-        }
-        if (insym == EPSILON) {
-            if (epstrans == 1 || seentrans == 1) {
-                sequential = 0;
-                break;
-            }
-            epstrans = 1;
-        }
-        *(sigtable+insym) = laststate;
-        seentrans = 1;
+	insym = (fsm+i)->in;
+	if (insym < 0) {
+	    continue;
+	}
+	if ((fsm+i)->state_no != laststate) {
+	    laststate = (fsm+i)->state_no;
+	    epstrans = 0;
+	    seentrans = 0;
+	}
+	if (*(sigtable+insym) == laststate || epstrans == 1) {
+	    sequential = 0;
+	    break;
+	}
+	if (insym == EPSILON) {
+	    if (epstrans == 1 || seentrans == 1) {
+		sequential = 0;
+		break;
+	    }
+	    epstrans = 1;
+	}
+	*(sigtable+insym) = laststate;
+	seentrans = 1;
     }
     xxfree(sigtable);
     if (!sequential)
-        printf("fails at state %i\n",(fsm+i)->state_no);
+	printf("fails at state %i\n",(fsm+i)->state_no);
     return(sequential);
 }
 
@@ -416,7 +432,7 @@ int fsm_isidentity(struct fsm *net) {
 
     struct state_array *state_array;
     struct fsm_state *curr_ptr;
-    int i, j, v, vp, num_states, factor = 0, newlength, startfrom;
+    int i, j, v, vp, num_states, factor = 0, newlength = 1, startfrom;
     short int in, out, *newstring;
     struct discrepancy *discrepancy, *currd, *targetd;
 
@@ -639,7 +655,7 @@ struct fsm *fsm_extract_nonidentity(struct fsm *net) {
     struct state_array *state_array;
     struct fsm_state *curr_ptr;
     struct fsm *net2;
-    int i, j, v, vp, num_states, factor = 0, newlength, startfrom, killnum;
+    int i, j, v, vp, num_states, factor = 0, newlength = 1, startfrom, killnum;
     short int in, out, *newstring;
     struct discrepancy *discrepancy, *currd, *targetd;
 
@@ -806,7 +822,7 @@ int count_quantifiers() {
     struct defined_quantifiers *q;
     int i;
     for (i = 0, q = quantifiers; q != NULL; q = q->next) {
-        i++;
+	i++;
     }
     return(i);
 }
@@ -814,14 +830,14 @@ int count_quantifiers() {
 void add_quantifier (char *string) {
     struct defined_quantifiers *q;
     if (quantifiers == NULL) {
-        q = xxmalloc(sizeof(struct defined_quantifiers));
-        quantifiers = q;
+	q = xxmalloc(sizeof(struct defined_quantifiers));
+	quantifiers = q;
     } else { 
-        for (q = quantifiers; q->next != NULL; q = q->next) {
-            
-        }
-        q->next = xxmalloc(sizeof(struct defined_quantifiers));
-        q = q->next;
+	for (q = quantifiers; q->next != NULL; q = q->next) {
+	    
+	}
+	q->next = xxmalloc(sizeof(struct defined_quantifiers));
+	q = q->next;
     }
     q->name = xxstrdup(string);
     q->next = NULL;
@@ -841,13 +857,13 @@ struct fsm *union_quantifiers() {
     for (syms = 0, symlo = 0, q = quantifiers; q != NULL; q = q->next) {
       s = sigma_add(q->name, net->sigma);
       if (symlo == 0) {
-        symlo = s;
+	symlo = s;
       }
       syms++;
     }
     net->states = xxmalloc(sizeof(struct fsm_state)*(syms+1));
     for (i = 0; i < syms; i++) {
-        add_fsm_arc(net->states, i, 0, symlo+i, symlo+i, 0, 1, 1);
+	add_fsm_arc(net->states, i, 0, symlo+i, symlo+i, 0, 1, 1);
     }
     add_fsm_arc(net->states, i, -1, -1, -1, -1 ,-1 ,-1);
     net->arccount = syms;
@@ -859,8 +875,8 @@ struct fsm *union_quantifiers() {
 char *find_quantifier (char *string) {
     struct defined_quantifiers *q;
     for (q = quantifiers; q != NULL; q = q->next) {
-        if (strcmp(string,q->name) == 0)
-            return q->name;
+	if (strcmp(string,q->name) == 0)
+	    return q->name;
     }
     return(NULL);
 }
@@ -868,13 +884,13 @@ char *find_quantifier (char *string) {
 void purge_quantifier (char *string) {
     struct defined_quantifiers *q, *q_prev;    
     for (q = quantifiers, q_prev = NULL; q != NULL; q_prev = q, q = q->next) {
-        if (strcmp(string, q->name) == 0) {
-            if (q_prev != NULL) {
-                q_prev->next = q->next;
-            } else {
-                quantifiers = q->next;
-            }
-        }
+	if (strcmp(string, q->name) == 0) {
+	    if (q_prev != NULL) {
+		q_prev->next = q->next;
+	    } else {
+		quantifiers = q->next;
+	    }
+	}
     }
 }
 

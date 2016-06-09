@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #include "FomaTransducer.h"
 
@@ -77,7 +74,7 @@ namespace hfst { namespace implementations {
   
   bool FomaInputStream::is_good(void)
   {
-    return not is_bad();
+    return ! is_bad();
   };
   
   bool FomaInputStream::is_fst(void)
@@ -525,7 +522,7 @@ namespace hfst { namespace implementations {
               }
           }
         
-        hfst::HfstTwoLevelPath path(0, spv);
+        hfst::HfstTwoLevelPath path(float(0), spv);
         hfst::ExtractStringsCb::RetVal ret = callback(path, final);
         if(!ret.continueSearch || !ret.continuePath)
           {
@@ -671,7 +668,7 @@ namespace hfst { namespace implementations {
           }
         if (final_initial) {
           StringPairVector empty_spv;
-          HfstTwoLevelPath epsilon_path(0, empty_spv);
+          HfstTwoLevelPath epsilon_path(float(0), empty_spv);
           callback(epsilon_path, true /* final*/);
         }
       }
@@ -798,6 +795,7 @@ namespace hfst { namespace implementations {
     return table;
   }
 
+#if GENERATE_LEXC_WRAPPER
     fsm * FomaTransducer::read_lexc(const std::string &filename, bool verbose)
   {
     char * filename_ = strdup(filename.c_str());
@@ -822,6 +820,7 @@ namespace hfst { namespace implementations {
     free(lexcfile);
     return retval;
   }
+#endif
 
   struct fsm * FomaTransducer::eliminate_flags(struct fsm * t)
   {
@@ -849,7 +848,7 @@ namespace hfst { namespace implementations {
     /* Read foma transducer . */
     struct fsm * FomaTransducer::read_net(FILE *infile) {
       
-    unsigned int READ_BUF_SIZE=4096; 
+    const unsigned int READ_BUF_SIZE=4096; 
     char buf[READ_BUF_SIZE];
     struct fsm *net;
     struct fsm_state *fsm;

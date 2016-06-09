@@ -1,5 +1,5 @@
 /*     Foma: a finite-state toolkit and library.                             */
-/*     Copyright © 2008-2011 Mans Hulden                                     */
+/*     Copyright © 2008-2014 Mans Hulden                                     */
 
 /*     This file is part of foma.                                            */
 
@@ -83,7 +83,7 @@ void fsm_state_set_current_state(int state_no, int final_state, int start_state)
     if (current_final == 1)
         num_finals++;
     if (current_start == 1)
-        num_initials++;
+	num_initials++;
 }
 
 /* Add sentinel if needed */
@@ -116,9 +116,9 @@ void fsm_state_add_arc(int state_no, int in, int out, int target, int final_stat
     if (in != -1 && out != -1) {
         if ((slookup+(ssize*in)+out)->mainloop == mainloop) {
             if ((slookup+(ssize*in)+out)->target == target) {
-                return;
+	        return;
             } else {
-                is_deterministic = 0;
+	        is_deterministic = 0;
             }
         }
         arccount++;
@@ -155,7 +155,7 @@ void fsm_state_close(struct fsm *net) {
     net->finalcount = num_finals;
     net->pathcount = PATHCOUNT_UNKNOWN;
     if (num_initials > 1)
-        is_deterministic = 0;
+	is_deterministic = 0;
     net->is_deterministic = is_deterministic;
     net->is_pruned = UNK;
     net->is_minimized = UNK;
@@ -187,6 +187,7 @@ struct fsm_construct_handle *fsm_construct_init(char *name) {
     } else {
         handle->name = xxstrdup(name);
     }
+    handle->hasinitial = 0;
     return(handle);
 }
 
@@ -232,6 +233,7 @@ void fsm_construct_set_initial(struct fsm_construct_handle *handle, int state_no
 
     sl = handle->fsm_state_list;
     (sl+state_no)->is_initial = 1;
+    handle->hasinitial = 1;
 }
 
 void fsm_construct_add_arc(struct fsm_construct_handle *handle, int source, int target, char *in, char *out) {
@@ -304,32 +306,32 @@ void fsm_construct_copy_sigma(struct fsm_construct_handle *handle, struct sigma 
     char *symbol, *symdup;
 
     for (; sigma != NULL && sigma->number != -1; sigma = sigma->next) {
-        symnum = sigma->number;
-        if (symnum > handle->maxsigma) {
-            handle->maxsigma = symnum;
-        }
-        symbol = sigma->symbol;
-        if (symnum >= handle->fsm_sigma_list_size) {
-            handle->fsm_sigma_list_size = next_power_of_two(handle->fsm_sigma_list_size);
-            handle->fsm_sigma_list = xxrealloc(handle->fsm_sigma_list, (handle->fsm_sigma_list_size) * sizeof(struct fsm_sigma_list));
-        }
-        /* Insert into list */
-        symdup = xxstrdup(symbol);
-        ((handle->fsm_sigma_list)+symnum)->symbol = symdup;
-        
-        /* Insert into hashtable */
-        hash = fsm_construct_hash_sym(symbol);
-        fh = (handle->fsm_sigma_hash)+hash;   
-        if (fh->symbol == NULL) {
-            fh->symbol = symdup;
-            fh->sym = symnum;        
-        } else {
-            newfh = xxcalloc(1,sizeof(struct fsm_sigma_hash));
-            newfh->next = fh->next;
-            fh->next = newfh;
-            newfh->symbol = symdup;
-            newfh->sym = symnum;
-        }
+	symnum = sigma->number;
+	if (symnum > handle->maxsigma) {
+	    handle->maxsigma = symnum;
+	}
+	symbol = sigma->symbol;
+	if (symnum >= handle->fsm_sigma_list_size) {
+	    handle->fsm_sigma_list_size = next_power_of_two(handle->fsm_sigma_list_size);
+	    handle->fsm_sigma_list = xxrealloc(handle->fsm_sigma_list, (handle->fsm_sigma_list_size) * sizeof(struct fsm_sigma_list));
+	}
+	/* Insert into list */
+	symdup = xxstrdup(symbol);
+	((handle->fsm_sigma_list)+symnum)->symbol = symdup;
+	
+	/* Insert into hashtable */
+	hash = fsm_construct_hash_sym(symbol);
+	fh = (handle->fsm_sigma_hash)+hash;   
+	if (fh->symbol == NULL) {
+	    fh->symbol = symdup;
+	    fh->sym = symnum;        
+	} else {
+	    newfh = xxcalloc(1,sizeof(struct fsm_sigma_hash));
+	    newfh->next = fh->next;
+	    fh->next = newfh;
+	    newfh->symbol = symdup;
+	    newfh->sym = symnum;
+	}
     }
 }
 
@@ -421,20 +423,25 @@ struct sigma *fsm_construct_convert_sigma(struct fsm_construct_handle *handle) {
 }
 
 struct fsm *fsm_construct_done(struct fsm_construct_handle *handle) {
-    int i;
+    int i, emptyfsm;
     struct fsm *net;
     struct fsm_state_list *sl;
     struct fsm_trans_list *trans, *transnext;
     struct fsm_sigma_hash *sigmahash, *sigmahashnext;
 
     sl = handle->fsm_state_list;
-    if (handle->maxstate == -1 || handle->numfinals == 0) {
+    if (handle->maxstate == -1 || handle->numfinals == 0 || handle->hasinitial == 0) {
         return(fsm_empty_set());
     }
     fsm_state_init((handle->maxsigma)+1);
-    for (i=0; i <= handle->maxstate; i++) {
+
+    for (i=0, emptyfsm = 1; i <= handle->maxstate; i++) {
         fsm_state_set_current_state(i, (sl+i)->is_final, (sl+i)->is_initial);
+	if ((sl+i)->is_initial && (sl+i)->is_final)
+	    emptyfsm = 0; /* We want to keep track of if FSM has (a) something outgoing from initial, or (b) initial is final */
         for (trans = (sl+i)->fsm_trans_list; trans != NULL; trans = trans->next) {
+	    if ((sl+i)->is_initial)
+		emptyfsm = 0;
             fsm_state_add_arc(i, trans->in, trans->out, trans->target, (sl+i)->is_final, (sl+i)->is_initial);
         }
         fsm_state_end_state();
@@ -475,6 +482,10 @@ struct fsm *fsm_construct_done(struct fsm_construct_handle *handle) {
     xxfree(handle->fsm_state_list);
     xxfree(handle);
     sigma_sort(net);
+    if (emptyfsm) {
+	fsm_destroy(net);
+	return(fsm_empty_set());
+    }
     return(net);
 }
 
@@ -520,13 +531,13 @@ struct fsm_read_handle *fsm_read_init(struct fsm *net) {
                 num_finals++;
             }
         }
-        if ((fsm+i)->in == UNKNOWN || (fsm+i)->out == UNKNOWN || (fsm+i)->in == IDENTITY || (fsm+i)->out == IDENTITY) {
-            handle->has_unknowns = 1;
-        }
-        if ((fsm+i)->state_no != laststate) {
-            *(states_head+(fsm+i)->state_no) = fsm+i;
-        }
-        laststate = (fsm+i)->state_no;
+	if ((fsm+i)->in == UNKNOWN || (fsm+i)->out == UNKNOWN || (fsm+i)->in == IDENTITY || (fsm+i)->out == IDENTITY) {
+	    handle->has_unknowns = 1;
+	}
+	if ((fsm+i)->state_no != laststate) {
+	    *(states_head+(fsm+i)->state_no) = fsm+i;
+	}
+	laststate = (fsm+i)->state_no;
     }
     
     finals_head = xxcalloc(num_finals+1,sizeof(int));
@@ -560,7 +571,7 @@ struct fsm_read_handle *fsm_read_init(struct fsm *net) {
 
 void fsm_read_reset(struct fsm_read_handle *handle) {
     if (handle == NULL)
-        return;
+	return;
     handle->arcs_cursor = NULL;
     handle->initials_cursor = NULL;
     handle->finals_cursor = NULL;
@@ -570,8 +581,8 @@ void fsm_read_reset(struct fsm_read_handle *handle) {
 int fsm_get_next_state_arc(struct fsm_read_handle *handle) {
     handle->arcs_cursor++;
     if ((handle->arcs_cursor->state_no != handle->current_state) || (handle->arcs_cursor->target == -1)) {
-        handle->arcs_cursor--;
-        return 0;
+	handle->arcs_cursor--;
+	return 0;
     }
     return 1;
 }
@@ -612,11 +623,11 @@ int fsm_get_arc_target(struct fsm_read_handle *handle) {
 int fsm_get_symbol_number(struct fsm_read_handle *handle, char *symbol) {
     int i;
     for (i=0; i < handle->sigma_list_size; i++) {
-        if ((handle->fsm_sigma_list+i)->symbol == NULL)
-            continue;
-        if (strcmp(symbol,  (handle->fsm_sigma_list+i)->symbol) == 0) {
-            return i;
-        }
+	if ((handle->fsm_sigma_list+i)->symbol == NULL)
+	    continue;
+	if (strcmp(symbol,  (handle->fsm_sigma_list+i)->symbol) == 0) {
+	    return i;
+	}
     }
     return -1;
 }
@@ -686,10 +697,10 @@ int fsm_get_next_state(struct fsm_read_handle *handle) {
     if (handle->states_cursor == NULL) {
         handle->states_cursor = handle->states_head;
     } else {
-        handle->states_cursor++;
+	handle->states_cursor++;
     }
     if (handle->states_cursor - handle->states_head >= fsm_get_num_states(handle)) {
-        return -1;
+	return -1;
     }
     handle->arcs_cursor = *(handle->states_cursor);
     stateno = (*(handle->states_cursor))->state_no;

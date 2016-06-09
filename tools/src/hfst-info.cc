@@ -226,6 +226,13 @@ int main (int argc, char * argv[])
           error(EXIT_FAILURE, 0, "Required foma support not present");
 #endif
         }
+      else if ((*f == "xfsm") || (*f == "XFSM") || (*f == "HAVE_XFSM"))
+        {
+          verbose_printf("Requiring xfsm support from library");
+#ifndef HAVE_XFSM
+          error(EXIT_FAILURE, 0, "Required xfsm support not present");
+#endif
+        }
       else if ((*f == "openfst") || (*f == "OPENFST") || (*f == "HAVE_OPENFST"))
         {
           verbose_printf("Requiring OpenFst support from library");
@@ -265,6 +272,9 @@ int main (int argc, char * argv[])
 #endif
 #if HAVE_FOMA
   verbose_printf("foma supported\n");
+#endif
+#if HAVE_XFSM
+  verbose_printf("xfsm supported\n");
 #endif
 #if USE_GLIB_UNICODE
   verbose_printf("Unicode support: glib\n");

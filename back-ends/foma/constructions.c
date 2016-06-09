@@ -1,19 +1,19 @@
-/*     Foma: a finite-state toolkit and library.                             */
-/*     Copyright © 2008-2012 Mans Hulden                                     */
+/*   Foma: a finite-state toolkit and library.                                 */
+/*   Copyright © 2008-2015 Mans Hulden                                         */
 
-/*     This file is part of foma.                                            */
+/*   This file is part of foma.                                                */
 
-/*     Foma is free software: you can redistribute it and/or modify          */
-/*     it under the terms of the GNU General Public License version 2 as     */
-/*     published by the Free Software Foundation.                            */
+/*   Licensed under the Apache License, Version 2.0 (the "License");           */
+/*   you may not use this file except in compliance with the License.          */
+/*   You may obtain a copy of the License at                                   */
 
-/*     Foma is distributed in the hope that it will be useful,               */
-/*     but WITHOUT ANY WARRANTY; without even the implied warranty of        */
-/*     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
-/*     GNU General Public License for more details.                          */
+/*      http://www.apache.org/licenses/LICENSE-2.0                             */
 
-/*     You should have received a copy of the GNU General Public License     */
-/*     along with foma.  If not, see <http://www.gnu.org/licenses/>.         */
+/*   Unless required by applicable law or agreed to in writing, software       */
+/*   distributed under the License is distributed on an "AS IS" BASIS,         */
+/*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  */
+/*   See the License for the specific language governing permissions and       */
+/*   limitations under the License.                                            */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,10 +26,6 @@
 
 #define COMPLEMENT 0
 #define COMPLETE 1
-
-#define BI_AVL_HASH_THRESHOLD 2097152 /* We start hashing instead of array above this */
-#define BI_AVL_TYPE_HASH 0
-#define BI_AVL_TYPE_ARRAY 1
 
 #define STACK_3_PUSH(a,b,c) int_stack_push(a); int_stack_push(b); int_stack_push(c);
 #define STACK_2_PUSH(a,b) int_stack_push(a); int_stack_push(b);
@@ -45,7 +41,7 @@ int sort_cmp(const void *a, const void *b) {
   return (((const struct fsm_state *)a)->state_no - ((const struct fsm_state *)b)->state_no);
 }
 
-inline int add_fsm_arc(struct fsm_state *fsm, int offset, int state_no, int in, int out, int target, int final_state, int start_state);
+INLINE int add_fsm_arc(struct fsm_state *fsm, int offset, int state_no, int in, int out, int target, int final_state, int start_state);
 
 struct fsm *fsm_kleene_closure(struct fsm *net, int optionality);
 
@@ -179,7 +175,7 @@ struct fsm *fsm_symbol(char *symbol) {
   fsm_update_flags(net, YES, YES, YES, YES, YES, NO);
   if (strcmp(symbol,"@_EPSILON_SYMBOL_@")==0) {
     /* Epsilon */
-      symbol_no = sigma_add_special(EPSILON,net->sigma);
+    (void)sigma_add_special(EPSILON, net->sigma);
     net->states = xxmalloc(sizeof(struct fsm_state)*2);
     add_fsm_arc(net->states, 0, 0, -1,-1,-1,1,1);
     add_fsm_arc(net->states, 1, -1,-1,-1,-1,-1,-1);
@@ -254,7 +250,8 @@ struct state_arr *init_state_pointers(struct fsm_state *fsm_state) {
   /* Create an array for quick lookup of whether states are final, and a pointer to the first line regarding each state */
 
   struct state_arr *state_arr;
-  int states, i, sold = -1;
+  int states, i, sold;
+  sold = -1;
   states = fsm_count_states(fsm_state);
   state_arr = xxmalloc(sizeof(struct state_arr)*(states+1));
   for (i=0; i<states; i++) {
@@ -275,242 +272,129 @@ struct state_arr *init_state_pointers(struct fsm_state *fsm_state) {
   return(state_arr);
 }
 
-/* Tristate lookups */
+/* An open addressing scheme (with linear probing) to store triplets of ints */
+/* and hashing them with an automatically increasing key at every insert     */
+/* The table is rehashed whenever occupancy reaches 0.5                      */
 
-static struct tri_avl {
-    int state_a;
-    int state_b;
-    int state_number;
-    struct tri_avl *next;
-    char mode;
-} *tri_avl;
+struct triplethash_triplets {
+    int a;
+    int b;
+    int c;
+    int key;
+};
 
-static int tri_avl_state, tri_avl_tablesize;
-static _Bool *tri_avl_a, *tri_avl_b;
+struct triplethash {
+    struct triplethash_triplets *triplets;
+    unsigned int tablesize;
+    int occupancy;
+};
 
-static unsigned int primes[26] = {61,127,251,509,1021,2039,4093,8191,16381,32749,65521,131071,262139,524287,1048573,2097143,4194301,8388593,16777213,33554393,67108859,134217689,268435399,536870909,1073741789,2147483647};
-
-int tri_avl_insert(int a, int b, char mode);
-
-void tri_avl_init(int a, int b, int sizea, int sizeb) {
-
- int i, size;
- 
- size = (sizea+sizeb)/2;
- 
- tri_avl_state = 0;
- for (i=0; primes[i]<size; i++) { }
- 
- tri_avl_tablesize = primes[i];
- 
- tri_avl = xxmalloc(sizeof(struct tri_avl)*tri_avl_tablesize);
- tri_avl_a = xxmalloc(sizeof(_Bool)*sizea);
- tri_avl_b = xxmalloc(sizeof(_Bool)*sizeb);
- for (i = 0; i < sizea; i++) {
-     *(tri_avl_a+i) = 0;
- }
- for (i = 0; i < sizeb; i++) {
-     *(tri_avl_b+i) = 0;
- }
- for (i = 0; i < tri_avl_tablesize; i++) {
-     (tri_avl+i)->state_number = -1;
-     (tri_avl+i)->next = NULL;
- }
- tri_avl_insert(0,0,0);
+struct triplethash *triplet_hash_init() {
+    struct triplethash *th;
+    int i;
+    th = xxmalloc(sizeof(struct triplethash));
+    th->tablesize = 128;
+    th->occupancy = 0;
+    th->triplets = xxmalloc(sizeof(struct triplethash_triplets) * th->tablesize);
+    for (i = 0; i < th->tablesize; i++) {
+	(th->triplets+i)->key = -1;
+    }
+    return(th);
 }
 
-static unsigned int tri_avl_hash (int a, int b, int mode) {
-    return(((unsigned int)((a+b)%tri_avl_tablesize)));
-    return(((unsigned int)((a+1+mode)^b))%tri_avl_tablesize);
+unsigned int triplethash_hashf(int a, int b, int c) {
+    return((unsigned int)(a * 7907 + b * 86028157 + c * 7919));
 }
 
-int tri_avl_insert(int a, int b, char mode) {
-    
-    struct tri_avl *curr_tri_avl, *new_tri_avl;
-    *(tri_avl_a+a) = 1;
-    *(tri_avl_b+b) = 1;
-    curr_tri_avl = tri_avl + tri_avl_hash(a,b,mode);
-
-    if (curr_tri_avl->state_number != -1) {
-        new_tri_avl = xxmalloc(sizeof(struct tri_avl));
-        new_tri_avl->next = curr_tri_avl->next;
-        curr_tri_avl->next = new_tri_avl;
-        new_tri_avl->state_a = a;
-        new_tri_avl->state_b = b;
-        new_tri_avl->mode = mode;
-        new_tri_avl->state_number = tri_avl_state;
-        return(tri_avl_state++);
-    }
-    curr_tri_avl->state_a = a;
-    curr_tri_avl->state_b = b;
-    curr_tri_avl->mode = mode;
-    curr_tri_avl->state_number = tri_avl_state;
-    return(tri_avl_state++);
+void triplet_hash_free(struct triplethash *th) {
+    if (th != NULL) {
+	if (th->triplets != NULL) {
+	    xxfree(th->triplets);
+	}
+	xxfree(th);
+    }    
 }
 
-int tri_avl_find(int a, int b, char mode) {
-    struct tri_avl *curr_tri_avl;
+void triplet_hash_rehash(struct triplethash *th);
 
-    if (*(tri_avl_a+a) == 0) {
-        return -1;
+void triplet_hash_insert_with_key(struct triplethash *th, int a, int b, int c, int key) {
+    struct triplethash_triplets *th_table;
+    unsigned int hash;
+    th_table = th->triplets;
+    hash = triplethash_hashf(a, b, c) % th->tablesize;
+    for (;;) {
+	if ((th_table + hash)->key == -1) {
+	    (th_table + hash)->key = key;
+	    (th_table + hash)->a = a;
+	    (th_table + hash)->b = b;
+	    (th_table + hash)->c = c;
+	    break;
+	}
+	hash++;
+	if (hash >= th->tablesize)
+	    hash -= th->tablesize;
     }
-    if (*(tri_avl_b+b) == 0) {
-        return -1;
-    }
-
-    curr_tri_avl = tri_avl + tri_avl_hash(a,b,mode);
-    
-    if (curr_tri_avl->state_number == -1)
-        return -1;
-    
-    for ( ; curr_tri_avl != NULL; curr_tri_avl = curr_tri_avl->next) {
-        if (curr_tri_avl->state_a == a && curr_tri_avl->state_b == b && curr_tri_avl->mode == mode)
-            return (curr_tri_avl->state_number);
-    }
-    return (-1);
 }
 
-void tri_avl_free() {
-  struct tri_avl *temp_tri_avl, *prev_tri_avl;
-  int i;
-
-  for (i = 0; i < tri_avl_tablesize; i++) {
-    for (temp_tri_avl = (tri_avl+i)->next; temp_tri_avl != NULL;) {
-      prev_tri_avl = temp_tri_avl;
-      temp_tri_avl = temp_tri_avl->next;
-      xxfree(prev_tri_avl);
+int triplet_hash_insert(struct triplethash *th, int a, int b, int c) {
+    struct triplethash_triplets *th_table;
+    unsigned int hash;
+    th_table = th->triplets;
+    hash = triplethash_hashf(a,b,c) % th->tablesize;
+    for (;;) {
+	if ((th_table + hash)->key == - 1) {
+	    (th_table + hash)->key = th->occupancy;
+	    (th_table + hash)->a = a;
+	    (th_table + hash)->b = b;
+	    (th_table + hash)->c = c;
+	    th->occupancy = th->occupancy + 1;
+	    if (th->occupancy > th->tablesize / 2) {
+		triplet_hash_rehash(th);
+	    }
+	    return(th->occupancy - 1);
+	}
+	hash++;
+	if (hash >= th->tablesize)
+	    hash -= th->tablesize;
     }
-  }
-  xxfree(tri_avl);  
-  xxfree(tri_avl_a);  
-  xxfree(tri_avl_b);
-  tri_avl = NULL;
-  return;
 }
 
-/* Bistate lookups */
-
-static struct bi_avl {
-  int state_a;
-  int state_b;
-  int state_number;
-  struct bi_avl *next;
-} *bi_avl;
-
-static int bi_avl_state, bi_avl_tablesize, **bi_avl_array, bi_avl_type, bi_avl_rowsize;
-
-int bi_avl_insert(int a, int b);
-
-void bi_avl_init(int a, int b, int sizea, int sizeb) {
-  
-    int i, j, size;
-    
-    if ((sizea*sizeb) <= BI_AVL_HASH_THRESHOLD) {
-        bi_avl_rowsize = sizea; /* Save this for xxfree() */
-        bi_avl_array = (int **)xxcalloc(sizea,sizeof(int *));
-        for(i = 0; i < sizea; i++) {
-            bi_avl_array[i] = (int *)xxcalloc(sizeb,sizeof(int));
-        }
-        for (i=0; i < sizea; i++)
-            for (j=0; j < sizeb; j++)
-                bi_avl_array[i][j] = -1;
-        
-        bi_avl_type = BI_AVL_TYPE_ARRAY;
-        bi_avl_state = 0;
-        bi_avl_insert(a,b);
-        return;
+void triplet_hash_rehash(struct triplethash *th) {
+    int i;
+    unsigned int newtablesize, oldtablesize;
+    struct triplethash_triplets *oldtriplets;
+    newtablesize = th->tablesize * 2;
+    oldtablesize = th->tablesize;
+    oldtriplets = th->triplets;
+    th->triplets = xxmalloc(sizeof(struct triplethash_triplets) * newtablesize);
+    th->tablesize = newtablesize;
+    for (i = 0; i < newtablesize; i++) {
+	(th->triplets+i)->key = -1;
     }
-    
-    bi_avl_type = BI_AVL_TYPE_HASH;
-    
-    size = (sizea+sizeb)/2;
-    
-    bi_avl_state = 0;
-    for (i=0; primes[i]<size; i++) {
+    for (i = 0; i < oldtablesize; i++) {
+	if ((oldtriplets+i)-> key != -1) {
+	    triplet_hash_insert_with_key(th, (oldtriplets+i)->a, (oldtriplets+i)->b, (oldtriplets+i)->c, (oldtriplets+i)->key);
+	}
     }
-    
-    bi_avl_tablesize = primes[i];
-    
-    bi_avl = xxmalloc(sizeof(struct bi_avl)*bi_avl_tablesize);
-    for (i = 0; i < bi_avl_tablesize; i++) {
-        (bi_avl+i)->state_number = -1;
-        (bi_avl+i)->next = NULL;
-    }
-    bi_avl_insert(a,b);
+    xxfree(oldtriplets);
 }
 
-unsigned int bi_avl_hash (int a, int b) {
-    return(((unsigned int)((a+1)^b))%bi_avl_tablesize);
-    return (((a ^ 0xffffffff) + b) % bi_avl_tablesize);
-}
-
-int bi_avl_insert(int a, int b) {
-    
-    struct bi_avl *curr_bi_avl, *new_bi_avl;
-
-    if (bi_avl_type == BI_AVL_TYPE_ARRAY) {
-        bi_avl_array[a][b] = bi_avl_state;
-        return(bi_avl_state++);
+int triplet_hash_find(struct triplethash *th, int a, int b, int c) {
+    struct triplethash_triplets *th_table;
+    unsigned int hash, j;
+    th_table = th->triplets;
+    hash = triplethash_hashf(a, b, c) % th->tablesize;
+    for (j = 0; j < th->tablesize; j++) {
+	if ((th_table + hash)->key == - 1)
+	    return -1;
+	if ((th_table + hash)->a == a && (th_table + hash)->b == b && (th_table + hash)->c == c) {
+	    return((th_table + hash)->key);
+	}
+	hash++;
+	if (hash >= th->tablesize)
+	    hash -= th->tablesize;
     }
-
-    curr_bi_avl = bi_avl + bi_avl_hash(a,b);
-
-    if (curr_bi_avl->state_number != -1) {
-        new_bi_avl = xxmalloc(sizeof(struct bi_avl));
-        new_bi_avl->next = curr_bi_avl->next;
-        curr_bi_avl->next = new_bi_avl;
-        new_bi_avl->state_a = a;
-        new_bi_avl->state_b = b;
-        new_bi_avl->state_number = bi_avl_state;
-        return(bi_avl_state++);
-    }
-    curr_bi_avl->state_a = a;
-    curr_bi_avl->state_b = b;
-    curr_bi_avl->state_number = bi_avl_state;
-    return(bi_avl_state++);
-}
-
-int bi_avl_find(int a, int b) {
-    struct bi_avl *curr_bi_avl;
-
-    if (bi_avl_type == BI_AVL_TYPE_ARRAY) {
-        return(bi_avl_array[a][b]);            
-    }
-
-    curr_bi_avl = bi_avl + bi_avl_hash(a,b);
-    
-    if (curr_bi_avl->state_number == -1)
-        return (-1);
-    
-    for ( ; curr_bi_avl != NULL; curr_bi_avl = curr_bi_avl->next) {
-        if (curr_bi_avl->state_a == a && curr_bi_avl->state_b == b)
-            return (curr_bi_avl->state_number);
-    }
-    return (-1);
-}
-
-void bi_avl_free() {
-  struct bi_avl *temp_bi_avl, *prev_bi_avl;
-  int i;
-
-  if (bi_avl_type == BI_AVL_TYPE_ARRAY) {
-     for(i = 0; i < bi_avl_rowsize; i++) {
-         xxfree(bi_avl_array[i]);
-     }
-     xxfree(bi_avl_array);
-     return;
-  }
-
-  for (i = 0; i < bi_avl_tablesize; i++) {
-    for (temp_bi_avl = (bi_avl+i)->next; temp_bi_avl != NULL;) {
-      prev_bi_avl = temp_bi_avl;
-      temp_bi_avl = temp_bi_avl->next;
-      xxfree(prev_bi_avl);
-    }
-  }
-  xxfree(bi_avl);  
-  bi_avl = NULL;
-  return;  
+    return -1;
 }
 
 struct fsm *fsm_intersect(struct fsm *net1, struct fsm *net2) {
@@ -520,6 +404,7 @@ struct fsm *fsm_intersect(struct fsm *net1, struct fsm *net2) {
     struct fsm_state *machine_a, *machine_b;
     struct state_arr *point_a, *point_b;
     struct fsm *new_net;
+    struct triplethash *th;
 
     net1 = fsm_minimize(net1);
     net2 = fsm_minimize(net2);
@@ -546,8 +431,9 @@ struct fsm *fsm_intersect(struct fsm *net1, struct fsm *net2) {
     
     STACK_2_PUSH(0,0);
     
-    bi_avl_init(0,0,net1->statecount,net2->statecount);
-    
+    th = triplet_hash_init();
+    triplet_hash_insert(th, 0, 0, 0);
+
     fsm_state_init(sigma_max(net1->sigma));
     
     point_a = init_state_pointers(machine_a);
@@ -560,7 +446,7 @@ struct fsm *fsm_intersect(struct fsm *net1, struct fsm *net2) {
         a = int_stack_pop();
         b = int_stack_pop();
         
-        current_state = bi_avl_find(a,b);
+	current_state = triplet_hash_find(th, a, b, 0);
         current_start = (((point_a+a)->start == 1) && ((point_b+b)->start == 1)) ? 1 : 0;
         current_final = (((point_a+a)->final == 1) && ((point_b+b)->final == 1)) ? 1 : 0;
         
@@ -590,9 +476,9 @@ struct fsm *fsm_intersect(struct fsm *net1, struct fsm *net2) {
             if (bptr->mainloop != mainloop)
                 continue;
                 
-            if ((target_number = bi_avl_find(machine_a->target, bptr->target)) == -1) {
+            if ((target_number = triplet_hash_find(th, machine_a->target, bptr->target, 0)) == -1) {
                 STACK_2_PUSH(bptr->target, machine_a->target);
-                target_number = bi_avl_insert(machine_a->target, bptr->target);
+                target_number = triplet_hash_insert(th, machine_a->target, bptr->target, 0);		
             }
             
             fsm_state_add_arc(current_state, machine_a->in, machine_a->out, target_number, current_final, current_start);
@@ -610,7 +496,7 @@ struct fsm *fsm_intersect(struct fsm *net1, struct fsm *net2) {
     xxfree(point_a);
     xxfree(point_b);
     xxfree(array);
-    bi_avl_free();
+    triplet_hash_free(th);
     return(fsm_coaccessible(new_net));
 }
 
@@ -661,7 +547,8 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
     int a,b,i,mainloop,current_state, current_start, current_final, target_number, ain, bin, aout, bout, asearch, max2sigma;
     struct fsm_state *machine_a, *machine_b;
     struct state_arr *point_a, *point_b;
-    char mode;
+    struct triplethash *th;
+    int mode;
     _Bool *is_flag = NULL;
 
 
@@ -717,9 +604,7 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
 
     if (g_flag_is_epsilon) {
         /* Create lookup table for quickly checking if a symbol is a flag */
-        int smax;
         struct sigma *sig1;
-        smax = sigma_max(net1->sigma);
         is_flag = xxmalloc(sizeof(_Bool)*(sigma_max(net1->sigma)+1));
         for (sig1 = net1->sigma; sig1 != NULL; sig1=sig1->next) {
             if (flag_check(sig1->symbol)) {
@@ -756,7 +641,8 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
     /* Mode, a, b */
     STACK_3_PUSH(0,0,0);
 
-    tri_avl_init(0,0,net1->statecount,net2->statecount);
+    th = triplet_hash_init();
+    triplet_hash_insert(th, 0, 0, 0);
 
     fsm_state_init(sigma_max(net1->sigma));
     
@@ -771,9 +657,9 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
         
         a = int_stack_pop();
         b = int_stack_pop();
-        mode = (char) int_stack_pop();
+        mode = int_stack_pop();
         
-        current_state = tri_avl_find(a,b,mode);
+	current_state = triplet_hash_find(th, a,b,mode);
         current_start = (((point_a+a)->start == 1) && ((point_b+b)->start == 1) && (mode == 0)) ? 1 : 0;
         current_final = (((point_a+a)->final == 1) && ((point_b+b)->final == 1)) ? 1 : 0;
         
@@ -813,6 +699,8 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
             currtail = (index+asearch)->tail + 1;
             for ( ; iptr != currtail && iptr->mainloop == mainloop ; iptr++) {
                 
+                ain = machine_a->in;
+                aout = machine_a->out;
                 bin = iptr->symin;
                 bout = iptr->symout;
                 
@@ -826,9 +714,9 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
                 if (!g_compose_tristate) {
                     if (bin == aout && bin != -1 && bin != EPSILON) {
                         /* mode -> 0 */
-                        if ((target_number = tri_avl_find(machine_a->target, iptr->target, 0)) == -1) {
+                        if ((target_number = triplet_hash_find(th, machine_a->target, iptr->target, 0)) == -1) {
                             STACK_3_PUSH(0, iptr->target, machine_a->target);
-                            target_number = tri_avl_insert(machine_a->target, iptr->target, 0);
+                            target_number = triplet_hash_insert(th, machine_a->target, iptr->target, 0);
                         }
                         
                         fsm_state_add_arc(current_state, ain, bout, target_number, current_final, current_start);
@@ -838,9 +726,9 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
                 else if (g_compose_tristate) {
                     if (bin == aout && bin != -1 && ((bin != EPSILON || mode == 0))) {
                         /* mode -> 0 */
-                        if ((target_number = tri_avl_find(machine_a->target, iptr->target, 0)) == -1) {
+                        if ((target_number = triplet_hash_find(th, machine_a->target, iptr->target, 0)) == -1) {
                             STACK_3_PUSH(0, iptr->target, machine_a->target);
-                            target_number = tri_avl_insert(machine_a->target, iptr->target, 0);
+                            target_number = triplet_hash_insert(th, machine_a->target, iptr->target, 0);
                         }
                         
                         fsm_state_add_arc(current_state, ain, bout, target_number, current_final, current_start);
@@ -858,9 +746,9 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
             ain = machine_a->in;
 
             if (g_flag_is_epsilon && aout != -1 && mode == 0 && *(is_flag+aout)) {
-                if ((target_number = tri_avl_find(machine_a->target, b, 0)) == -1) {
+                if ((target_number = triplet_hash_find(th, machine_a->target, b, 0)) == -1) {
                     STACK_3_PUSH(0, b, machine_a->target);
-                    target_number = tri_avl_insert(machine_a->target, b, 0);
+		    target_number = triplet_hash_insert(th, machine_a->target, b, 0);
                 }
                 fsm_state_add_arc(current_state, ain, aout, target_number, current_final, current_start);
             }
@@ -869,9 +757,9 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
                 /* Check A:0 arcs on upper side */
                 if (aout == EPSILON && mode == 0) {
                     /* mode -> 0 */        
-                    if ((target_number = tri_avl_find(machine_a->target, b, 0)) == -1) {
+                    if ((target_number = triplet_hash_find(th, machine_a->target, b, 0)) == -1) {
                         STACK_3_PUSH(0, b, machine_a->target);
-                        target_number = tri_avl_insert(machine_a->target, b, 0);                    
+                        target_number = triplet_hash_insert(th, machine_a->target, b, 0);                    
                     }
                     
                     fsm_state_add_arc(current_state, ain, EPSILON, target_number, current_final, current_start);
@@ -881,9 +769,9 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
             else if (g_compose_tristate) {
                 if (aout == EPSILON && (mode != 2)) {
                     /* mode -> 1 */
-                    if ((target_number = tri_avl_find(machine_a->target, b, 1)) == -1) {
+                    if ((target_number = triplet_hash_find(th, machine_a->target, b, 1)) == -1) {
                         STACK_3_PUSH(1, b, machine_a->target);
-                        target_number = tri_avl_insert(machine_a->target, b, 1);                    
+                        target_number = triplet_hash_insert(th, machine_a->target, b, 1);                    
                     }
                     
                     fsm_state_add_arc(current_state, ain, EPSILON, target_number, current_final, current_start);
@@ -901,9 +789,9 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
             bout = machine_b->out;
             
             if (g_flag_is_epsilon && bin != -1 && *(is_flag+bin)) {
-                if ((target_number = tri_avl_find(a, machine_b->target, 1)) == -1) {
+                if ((target_number = triplet_hash_find(th, a, machine_b->target, 1)) == -1) {
                     STACK_3_PUSH(1, machine_b->target,a);
-                    target_number = tri_avl_insert(a, machine_b->target, 1);
+                    target_number = triplet_hash_insert(th, a, machine_b->target, 1);
                 }
                 fsm_state_add_arc(current_state, bin, bout, target_number, current_final, current_start);
             }
@@ -912,9 +800,9 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
                 /* Check 0:A arcs on lower side */
                 if (bin == EPSILON) {
                     /* mode -> 1 */
-                    if ((target_number = tri_avl_find(a, machine_b->target, 1)) == -1) {
+                    if ((target_number = triplet_hash_find(th, a, machine_b->target, 1)) == -1) {
                         STACK_3_PUSH(1, machine_b->target,a);
-                        target_number = tri_avl_insert(a, machine_b->target, 1);
+                        target_number = triplet_hash_insert(th, a, machine_b->target, 1);
                     }
                     
                     fsm_state_add_arc(current_state, EPSILON, bout, target_number, current_final, current_start);
@@ -925,9 +813,9 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
                 /* Check 0:A arcs on lower side */
                 if (bin == EPSILON && mode != 1) {
                     /* mode -> 1 */
-                    if ((target_number = tri_avl_find(a, machine_b->target, 2)) == -1) {
+                    if ((target_number = triplet_hash_find(th, a, machine_b->target, 2)) == -1) {
                         STACK_3_PUSH(2, machine_b->target, a);
-                        target_number = tri_avl_insert(a, machine_b->target, 2);
+                        target_number = triplet_hash_insert(th, a, machine_b->target, 2);
                     }
                     
                     fsm_state_add_arc(current_state, EPSILON, bout, target_number, current_final, current_start);
@@ -947,8 +835,7 @@ struct fsm *fsm_compose(struct fsm *net1, struct fsm *net2) {
 
     if (g_flag_is_epsilon)
         xxfree(is_flag);
-    tri_avl_free();
-
+    triplet_hash_free(th);
     net1 = fsm_topsort(fsm_coaccessible(net1));
     return(fsm_coaccessible(net1));
 }
@@ -1007,7 +894,7 @@ void fsm_merge_sigma(struct fsm *net1, struct fsm *net2) {
   struct fsm_state *fsm_state, *new_1_state, *new_2_state;
   int i, j, end_1 = 0, end_2 = 0, sigmasizes, *mapping_1, *mapping_2, equal = 1, unknown_1 = 0, unknown_2 = 0, net_unk = 0, net_adds = 0, net_lines;
 
-#ifdef foo
+#ifdef ORIGINAL
   i = sigma_find(".#.", net1->sigma);
   j = sigma_find(".#.", net2->sigma);
   if (i != -1 && j == -1) {
@@ -1018,6 +905,8 @@ void fsm_merge_sigma(struct fsm *net1, struct fsm *net2) {
       sigma_add(".#.", net1->sigma);
       sigma_sort(net1);
   }
+#else
+  // This is handled by HFST's XfstCompiler, if needed.
 #endif
 
   sigma_1 = net1->sigma;
@@ -1350,8 +1239,7 @@ int add_fsm_arc(struct fsm_state *fsm, int offset, int state_no, int in, int out
 
 void fsm_count(struct fsm *net) {
   struct fsm_state *fsm;
-  int i, linecount, arccount, oldstate, finalcount, maxstate, arity;
-  arity = 1;
+  int i, linecount, arccount, oldstate, finalcount, maxstate;
   linecount = arccount = finalcount = maxstate = 0;
 
   oldstate = -1;
@@ -1364,8 +1252,8 @@ void fsm_count(struct fsm *net) {
     linecount++;
     if ((fsm+i)->target != -1) {
         arccount++;
-        if (((fsm+i)->in != (fsm+i)->out) || ((fsm+i)->in == UNKNOWN) || ((fsm+i)->out == UNKNOWN))
-            arity = 2;
+	//        if (((fsm+i)->in != (fsm+i)->out) || ((fsm+i)->in == UNKNOWN) || ((fsm+i)->out == UNKNOWN))
+        //    arity = 2;
     }
     if ((fsm+i)->state_no != oldstate) {
         if ((fsm+i)->final_state) {
@@ -1380,7 +1268,6 @@ void fsm_count(struct fsm *net) {
   net->linecount = linecount;
   net->arccount = arccount;
   net->finalcount = finalcount;
-  //net->arity = arity;
 }
 
 static void fsm_add_to_states(struct fsm *net, int add) {
@@ -1740,6 +1627,18 @@ struct fsm *fsm_kleene_closure(struct fsm *net, int operation) {
     return(net);
 }
 
+char *fsm_network_to_char(struct fsm *net) {
+    struct sigma *sigma, *sigprev;
+    sigma = net->sigma;
+    if (sigma->number == -1) {
+        return NULL;
+    }
+    for (; sigma != NULL && sigma->number != -1 ; sigma = sigma->next) {
+	sigprev = sigma;
+    }
+    return(strdup(sigprev->symbol));
+}
+
 struct fsm *fsm_substitute_label(struct fsm *net, char *original, struct fsm *substitute) {
    
     struct fsm *outnet, *subnet2;
@@ -1748,6 +1647,7 @@ struct fsm *fsm_substitute_label(struct fsm *net, char *original, struct fsm *su
     char *subin, *subout;
     int i, repsym, source, target, in, out, addstate1, addstate2;
         
+    fsm_merge_sigma(net, substitute);
     addstate1 = net->statecount;
     addstate2 = substitute->statecount;
 
@@ -1756,7 +1656,7 @@ struct fsm *fsm_substitute_label(struct fsm *net, char *original, struct fsm *su
     repsym = fsm_get_symbol_number(inh, original);
     if (repsym == -1) {
 	fsm_read_done(inh);
-	return(NULL);
+	return(net);
     }
     outh = fsm_construct_init(net->name);
     fsm_construct_copy_sigma(outh, net->sigma);
@@ -1829,7 +1729,7 @@ struct fsm *fsm_substitute_symbol(struct fsm *net, char *original, char *substit
     if (strcmp(original,substitute) == 0)
         return(net);
     if ((o = sigma_find(original, net->sigma)) == -1) {
-	printf("\nSymbol '%s' not found in network!\n",original);
+	//fprintf(stderr, "\nSymbol '%s' not found in network!\n", original);
 	return(net);
     }
     if (strcmp(substitute,"0") == 0)
@@ -1858,6 +1758,7 @@ struct fsm *fsm_cross_product(struct fsm *net1, struct fsm *net2) {
   int i, a, b, current_state, current_start, current_final, target_number, symbol1, symbol2, epsilon = 0, unknown = 0;
   struct fsm_state *machine_a, *machine_b, *fsm;
   struct state_arr *point_a, *point_b;
+  struct triplethash *th;
 
   /* Perform a cross product by running two machines in parallel */
   /* The approach here allows a state to stay, creating a a:0 or 0:b transition */
@@ -1893,7 +1794,8 @@ struct fsm *fsm_cross_product(struct fsm *net1, struct fsm *net2) {
 
   STACK_2_PUSH(0,0);
 
-  bi_avl_init(0,0,net1->statecount,net2->statecount);
+  th = triplet_hash_init();
+  triplet_hash_insert(th, 0, 0, 0);
 
   fsm_state_init(sigma_max(net1->sigma));
 
@@ -1909,7 +1811,7 @@ struct fsm *fsm_cross_product(struct fsm *net1, struct fsm *net2) {
     
    /* printf("Treating pair: {%i,%i}\n",a,b); */
 
-    current_state = bi_avl_find(a,b);
+    current_state = triplet_hash_find(th, a, b, 0);
     current_start = (((point_a+a)->start == 1) && ((point_b+b)->start == 1)) ? 1 : 0;
     current_final = (((point_a+a)->final == 1) && ((point_b+b)->final == 1)) ? 1 : 0;
 
@@ -1929,9 +1831,9 @@ struct fsm *fsm_cross_product(struct fsm *net1, struct fsm *net2) {
 	}
 	/* Main check */
 	if (!((machine_a->target == -1) || (machine_b->target == -1))) {
-	  if ((target_number = bi_avl_find(machine_a->target, machine_b->target)) == -1) {
+	    if ((target_number = triplet_hash_find(th, machine_a->target, machine_b->target, 0)) == -1) {
               STACK_2_PUSH(machine_b->target, machine_a->target);
-              target_number = bi_avl_insert(machine_a->target, machine_b->target);
+              target_number = triplet_hash_insert(th, machine_a->target, machine_b->target, 0);
 	  }
 	  symbol1 = machine_a->in;
 	  symbol2 = machine_b->in;
@@ -1949,10 +1851,10 @@ struct fsm *fsm_cross_product(struct fsm *net1, struct fsm *net2) {
 	if (machine_a->final_state == 1 && machine_b->target != -1) {
             
 	  /* Add 0:b i.e. stay in state A */
-	  if ((target_number = bi_avl_find(machine_a->state_no, machine_b->target)) == -1) {
-              STACK_2_PUSH(machine_b->target, machine_a->state_no);
-              target_number = bi_avl_insert(machine_a->state_no, machine_b->target);
-	  }
+	    if ((target_number = triplet_hash_find(th, machine_a->state_no, machine_b->target, 0)) == -1) {
+		STACK_2_PUSH(machine_b->target, machine_a->state_no);
+		target_number = triplet_hash_insert(th, machine_a->state_no, machine_b->target, 0);
+	    }
 	  /* @:0 becomes ?:0 */
 	  symbol2 = machine_b->in == IDENTITY ? UNKNOWN : machine_b->in;
           fsm_state_add_arc(current_state, EPSILON, symbol2, target_number, current_final, current_start);
@@ -1961,9 +1863,9 @@ struct fsm *fsm_cross_product(struct fsm *net1, struct fsm *net2) {
 	if (machine_b->final_state == 1 && machine_a->target != -1) {
 	  
 	  /* Add a:0 i.e. stay in state B */
-	  if ((target_number = bi_avl_find(machine_a->target, machine_b->state_no)) == -1) {
+	    if ((target_number = triplet_hash_find(th, machine_a->target, machine_b->state_no, 0)) == -1) {
               STACK_2_PUSH(machine_b->state_no, machine_a->target);
-              target_number = bi_avl_insert(machine_a->target, machine_b->state_no);
+              target_number = triplet_hash_insert(th, machine_a->target, machine_b->state_no, 0);
 	  }
 	  /* @:0 becomes ?:0 */
 	  symbol1 = machine_a->in == IDENTITY ? UNKNOWN : machine_a->in;
@@ -1997,7 +1899,7 @@ struct fsm *fsm_cross_product(struct fsm *net1, struct fsm *net2) {
   xxfree(point_a);
   xxfree(point_b);
   fsm_destroy(net2);
-  bi_avl_free();
+  triplet_hash_free(th);
   return(fsm_coaccessible(net1));
 }
 
@@ -2009,10 +1911,92 @@ struct fsm *fsm_follows(struct fsm *net1, struct fsm *net2) {
     return(fsm_complement(fsm_minimize(fsm_contains(fsm_minimize(fsm_concat(fsm_minimize(fsm_copy(net1)),fsm_concat(fsm_universal(),fsm_minimize(fsm_copy(net2)))))))));
 }
 
+struct fsm *fsm_unflatten(struct fsm *net, char *epsilon_sym, char *repeat_sym) {
+    int a, b, current_state, current_start, current_final, target_number, epsilon, repeat, in, out;
+    struct fsm_state *even_state, *odd_state;
+    struct state_arr *point_a;
+    struct triplethash *th;
+    
+    fsm_minimize(net);
+    fsm_count(net);
+    
+    epsilon = sigma_find(epsilon_sym, net->sigma);
+    repeat = sigma_find(repeat_sym, net->sigma);  
+    
+    even_state = net->states;
+    
+    /* new state 0 = {0,0} */
+    
+    STACK_2_PUSH(0,0);
+    
+    th = triplet_hash_init();
+    triplet_hash_insert(th, 0, 0, 0);
+    
+    fsm_state_init(sigma_max(net->sigma));
+    
+    point_a = init_state_pointers(even_state);
+
+    while (!int_stack_isempty()) {
+	
+	/* Get a pair of states to examine */
+	
+	a = int_stack_pop();
+	a = int_stack_pop();
+	
+	/* printf("Treating pair: {%i,%i}\n",a,b); */
+	
+	current_state = triplet_hash_find(th, a, a, 0);
+	current_start = ((point_a+a)->start == 1) ? 1 : 0;
+	current_final = ((point_a+a)->final == 1) ? 1 : 0;
+	
+	fsm_state_set_current_state(current_state, current_final, current_start);
+	
+	for (even_state = (point_a+a)->transitions; even_state->state_no == a; even_state++) {
+	    if (even_state->target == -1) {
+		continue;
+	    }
+	    in = even_state->in;
+	    b = even_state->target;
+	    for (odd_state = (point_a+b)->transitions; odd_state->state_no == b; odd_state++) {
+		if (odd_state->target == -1) {
+		    continue;
+		}
+		if ((target_number = triplet_hash_find(th, odd_state->target, odd_state->target, 0)) == -1) {
+		    STACK_2_PUSH(odd_state->target, odd_state->target);
+		    target_number = triplet_hash_insert(th, odd_state->target, odd_state->target, 0);
+		}
+		in = even_state->in;
+		out = odd_state->in;
+		if (out == repeat) {
+		    out = in;
+		} else if (in == IDENTITY || out == IDENTITY) {
+		    in = in == IDENTITY ? UNKNOWN : in;
+		    out = out == IDENTITY ? UNKNOWN : out;
+		}
+		if (in == epsilon) {
+		    in = EPSILON;
+		}
+		if (out == epsilon) {
+		    out = EPSILON;
+		}
+		fsm_state_add_arc(current_state, in, out, target_number, current_final, current_start);
+	    }
+	}
+	fsm_state_end_state();
+    }
+    xxfree(net->states);
+    fsm_state_close(net);
+    xxfree(point_a);
+    triplet_hash_free(th);
+    return(net);
+}
+
+
 struct fsm *fsm_shuffle(struct fsm *net1, struct fsm *net2) {
   int a, b, current_state, current_start, current_final, target_number;
   struct fsm_state *machine_a, *machine_b;
   struct state_arr *point_a, *point_b;
+  struct triplethash *th;
 
   /* Shuffle A and B by making alternatively A move and B stay at each or */
   /* vice versa at each step */
@@ -2032,7 +2016,8 @@ struct fsm *fsm_shuffle(struct fsm *net1, struct fsm *net2) {
 
   STACK_2_PUSH(0,0);
 
-  bi_avl_init(0,0,net1->statecount,net2->statecount);
+  th = triplet_hash_init();
+  triplet_hash_insert(th, 0, 0, 0);
 
   fsm_state_init(sigma_max(net1->sigma));
 
@@ -2048,7 +2033,7 @@ struct fsm *fsm_shuffle(struct fsm *net1, struct fsm *net2) {
     
    /* printf("Treating pair: {%i,%i}\n",a,b); */
 
-    current_state = bi_avl_find(a,b);
+    current_state = triplet_hash_find(th, a, b, 0);
     current_start = (((point_a+a)->start == 1) && ((point_b+b)->start == 1)) ? 1 : 0;
     current_final = (((point_a+a)->final == 1) && ((point_b+b)->final == 1)) ? 1 : 0;
 
@@ -2059,9 +2044,9 @@ struct fsm *fsm_shuffle(struct fsm *net1, struct fsm *net2) {
 	if (machine_a->target == -1) {
 	  continue;
 	}
-	if ((target_number = bi_avl_find(machine_a->target, b)) == -1) {
+	if ((target_number = triplet_hash_find(th, machine_a->target, b, 0)) == -1) {
           STACK_2_PUSH(b, machine_a->target);
-	  target_number = bi_avl_insert(machine_a->target, b);
+	  target_number = triplet_hash_insert(th, machine_a->target, b, 0);
 	}
 
         fsm_state_add_arc(current_state, machine_a->in, machine_a->out, target_number, current_final, current_start);
@@ -2074,9 +2059,9 @@ struct fsm *fsm_shuffle(struct fsm *net1, struct fsm *net2) {
 	  continue;
 	}
 
-	  if ((target_number = bi_avl_find(a, machine_b->target)) == -1) {
+	if ((target_number = triplet_hash_find(th, a, machine_b->target, 0)) == -1) {
               STACK_2_PUSH(machine_b->target, a);
-              target_number = bi_avl_insert(a, machine_b->target);
+              target_number = triplet_hash_insert(th, a, machine_b->target, 0);
 	  }
           fsm_state_add_arc(current_state, machine_b->in, machine_b->out, target_number, current_final, current_start);
       }
@@ -2090,39 +2075,125 @@ struct fsm *fsm_shuffle(struct fsm *net1, struct fsm *net2) {
   xxfree(point_a);
   xxfree(point_b);
   fsm_destroy(net2);
-  bi_avl_free();
+  triplet_hash_free(th);
   return(net1);
 }
 
+int fsm_equivalent(struct fsm *net1, struct fsm *net2) {
+    /* Test path equivalence of two FSMs by traversing both in parallel */
+    int a, b, matching_arc, equivalent;
+    struct fsm_state *machine_a, *machine_b;
+    struct state_arr *point_a, *point_b;
+    struct triplethash *th;
+    
+    fsm_merge_sigma(net1, net2);
+    
+    fsm_count(net1);
+    fsm_count(net2);
+    
+    machine_a = net1->states;
+    machine_b = net2->states;
+    
+    equivalent = 0;
+    /* new state 0 = {0,0} */
+    STACK_2_PUSH(0,0);
+    
+    th = triplet_hash_init();
+    triplet_hash_insert(th, 0, 0, 0);
+    
+    point_a = init_state_pointers(machine_a);
+    point_b = init_state_pointers(machine_b);
+    
+    while (!int_stack_isempty()) {
+	
+	/* Get a pair of states to examine */
+	
+	a = int_stack_pop();
+	b = int_stack_pop();
+   	
+	if ((point_a+a)->final != (point_b+b)->final) {	  
+	    goto not_equivalent;
+	}
+	/* Check that all arcs in A have matching arc in B, push new state pair on stack */
+	for (machine_a = (point_a+a)->transitions ; machine_a->state_no == a  ; machine_a++) {
+	    if (machine_a->target == -1) {
+		break;
+	    }
+	    matching_arc = 0;
+	    for (machine_b = (point_b+b)->transitions; machine_b->state_no == b ; machine_b++) {
+		if (machine_b->target == -1) {
+		    break;
+		}
+		if (machine_a->in == machine_b->in && machine_a->out == machine_b->out) {
+		    matching_arc = 1;
+		    if ((triplet_hash_find(th, machine_a->target, machine_b->target, 0)) == -1) {
+			STACK_2_PUSH(machine_b->target, machine_a->target);
+			triplet_hash_insert(th, machine_a->target, machine_b->target, 0);
+		    }
+		    break;
+		}
+	    }
+	    if (matching_arc == 0) {
+		goto not_equivalent;
+	    }
+	}
+	for (machine_b = (point_b+b)->transitions; machine_b->state_no == b ; machine_b++) {
+	    if (machine_b->target == -1) {
+		break;
+	    }
+	    matching_arc = 0;
+	    for (machine_a = (point_a+a)->transitions ; machine_a->state_no == a  ; machine_a++) {
+		if (machine_a->in == machine_b->in && machine_a->out == machine_b->out) {
+		    matching_arc = 1;
+		    break;
+		}
+	    }
+	    if (matching_arc == 0) {
+		goto not_equivalent;
+	    }
+	}
+    }
+    equivalent = 1;
+ not_equivalent:
+    fsm_destroy(net1);
+    fsm_destroy(net2);
+    xxfree(point_a);
+    xxfree(point_b);
+    triplet_hash_free(th);
+    return(equivalent);
+}
+
+
 struct fsm *fsm_minus(struct fsm *net1, struct fsm *net2) {
     int a, b, current_state, current_start, current_final, target_number, b_has_trans, btarget, statecount;
-  struct fsm_state *machine_a, *machine_b;
-  struct state_arr *point_a, *point_b;
+    struct fsm_state *machine_a, *machine_b;
+    struct state_arr *point_a, *point_b;
+    struct triplethash *th;
+    statecount = 0;
 
-  statecount = 0;
+    net1 = fsm_minimize(net1);
+    net2 = fsm_minimize(net2);
+    
+    fsm_merge_sigma(net1, net2);
+    
+    fsm_count(net1);
+    fsm_count(net2);
+    
+    machine_a = net1->states;
+    machine_b = net2->states;
+    
+    /* new state 0 = {1,1} */
 
-  net1 = fsm_minimize(net1);
-  net2 = fsm_minimize(net2);
-  
-  fsm_merge_sigma(net1, net2);
+    int_stack_clear();
+    STACK_2_PUSH(1,1);
 
-  fsm_count(net1);
-  fsm_count(net2);
-  
-  machine_a = net1->states;
-  machine_b = net2->states;
-  
-  /* new state 0 = {1,1} */
+    th = triplet_hash_init();
+    triplet_hash_insert(th, 1, 1, 0);
 
-  int_stack_clear();
-  STACK_2_PUSH(1,1);
+    point_a = init_state_pointers(machine_a);
+    point_b = init_state_pointers(machine_b);
 
-  bi_avl_init(1,1,net1->statecount+1,net2->statecount+1);
-
-  point_a = init_state_pointers(machine_a);
-  point_b = init_state_pointers(machine_b);
-
-  fsm_state_init(sigma_max(net1->sigma));
+    fsm_state_init(sigma_max(net1->sigma));
 
   while (!int_stack_isempty()) {
       statecount++;
@@ -2131,7 +2202,7 @@ struct fsm *fsm_minus(struct fsm *net1, struct fsm *net2) {
       a = int_stack_pop();
       b = int_stack_pop();
 
-      current_state = bi_avl_find(a,b);
+      current_state = triplet_hash_find(th, a, b, 0);
       a--;
       b--;
     
@@ -2152,9 +2223,9 @@ struct fsm *fsm_minus(struct fsm *net1, struct fsm *net2) {
           }
           if (b == -1) {
               /* b is dead */
-              if ((target_number = bi_avl_find((machine_a->target)+1, 0)) == -1) {
+              if ((target_number = triplet_hash_find(th, (machine_a->target)+1, 0, 0)) == -1) {
                   STACK_2_PUSH(0, (machine_a->target)+1);
-                  target_number = bi_avl_insert((machine_a->target)+1, 0);
+                  target_number = triplet_hash_insert(th, (machine_a->target)+1, 0, 0);
               }
           } else {
               /* b is alive */
@@ -2167,15 +2238,15 @@ struct fsm *fsm_minus(struct fsm *net1, struct fsm *net2) {
                   }
               }
               if (b_has_trans) {
-                  if ((target_number = bi_avl_find((machine_a->target)+1, btarget+1)) == -1) {
+                  if ((target_number = triplet_hash_find(th, (machine_a->target)+1, btarget+1, 0)) == -1) {
                       STACK_2_PUSH(btarget+1, (machine_a->target)+1);
-                      target_number = bi_avl_insert((machine_a->target)+1, (machine_b->target)+1);
+		      target_number = triplet_hash_insert(th, (machine_a->target)+1, (machine_b->target)+1, 0);
                   }
               } else {
                   /* b is dead */
-                  if ((target_number = bi_avl_find((machine_a->target)+1, 0)) == -1) {
+                  if ((target_number = triplet_hash_find(th, (machine_a->target)+1, 0, 0)) == -1) {
                       STACK_2_PUSH(0, (machine_a->target)+1);
-                      target_number = bi_avl_insert((machine_a->target)+1, 0);
+		      target_number = triplet_hash_insert(th, (machine_a->target)+1, 0, 0);
                   }
               }
           }
@@ -2189,7 +2260,7 @@ struct fsm *fsm_minus(struct fsm *net1, struct fsm *net2) {
   xxfree(point_a);
   xxfree(point_b);
   fsm_destroy(net2);
-  bi_avl_free();
+  triplet_hash_free(th);
   return(fsm_minimize(net1));
 }
 
@@ -2944,12 +3015,86 @@ struct fsm *fsm_mark_fsm_tail(struct fsm *net, struct fsm *marker) {
     return(newnet);
 }
 
+#ifndef ORIGINAL
+struct fsm *fsm_context_restrict(struct fsm *X, struct fsmcontexts *LR);
+#else
+struct fsm *fsm_context_restrict(struct fsm *X, struct fsmcontexts *LR) {
+
+    struct fsm *Var, *Notvar, *UnionL, *UnionP, *Result, *Word;
+    struct fsmcontexts *pairs;
+
+    /* [.#. \.#.* .#.]-`[[ [\X* X C X \X*]&~[\X* [L1 X \X* X R1|...|Ln X \X* X Rn] \X*]],X,0] */
+    /* Where X = variable symbol */
+    /* The above only works if we do the subtraction iff the right hand side contains .#. in */
+    /* its alphabet */
+    /* A more generic formula is the following: */
+
+    /* `[[[(?) \.#.* (?)] - `[[[\X* X C X \X*] - [\X* [L1 X \X* X R1|...|Ln X \X* X Rn] \X*] ],X,0],.#.,0]; */
+    /* Here, the LHS is another way of saying ~[?+ .#. ?+] */
+
+    Var = fsm_symbol("@VARX@");
+    Notvar = fsm_minimize(fsm_kleene_star(fsm_term_negation(fsm_symbol("@VARX@"))));
+
+    /* We add the variable symbol to all alphabets to avoid ? mathing it */
+    /* which would cause extra nondeterminism */
+    sigma_add("@VARX@", X->sigma);
+    sigma_sort(X);
+    
+    /* Also, if any L or R is undeclared we add 0 */
+    for (pairs = LR; pairs != NULL; pairs = pairs->next) {
+        if (pairs->left == NULL) {
+            pairs->left = fsm_empty_string();
+        } else {
+            sigma_add("@VARX@",pairs->left->sigma);
+	    sigma_substitute(".#.", "@#@", pairs->left->sigma);
+            sigma_sort(pairs->left);
+        }
+        if (pairs->right == NULL) {
+            pairs->right = fsm_empty_string();
+        } else {
+            sigma_add("@VARX@",pairs->right->sigma);
+	    sigma_substitute(".#.", "@#@", pairs->right->sigma);
+            sigma_sort(pairs->right);
+        }
+    }
+
+    UnionP = fsm_empty_set();
+    
+    for (pairs = LR; pairs != NULL ; pairs = pairs->next) {
+        UnionP = fsm_minimize(fsm_union(fsm_minimize(fsm_concat(fsm_copy(pairs->left),fsm_concat(fsm_copy(Var),fsm_concat(fsm_copy(Notvar),fsm_concat(fsm_copy(Var),fsm_copy(pairs->right)))))), UnionP));
+    }
+    
+    UnionL = fsm_minimize(fsm_concat(fsm_copy(Notvar),fsm_concat(fsm_copy(Var), fsm_concat(fsm_copy(X), fsm_concat(fsm_copy(Var),fsm_copy(Notvar))))));
+
+    Result = fsm_intersect(UnionL, fsm_complement(fsm_concat(fsm_copy(Notvar),fsm_minimize(fsm_concat(fsm_copy(UnionP),fsm_copy(Notvar))))));
+    if (sigma_find("@VARX@", Result->sigma) != -1) {
+        Result = fsm_complement(fsm_substitute_symbol(Result, "@VARX@","@_EPSILON_SYMBOL_@"));
+    } else {
+	Result = fsm_complement(Result);
+    }
+
+    if (sigma_find("@#@", Result->sigma) != -1) {
+	Word = fsm_minimize(fsm_concat(fsm_symbol("@#@"),fsm_concat(fsm_kleene_star(fsm_term_negation(fsm_symbol("@#@"))),fsm_symbol("@#@"))));
+        Result = fsm_intersect(Word, Result);
+        Result = fsm_substitute_symbol(Result, "@#@", "@_EPSILON_SYMBOL_@");
+    }
+    fsm_destroy(UnionP);
+    fsm_destroy(Var);
+    fsm_destroy(Notvar);
+    fsm_destroy(X);
+    fsm_clear_contexts(pairs);
+    return(Result);
+}
+#endif
+
 struct fsm *fsm_flatten(struct fsm *net, struct fsm *epsilon) {
     struct fsm *newnet;
     struct fsm_construct_handle *outh;
     struct fsm_read_handle *inh, *eps;
     int i, maxstate, in, out, target;
     char *epssym, *instring, *outstring;
+
+    net = fsm_minimize(net);
     
     inh = fsm_read_init(net);
     eps = fsm_read_init(epsilon);
@@ -2997,4 +3142,31 @@ struct fsm *fsm_flatten(struct fsm *net, struct fsm *epsilon) {
     fsm_destroy(epsilon);
     xxfree(epssym);
     return(newnet);
+}
+
+/* Removes IDENTITY and UNKNOWN transitions. If mode = 1, only removes UNKNOWNs */
+struct fsm *fsm_close_sigma(struct fsm *net, int mode) {
+    struct fsm *newnet;
+    struct fsm_construct_handle *newh;
+    struct fsm_read_handle *inh;
+    int i;
+
+    inh = fsm_read_init(net);
+    newh = fsm_construct_init(net->name);
+    fsm_construct_copy_sigma(newh, net->sigma);
+
+    while (fsm_get_next_arc(inh)) {
+	if ((fsm_get_arc_num_in(inh) != UNKNOWN && fsm_get_arc_num_in(inh) != IDENTITY && fsm_get_arc_num_out(inh) != UNKNOWN && fsm_get_arc_num_out(inh) != IDENTITY) || (mode == 1 && fsm_get_arc_num_in(inh) != UNKNOWN && fsm_get_arc_num_out(inh) != UNKNOWN))
+	    fsm_construct_add_arc_nums(newh, fsm_get_arc_source(inh), fsm_get_arc_target(inh), fsm_get_arc_num_in(inh), fsm_get_arc_num_out(inh));
+    }
+    while ((i = fsm_get_next_final(inh)) != -1) {
+	fsm_construct_set_final(newh, i);
+    }
+    while ((i = fsm_get_next_initial(inh)) != -1) {
+	fsm_construct_set_initial(newh, i);
+    }
+    fsm_read_done(inh);
+    newnet = fsm_construct_done(newh);
+    fsm_destroy(net);
+    return(fsm_minimize(newnet));
 }

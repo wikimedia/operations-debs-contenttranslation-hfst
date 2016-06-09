@@ -38,7 +38,13 @@ using std::pair;
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <getopt.h>
+
+#ifdef _MSC_VER
+#  include "hfst-getopt.h"
+#else
+#  include <getopt.h>
+#endif
+
 #include <math.h>
 #include <errno.h>
 
@@ -263,7 +269,7 @@ process_stream(HfstOutputStream& outstream)
   HfstBasicTransducer disjunction;
   size_t line_n = 0;
 
-  HfstStrings2FstTokenizer
+  hfst::HfstStrings2FstTokenizer
     multichar_symbol_tokenizer(multichar_symbols,std::string(epsilonname));
 
   while (hfst_getline(&line, &len, inputfile) != -1)
@@ -312,7 +318,7 @@ process_stream(HfstOutputStream& outstream)
             { spv = multichar_symbol_tokenizer.tokenize_string_pair
                 (line,has_spaces); }
         }
-      catch (const UnescapedColsFound &e)
+      catch (const hfst::UnescapedColsFound &e)
         { 
           if (pairstrings)
             {
@@ -421,7 +427,7 @@ int main( int argc, char **argv )
                      multichar_symbol_filename);
       std::ifstream multichar_in(multichar_symbol_filename);
       (void)multichar_in.peek();
-      if (not multichar_in.good())
+      if (! multichar_in.good())
         { error(EXIT_FAILURE, errno,"Multichar symbol file can't be read."); }
       char multichar_line[1000];
       while (multichar_in.good())

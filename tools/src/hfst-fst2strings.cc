@@ -62,6 +62,8 @@ static int max_strings = 0;
 static int cycles = -1;
 static int nbest_strings=-1;
 static int max_random_strings=-1;
+static float max_weight=-1;
+static float beam=-1;
 static bool display_weights=false;
 static bool eval_fd=false;
 static bool filter_fd=true;
@@ -97,6 +99,8 @@ print_usage()
 "  -e, --epsilon-format=EPS   print epsilon as EPS\n"
 "  -X, --xfst=VARIABLE        toggle xfst compatibility option VARIABLE\n");
     fprintf(message_out, "Ignore paths if:\n"
+"  -b, --beam=B               output string weight not within B from the weight\n"
+"                             of the best output string\n"
 "  -l, --max-in-length=MIL    input string longer than MIL\n"
 "  -L, --max-out-length=MOL   output string longer than MOL\n"
 "  -p, --in-prefix=OPREFIX    input string not beginning with IPREFIX\n"
@@ -112,6 +116,7 @@ print_usage()
             "NSTR, NBEST and NCYC default to infinity.\n"
             "NBEST overrides NSTR and NCYC\n"
         "NRAND overrides NBEST, NSTR and NCYC\n"
+            "B must be a non-negative float\n"
             "If EPS is not given, default is empty string.\n"
             "Numeric options are parsed with strtod(3).\n"
         "Xfst variables supported are { obey-flags, print-flags,\n"
@@ -144,6 +149,7 @@ parse_options(int argc, char** argv)
           {
             HFST_GETOPT_COMMON_LONG,
             HFST_GETOPT_UNARY_LONG,
+            {"beam", required_argument, 0, 'b'},
             {"cycles", required_argument, 0, 'c'},
             {"epsilon-format", required_argument, 0, 'e'},
             {"in-exclude", required_argument, 0, 'u'},
@@ -163,7 +169,7 @@ parse_options(int argc, char** argv)
         int option_index = 0;
         char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT
-                             "Swc:e:u:p:l:L:n:r:N:U:P:X:",
+                             "Swb:c:e:u:p:l:L:n:r:N:U:P:X:",
                              long_options, &option_index);
         if (-1 == c)
         {
@@ -183,6 +189,14 @@ parse_options(int argc, char** argv)
         case 'r':
             max_random_strings = hfst_strtoul(optarg, 10);
             break;
+        case 'b':
+          beam = atof(optarg);
+          if (beam < 0)
+            {
+              std::cerr << "Invalid argument for --beam\n";
+              return EXIT_FAILURE;
+            }
+          break;
         case 'c':
             cycles = hfst_strtoul(optarg, 10);
             break;
@@ -302,7 +316,7 @@ public:
       istring.append(it->first);
       ostring.append(it->second);
     }
-
+    float weight = path.first;
 
     if ((max_input_length > 0) &&
         (istring.length() > max_input_length))
@@ -348,6 +362,11 @@ public:
       }
     if (output_exclude.length() > 0 && 
         (ostring.find(output_exclude) != std::string::npos))
+      {
+        return RetVal(true, false);
+        // continue searching, break off this path
+      }
+    if (max_weight >= 0 && weight > (max_weight + beam))
       {
         return RetVal(true, false);
         // continue searching, break off this path
@@ -470,6 +489,41 @@ process_stream(HfstInputStream& instream, std::ostream& outstream)
     if(input_prefix != "")
       verbose_printf("input_prefix: '%s'\n", input_prefix.c_str());
     
+    if(beam >= 0) 
+      {
+        verbose_printf("Finding the weight of the best path...\n");
+      try 
+        {
+          HfstTransducer tc(t);
+          tc.n_best(1);
+          HfstTwoLevelPaths best_paths;
+          tc.extract_paths(best_paths);
+          if (best_paths.size() != 1)
+            {
+              error(EXIT_FAILURE, 0, "n_best(1) produced more than one path");
+            }
+          max_weight = best_paths.begin()->first;
+        }
+      catch (const FunctionNotImplementedException & e)
+        {
+          if (instream.get_type() == hfst::HFST_OL_TYPE || 
+              instream.get_type() == hfst::HFST_OLW_TYPE)
+            {
+              error(EXIT_FAILURE, 0, "option --beam not implemented for optimized lookup format");
+            }
+          else
+            {
+              error(EXIT_FAILURE, 0, "option --beam not implemented");
+            }
+          return EXIT_FAILURE;
+        }
+      catch(const HfstFatalException & e)
+        {
+          error(EXIT_FAILURE, 0, "n_best runs out of memory");
+          return EXIT_FAILURE;
+        }
+      }
+
     if(nbest_strings > 0)
     {
       verbose_printf("Pruning transducer to %i best path(s)...\n", 
@@ -563,8 +617,8 @@ process_stream(HfstInputStream& instream, std::ostream& outstream)
     verbose_printf("Printed %i random string(s)\n", cb.count);
       }
 
-    if (print_separator_after_each_transducer)
-      outstream << "--" << std::endl;
+    //if (print_separator_after_each_transducer)
+    //  outstream << "--" << std::endl;
   }
     
   instream.close();

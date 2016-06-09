@@ -1,14 +1,12 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 #ifndef _HFST_INPUTSTREAM_H_
 #define _HFST_INPUTSTREAM_H_
 
@@ -17,6 +15,8 @@
 #endif
 
 #include "HfstDataTypes.h"
+
+#include "hfstdll.h"
 
 /** @file HfstInputStream.h 
     \brief Declaration of class HfstInputStream.
@@ -38,6 +38,9 @@ namespace hfst
 #if HAVE_FOMA
     class FomaInputStream;
 #endif    
+#if HAVE_XFSM
+    class XfsmInputStream;
+#endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
     class MyTransducerLibraryInputStream;
 #endif
@@ -108,6 +111,9 @@ For documentation on the HFST binary transducer format, see
 #endif
 #if HAVE_FOMA
       hfst::implementations::FomaInputStream * foma;
+#endif
+#if HAVE_XFSM
+      hfst::implementations::XfsmInputStream * xfsm;
 #endif
 
 #if HAVE_MY_TRANSDUCER_LIBRARY
@@ -185,8 +191,11 @@ For documentation on the HFST binary transducer format, see
       OPENFST_LOG_,
       /* An SFST transducer. */ 
       SFST_, 
-      /* A foma transducer. */ 
-      FOMA_, 
+      /* A foma transducer in unzipped format. 
+         A zipped file is handled by throwing a FileIsInGZFormatException. */ 
+      FOMA_,
+      /* An xfsm transducer. */
+      XFSM_,
       /* Your transducer type */
       //MY_TRANSDUCER_LIBRARY_,
       /* Transducer type not recognized. */ 
@@ -223,7 +232,7 @@ For documentation on the HFST binary transducer format, see
         @throws EndOfStreamException
         @throws TransducerHeaderException
     */
-    HfstInputStream(void);
+    HFSTDLL HfstInputStream(void);
 
     /** \brief Open a stream to file \a filename for reading binary 
         transducers. 
@@ -236,29 +245,31 @@ For documentation on the HFST binary transducer format, see
         @throws EndOfStreamException
         @throws TransducerHeaderException
     */
-    HfstInputStream(const std::string &filename);
+    HFSTDLL HfstInputStream(const std::string &filename);
 
     /** \brief Destructor. */
-    ~HfstInputStream(void);
+    HFSTDLL ~HfstInputStream(void);
 
     /** \brief Close the stream.
 
         If the stream points to standard input, nothing is done. */
-    void close(void);
+    HFSTDLL void close(void);
 
     /** \brief Whether the stream is at end. */
-    bool is_eof(void);
+    HFSTDLL bool is_eof(void);
     /** \brief Whether badbit is set. */
-    bool is_bad(void);
+    HFSTDLL bool is_bad(void);
     /** \brief Whether the state of the stream is good for input operations. */
-    bool is_good(void);
+    HFSTDLL bool is_good(void);
     
     /** \brief The type of the first transducer in the stream. 
 
         By default, all transducers in a stream have the same type, else
         a TransducerTypeMismatchException is thrown when reading the first
     transducer that has a different type than the previous ones. */
-    ImplementationType get_type(void) const;
+    HFSTDLL ImplementationType get_type(void) const;
+
+    HFSTDLL bool is_hfst_header_included(void) const;
 
     friend class HfstTransducer;
   };

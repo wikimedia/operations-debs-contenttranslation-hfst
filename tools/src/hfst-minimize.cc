@@ -33,6 +33,10 @@
 #include <cstring>
 #include <getopt.h>
 
+#ifdef PROFILE
+ #include <time.h>
+#endif
+
 #include "hfst-commandline.h"
 #include "hfst-program-options.h"
 #include "hfst-tool-metadata.h"
@@ -135,12 +139,26 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
         {
           verbose_printf("Minimizing %s..." SIZE_T_SPECIFIER "\n", inputname, transducer_n); 
         }
+
+#ifdef PROFILE
+        bool val = hfst::get_minimize_even_if_already_minimal();
+        hfst::set_minimize_even_if_already_minimal(true);
+        clock_t t;
+        t = clock();
+#endif
         trans.minimize();
+#ifdef PROFILE
+        t = clock() - t;
+        hfst::set_minimize_even_if_already_minimal(val);
+        std::cerr << "Minimization took " << ((float)t)/CLOCKS_PER_SEC << " seconds" << std::endl;
+#endif
+
         hfst_set_name(trans, trans, "minimize");
         hfst_set_formula(trans, trans, "M");
         outstream << trans;
         free(inputname);
     }
+    outstream.flush();
     instream.close();
     outstream.close();
     return EXIT_SUCCESS;
@@ -183,7 +201,13 @@ int main( int argc, char **argv ) {
     try {
       instream = (inputfile != stdin) ?
         new HfstInputStream(inputfilename) : new HfstInputStream();
-    } catch(const HfstException e)    {
+    }
+    catch(const ImplementationTypeNotAvailableException & e) {
+      error(EXIT_FAILURE, 0, "file %s is in %s format which is not available",
+            inputfilename, hfst::implementation_type_to_format(instream->get_type()));
+      return EXIT_FAILURE;
+      }
+    catch(const HfstException & e)    {
         error(EXIT_FAILURE, 0, "%s is not a valid transducer file",
               inputfilename);
         return EXIT_FAILURE;

@@ -26,7 +26,7 @@ TwolCGrammar::TwolCGrammar(bool be_quiet,
   be_quiet(be_quiet),
   be_verbose(be_verbose)
 {
-  left_arrow_rule_container.set_report_left_arrow_conflicts(not be_quiet);
+  left_arrow_rule_container.set_report_left_arrow_conflicts(! be_quiet);
   left_arrow_rule_container.set_resolve_left_arrow_conflicts
     (resolve_left_conflicts);
   right_arrow_rule_container.set_report_right_arrow_conflicts
@@ -175,12 +175,12 @@ void TwolCGrammar::add_rule(const std::string &name,
 
 void TwolCGrammar::compile_and_store(HfstOutputStream &out)
 {
-  if (not be_quiet)
+  if (! be_quiet)
     { std::cerr << "Compiling rules." << std::endl; }
 
-  left_arrow_rule_container.compile(std::cerr,(not be_quiet) and be_verbose);
-  right_arrow_rule_container.compile(std::cerr,(not be_quiet) and be_verbose);
-  other_rule_container.compile(std::cerr,(not be_quiet) and be_verbose);
+  left_arrow_rule_container.compile(std::cerr,(! be_quiet) && be_verbose);
+  right_arrow_rule_container.compile(std::cerr,(! be_quiet) && be_verbose);
+  other_rule_container.compile(std::cerr,(! be_quiet) && be_verbose);
 
   for (StringRuleSetMap::const_iterator it = name_to_rule_subcases.begin();
        it != name_to_rule_subcases.end();
@@ -190,9 +190,9 @@ void TwolCGrammar::compile_and_store(HfstOutputStream &out)
                          it->second.end()))); }
   compiled_rule_container.add_missing_symbols_freely(diacritics);
 
-  if (not be_quiet)
+  if (! be_quiet)
     { std::cerr << "Storing rules." << std::endl; }
-  compiled_rule_container.store(out,std::cerr,(not be_quiet) and be_verbose);
+  compiled_rule_container.store(out,std::cerr,(! be_quiet) && be_verbose);
 }
 
 #ifdef TEST_TWOL_C_GRAMMAR
@@ -231,6 +231,10 @@ ImplementationType transducer_type
   symbols.insert(SymbolPair("a","d"));
   symbols.insert(SymbolPair("b","c"));*/
   //g.set_alphabet(symbols);
+
+#ifdef HAVE_XFSM
+  #define Alphabet TwolCAlphabet
+#endif
 
   Alphabet alphabet;
   alphabet.define_alphabet_pair(SymbolPair("a","b"));

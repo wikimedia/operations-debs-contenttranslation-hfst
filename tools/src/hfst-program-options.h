@@ -52,20 +52,21 @@ void print_common_unary_string_program_options(FILE *file);
 
 // Text to one transducer: txt2fst
 // Text to transducer(s): strings2fst
-//	  "  -i, --input=FILENAME  	Read input text-file from FILENAME\n"
-//	  "  -o, --output=FILENAME 	Write output transducer(s) to FILENAME\n"
-//	  "  -R, --symbols=FILENAME 	Read symbol table from FILENAME\n"
-//	  "  -D, --do-not-write-symbols 	Do not write symbol table with the output transducer(s)\n"
-//	  "  -W, --write-symbols-to=FILENAME 	Write symbol table to file FILENAME\n"
+//        "  -i, --input=FILENAME       Read input text-file from FILENAME\n"
+//        "  -o, --output=FILENAME      Write output transducer(s) to FILENAME\n"
+//        "  -R, --symbols=FILENAME     Read symbol table from FILENAME\n"
+//        "  -D, --do-not-write-symbols         Do not write symbol table with the output transducer(s)\n"
+//        "  -W, --write-symbols-to=FILENAME    Write symbol table to file FILENAME\n"
 
 
 // Two transducers to one transducer: compose, concatenate, conjunct, disjunct, 
 void print_common_binary_program_options(FILE *file);
 void print_common_binary_program_parameter_instructions(FILE *file);
-#define HFST_GETOPT_BINARY_SHORT "1:2:o:"
+#define HFST_GETOPT_BINARY_SHORT "1:2:o:C"
 #define HFST_GETOPT_BINARY_LONG {"input1", required_argument, 0, '1'},\
     {"input2", required_argument, 0, '1'},\
-    {"output", required_argument, 0, 'o'}
+    {"output", required_argument, 0, 'o'},\
+    {"do-not-convert", no_argument, 0, 'C'}
 
 // Write separate commandline helps: compare, split, strings2fst, summarize, txt2fst
 

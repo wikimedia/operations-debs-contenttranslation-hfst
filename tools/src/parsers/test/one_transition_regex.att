@@ -1,0 +1,10 @@
+0	1	x	y
+1
+--
+0	1	x	@_UNKNOWN_SYMBOL_@
+0	1	x	x
+1
+--
+0	1	@_UNKNOWN_SYMBOL_@	y
+0	1	y	y
+1

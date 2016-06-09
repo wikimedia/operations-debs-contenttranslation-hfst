@@ -1,0 +1,11 @@
+define foo x ;
+define bar y ;
+regex foo:bar ;
+write att
+echo --
+regex foo:? ;
+write att
+echo --
+regex ?:bar ;
+write att
+quit

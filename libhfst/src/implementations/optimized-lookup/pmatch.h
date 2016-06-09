@@ -1,3 +1,11 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 #ifndef _HFST_OL_TRANSDUCER_PMATCH_H_
 #define _HFST_OL_TRANSDUCER_PMATCH_H_
 
@@ -5,6 +13,7 @@
 #include <stack>
 #include <sstream>
 #include <algorithm>
+#include <ctime>
 #include "transducer.h"
 
 namespace hfst_ol {
@@ -16,7 +25,8 @@ namespace hfst_ol {
 
     const unsigned int PMATCH_MAX_RECURSION_DEPTH = 5000;
     
-    typedef std::map<SymbolNumber, PmatchTransducer *> RtnMap;
+    typedef std::vector<PmatchTransducer *> RtnVector;
+    typedef std::map<std::string, SymbolNumber> RtnNameMap;
     typedef std::vector<Location> LocationVector;
     typedef std::vector<LocationVector> LocationVectorVector;
     typedef std::vector<WeightedDoubleTape> WeightedDoubleTapeVector;
@@ -33,7 +43,9 @@ namespace hfst_ol {
                        NRC_entry,
                        NRC_exit,
                        Pmatch_passthrough,
-                       boundary};
+                       boundary,
+                       Pmatch_input_mark,
+                       SPECIALSYMBOL_NR_ITEMS};
 
     struct SymbolPair
     {
@@ -86,33 +98,56 @@ namespace hfst_ol {
 
     class PmatchAlphabet: public TransducerAlphabet {
     protected:
-        RtnMap rtns;
-        std::map<SpecialSymbol, SymbolNumber> special_symbols;
+        RtnVector rtns;
+        SymbolNumberVector special_symbols;
         std::map<SymbolNumber, std::string> end_tag_map;
-        std::map<std::string, SymbolNumber> rtn_names;
+        RtnNameMap rtn_names;
+// For each symbol, either NO_SYMBOL for "no corresponding list" or an index into symbol_lists
+        SymbolNumberVector symbol2lists;
+// For each a symbol, either NO_SYMBOL for "this is not a list" or an index into symbol_list_members
+        SymbolNumberVector list2symbols;
+        // For each entry referring to entries in the symbol table, indicate
+        // "this symbol is an exclusionary list", ie. symbols not in it
+        // will match
+        SymbolNumberVector exclusionary_lists;
+        std::vector<SymbolNumberVector> symbol_lists;
+        std::vector<SymbolNumberVector> symbol_list_members;
+        std::vector<unsigned long int> counters;
         SymbolNumberVector guards;
+        std::vector<bool> printable_vector;
         bool is_end_tag(const SymbolNumber symbol) const;
+        bool is_input_mark(const SymbolNumber symbol) const;
         bool is_guard(const SymbolNumber symbol) const;
+        bool is_counter(const SymbolNumber symbol) const;
         std::string end_tag(const SymbolNumber symbol);
         std::string start_tag(const SymbolNumber symbol);
         bool extract_tags;
 
     public:
         PmatchAlphabet(std::istream& is, SymbolNumber symbol_count);
+        PmatchAlphabet(TransducerAlphabet const & a);
         PmatchAlphabet(void);
         ~PmatchAlphabet(void);
+        virtual void add_symbol(const std::string & symbol);
         static bool is_end_tag(const std::string & symbol);
         static bool is_insertion(const std::string & symbol);
         static bool is_guard(const std::string & symbol);
+        static bool is_list(const std::string & symbol);
+        static bool is_counter(const std::string & symbol);
         static bool is_special(const std::string & symbol);
+        static bool is_printable(const std::string & symbol);
         static std::string name_from_insertion(
             const std::string & symbol);
         bool is_printable(SymbolNumber symbol);
         void add_special_symbol(const std::string & str, SymbolNumber symbol_number);
+        void process_symbol_list(std::string str, SymbolNumber sym);
+        void process_counter(std::string str, SymbolNumber sym);
+        void count(SymbolNumber sym);
         void add_rtn(PmatchTransducer * rtn, std::string const & name);
         bool has_rtn(std::string const & name) const;
         bool has_rtn(SymbolNumber symbol) const;
         PmatchTransducer * get_rtn(SymbolNumber symbol);
+        std::string get_counter_name(SymbolNumber symbol);
         SymbolNumber get_special(SpecialSymbol special) const;
         SymbolNumberVector get_specials(void) const;
         std::string stringify(const DoubleTape & str);
@@ -140,23 +175,37 @@ namespace hfst_ol {
         std::vector<char> possible_first_symbols;
         bool verbose;
         bool locate_mode;
+        bool profile_mode;
+        bool single_codepoint_tokenization;
         unsigned int recursion_depth_left;
+        // An optional time limit for operations
+        double max_time;
+        // When we started work
+        clock_t start_clock;
+        // A counter to avoid checking the clock too often
+        unsigned long call_counter;
+        // A flag to set for when time has been overstepped
+        bool limit_reached;
 
     public:
 
-        PmatchContainer(std::istream & is, bool verbose = false,
-                        bool extract_tags = false);
+        PmatchContainer(std::istream & is);
+        PmatchContainer(Transducer * toplevel);
         PmatchContainer(void);
         ~PmatchContainer(void);
 
-        long line_number;
+        unsigned long line_number;
 
         void initialize_input(const char * input);
         bool has_unsatisfied_rtns(void) const;
         std::string get_unsatisfied_rtn_name(void) const;
-        void process(std::string & input);
-        std::string match(std::string & input);
-        LocationVectorVector locate(std::string & input);
+        void add_rtn(Transducer * rtn, const std::string & name);
+        void process(const std::string & input);
+        std::string match(const std::string & input,
+                          double time_cutoff = 0.0);
+        LocationVectorVector locate(std::string & input,
+                                    double time_cutoff = 0.0);
+        std::string get_profiling_info(void);
         bool has_queued_input(unsigned int input_pos);
         bool not_possible_first_symbol(SymbolNumber sym)
         {
@@ -171,8 +220,12 @@ namespace hfst_ol {
         std::string stringify_output(void);
 //        LocationVector locatefy_output(void);
         static std::string parse_name_from_hfst3_header(std::istream & f);
-        void be_verbose(void) { verbose = true; }
-        bool is_verbose(void) { return verbose; }
+        void set_verbose(bool b) { verbose = b; }
+        void set_extract_tags_mode(bool b)
+            { alphabet.extract_tags = b; }
+        void set_single_codepoint_tokenization(bool b)
+            { single_codepoint_tokenization = b; }
+        void set_profile(bool b) { profile_mode = b; }
         bool try_recurse(void)
         {
             if (recursion_depth_left > 0) {
@@ -196,6 +249,8 @@ namespace hfst_ol {
         std::string output;
         std::string tag;
         Weight weight;
+        std::vector<size_t> input_parts;
+        std::vector<size_t> output_parts;
 
         bool operator<(Location rhs) const
             { return this->weight < rhs.weight; }
@@ -236,6 +291,7 @@ namespace hfst_ol {
             unsigned int tape_entry;
             DoubleTape best_result;
             Weight best_weight;
+            bool candidate_found;
         };
 
         std::stack<LocalVariables> local_stack;
@@ -335,6 +391,11 @@ namespace hfst_ol {
         PmatchTransducer(std::istream& is,
                          TransitionTableIndex index_table_size,
                          TransitionTableIndex transition_table_size,
+                         PmatchAlphabet & alphabet,
+                         PmatchContainer * container);
+
+        PmatchTransducer(std::vector<TransitionW> transition_vector,
+                         std::vector<TransitionWIndex> index_vector,
                          PmatchAlphabet & alphabet,
                          PmatchContainer * container);
 

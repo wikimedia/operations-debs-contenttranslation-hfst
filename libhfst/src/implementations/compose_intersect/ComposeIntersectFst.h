@@ -1,3 +1,10 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
 #ifndef COMPOSE_INTERSECT_FST_H
 #define COMPOSE_INTERSECT_FST_H
 
@@ -19,13 +26,13 @@ namespace hfst
     public:      
       struct Transition
       {
-	size_t ilabel;
-	size_t olabel;
-	float weight;
-	HfstState target;
-	Transition(const HfstBasicTransition &);
-	Transition(HfstState,size_t,size_t,float);
-	bool operator==(const Transition&) const;
+        size_t ilabel;
+        size_t olabel;
+        float weight;
+        HfstState target;
+        Transition(const HfstBasicTransition &);
+        Transition(HfstState,size_t,size_t,float);
+        bool operator==(const Transition&) const;
       };
       
       struct CompareTransitions
@@ -38,7 +45,7 @@ namespace hfst
     <Transition,CompareTransitions> 
     TransitionSet; 
       typedef std::set<size_t> SymbolSet;
-      static const HfstState START = 0;
+      static const HfstState START; // = 0;
       ComposeIntersectFst(const HfstBasicTransducer &, bool input_keys);
       ComposeIntersectFst(void);
       virtual ~ComposeIntersectFst(void);

@@ -1,14 +1,12 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 #ifndef _TROPICAL_WEIGHT_TRANSDUCER_H_
 #define _TROPICAL_WEIGHT_TRANSDUCER_H_
 
@@ -16,12 +14,15 @@
 #include "HfstExceptionDefs.h"
 #include "HfstFlagDiacritics.h"
 
-#ifdef WINDOWS
+#if HAVE_CONFIG_H
+  #include "../../../config.h"
+#endif
+
+#ifdef _MSC_VER
 #include "back-ends/openfstwin/src/include/fst/fstlib.h"
 #else
-#include "../../../config.h"
 #include "back-ends/openfst/src/include/fst/fstlib.h"
-#endif // WINDOWS
+#endif // _MSC_VER
 
 #include "HfstExtractStrings.h"
 #include <cstdio>
@@ -208,8 +209,8 @@ namespace implementations
       static StdVectorFst * disjunct
         (StdVectorFst * t, const NumberPairVector &npv);
 
-      static StdVectorFst * disjunct_as_tries(StdVectorFst * t1,
-                                              const StdVectorFst * t2);
+      static fst::StdVectorFst * disjunct_as_tries(fst::StdVectorFst * t1,
+                                              const fst::StdVectorFst * t2);
 
       static StdVectorFst * intersect(StdVectorFst * t1,
                                       StdVectorFst * t2);
@@ -241,6 +242,9 @@ namespace implementations
       static bool is_automaton(StdVectorFst * t);
 
       static FdTable<int64>* get_flag_diacritics(StdVectorFst * t);
+
+      static void add_to_weights(StdVectorFst * t, float w);
+      static float get_smallest_weight(StdVectorFst * t);
 
       static void print_alphabet(const StdVectorFst *t);
 
@@ -307,10 +311,15 @@ namespace implementations
         (StdVectorFst * t, 
          std::vector<std::pair<unsigned short, std::string> > symbol_mappings);
 
+      static void set_warning_stream(std::ostream * os);
+      static std::ostream * get_warning_stream();
+
     private:
       static fst::SymbolTable create_symbol_table(std::string name);
       static void initialize_symbol_tables(StdVectorFst *t);
       static void remove_symbol_table(StdVectorFst *t);      
+
+      static std::ostream * warning_stream;
 
       /* Maps state numbers in AT&T text format to state ids used by 
          OpenFst transducers. */
@@ -322,9 +331,9 @@ namespace implementations
                   StdArc::StateId sourcestate,                          
                   StdArc::Label ilabel, 
                   StdArc::Label olabel);
-      static void disjunct_as_tries(StdVectorFst &t1,
+      static void disjunct_as_tries(fst::StdVectorFst &t1,
                              StateId t1_state,
-                             const StdVectorFst * t2,
+                                    const fst::StdVectorFst * t2,
                              StateId t2_state);
       static void add_sub_trie(StdVectorFst &t1,
                         StateId t1_state,

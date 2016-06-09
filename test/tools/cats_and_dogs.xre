@@ -2,4 +2,4 @@ c a t
 c a t | d o g
 c:d a:o t:g
 c:d::1 a:o::2 g:t::3
-c a t ;	3.141
+! Not supported any more: c a t ;	3.141

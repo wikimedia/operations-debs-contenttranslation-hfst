@@ -181,6 +181,7 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
             first_but_n.pop_front();
           }
       }
+    outstream.flush();
     instream.close();
     outstream.close();
     return EXIT_SUCCESS;

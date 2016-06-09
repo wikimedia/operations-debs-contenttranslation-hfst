@@ -1,0 +1,58 @@
+General:
+        apropos <text>
+will help in finding the command related to text. Then use
+        help <full command name>
+Some commands have built-in aliases. They are equivalent, that is,
+        help <built-in-alias name>
+will give the same result.  Some full and built-in alias command names
+can be abbreviated. When in doubt, ask `help' to list and explain
+valid abbreviations!
+        help variable
+will print out a list of variables that control the behavior of
+the interface and some finite-state operations.
+        show <variable name>
+shows the current value of the variable. The 'set' command can be
+used to set a variable to a new value.
+
+COMMAND CLASS: System commands
+
+alias, quit, set, show, system
+
+COMMAND CLASS: Input/output and stack commands
+
+clear stack, define, list, load defined, load stack, pop stack,
+push defined, read att, read lexc, read prolog, read regex, read spaced-text,
+read text, rotate stack, save defined, save stack, turn stack,
+undefine, unlist, write prolog, write spaced-text, write text,
+
+
+COMMAND CLASS: Display commands
+
+apply up, apply down, apropos, echo, help, inspect net, print aliases,
+print arc-tally, print defined, write definition, write definitions,
+print directory, print file-info, print flags, print labels,
+print label-maps, print label-tally, print list, print lists,
+print longest-string, print longest-string-size, print lower-words,
+print name, print net, print random-lower, print random-upper,
+print random-words, print shortest-string, print shortest-string-size,
+print sigma, print sigma-tally, print sigma-word-tally, print size,
+print stack, print upper-words, print words, write att, write dot,
+write properties
+
+COMMAND CLASS: Tests of network properties
+
+collect epsilon-loops, test equivalent, test lower-bounded, test lower-universal,
+test non-null, test null, test overlap, test sublanguage, test upper-bounded,
+test upper-universal
+
+COMMAND CLASS: Operations on networks
+
+add properties, cleanup net, compact sigma, compile-replace lower,
+compile-replace upper, complete net, compose net, concatenate net,
+crossproduct net, determinize net, edit properties, eliminate flag,
+epsilon-remove net, ignore net, intersect net, invert net, label net,
+lower-side net, minimize net, minus net, name net, negate net,
+one-plus net, prune net, read properties, reverse net, shuffle net,
+sigma net, sort net, source, substitute defined, substitute label,
+substitute symbol, substring net, twosided flag-diacritics, union net,
+upper-side net, zero-plus net

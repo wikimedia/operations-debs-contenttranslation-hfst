@@ -22,7 +22,7 @@
 #endif
 
 #ifdef WINDOWS
-#include <io.h>
+#  include <io.h>
 #endif
 
 #include <iostream>
@@ -32,7 +32,18 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdarg>
-#include <getopt.h>
+
+#ifdef _MSC_VER
+#  include "hfst-getopt.h"
+#else
+#  include <getopt.h>
+#endif
+
+#ifdef WINDOWS
+#include "hfst-string-conversions.h"
+using hfst::hfst_fprintf_console;
+#endif
+
 #include <limits>
 #include <math.h>
 
@@ -79,13 +90,20 @@ using hfst::StringSet;
 using std::string;
 using std::vector;
 
+
 // add tools-specific variables here
 static char* lookup_file_name;
 static FILE* lookup_file;
-static bool pipe_mode = false;
+static bool pipe_input = false;
+static bool pipe_output = false;
 static size_t linen = 0;
 static bool lookup_given = false;
 static size_t infinite_cutoff = 5;
+static float beam=-1;
+
+// symbols actually seen in (non-ol) transducers
+static std::vector<std::set<std::string> > cascade_symbols_seen;
+static std::vector<bool> cascade_unknown_or_identity_seen;
 
 enum lookup_input_format
 {
@@ -103,6 +121,7 @@ enum lookup_output_format
 
 static lookup_input_format input_format = UTF8_TOKEN_INPUT;
 static lookup_output_format output_format = XEROX_OUTPUT;
+static double time_cutoff = 0.0;
 
 // XFST variables for apply
 static bool show_flags = false;
@@ -211,14 +230,17 @@ print_usage()
     // c.f. http://www.gnu.org/prep/standards/standards.html#g_t_002d_002dhelp
     fprintf(message_out, "Usage: %s [OPTIONS...] [INFILE]\n"
            "perform transducer lookup (apply)\n"
+           "NOTE: hfst-lookup does lookup from left to right as opposed to xfst and foma\n"
+           "      lookup which is carried out from right to left. In order to do lookup\n"
+           "      in a similar way as xfst and foma, use 'hfst-flookup' instead.\n"
         "\n", program_name);
 
     print_common_program_options(message_out);
     fprintf(message_out, 
         "Input/Output options:\n"
-        "  -i, --input=INFILE     Read input transducer from INFILE\n"
-        "  -o, --output=OUTFILE   Write output to OUTFILE\n"
-        "  -p, --pipe-mode        Read lookup strings from standard input, do not prompt\n");
+        "  -i, --input=INFILE       Read input transducer from INFILE\n"
+        "  -o, --output=OUTFILE     Write output to OUTFILE\n"
+        "  -p, --pipe-mode[=STREAM] Control input and output streams\n");
 
     fprintf(message_out, "Lookup options:\n"
             "  -I, --input-strings=SFILE        Read lookup strings from SFILE\n"
@@ -228,6 +250,10 @@ print_usage()
             "  -x, --statistics                 Print statistics\n"
             "  -X, --xfst=VARIABLE              Toggle xfst VARIABLE\n"
             "  -c, --cycles=INT                 How many times to follow input epsilon cycles\n"
+            "  -b, --beam=B                     Output only analyses whose weight is within B from\n"
+            "                                   the best analysis\n"
+            "  -t, --time-cutoff=S              Limit search after having used S seconds per input\n"
+            "                                   (currently only works in optimized-lookup mode\n"
             "  -P, --progress                   Show neat progress bar if possible\n");
     fprintf(message_out, "\n");
     print_common_unary_program_parameter_instructions(message_out);
@@ -239,8 +265,23 @@ print_usage()
             "quote-special,show-flags,obey-flags}\n"
             "Input epsilon cycles are followed by default INT=5 times.\n"
             "Epsilon is printed by default as an empty string.\n"
+            "B must be a non-negative float.\n"
+            "S must be a non-negative float. The default, 0.0, indicates no cutoff.\n"
             "If the input contains several transducers, a set containing\n"
             "results from all transducers is printed for each input string.\n");
+    fprintf(message_out, "\n");
+
+    fprintf(message_out, "STREAM can be { input, output, both }. If not given, defaults to {both}.\n"
+#ifdef _MSC_VER
+          "If input file is not specified with -I, input is read interactively via the\n"
+          "console, i.e. line by line from the user. If you redirect input from a file,\n"
+          "use --pipe-mode=input. Output is by default printed to the console. If you\n"
+          "redirect output to a file, use --pipe-mode=output.\n");
+#else
+          "If input file is not specified with -I, input is read interactively line by\n"
+          "line from the user. If you redirect input from a file, use --pipe-mode=input.\n"
+          "--pipe-mode=output is ignored on non-windows platforms.\n");
+#endif
     fprintf(message_out, "\n");
 
     fprintf(message_out, 
@@ -280,14 +321,16 @@ parse_options(int argc, char** argv)
             {"xfst", required_argument, 0, 'X'},
             {"epsilon-format", required_argument, 0, 'e'},
             {"epsilon-format2", required_argument, 0, 'E'},
-            {"pipe-mode", no_argument, 0, 'p'},
+            {"beam", required_argument, 0, 'b'},
+            {"time-cutoff", required_argument, 0, 't'},
+            {"pipe-mode", optional_argument, 0, 'p'},
             {"progress", no_argument, 0, 'P'},
             {0,0,0,0}
         };
         int option_index = 0;
         // add tool-specific options here 
         char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
-                             HFST_GETOPT_UNARY_SHORT "I:O:F:xc:X:e:E:pP",
+                             HFST_GETOPT_UNARY_SHORT "I:O:F:xc:X:e:E:b:t:p::P",
                              long_options, &option_index);
         if (-1 == c)
         {
@@ -351,6 +394,22 @@ parse_options(int argc, char** argv)
         case 'E':
             epsilon_format = hfst_strdup(optarg);
             break;
+        case 'b':
+          beam = atof(optarg);
+          if (beam < 0)
+            {
+              std::cerr << "Invalid argument for --beam\n";
+              return EXIT_FAILURE;
+            }
+          break;
+        case 't':
+            time_cutoff = atof(optarg);
+            if (time_cutoff < 0.0)
+            {
+                std::cerr << "Invalid argument for --time-cutoff\n";
+                return EXIT_FAILURE;
+            }
+            break;
         case 'x':
             print_statistics = true;
             break;
@@ -385,9 +444,22 @@ parse_options(int argc, char** argv)
         case 'c':
             infinite_cutoff = (size_t)atoi(hfst_strdup(optarg));
             break;
+
         case 'p':
-            pipe_mode = true;
-            break;
+          if (optarg == NULL)
+            { pipe_input = true; pipe_output = true; }
+          else if (strcmp(optarg, "both") == 0 || strcmp(optarg, "BOTH") == 0)
+            { pipe_input = true; pipe_output = true; }
+          else if (strcmp(optarg, "input") == 0 || strcmp(optarg, "INPUT") == 0 ||
+                   strcmp(optarg, "in") == 0 || strcmp(optarg, "IN") == 0)
+            { pipe_input = true; }
+          else if (strcmp(optarg, "output") == 0 || strcmp(optarg, "OUTPUT") == 0 ||
+                   strcmp(optarg, "out") == 0 || strcmp(optarg, "OUT") == 0)
+            { pipe_output = true; }
+          else
+            { error(EXIT_FAILURE, 0, "--pipe-mode argument %s unrecognised", optarg); }
+          break;
+
         case 'P':
             show_progress_bar = true;
             break;
@@ -457,7 +529,7 @@ parse_options(int argc, char** argv)
 
 static void print_prompt()
 {
-  if (!silent && !pipe_mode && !lookup_given)
+  if (!silent && !pipe_input && !lookup_given)
     {
       fprintf(stderr, "> ");
     }
@@ -688,7 +760,11 @@ lookup_printf(const char* format, const HfstOneLevelPath* input,
       }
     else
       {
+#ifdef _MSC_VER
+        w = std::numeric_limits<float>::infinity();
+#else
         w = INFINITY;
+#endif
       }
     i = strdup(inputform);
     if (lookupform != NULL)
@@ -784,8 +860,20 @@ lookup_printf(const char* format, const HfstOneLevelPath* input,
                 src++;
             }
             else if (*src == 'w')
-              {
-                int skip = snprintf(dst, space_left, "%f", w);
+              { 
+                int skip = 0;
+#ifdef _MSC_VER
+                if (w == std::numeric_limits<float>::infinity())
+#else
+                if (false)
+#endif
+                  {
+                    skip = snprintf(dst, space_left, "%s", "inf");
+                  }
+                else
+                  {
+                    skip = snprintf(dst, space_left, "%f", w);
+                  }
                 dst += skip;
                 space_left -= skip;
                 src++;
@@ -825,10 +913,24 @@ lookup_printf(const char* format, const HfstOneLevelPath* input,
     free(inputform);
     free(lookupform);
     int rv;
-    if (not quote_special)
-      rv = fprintf(ofile, "%s", res);
+    if (! quote_special)
+      {
+#ifdef WINDOWS
+        if (!pipe_output)
+          rv = hfst_fprintf_console(ofile, "%s", res);
+        else
+#endif
+          rv = fprintf(ofile, "%s", res);
+      }
     else
-      rv = fprintf(ofile, "%s", get_print_format(res).c_str());
+      {
+#ifdef WINDOWS
+        if (!pipe_output)
+          rv = hfst_fprintf_console(ofile, "%s", get_print_format(res).c_str());
+        else
+#endif
+          rv = fprintf(ofile, "%s", get_print_format(res).c_str());
+      }
     free(res);
     return rv;
 }
@@ -885,7 +987,7 @@ static std::string escape_special_characters(char *s)
 }
 
 HfstOneLevelPath*
-line_to_lookup_path(char** s, HfstStrings2FstTokenizer& tok,
+line_to_lookup_path(char** s, hfst::HfstStrings2FstTokenizer& tok,
                     char** markup, bool* outside_sigma, bool optimized_lookup)
 {
     HfstOneLevelPath* rv = new HfstOneLevelPath;
@@ -936,6 +1038,7 @@ line_to_lookup_path(char** s, HfstStrings2FstTokenizer& tok,
               for (StringPairVector::const_iterator it = spv.begin();
                    it != spv.end(); it++)
                 {
+                  // todo: check if symbol is known to transducer
                   rv->second.push_back(it->first);
                 }
             }
@@ -1016,18 +1119,18 @@ HfstOneLevelPaths*
 lookup_simple(const HfstOneLevelPath& s, HfstTransducer& t, bool* infinity)
 {
   HfstOneLevelPaths* results = 0;
-  if (t.is_lookup_infinitely_ambiguous(s.second))
+  if (time_cutoff == 0.0 && t.is_lookup_infinitely_ambiguous(s.second))
     {
       if (!silent && infinite_cutoff > 0) {
     warning(0, 0, "Got infinite results, number of cycles limited to " SIZE_T_SPECIFIER "",
         infinite_cutoff);
       }
-      results = t.lookup_fd(s.second, infinite_cutoff);
+      results = t.lookup_fd(s.second, infinite_cutoff, time_cutoff);
       *infinity = true;
     }
   else
     {
-      results = t.lookup_fd(s.second);
+        results = t.lookup_fd(s.second, -1, time_cutoff);
     }
 
   if (results->size() == 0)
@@ -1083,6 +1186,24 @@ static void print_lookup_string(const StringVector &s) {
   }
 }
 
+bool is_possible_to_get_result(const HfstOneLevelPath & s,
+                               const StringSet & symbols_seen,
+                               bool unknown_or_identity_seen)
+{
+  if (unknown_or_identity_seen)
+    return true;
+  StringVector sv = s.second;
+  for (StringVector::const_iterator it = sv.begin(); it != sv.end(); it++)
+    {
+      if (symbols_seen.find(*it) == symbols_seen.end())
+        return false;
+    }
+  return true;
+}
+
+// which transducer in the cascade we are handling
+static unsigned int transducer_number=0;
+
 void lookup_fd_and_print(HfstBasicTransducer &t, HfstOneLevelPaths& results, 
                          const HfstOneLevelPath& s, ssize_t limit = -1)
 {
@@ -1092,7 +1213,11 @@ void lookup_fd_and_print(HfstBasicTransducer &t, HfstOneLevelPaths& results,
   HfstTwoLevelPaths results_spv;
   StringPairVector path_spv;
 
-  t.lookup_fd(s.second, results_spv, infinite_cutoff);
+  if (is_possible_to_get_result(s, cascade_symbols_seen[transducer_number], 
+                                cascade_unknown_or_identity_seen[transducer_number]))
+    {
+        t.lookup_fd(s.second, results_spv, &infinite_cutoff);
+    }
 
   if (print_pairs) {
     
@@ -1101,32 +1226,39 @@ void lookup_fd_and_print(HfstBasicTransducer &t, HfstOneLevelPaths& results,
       print_lookup_string(s.second);
       fprintf(outfile, "\n");
     }
-    else {
+    else {  // HERE!!!
+      float lowest_weight = -1;
       /* For all result strings, */
       for (HfstTwoLevelPaths::const_iterator it
              = results_spv.begin(); it != results_spv.end(); it++) {
-        
-        /* print the lookup string */
-        print_lookup_string(s.second);
-        fprintf(outfile, "\t");
-        
-        /* and the path that yielded the result string */
-        bool first_pair=true;
-        for (StringPairVector::const_iterator IT = it->second.begin();
-             IT != it->second.end(); IT++) {
-          if (print_space && not first_pair) {
-            fprintf(outfile, " ");
+
+        if (it == results_spv.begin())
+          lowest_weight = it->first;
+        if (beam < 0 || it->first <= (lowest_weight + beam))
+          {        
+            /* print the lookup string */
+            print_lookup_string(s.second);
+            fprintf(outfile, "\t");
+            
+            /* and the path that yielded the result string */
+            bool first_pair=true;
+            for (StringPairVector::const_iterator IT = it->second.begin();
+                 IT != it->second.end(); IT++) {
+              if (print_space && ! first_pair) {
+                fprintf(outfile, " ");
+              }
+              first_pair=false;
+              fprintf(outfile, "%s:%s", 
+                      get_print_format(IT->first).c_str(), 
+                      get_print_format(IT->second).c_str());
+            }
+            /* and the weight of that path. */
+            fprintf(outfile, "\t%f\n", it->first);
           }
-          first_pair=false;
-          fprintf(outfile, "%s:%s", 
-                  get_print_format(IT->first).c_str(), 
-                  get_print_format(IT->second).c_str());
-        }
-        /* and the weight of that path. */
-        fprintf(outfile, "\t%f\n", it->first);
       }
-    }
     fprintf(outfile, "\n");
+    }
+    fflush(outfile);
   }
 
   // Convert HfstTwoLevelPaths into HfstOneLevelPaths
@@ -1166,12 +1298,17 @@ void lookup_fd_and_print(HfstBasicTransducer &t, HfstOneLevelPaths& results,
   results = filtered;
 }
 
+
 HfstOneLevelPaths*
 lookup_simple(const HfstOneLevelPath& s, HfstBasicTransducer& t, bool* infinity)
 {
   HfstOneLevelPaths* results = new HfstOneLevelPaths;
 
-  if (t.is_lookup_infinitely_ambiguous(s))
+  bool possible = is_possible_to_get_result
+    (s, cascade_symbols_seen[transducer_number], 
+     cascade_unknown_or_identity_seen[transducer_number]);
+
+  if (possible && t.is_lookup_infinitely_ambiguous(s))
     {
       if (!silent && infinite_cutoff > 0) {
     warning(0, 0, "Got infinite results, number of cycles limited to " SIZE_T_SPECIFIER "",
@@ -1182,7 +1319,7 @@ lookup_simple(const HfstOneLevelPath& s, HfstBasicTransducer& t, bool* infinity)
     }
   else
     {
-      lookup_fd_and_print(t, *results, s);
+        lookup_fd_and_print(t, *results, s);
     }
 
   if (results->size() == 0)
@@ -1225,6 +1362,7 @@ lookup_cascading(const HfstOneLevelPath& s, vector<HfstTransducer> cascade,
   return results;
 }
 
+
 HfstOneLevelPaths*
 lookup_cascading(const HfstOneLevelPath& s, vector<HfstBasicTransducer> cascade,
                  bool* infinity)
@@ -1234,6 +1372,7 @@ lookup_cascading(const HfstOneLevelPath& s, vector<HfstBasicTransducer> cascade,
   // go through all transducers in the cascade
   for (unsigned int i = 0; i < cascade.size(); i++)
     {
+      transducer_number=i; // needed for lookup_simple
       HfstOneLevelPaths* result = lookup_simple(s, cascade[i], infinity);
       if (infinity)
         {
@@ -1248,6 +1387,7 @@ lookup_cascading(const HfstOneLevelPath& s, vector<HfstBasicTransducer> cascade,
         {
           results->insert(*it);
         }
+      delete result;
     }
   // all transducers gone through
 
@@ -1255,11 +1395,14 @@ lookup_cascading(const HfstOneLevelPath& s, vector<HfstBasicTransducer> cascade,
 }
 
 
+// HERE!!! limits kvs with beam
 void
 print_lookups(const HfstOneLevelPaths& kvs,
               const HfstOneLevelPath& kv, char* markup,
               bool outside_sigma, bool inf, FILE * ofile)
 {
+  float lowest_weight = -1;
+
     if (outside_sigma)
       {
         lookup_printf(unknown_begin_setf, &kv, NULL, markup, ofile);
@@ -1283,8 +1426,13 @@ print_lookups(const HfstOneLevelPaths& kvs,
                 ++lkv)
           {
             HfstOneLevelPath lup = *lkv;
-            lookup_printf(infinite_lookupf, &kv, &lup, markup, ofile);
-            analyses++;
+            if (lkv == kvs.begin())
+              lowest_weight = lup.first;
+            if (beam < 0 || lup.first <= (lowest_weight + beam))
+              {
+                lookup_printf(infinite_lookupf, &kv, &lup, markup, ofile);
+                analyses++;
+              }
           }
         lookup_printf(infinite_end_setf, &kv, NULL, markup, ofile);
       }
@@ -1298,8 +1446,13 @@ print_lookups(const HfstOneLevelPaths& kvs,
                 ++lkv)
           {
             HfstOneLevelPath lup = *lkv;
-            lookup_printf(lookupf, &kv, &lup, markup, ofile);
-            analyses++;
+            if (lkv == kvs.begin())
+              lowest_weight = lup.first;
+            if (beam < 0 || lup.first <= (lowest_weight + beam))
+              {
+                lookup_printf(lookupf, &kv, &lup, markup, ofile);
+                analyses++;
+              }
         }
         lookup_printf(end_setf, &kv, NULL, markup, ofile);
       }
@@ -1352,7 +1505,6 @@ perform_lookups(HfstOneLevelPath& origin, std::vector<HfstBasicTransducer>& casc
     return kvs;
 }
 
-
 int
 process_stream(HfstInputStream& inputstream, FILE* outstream)
 {
@@ -1363,11 +1515,13 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
     
     size_t transducer_n=0;
     StringVector mc_symbols;
+    bool id_or_unk_seen = false;
     while (inputstream.is_good())
     {
         transducer_n++;
         HfstTransducer trans(inputstream);
         hfst::ImplementationType type = trans.get_type();
+        std::set<std::string> symbols_seen;
 
         if (type != HFST_OL_TYPE && type != HFST_OLW_TYPE) 
           {
@@ -1402,6 +1556,9 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
                        tr_it = it->begin(); tr_it != it->end(); tr_it++)
                   {
                     std::string mcs = tr_it->get_input_symbol();
+                    symbols_seen.insert(mcs);
+                    if (mcs == hfst::internal_unknown || mcs == hfst::internal_identity)
+                      id_or_unk_seen = true;
                     if (mcs.size() > 1) {
                       mc_symbols.push_back(mcs);
                       verbose_printf("multicharacter symbol: %s\n",
@@ -1410,9 +1567,15 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
                   }
               }
             cascade_mut.push_back(basic);
-          }
+            cascade_symbols_seen.push_back(symbols_seen);
+            if (id_or_unk_seen)
+              cascade_unknown_or_identity_seen.push_back(true);
+            else
+              cascade_unknown_or_identity_seen.push_back(false);
+        }
 
         cascade.push_back(trans);
+        id_or_unk_seen = false;
       }
 
     inputstream.close();
@@ -1430,7 +1593,7 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
     char* line = 0;
     size_t llen = 0;
 
-    HfstStrings2FstTokenizer input_tokenizer(mc_symbols, 
+    hfst::HfstStrings2FstTokenizer input_tokenizer(mc_symbols, 
                          std::string(epsilon_format));
 
     if (!only_optimized_lookup)
@@ -1457,10 +1620,31 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
       }
     print_prompt();
     long filepos = ftell(lookup_file);
-    while (hfst_getline(&line, &llen, lookup_file) != -1)
+    while (true)
       {
+#ifdef WINDOWS
+        if (lookup_file == stdin && !pipe_input)
+          {
+            std::string str("");
+            size_t bufsize = 1000;
+            if (! hfst::get_line_from_console(str, bufsize))
+              {
+                break;
+              }
+            line = strdup(str.c_str());
+          }
+        else
+          {
+#endif
+            if (hfst_getline(&line, &llen, lookup_file) == -1)
+              break;
+#ifdef WINDOWS
+          }
+#endif
+
+        char * p = line;
         linen++;
-        char *p = line;
+
         while (*p != '\0')
           {
             if (*p == '\n' || *p == '\r') // '\r' is possible on Windows
@@ -1515,9 +1699,10 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
                                   unknown, &infinite);
           }
 
-        if (not print_pairs) { 
+        if (! print_pairs) { 
           // printing was already done in function lookup_fd
           print_lookups(*kvs, *kv, markup, unknown, infinite, outstream);
+          fflush(outstream);
         }
         delete kv;
         delete kvs;
@@ -1546,6 +1731,7 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
 int main( int argc, char **argv ) {
     hfst_setlocale();
     hfst_set_program_name(argv[0], "0.6", "HfstLookup");
+
     int retval = parse_options(argc, argv);
     if (retval != EXIT_CONTINUE)
     {
@@ -1557,6 +1743,15 @@ int main( int argc, char **argv ) {
       {
         _setmode(0, _O_BINARY);
       }
+
+    if (inputfile == stdin && pipe_input && show_progress_bar)
+      {
+        // todo: print warning?
+        show_progress_bar = false;
+      }
+
+    // has no effect on windows or mac
+    //hfst::print_output_to_console(!pipe_output);
 #endif
 
     // close buffers, we use streams
@@ -1596,6 +1791,7 @@ int main( int argc, char **argv ) {
     {
         fclose(outfile);
     }
+    delete instream;
     free(inputfilename);
     free(outfilename);
     return EXIT_SUCCESS;

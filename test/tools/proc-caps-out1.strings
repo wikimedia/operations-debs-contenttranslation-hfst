@@ -1,6 +1,6 @@
 ^test/test+n$
-^Test/Test+n/Test+nlp/Test+np$
-^TEST/TEST+n/TEST+nlp/TEST+np$
-^TeSt/Test+n/Test+nlp/Test+np$
+^Test/Test+np/Test+n/Test+nlp$
+^TEST/TEST+np/TEST+n/TEST+nlp$
+^TeSt/Test+np/Test+n/Test+nlp$
 ^tesT/test+n$
-^TEst/Test+n/Test+nlp/Test+np$
+^TEst/Test+np/Test+n/Test+nlp$

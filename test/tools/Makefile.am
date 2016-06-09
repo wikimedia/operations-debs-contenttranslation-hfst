@@ -68,6 +68,9 @@ endif
 if WANT_LOOKUP
 TESTS += lookup-functionality.sh
 endif
+if WANT_FLOOKUP
+TESTS += flookup-functionality.sh
+endif
 if WANT_OPTIMIZED_LOOKUP
 TESTS += optimized-lookup-functionality.sh
 endif
@@ -161,6 +164,7 @@ TESTS += proc-functionality.sh
 endif
 
 TESTS += $(STRESSES)
+TESTS += mismatching-input-streams.sh
 
 # XFAIL_TESTS=incompatible-formats.sh latin-1-strings.sh
 
@@ -181,7 +185,7 @@ DEFAULT_CHECKS=0to3cats.hfst 2to4cats.hfst 4cats.hfst 4toINFcats.hfst \
 		   prunable_alphabet.hfst non_prunable_alphabet_1.hfst non_prunable_alphabet_2.hfst id.hfst \
 		   a2a_or_a2b_or_a2unk.hfst a2b_or_b2b_or_unk2b.hfst unk2unk_or_id.hfst \
 		   a_or_id.hfst id_star_a_b_c.hfst pmatch_endtag.pmatch
-OL_CHECKS=cat2dog.hfstol cat2dog.genhfstol cat_weight_final.hfstol \
+OL_CHECKS=cat2dog.hfstol cat2dog.genhfstol cat_weight_final.hfstol cat_weight_ambig.hfstol \
 			proc-caps.hfstol proc-caps.genhfstol \
 			compounds.hfstol compounds2.hfstol
 if WANT_SFST
@@ -202,7 +206,7 @@ SFST_CHECKS=0to3cats.sfst 2to4cats.sfst 4cats.sfst\
 			ab_shuffle_bc.sfst id_shuffle_id.sfst aid_shuffle_idb.sfst \
 			prunable_alphabet.sfst non_prunable_alphabet_1.sfst non_prunable_alphabet_2.sfst id.sfst \
 			a2a_or_a2b_or_a2unk.sfst a2b_or_b2b_or_unk2b.sfst unk2unk_or_id.sfst \
-			a_or_id.sfst id_star_a_b_c.sfst epsilon.sfst another_epsilon.sfst
+			a_or_id.sfst id_star_a_b_c.sfst epsilon.sfst another_epsilon.sfst substituting_transducer.sfst substituted_transducer.sfst
 endif
 if WANT_OPENFST
 OFST_CHECKS=0to3cats.ofst \
@@ -223,7 +227,7 @@ OFST_CHECKS=0to3cats.ofst \
 			ab_shuffle_bc.ofst id_shuffle_id.ofst aid_shuffle_idb.ofst \
 			prunable_alphabet.ofst non_prunable_alphabet_1.ofst non_prunable_alphabet_2.ofst id.ofst \
 			a2a_or_a2b_or_a2unk.ofst a2b_or_b2b_or_unk2b.ofst unk2unk_or_id.ofst \
-			a_or_id.ofst id_star_a_b_c.ofst epsilon.ofst another_epsilon.ofst
+			a_or_id.ofst id_star_a_b_c.ofst epsilon.ofst another_epsilon.ofst substituting_transducer.ofst substituted_transducer.ofst
 endif
 if WANT_FOMA
 FOMA_CHECKS=0to3cats.foma 2to4cats.foma 4cats.foma \
@@ -243,12 +247,12 @@ FOMA_CHECKS=0to3cats.foma 2to4cats.foma 4cats.foma \
 			ab_shuffle_bc.foma id_shuffle_id.foma aid_shuffle_idb.foma \
 			prunable_alphabet.foma non_prunable_alphabet_1.foma non_prunable_alphabet_2.foma id.foma \
 			a2a_or_a2b_or_a2unk.foma a2b_or_b2b_or_unk2b.foma unk2unk_or_id.foma \
-			a_or_id.foma id_star_a_b_c.foma epsilon.foma another_epsilon.foma
+			a_or_id.foma id_star_a_b_c.foma epsilon.foma another_epsilon.foma substituting_transducer.foma substituted_transducer.foma
 endif
 
 check_DATA=$(DEFAULT_CHECKS) $(SFST_CHECKS) $(OFST_CHECKS) $(FOMA_CHECKS) $(OL_CHECKS)
 
-FST_TXTS=0to3cats.txt 2to4cats.txt 4cats.txt 4toINFcats.txt \
+FST_TXTS=0to3cats.txt 2to4cats.txt 4cats.txt 4toINFcats.txt cat_weight_ambig.txt \
 		 cat2cat_or_CAT_uppercased.txt cat2CAT_uppercased.txt \
 		 cat2epsilon.txt another_epsilon.txt cat2dog.txt \
 		 cat+dog.txt catdog.txt cat_or_dog.txt cat.txt CAT_uppercased2cat.txt \
@@ -265,7 +269,8 @@ FST_TXTS=0to3cats.txt 2to4cats.txt 4cats.txt 4toINFcats.txt \
 		 compounds.txt compounds2.txt \
 		 id_shuffle_id.txt aid_shuffle_idb.txt \
 		 prunable_alphabet.txt non_prunable_alphabet_1.txt non_prunable_alphabet_2.txt id.txt unk2unk_or_id.txt \
-		 a2a_or_a2b_or_a2unk.txt a2b_or_b2b_or_unk2b.txt a_or_id.txt id_star_a_b_c.txt
+		 a2a_or_a2b_or_a2unk.txt a2b_or_b2b_or_unk2b.txt a_or_id.txt id_star_a_b_c.txt \
+		 substituting_transducer.txt substituted_transducer.txt
 FST_STRINGS=cat.strings proc-caps-in.strings proc-caps-gen.strings \
 			proc-caps-out1.strings proc-caps-out2.strings \
 			proc-caps-out3.strings proc-caps-out4.strings \
@@ -274,7 +279,10 @@ FST_STRINGS=cat.strings proc-caps-in.strings proc-caps-gen.strings \
 			proc-compounds-out.strings proc-compounds.strings \
 			proc-compounds2-out.strings proc-compounds2.strings \
 			utf-8.strings latin-1.strings \
-			cat2dog.strings heavycat.strings
+			cat2dog.strings heavycat.strings \
+			cat_weight_ambig_out.strings cat_weight_ambig_W_out.strings \
+			proc-cat-NUL.strings cat_cat.strings cat_weight_ambig_xerox.strings \
+			cat_weight_ambig_W_xerox.strings cat_weight_ambig_W1_xerox.strings
 FST_PAIRS=cat2dog.pairs
 FST_PAIRSTRINGS=cat2dog.pairstring
 FST_SPACESTRINGS=cat2dog.spaces
@@ -299,6 +307,7 @@ LEXC_TXTS=basic.cat-dog-bird.lexc basic.colons.lexc basic.comments.lexc \
 		  basic.two-lexicons.lexc basic.UTF-8.lexc basic.zeros-epsilons.lexc \
 		  cat.lexc hfst.weights.lexc stress.random-lexicons-100.lexc \
 		  xfail.bogus.lexc xfail.ISO-8859-1.lexc xfail.lexicon-semicolon.lexc \
+		  xfail.sublexicon-defined-more-than-once.lexc \
 		  xre.any-variations.lexc xre.at-file.lexc \
 		  xre.automatic-multichar-symbols.lexc xre.basic.lexc \
 		  xre.definitions.lexc xre.months.lexc xre.nested-definitions.lexc \
@@ -306,7 +315,8 @@ LEXC_TXTS=basic.cat-dog-bird.lexc basic.colons.lexc basic.comments.lexc \
 		  xre.star-plus-optional.lexc basic.lowercase-lexicon-end.lexc \
 		  basic.multichar-flag-with-zero.lexc basic.almost-reserved-words.lexc \
 		  basic.regexps.lexc no-newline-before-sublexicon.lexc \
-		  warn.sublexicon-mentioned-but-not-defined.lexc
+		  warn.sublexicon-mentioned-but-not-defined.lexc \
+		  warn.one-sided-flags.lexc
 
 #XFST_TXTS=cat-regex.xfst
 ALL_SRCS=$(FST_TXTS) $(FST_STRINGS) $(FST_PAIRS) $(FST_PAIRSTRINGS) \
@@ -341,7 +351,7 @@ ALL_SRCS=$(FST_TXTS) $(FST_STRINGS) $(FST_PAIRS) $(FST_PAIRSTRINGS) \
 .txt.pmatch:
 	${top_builddir}/tools/src/hfst-pmatch2fst $< > $@
 
-EXTRA_FILES=cat2dog.substitute cat.strings cat.txt cats_and_dogs.xre utf-8.strings latin-1.strings c_a_t.strings dos.strings not-contains-a.xre not-contains-a-comment-emptyline.xre parallel-left-arrow-multicom-emptyline.xre  parallel-left-arrow.xre cat.prolog
+EXTRA_FILES=cat2dog.substitute cat.strings cat.txt cats_and_dogs.xre utf-8.strings latin-1.strings c_a_t.strings dos.strings not-contains-a.xre not-contains-a-comment-emptyline.xre parallel-left-arrow-multicom-emptyline.xre  parallel-left-arrow.xre cat.prolog negative_epsilon_cycles.txt no_negative_epsilon_cycles.txt substituting_transducer.txt substituted_transducer.txt
 
 RESULT_FILES=basic.cat-dog-bird.lexc.flag.result \
 basic.cat-dog-bird.lexc.result \
@@ -412,7 +422,9 @@ xre.star-plus-optional.lexc.result \
 no-newline-before-sublexicon.lexc.flag.result \
 no-newline-before-sublexicon.lexc.result \
 warn.sublexicon-mentioned-but-not-defined.lexc.flag.result \
-warn.sublexicon-mentioned-but-not-defined.lexc.result
+warn.sublexicon-mentioned-but-not-defined.lexc.result \
+warn.one-sided-flags.lexc.flag.result \
+warn.one-sided-flags.lexc.result
 
 # files needed for test programs
 EXTRA_DIST=empty-file $(FST_TXTS) $(FST_STRINGS) $(FST_PAIRS) $(FST_PAIRSTRINGS) $(FST_SPACESTRINGS) $(SUBSTITUTE_TXTS) $(XRE_TXTS) $(XFST_TXTS) $(TESTS) $(EXTRA_FILES) $(LEXC_TXTS) $(PMATCH_TXTS) $(PMATCHSCRIPTS) script.xfst lexc2fst-stress.sh lookup-stress.sh proc-stress.sh valgrind.sh \

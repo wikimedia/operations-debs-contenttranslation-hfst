@@ -3,4 +3,4 @@ set precision 1
 set lookup-cycle-cutoff 5
 
 regex [a::3|[a a]::5|[a a a]::7] -> A || c[a]* __ [a]*c ;
-apply up caaac
+apply down caaac

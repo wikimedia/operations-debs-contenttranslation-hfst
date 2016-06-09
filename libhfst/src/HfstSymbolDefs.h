@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #ifndef _SYMBOL_DEFS_H_
 #define _SYMBOL_DEFS_H_
@@ -16,6 +13,8 @@
 #include <string>
 #include <map>
 #include <set>
+
+#include "hfstdll.h"
 
 /** @file HfstSymbolDefs.h
     \brief Typedefs and functions for symbols, symbol pairs and 
@@ -104,14 +103,14 @@ namespace hfst
   const std::string internal_default = "@_DEFAULT_SYMBOL_@";
   
   /* Check whether a string is equal to reserved internal representation. */
-  bool is_epsilon(std::string const & str);
-  bool is_unknown(std::string const & str);
-  bool is_identity(std::string const & str);
-  bool is_default(std::string const & str);
-  bool is_epsilon(const char * str);
-  bool is_unknown(const char * str);
-  bool is_identity(const char * str);
-  bool is_default(const char * str);
+  HFSTDLL bool is_epsilon(std::string const & str);
+  HFSTDLL bool is_unknown(std::string const & str);
+  HFSTDLL bool is_identity(std::string const & str);
+  HFSTDLL bool is_default(std::string const & str);
+  HFSTDLL bool is_epsilon(const char * str);
+  HFSTDLL bool is_unknown(const char * str);
+  HFSTDLL bool is_identity(const char * str);
+  HFSTDLL bool is_default(const char * str);
 
   /* For internal use */
   typedef std::pair<unsigned int, unsigned int> NumberPair;
@@ -121,18 +120,19 @@ namespace hfst
   typedef std::map<unsigned int,unsigned int> NumberNumberMap;
 
   namespace symbols {
-    void collect_unknown_sets(StringSet &s1, StringSet &unknown1,
+    HFSTDLL void collect_unknown_sets(StringSet &s1, StringSet &unknown1,
                   StringSet &s2, StringSet &unknown2);
-    int longest_path_length(const hfst::HfstTwoLevelPaths & paths, bool equally_long=false);
-    hfst::HfstTwoLevelPaths get_longest_paths(const hfst::HfstTwoLevelPaths & paths);
-    StringVector to_string_vector(const hfst::HfstTwoLevelPath & path);
-    std::string to_string(const StringVector & sv, bool spaces=false);
-    std::string to_string(const StringPairVector & sv, bool spaces=false);
-    hfst::HfstTwoLevelPaths remove_flags(const hfst::HfstTwoLevelPaths & paths);
-    hfst::HfstTwoLevelPath remove_flags(const hfst::HfstTwoLevelPath & path);
-    StringPairSet to_string_pair_set(const StringSet & ss);
-    StringPairVector remove_flags(const StringPairVector &v);
-    StringVector remove_flags(const StringVector &v);
+    HFSTDLL int longest_path_length(const hfst::HfstTwoLevelPaths & paths, bool equally_long=false);
+    HFSTDLL hfst::HfstTwoLevelPaths get_longest_paths(const hfst::HfstTwoLevelPaths & paths);
+    HFSTDLL StringVector to_string_vector(const hfst::HfstTwoLevelPath & path);
+    HFSTDLL std::string to_string(const StringVector & sv, bool spaces=false);
+    HFSTDLL std::string to_string(const StringPairVector & sv, bool spaces=false);
+    HFSTDLL StringVector to_string_vector(const StringPairVector & spv, bool input_side);
+    HFSTDLL hfst::HfstTwoLevelPaths remove_flags(const hfst::HfstTwoLevelPaths & paths);
+    HFSTDLL hfst::HfstTwoLevelPath remove_flags(const hfst::HfstTwoLevelPath & path);
+    HFSTDLL StringPairSet to_string_pair_set(const StringSet & ss);
+    HFSTDLL StringPairVector remove_flags(const StringPairVector &v);
+    HFSTDLL StringVector remove_flags(const StringVector &v);
   }
 }
 #endif

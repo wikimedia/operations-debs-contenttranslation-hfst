@@ -2,5 +2,5 @@ set precision 1
 set print-weight ON
 
 regex [a|b] -> "["::1 ... "]"::1 ;
-apply up mba
+apply down mba
 

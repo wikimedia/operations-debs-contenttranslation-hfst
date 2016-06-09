@@ -113,6 +113,9 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
   //instream.open();
   //outstream.open();
     
+  if (!silent)
+    hfst::set_warning_stream(&std::cerr);
+
     size_t transducer_n=0;
     while(instream.is_good())
     {

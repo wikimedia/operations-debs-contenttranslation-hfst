@@ -1,5 +1,5 @@
 /*     Foma: a finite-state toolkit and library.                             */
-/*     Copyright © 2008-2012 Mans Hulden                                     */
+/*     Copyright © 2008-2015 Mans Hulden                                     */
 
 /*     This file is part of foma.                                            */
 
@@ -25,6 +25,17 @@ struct fsm_trans_list {
     int target;
     struct fsm_trans_list *next;
 };
+
+#ifndef ORIGINAL
+  #ifndef __cplusplus
+    #ifndef bool
+      #define bool int
+      #define false ((bool)0)
+      #define true  ((bool)1)
+    #endif
+  #endif
+#define _Bool bool
+#endif // #ifndef ORIGINAL
 
 struct fsm_state_list {
     _Bool used;
@@ -57,6 +68,7 @@ struct fsm_construct_handle {
     int maxstate;
     int maxsigma;
     int numfinals;
+    int hasinitial;
     char *name;
 };
 
@@ -147,6 +159,9 @@ struct apply_handle {
     int obey_flags;
     int show_flags;
     int print_space;
+    char *space_symbol;
+    char *separator;
+    char *epsilon_symbol;
     int print_pairs;
     int apply_stack_ptr;
     int apply_stack_top; 
@@ -275,6 +290,7 @@ void xprintf(char *string);
 
 /* UTF8 */
 unsigned char *utf8code16tostr(char *str);
+int utf8iscombining(unsigned char *s);
 int utf8skip(char *str);
 int utf8strlen(char *str);
 int ishexstr(char *str);
@@ -282,6 +298,7 @@ void decode_quoted(char *s);
 void dequote_string(char *s);
 char *remove_trailing(char *s, char c);
 char *escape_string(char *string, char chr);
+char *xstrrev(char *str);
 
 /* Flag-related */
 int flag_check(char *sm);

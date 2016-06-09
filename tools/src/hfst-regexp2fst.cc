@@ -123,8 +123,8 @@ print_usage()
 "  echo \" {cat}:{dog}::3 \" | %s    same but with weight 3\n"
 "  echo \" c:d a:o::3 t:g \" | %s    same but with weight 3\n"
 "                                               in the middle\n"
-"  echo \" {cat}:{dog} ; 3 \" | %s   legacy way of defining weights\n"
-"  echo \" cat ; dog ; 3 \" | %s -S  create transducers\n"
+//"  echo \" {cat}:{dog} ; 3 \" | %s   legacy way of defining weights\n"
+"  echo \" cat ; dog ; \"3\" \" | %s -S  create transducers\n"
 "                                               \"cat\" and \"dog\" and \"3\"\n"
                 "\n", program_name, program_name, program_name, program_name, program_name);
         print_report_bugs();
@@ -264,7 +264,8 @@ process_stream(HfstOutputStream& outstream)
   size_t len = 0;
   unsigned int line_count = 0;
   XreCompiler comp(output_format);
-  comp.set_verbosity(verbose, stderr);
+  comp.set_verbosity(verbose);
+  comp.set_error_stream(&std::cerr);
   comp.set_harmonization(harmonize);
   comp.set_flag_harmonization(harmonize_flags);
   HfstTransducer disjunction(output_format);
@@ -272,12 +273,6 @@ process_stream(HfstOutputStream& outstream)
   char delim = (line_separated)? '\n' : ';';  
   char* first_line = 0;
 
-  // todo: Not yet working until we know how weights should be handled, 
-  // For example input 'cat ; 3' is ambiguous 
-  // (regex [cat] with weight 3 or regex [cat] followed by regex [3])
-  // Another problem is that compile_first is not eager enough, so comments
-  // at the end get not parsed until next call which then gives an error
-  // message (for example the line 'cat ; ! a comment').
   if (!line_separated)
     {
       char * filebuf_ = hfst_file_to_mem(inputfilename);
@@ -295,13 +290,14 @@ process_stream(HfstOutputStream& outstream)
                 {
                   if (transducer_n == 1)
                     {
-                      warning(0, 0, "input contains only whitespace or comments");
+                      error(EXIT_FAILURE, 0, "%s: XRE parsing failed: expression #%u "
+                            "contains only whitespace or comments", inputfilename, 
+                            (unsigned int)transducer_n);
                     }
                   break;
                 }
               else
                 {
-                  std::cerr << comp.get_error_message() << std::endl;
                   error(EXIT_FAILURE, 0, "%s: XRE parsing failed"
                         "in expression #%u separated by semicolons", inputfilename,
                         (unsigned int)transducer_n);
@@ -332,10 +328,16 @@ process_stream(HfstOutputStream& outstream)
     }
   else
     {
+      bool input_contains_only_whitespace_or_comments = true;
       while (true)
         {
           if (hfst_getdelim(&line, &len, delim, inputfile) == -1)
             {
+              if (input_contains_only_whitespace_or_comments)
+                {
+                  error(EXIT_FAILURE, 0, "%s: XRE parsing failed:"
+                        " input contains only whitespace or comments", inputfilename);
+                }
               break;
             }
           if (first_line == 0)
@@ -359,41 +361,26 @@ process_stream(HfstOutputStream& outstream)
           compiled = comp.compile(exp);
           if (compiled == NULL)
             {
-              if (comp.contained_only_comments())
+              if (!comp.contained_only_comments())
                 {
-                  if (transducer_n == 1)
-                    {
-                      warning(0, 0, "input contains only whitespace or comments");
-                    }
-                  break;
+                  error_at_line(EXIT_FAILURE, 0, inputfilename, line_count,
+                                "XRE parsing failed");
                 }
-              else {
-              //if (line_separated)
-              //{
-                std::cerr << comp.get_error_message() << std::endl;
-                error_at_line(EXIT_FAILURE, 0, inputfilename, line_count,
-                              "XRE parsing failed");
-              }
-                  //else
-                  //{
-                  //error(EXIT_FAILURE, 0, "%s: XRE parsing failed"
-                  //      "in expression #%u separated semicolons", inputfilename,
-                  //      line_count);
-                  //}
+              continue;
             }
-          if (compiled != NULL)
+          input_contains_only_whitespace_or_comments = false;
+
+          if (disjunct_expressions)
             {
-              if (disjunct_expressions)
-                {
-                  disjunction.disjunct(*compiled, harmonize);
-                }
-              else
-                {
-                  hfst_set_name(*compiled, "?", "xre");
-                  outstream << *compiled;
-                }
-              delete compiled;
+              disjunction.disjunct(*compiled, harmonize);
             }
+          else
+            {
+              hfst_set_name(*compiled, "?", "xre");
+              outstream << *compiled;
+            }
+          delete compiled;
+          
         }
     }
 

@@ -28,6 +28,10 @@
 #include "../HfstTwolcDefs.h"
 #include "../rule_src/OtherSymbolTransducer.h"
 
+#ifdef HAVE_XFSM
+  #define Alphabet TwolCAlphabet
+#endif
+
 class Alphabet
 {
  protected:

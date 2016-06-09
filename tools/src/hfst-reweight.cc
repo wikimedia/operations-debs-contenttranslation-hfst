@@ -72,6 +72,7 @@ char* input_symbol = 0;
 char* output_symbol = 0;
 char* symbol = 0;
 bool ends_only = false;
+bool arcs_only = false;
 char* tsv_file_name = 0;
 FILE* tsv_file = 0;
 
@@ -94,8 +95,9 @@ print_usage()
             "  -u, --upper-bound=UVAL     match weights less than UVAL\n"
             "  -I, --input-symbol=ISYM    match arcs with input symbol ISYM\n"
             "  -O, --output-symbol=OSYM   match arcs with output symbol OSYM\n"
-            "  -S, --symbol=SYM           match arcs havins symbol SYM\n"
+            "  -S, --symbol=SYM           match arcs with input or output symbol SYM or both\n"
             "  -e, --end-states-only      match end states only, no arcs\n"
+            "  -A, --arcs-only            match arcs only, no end states\n"
             "  -T, --tsv-file=TFILE       read reweighting rules from TFILE\n"
             "\n");
     fprintf(message_out, "\n");
@@ -104,20 +106,25 @@ print_usage()
             "elements of addition, multiplication or identity function.\n"
             "If LVAL or UVAL are omitted, they default to minimum and maximum "
             "values of the weight structure.\n"
-            "If ISYM, OSYM or SYM are omitted, they default to value that "
-            "matches all arcs.\n"
-            "Float values are parsed with strtod(3) and integers strtoul(3)\n"
+            "If ISYM, OSYM or SYM are omitted, they default to a value that "
+            "matches all arcs.\nOnly one ISYM, OSYM and SYM can be given.\n\n"
+            "Float values are parsed with strtod(3) and integers strtoul(3).\n"
             "The functions allowed for FNAME are <cmath> float functions with "
             "parameter count of 1 and a matching return value:\n"
-            "abs, acos, asin, ... sqrt, tan, tanh\n"
+            "abs, acos, asin, ... sqrt, tan, tanh\n\n"
             "The precedence of operands follows the formula "
-            "BVAL * FNAME(w) + AVAL\n"
-            "The formula is applied iff\n"
+            "BVAL * FNAME(w) + AVAL.\n"
+            "The formula is applied iff:\n"
             "((LVAL <= w) && (w <= UVAL)),\n"
             "where w is weight of arc, and \n"
             "(ISYM == i) && (OSYM == o) && ((SYM == i) || (SYM == o)) ^^ \n"
-            "(end state && -e).\n"
-            "\n");
+            "(end state && -e).\n\n"
+            "TFILE should contain lines with tab-separated pairs of SYM and "
+            "AVAL or BVAL. AVAL values must be preceded by a + character, "
+            "BVAL should be given as plain digits. "
+            "Comment lines starting with # and empty lines are ignored.\n\n"
+            "Weights are by default modified for all arcs and end states,\n"
+            "unless option --end-states-only or --arcs-only is used.\n");
     fprintf(message_out, "\n");
     print_report_bugs();
     fprintf(message_out, "\n");
@@ -145,14 +152,15 @@ parse_options(int argc, char** argv)
             {"input-symbol", required_argument, 0, 'I'},
             {"output-symbol", required_argument, 0, 'O'},
             {"symbol", required_argument, 0, 'S'},
-            {"end-state-only", required_argument, 0, 'e'},
+            {"end-states-only", no_argument, 0, 'e'},
+            {"arcs-only", no_argument, 0, 'A'},
             {"tsv", required_argument, 0, 'T'},
             {0,0,0,0}
         };
         int option_index = 0;
         // add tool-specific options here 
         char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
-                             HFST_GETOPT_UNARY_SHORT "a:b:F:l:u:I:O:S:eT:",
+                             HFST_GETOPT_UNARY_SHORT "a:b:F:l:u:I:O:S:eT:A",
                              long_options, &option_index);
         if (-1 == c)
         {
@@ -256,12 +264,21 @@ parse_options(int argc, char** argv)
         case 'e':
           ends_only = true;
           break;
+        case 'A':
+          arcs_only = true;
+          break;
         case 'T':
           tsv_file_name = hfst_strdup(optarg);
           break;
 #include "inc/getopt-cases-error.h"
         }
     }
+
+    if (arcs_only && ends_only)
+      {
+        error(EXIT_FAILURE, 0, "Options '--arcs-only' and '--end-states-only' cannot be used at the same time");
+        return EXIT_FAILURE;
+      }
 
 #include "inc/check-params-common.h"
 #include "inc/check-params-unary.h"
@@ -292,7 +309,7 @@ reweight(float w, const char* i, const char* o)
     }
   if ((i == 0) && (o == 0))
     {
-      if (!ends_only)
+      if (arcs_only)
         {
           return w;
         }
@@ -303,10 +320,16 @@ reweight(float w, const char* i, const char* o)
         {
           return w;
         }
-      else if ((symbol != 0) && ((strcmp(i, symbol) != 0) && 
+      if ((symbol != 0) && ((strcmp(i, symbol) != 0) && 
                             (strcmp(o, symbol) != 0) ) )
         {
           // symbol doesn't match, don't apply
+          return w;
+        }
+      if ((input_symbol != 0) && (output_symbol != 0) &&
+          (strcmp(i, input_symbol) != 0) && (strcmp(o, output_symbol) != 0))
+        {
+          // input doesn't match, don't apply
           return w;
         }
       else if ((input_symbol != 0) && (strcmp(i, input_symbol) != 0))
@@ -373,7 +396,7 @@ do_reweight(HfstTransducer& trans)
                                                 arc->get_output_symbol().c_str()));
                 replication.add_transition(rebuilt[source_state], nu);
               }
-        source_state++;
+            source_state++;
           }
         trans = HfstTransducer(replication, trans.get_type());
         return trans;
@@ -409,7 +432,7 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
             free(symbol);
             addition = 0;
             multiplier = 1;
-            char* line;
+            char* line = NULL;
             size_t len = 0;
             size_t linen = 0;
             verbose_printf("Reading reweights from %s\n", tsv_file_name);
@@ -417,6 +440,10 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
               {
                 linen++;
                 if (*line == '\n')
+                  {
+                    continue;
+                  }
+                if (*line == '#')
                   {
                     continue;
                   }
@@ -449,8 +476,11 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
                     multiplier = hfst_strtoweight(weightspec);
                   }
                 free(weightspec);
+                verbose_printf("Modifying weights %f < w < %f as %f * %s(w) + %f for symbol %s\n",
+                   lower_bound, upper_bound, multiplier, funcname, addition, symbol);
                 trans = do_reweight(trans);
               } // getline
+              free(line);
             hfst_set_name(trans, trans, "reweight");
             hfst_set_formula(trans, trans, "W");
           } // if tsv_file
@@ -496,15 +526,19 @@ int main( int argc, char **argv ) {
       }
     if (input_symbol)
       {
-        verbose_printf("only if first symbol is %s\n", input_symbol);
+        verbose_printf("only if input symbol is %s\n", input_symbol);
       }
     if (output_symbol)
       {
-        verbose_printf("only if second symbol is %s\n", output_symbol);
+        verbose_printf("only if output symbol is %s\n", output_symbol);
       }
     if (ends_only)
       {
-        verbose_printf("only on final weights");
+        verbose_printf("only on final weights, no arcs\n");
+      }
+    if (arcs_only)
+      {
+        verbose_printf("only on arc weights, no end states\n");
       }
     // here starts the buffer handling part
     HfstInputStream* instream = NULL;

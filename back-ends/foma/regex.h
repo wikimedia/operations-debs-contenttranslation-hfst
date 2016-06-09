@@ -1,24 +1,21 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 2.5.  */
 
-/* Skeleton interface for Bison's Yacc-like parsers in C
-
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
-
-   This program is free software; you can redistribute it and/or modify
+/* Bison interface for Yacc-like parsers in C
+   
+      Copyright (C) 1984, 1989-1990, 2000-2011 Free Software Foundation, Inc.
+   
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-
+   
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -29,9 +26,10 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-
+   
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
+
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -106,122 +104,47 @@
      ADDSINK = 322,
      LEFTREWR = 323,
      FLATTEN = 324,
-     ARROW = 325,
-     DIRECTION = 326,
-     HIGH_CROSS_PRODUCT = 327,
-     CROSS_PRODUCT = 328,
-     COMPOSE = 329,
-     MINUS = 330,
-     INTERSECT = 331,
-     UNION = 332,
-     COMPLEMENT = 333,
-     INVERSE = 334,
-     REVERSE = 335,
-     KLEENE_PLUS = 336,
-     KLEENE_STAR = 337,
-     TERM_NEGATION = 338
+     SUBLABEL = 325,
+     CLOSESIGMA = 326,
+     CLOSESIGMAUNK = 327,
+     ARROW = 328,
+     DIRECTION = 329,
+     HIGH_CROSS_PRODUCT = 330,
+     CROSS_PRODUCT = 331,
+     COMPOSE = 332,
+     MINUS = 333,
+     INTERSECT = 334,
+     UNION = 335,
+     COMPLEMENT = 336,
+     INVERSE = 337,
+     REVERSE = 338,
+     KLEENE_PLUS = 339,
+     KLEENE_STAR = 340,
+     TERM_NEGATION = 341
    };
 #endif
-/* Tokens.  */
-#define NET 258
-#define END 259
-#define LBRACKET 260
-#define RBRACKET 261
-#define LPAREN 262
-#define RPAREN 263
-#define ENDM 264
-#define ENDD 265
-#define CRESTRICT 266
-#define CONTAINS 267
-#define CONTAINS_OPT_ONE 268
-#define CONTAINS_ONE 269
-#define XUPPER 270
-#define XLOWER 271
-#define FLAG_ELIMINATE 272
-#define IGNORE_ALL 273
-#define IGNORE_INTERNAL 274
-#define CONTEXT 275
-#define NCONCAT 276
-#define MNCONCAT 277
-#define MORENCONCAT 278
-#define LESSNCONCAT 279
-#define DOUBLE_COMMA 280
-#define COMMA 281
-#define SHUFFLE 282
-#define PRECEDES 283
-#define FOLLOWS 284
-#define RIGHT_QUOTIENT 285
-#define LEFT_QUOTIENT 286
-#define INTERLEAVE_QUOTIENT 287
-#define UQUANT 288
-#define EQUANT 289
-#define VAR 290
-#define IN 291
-#define IMPLIES 292
-#define BICOND 293
-#define EQUALS 294
-#define NEQ 295
-#define SUBSTITUTE 296
-#define SUCCESSOR_OF 297
-#define PRIORITY_UNION_U 298
-#define PRIORITY_UNION_L 299
-#define LENIENT_COMPOSE 300
-#define TRIPLE_DOT 301
-#define LDOT 302
-#define RDOT 303
-#define FUNCTION 304
-#define SUBVAL 305
-#define ISUNAMBIGUOUS 306
-#define ISIDENTITY 307
-#define ISFUNCTIONAL 308
-#define NOTID 309
-#define LOWERUNIQ 310
-#define LOWERUNIQEPS 311
-#define ALLFINAL 312
-#define UNAMBIGUOUSPART 313
-#define AMBIGUOUSPART 314
-#define AMBIGUOUSDOMAIN 315
-#define EQSUBSTRINGS 316
-#define LETTERMACHINE 317
-#define MARKFSMTAIL 318
-#define MARKFSMTAILLOOP 319
-#define MARKFSMMIDLOOP 320
-#define MARKFSMLOOP 321
-#define ADDSINK 322
-#define LEFTREWR 323
-#define FLATTEN 324
-#define ARROW 325
-#define DIRECTION 326
-#define HIGH_CROSS_PRODUCT 327
-#define CROSS_PRODUCT 328
-#define COMPOSE 329
-#define MINUS 330
-#define INTERSECT 331
-#define UNION 332
-#define COMPLEMENT 333
-#define INVERSE 334
-#define REVERSE 335
-#define KLEENE_PLUS 336
-#define KLEENE_STAR 337
-#define TERM_NEGATION 338
-
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 188 "regex.y"
 {
+
+/* Line 2068 of yacc.c  */
+#line 186 "regex.y"
+
      char *string;
      struct fsm *net;
      int  type;
-}
-/* Line 1529 of yacc.c.  */
-#line 221 "regex.h"
-        YYSTYPE;
+
+
+
+/* Line 2068 of yacc.c  */
+#line 144 "regex.h"
+} YYSTYPE;
+# define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 
@@ -238,5 +161,6 @@ typedef struct YYLTYPE
 # define YYLTYPE_IS_DECLARED 1
 # define YYLTYPE_IS_TRIVIAL 1
 #endif
+
 
 

@@ -59,13 +59,17 @@ struct T_memo {
     unsigned int set_offset;
 };
 
-struct trans_list {
+// HFST MODIFICATIONS: struct trans_list -> struct trans_list_struct
+//                     struct trans_array -> struct trans_list_array
+// because some compilers complain about struct and variable having the same name
+
+static struct trans_list_struct {
     int inout;
     int target;
 } *trans_list;
 
-struct trans_array {
-    struct trans_list *transitions;
+static struct trans_array_struct {
+    struct trans_list_struct *transitions;
     unsigned int size;
     unsigned int tail;
 } *trans_array;
@@ -79,8 +83,8 @@ static struct nhash_list *table;
 extern int add_fsm_arc(struct fsm_state *fsm, int offset, int state_no, int in, int out, int target, int final_state, int start_state);
 
 static void init(struct fsm *net);
-inline static int e_closure(int states);
-inline static int set_lookup(int *lookup_table, int size);
+INLINE static int e_closure(int states);
+INLINE static int set_lookup(int *lookup_table, int size);
 static int initial_e_closure(struct fsm *network);
 static void memoize_e_closure(struct fsm_state *fsm);
 static int next_unmarked(void);
@@ -88,7 +92,7 @@ static void single_symbol_to_symbol_pair(int symbol, int *symbol_in, int *symbol
 static int symbol_pair_to_single_symbol(int in, int out);
 static void sigma_to_pairs(struct fsm *net);
 static int nhash_find_insert(int *set, int setsize);
-inline static int hashf(int *set, int setsize);
+INLINE static int hashf(int *set, int setsize);
 static int nhash_insert(int hashval, int *set, int setsize);
 static void nhash_rebuild_table ();
 static void nhash_init (int initial_size);
@@ -161,7 +165,7 @@ int fsm_isstarfree(struct fsm *net) {
 
 static struct fsm *fsm_subset(struct fsm *net, int operation) {
 
-    int T, U, tflag;
+    int T, U;
     
     if (net->is_deterministic == YES && operation != SUBSET_TEST_STAR_FREE) {
         return(net);
@@ -174,7 +178,6 @@ static struct fsm *fsm_subset(struct fsm *net, int operation) {
     init(net);
     nhash_init((num_states < 12) ? 6 : num_states/2);
     
-    tflag = 0;
     T = initial_e_closure(net);
 
     int_stack_clear();
@@ -222,8 +225,8 @@ static struct fsm *fsm_subset(struct fsm *net, int operation) {
 
     do {
         int i, j, tail, setsize, *theset, stateno, has_trans, minsym, next_minsym, trgt, symbol_in, symbol_out;
-        struct trans_list *transitions;
-        struct trans_array *tptr;
+        struct trans_list_struct *transitions;
+        struct trans_array_struct *tptr;
 
         fsm_state_set_current_state(T, (T_ptr+T)->finalstart, T == 0 ? 1 : 0);
         
@@ -377,16 +380,16 @@ static void init(struct fsm *net) {
 }
 
 static int trans_sort_cmp(const void *a, const void *b) {
-  return (((const struct trans_list *)a)->inout - ((const struct trans_list *)b)->inout);
+  return (((const struct trans_list_struct *)a)->inout - ((const struct trans_list_struct *)b)->inout);
 }
 
 static void init_trans_array(struct fsm *net) {
-    struct trans_list *arrptr;
+    struct trans_list_struct *arrptr;
     struct fsm_state *fsm;
     int i, j, laststate, lastsym, inout, size, state;
 
-    arrptr = trans_list = xxmalloc(net->linecount * sizeof(struct trans_list));
-    trans_array = xxcalloc(net->statecount, sizeof(struct trans_array));
+    arrptr = trans_list = xxmalloc(net->linecount * sizeof(struct trans_list_struct));
+    trans_array = xxcalloc(net->statecount, sizeof(struct trans_array_struct));
     
     laststate = -1;
     fsm = net->states;
@@ -422,7 +425,7 @@ static void init_trans_array(struct fsm *net) {
         arrptr = (trans_array+i)->transitions;
         size = (trans_array+i)->size;
         if (size > 1) {
-            qsort(arrptr, size, sizeof(struct trans_list), trans_sort_cmp);
+            qsort(arrptr, size, sizeof(struct trans_list_struct), trans_sort_cmp);
             lastsym = -1;
             /* Figure out if we're already deterministic */
             for (j=0; j < size; j++) {
@@ -434,7 +437,7 @@ static void init_trans_array(struct fsm *net) {
     }
 }
 
-inline static int e_closure(int states) {
+INLINE static int e_closure(int states) {
 
     int i, set_size;
     struct e_closure_memo *ptr;
@@ -493,7 +496,7 @@ inline static int e_closure(int states) {
     return(set_lookup(temp_move, set_size));
 }
 
-inline static int set_lookup (int *lookup_table, int size) {
+INLINE static int set_lookup (int *lookup_table, int size) {
 
   /* Look up a set and its corresponding state number */
   /* if it doesn't exist from before, assign a state number */
@@ -685,7 +688,7 @@ static void sigma_to_pairs(struct fsm *net) {
       *(single_sigma_array+next_x) = z;
       next_x++;
       if (y == EPSILON && z == EPSILON) {
-        epsilon_symbol = x;
+	epsilon_symbol = x;
       }
       x++;
     }
@@ -742,7 +745,7 @@ static int nhash_find_insert(int *set, int setsize) {
     }
 }
 
-inline static int hashf(int *set, int setsize) {
+INLINE static int hashf(int *set, int setsize) {
   int i;
   unsigned int hashval, sum = 0;
   hashval = 6703271;

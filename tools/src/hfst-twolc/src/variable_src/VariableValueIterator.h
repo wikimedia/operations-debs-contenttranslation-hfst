@@ -55,7 +55,7 @@ template <class IT> class VariableValueIterator
   //! @brief Assign @a another.
   VariableValueIterator &operator=(const VariableValueIterator<IT> &another)
   {
-    if (not (this == &another))
+    if (! (this == &another))
       {
     variable = another.variable;
     it = another.it;
@@ -65,11 +65,11 @@ template <class IT> class VariableValueIterator
 
   //! @brief Test equality with another.
   bool operator==(const VariableValueIterator<IT> &another) const
-  { return variable == another.variable and it == another.it; }
+  { return variable == another.variable && it == another.it; }
 
   //! @brief Test unequality with another.
   bool operator!=(const VariableValueIterator<IT> &another) const
-  { return not (*this == another); }
+  { return ! (*this == another); }
 
   //! Increment.
   void operator++(void)

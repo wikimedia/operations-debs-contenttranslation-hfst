@@ -1,3 +1,12 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 /**
  * @file xre.cc
  *
@@ -11,12 +20,13 @@
 #include "xre_utils.h"
 #include "HfstTransducer.h"
 #include "HfstXeroxRules.h"
+#include "XreCompiler.h"
 
 using std::string;
 using std::map;
 using std::ostringstream;
 
-class yy_buffer_state;
+struct yy_buffer_state;
 typedef yy_buffer_state * YY_BUFFER_STATE;
 typedef void * yyscan_t;
 extern int xreparse(yyscan_t);
@@ -30,9 +40,20 @@ namespace hfst {
   namespace xre {
     extern unsigned int cr; // number of characters read, defined in XreCompiler.cc
     bool allow_extra_text_at_end = false;
-    extern std::string error_message;
+    extern std::ostream * error_;
+    extern bool verbose_;
   }
 }
+
+std::ostream * xreerrstr()
+{
+  return hfst::xre::XreCompiler::get_stream(hfst::xre::error_);
+}
+
+void xreflush(std::ostream * os)
+{
+  hfst::xre::XreCompiler::flush(os);
+} 
 
 int xreerror(yyscan_t scanner, const char* msg)
 { 
@@ -50,8 +71,13 @@ int xreerror(yyscan_t scanner, const char* msg)
                   hfst::xre::data, xreget_text(scanner));
     }
 
-  buffer[1023] == '\0';
-  hfst::xre::error_message = std::string(buffer);
+  buffer[1023] = '\0';
+  if (hfst::xre::verbose_)
+    {
+      std::ostream * err = xreerrstr();
+      *(err) << std::string(buffer);
+      xreflush(err);
+    }
   return 0;
 }
 
@@ -60,8 +86,10 @@ xreerror(const char *msg)
 {
   char buffer [1024];
   int n = sprintf(buffer, "*** xre parsing failed: %s\n", msg);
-  buffer[1023] == '\0';
-  hfst::xre::error_message = std::string(buffer);
+  buffer[1023] = '\0';
+  std::ostream * err = xreerrstr();
+  *err << std::string(buffer);
+  xreflush(err);
   return 0;
 }
 
@@ -70,11 +98,12 @@ namespace hfst
 namespace xre 
 {
 
-char* data;
-std::map<std::string,hfst::HfstTransducer*> definitions;
+  char* data;
+  std::map<std::string,hfst::HfstTransducer*> definitions;
   std::map<std::string,std::string>  function_definitions;
   std::map<std::string,unsigned int> function_arguments;
-char* startptr;
+  std::map<std::string,std::set<string> > symbol_lists;
+  char* startptr; // changed this to an internal variable in compile functions
 hfst::HfstTransducer* last_compiled;
 bool contains_only_comments = false;
 hfst::ImplementationType format;
@@ -83,8 +112,7 @@ size_t len;
   bool expand_definitions=false;
   bool harmonize_=true;
   bool harmonize_flags_=false;
-  bool verbose_=false;
-  FILE * warning_stream=NULL;
+  //bool verbose_=false;
 
   std::string substitution_function_symbol;
 
@@ -259,6 +287,8 @@ get_quoted(const char *s)
 char*
 parse_quoted(const char *s)
 {
+  std::ostream * err = xreerrstr();
+
     char* quoted = get_quoted(s);
     char* rv = static_cast<char*>(malloc(sizeof(char)*strlen(quoted) + 1)); // added + 1
     char* p = quoted;
@@ -283,8 +313,8 @@ parse_quoted(const char *s)
               case '5':
               case '6':
               case '7':
-                fprintf(stderr, "*** XRE unimplemented: "
-                        "parse octal escape in %s", p);
+                *err << "*** XRE unimplemented: parse octal escape in " << std::string(p);
+                xreflush(err);
                 *r = '\0';
                 p = p + 5;
                 break;
@@ -319,7 +349,8 @@ parse_quoted(const char *s)
                 p = p + 2;
                 break;
               case 'u':
-                fprintf(stderr, "Unimplemented: parse unicode escapes in %s", p);
+                *err << "Unimplemented: parse unicode escapes in " << std::string(p);
+                xreflush(err);
                 *r = '\0';
                 r++;
                 p = p + 6;
@@ -339,8 +370,10 @@ parse_quoted(const char *s)
                       }
                     else
                       {
-                        fprintf(stderr, "*** XRE unimplemented: "
-                                "parse \\x%d\n", i);
+                        *err << "*** XRE unimplemented: parse \\x" << i << std::endl;
+                        xreflush(err);
+                        //fprintf(stderr, "*** XRE unimplemented: "
+                        //        "parse \\x%d\n", i);
                         *r = '\0';
                       }
                     r++;
@@ -349,7 +382,9 @@ parse_quoted(const char *s)
                    break;
                 }
               case '\0':
-                fprintf(stderr, "End of line after \\ escape\n");
+                *err << "End of line after \\ escape" << std::endl;
+                xreflush(err);
+                //fprintf(stderr, "End of line after \\ escape\n");
                 *r = '\0';
                 r++;
                 p++;
@@ -438,29 +473,32 @@ HfstTransducer*
 compile(const string& xre, map<string,HfstTransducer*>& defs,
         map<string, string>& func_defs,
         map<string, unsigned int > func_args,
+        map<string, std::set<string> >& lists,
         ImplementationType impl)
 {
     // lock here?
     data = strdup(xre.c_str());
-    startptr = data;
+    // use an internal variable startptr_ instead of global startptr
+    char * startptr_ = data;
     len = strlen(data);
     definitions = defs;
     function_definitions = func_defs;
     function_arguments = func_args;
+    symbol_lists = lists;
     format = impl;
 
     contains_only_comments = false;
 
     yyscan_t scanner;
     xrelex_init(&scanner);
-    YY_BUFFER_STATE bs = xre_scan_string(startptr,scanner);
+    YY_BUFFER_STATE bs = xre_scan_string(startptr_,scanner);
     
     int parse_retval = xreparse(scanner);
 
     xre_delete_buffer(bs,scanner);
     xrelex_destroy(scanner);
 
-    free(startptr);
+    free(startptr_);
     data = 0;
     len = 0;
     if (parse_retval == 0 && !contains_only_comments) // if (yynerrs == 0)
@@ -480,23 +518,26 @@ HfstTransducer*
 compile_first(const string& xre, map<string,HfstTransducer*>& defs,
               map<string, string>& func_defs,
               map<string, unsigned int > func_args,
+              map<string, std::set<string> >& lists,
               ImplementationType impl,
               unsigned int & chars_read)
 {
     // lock here?
     data = strdup(xre.c_str());
-    startptr = data;
+    // use an internal variable startptr_ instead of global startptr
+    char * startptr_ = data;
     len = strlen(data);
     definitions = defs;
     function_definitions = func_defs;
     function_arguments = func_args;
+    symbol_lists = lists;
     format = impl;
 
     contains_only_comments = false;
 
     yyscan_t scanner;
     xrelex_init(&scanner);
-    YY_BUFFER_STATE bs = xre_scan_string(startptr,scanner);
+    YY_BUFFER_STATE bs = xre_scan_string(startptr_,scanner);
 
     bool tmp = hfst::xre::allow_extra_text_at_end;
     hfst::xre::allow_extra_text_at_end = true;
@@ -509,7 +550,8 @@ compile_first(const string& xre, map<string,HfstTransducer*>& defs,
     xre_delete_buffer(bs,scanner);
     xrelex_destroy(scanner);
 
-    free(startptr);
+    free(startptr_);
+
     data = 0;
     len = 0;
     if (parse_retval == 0 && !contains_only_comments) // if (yynerrs == 0)
@@ -535,7 +577,10 @@ bool is_valid_function_call
   if (name2xre == function_definitions.end() || 
       name2args == function_arguments.end())
     {
-      fprintf(stderr, "No such function defined: '%s'\n", name);
+      std::ostream * err = xreerrstr();
+      *err << "No such function defined: '" << name << "'" << std::endl;
+      xreflush(err);
+      //fprintf(stderr, "No such function defined: '%s'\n", name);
       return false;
     }
 
@@ -543,8 +588,12 @@ bool is_valid_function_call
 
   if ( number_of_args != args->size())
     {
-      fprintf(stderr, "Wrong number of arguments: function '%s' expects %i, %i given\n", 
-              name, (int)number_of_args, (int)args->size());
+      std::ostream * err = xreerrstr();
+      *err << "Wrong number of arguments: function '" << name << "' expects " 
+                           << (int)number_of_args << ", " << (int)args->size() << " given" << std::endl;
+      xreflush(err);
+        //fprintf(stderr, "Wrong number of arguments: function '%s' expects %i, %i given\n", 
+        //       name, (int)number_of_args, (int)args->size());
       return false;
     }
 
@@ -562,12 +611,11 @@ const char * get_function_xre(const char * name)
   return it->second.c_str();
 }
 
-void define_function_args(const char * name, const std::vector<HfstTransducer> * args)
+bool define_function_args(const char * name, const std::vector<HfstTransducer> * args)
 {
   if (! is_valid_function_call(name, args))
     {
-      fprintf(stderr, "Could not define function args\n");
-      exit(1);
+      return false;
     }
   unsigned int arg_number = 1;
   for (std::vector<HfstTransducer>::const_iterator it = args->begin();
@@ -581,6 +629,7 @@ void define_function_args(const char * name, const std::vector<HfstTransducer> *
       //std::cerr << *it << std::endl;
       arg_number++;
     }
+  return true;
 }
 
 void undefine_function_args(const char * name)
@@ -725,30 +774,49 @@ xfst_label_to_transducer(const char* input, const char* output)
 {
   HfstTransducer * retval = NULL;
 
-  // non-matching definitions
-  if ( (is_definition(input) || is_definition(output)) && 
-       strcmp(input, output) != 0 )
+  bool input_is_definition = is_definition(input);
+  bool output_is_definition = is_definition(output);
+  bool input_is_unknown = (strcmp(input, hfst::internal_unknown.c_str()) == 0);
+  bool output_is_unknown = (strcmp(output, hfst::internal_unknown.c_str()) == 0);
+
+  // definitions -> use cross-product
+  if (input_is_definition || output_is_definition)
     {
-      // TODO, FIX:
-      //char msg[256];
-      //sprintf(msg, "invalid use of definitions in label %s:%s", 
-      //        get_print_format(input), get_print_format(output));
-      //yyerror(msg);
+      HfstTransducer * tmp = NULL; // temporary transducer for cross-product calculation
+      if (input_is_unknown)
+        {
+          retval = new HfstTransducer(hfst::internal_identity, hfst::xre::format);
+          tmp = expand_definition(output);
+        }
+      else if (output_is_unknown)
+        {
+          tmp = new HfstTransducer(hfst::internal_identity, hfst::xre::format);
+          retval = expand_definition(input);
+        }
+      else // neither is unknown
+        {
+          retval = expand_definition(input);
+          tmp = expand_definition(output);
+        }
+      retval->cross_product(*tmp);
+      delete tmp;
+      return retval;
     }
-  if  (strcmp(input, hfst::internal_unknown.c_str()) == 0 && 
-       strcmp(output, hfst::internal_unknown.c_str()) == 0)
+
+  // no definitions
+  if  (input_is_unknown && output_is_unknown)
     {
       retval = new HfstTransducer(hfst::internal_unknown, hfst::internal_unknown, hfst::xre::format);
       HfstTransducer id(hfst::internal_identity, hfst::internal_identity, hfst::xre::format);
       retval->disjunct(id).minimize();
     }
-  else if (strcmp(input, hfst::internal_unknown.c_str()) == 0)
+  else if (input_is_unknown)
     {
       retval = new HfstTransducer(hfst::internal_unknown, output, hfst::xre::format);
       HfstTransducer output_tr(output, output, hfst::xre::format);
       retval->disjunct(output_tr).minimize();
     }
-  else if (strcmp(output, hfst::internal_unknown.c_str()) == 0)
+  else if (output_is_unknown)
     {
       retval = new HfstTransducer(input, hfst::internal_unknown, hfst::xre::format);
       HfstTransducer input_tr(input, input, hfst::xre::format);
@@ -758,10 +826,6 @@ xfst_label_to_transducer(const char* input, const char* output)
     {
       retval = new HfstTransducer(input, output, hfst::xre::format);
     }
-
-  if (is_definition(input))
-    retval = expand_definition(input); // changed
-
   return retval;
 }
 
@@ -914,19 +978,31 @@ xfst_label_to_transducer(const char* input, const char* output)
     return retval;
   }
 
+  HfstTransducer * merge_first_to_second(HfstTransducer * tr1, HfstTransducer * tr2)
+  {
+    // Merge operation creates an XreCompiler that needs this information below. Otherwise, it will overwrite all this.
+    struct XreConstructorArguments args(hfst::xre::definitions, hfst::xre::function_definitions, hfst::xre::function_arguments, hfst::xre::symbol_lists, hfst::xre::format);
+
+    tr1->minimize();
+    tr2->merge(*tr1, args);
+    return tr2;
+  }
+
   void warn(const char * msg)
   {
     if (!verbose_)
       return;
     
-    fprintf(warning_stream, "%s", msg);
+    std::ostream * err = xreerrstr();
+    *err << msg;
+    xreflush(err);
   }
 
 void warn_about_xfst_special_symbol(const char * symbol)
 {
   if (strcmp("all", symbol) == 0) {
     if (verbose_) {
-      fprintf(warning_stream, "warning: symbol 'all' has no special meaning in hfst\n"); }
+      warn("warning: symbol 'all' has no special meaning in hfst\n"); }
     return;
   }
 
@@ -943,7 +1019,9 @@ void warn_about_xfst_special_symbol(const char * symbol)
     return;
   if (!verbose_)
     return;
-  fprintf(warning_stream, "warning: '%s' is an ordinary symbol in hfst\n", symbol);
+  std::ostream * err = xreerrstr();
+  *err << "warning: '" << symbol << " ' is an ordinary symbol in hfst" << std::endl;
+  xreflush(err);
 }
 
 void warn_about_hfst_special_symbol(const char * symbol)
@@ -964,13 +1042,20 @@ void warn_about_hfst_special_symbol(const char * symbol)
     return;
   if (!verbose_)
     return;
-  fprintf(warning_stream, "warning: '%s' is not an ordinary symbol in hfst\n", symbol);
+  if (hfst::xre::verbose_)
+    {
+      std::ostream * err = xreerrstr();
+      *err << "warning: '" << symbol << "' is not an ordinary symbol in hfst" << std::endl;
+      xreflush(err);
+    }
 }
 
 void warn_about_special_symbols_in_replace(HfstTransducer * t)
 {
   if (!verbose_)
     return;
+
+  std::ostream * err = xreerrstr();  
 
   StringSet alphabet = t->get_alphabet();
   for (StringSet::const_iterator it = alphabet.begin(); 
@@ -980,11 +1065,11 @@ void warn_about_special_symbols_in_replace(HfstTransducer * t)
           *it != hfst::internal_epsilon &&
           *it != hfst::internal_unknown &&
           *it != hfst::internal_identity)
-        {         
-          fprintf(warning_stream, "warning: using special symbol '%s' in replace rule, "
-                  "use substitute instead\n", it->c_str());
+        {  
+          *err << "warning: using special symbol '" << *it << "' in replace rule, use substitute instead" << std::endl;
         }
     }
+  xreflush(err);
 }
 
 bool has_non_identity_pairs(const HfstTransducer * t)

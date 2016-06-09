@@ -19,9 +19,9 @@ LEXCTESTS="basic.cat-dog-bird.lexc basic.colons.lexc basic.comments.lexc
           xre.definitions.lexc xre.months.lexc xre.nested-definitions.lexc 
           xre.numeric-star.lexc xre.sharp.lexc xre.quotations.lexc
           xre.star-plus-optional.lexc
-          xre.any-variations.lexc
-          no-newline-before-sublexicon.lexc"
+          no-newline-before-sublexicon.lexc xre.any-variations.lexc"
 
+          # xre.any-variations.lexc # - hfst works file, foma's eliminate_flags removes valid paths (hfst-compare -e)
           # basic.end.lexc -hfst doesn't parse till end
           # xre.any-variations.lexc -foma ?:? problem
           # basic.multichar-symbol-with-0.lexc  - hfst works fine, foma wrong
@@ -30,9 +30,9 @@ LEXCTESTS="basic.cat-dog-bird.lexc basic.colons.lexc basic.comments.lexc
           
                     
           
-LEXCXFAIL="xfail.bogus.lexc xfail.ISO-8859-1.lexc xfail.lexicon-semicolon.lexc"
+LEXCXFAIL="xfail.bogus.lexc xfail.ISO-8859-1.lexc xfail.lexicon-semicolon.lexc xfail.sublexicon-defined-more-than-once.lexc"
 
-LEXCWARN="warn.sublexicon-mentioned-but-not-defined.lexc"
+LEXCWARN="warn.sublexicon-mentioned-but-not-defined.lexc warn.one-sided-flags.lexc"
 
 if test "$srcdir" = ""; then
     srcdir="./"
@@ -123,7 +123,7 @@ for i in .sfst .ofst .foma ; do
            
          #echo "comparing flag file: $f"
          if ! $TOOLDIR/hfst-compare -e -s $RESULT.tmp test ; then
-             echo "results differ: $f"
+             echo "flag results differ: $f: "$RESULT".tmp != test"
              exit 1
          fi
         rm $RESULT.tmp

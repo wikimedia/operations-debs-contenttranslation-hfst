@@ -30,3 +30,12 @@ if ((test -z "$i") || $TOOLDIR/hfst-format --list-formats | grep $i > /dev/null)
     fi
 fi
 done
+
+$TOOLDIR/hfst-txt2fst -C -f openfst-tropical -i negative_epsilon_cycles.txt > /dev/null 2> test;
+if ! test `grep 'warning' test | wc -l` = '2'; then
+    exit 1
+fi
+$TOOLDIR/hfst-txt2fst -C -f openfst-tropical -i no_negative_epsilon_cycles.txt > /dev/null 2> test;
+if ! test `grep 'warning' test | wc -l` = '0'; then
+    exit 1
+fi

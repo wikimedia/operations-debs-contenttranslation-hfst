@@ -1,0 +1,109 @@
+ambiguous upper
+apply down
+apply down
+apply med
+apply med
+apply up
+apply up
+apropos
+clear stack
+compact sigma
+complete net
+compose net
+concatenate
+crossproduct net
+define
+define
+determinize net
+echo
+eliminate flag
+eliminate flags
+export cmatrix
+extract ambiguous
+extract unambiguous
+help license
+help warranty
+ignore net
+intersect net
+invert net
+label net
+letter machine
+load defined
+load stack
+lower-side net
+minimize net
+name net
+negate net
+one-plus net
+pop stack
+print cmatrix
+print defined
+print dot
+print lower-words
+print name
+print net
+print random-lower
+print random-upper
+print random-words
+print shortest-string
+print shortest-string-size
+print sigma
+print size
+prune net
+push (defined)
+quit
+quit-on-fail
+read att
+read cmatrix
+read lexc 
+read prolog
+read spaced-text 
+read text 
+regex
+reverse net
+rotate stack
+save defined 
+save stack 
+set  <ON|OFF>
+show variables
+shuffle net
+sigma net
+sort in
+sort net
+sort out
+source 
+substitute defined X for Y
+substitute symbol X for Y
+system 
+test equivalent
+test functional
+test identity
+test lower-universal
+test non-null
+test null
+test sequential
+test star-free
+test unambiguous
+test upper-universal
+turn stack
+twosided flag-diacritics
+undefine 
+union net
+upper-side net
+variable att-epsilon
+variable compose-tristate
+variable hopcroft-min
+variable med-cutoff
+variable med-limit
+variable minimal
+variable obey-flags
+variable print-pairs
+variable print-sigma
+variable print-space
+variable recursive-define
+variable show-flags
+variable verbose
+view net
+write att
+write prolog
+zero-plus net

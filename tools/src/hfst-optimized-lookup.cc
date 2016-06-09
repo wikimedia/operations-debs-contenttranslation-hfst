@@ -24,6 +24,23 @@
  */
 
 #include "hfst-optimized-lookup.h"
+#include "inc/globals-common.h"  // some cc files include extern declarations for these variables...
+
+//#ifdef _MSC_VER
+//#  include <windows.h>
+//#endif 
+
+#ifdef _MSC_VER
+#  include "hfst-string-conversions.h"
+using hfst::hfst_fprintf_console;
+#endif
+
+#include <cstdarg>
+#include <iostream> // DEBUG
+
+static float beam=-1;
+static bool pipe_input = false;
+static bool pipe_output = false;
 
 bool print_usage(void)
 {
@@ -31,6 +48,9 @@ bool print_usage(void)
     "\n" <<
     "Usage: " << PACKAGE_NAME << " [OPTIONS] TRANSDUCER\n" <<
     "Run a transducer on standard input (one word per line) and print analyses\n" <<
+    "NOTE: hfst-optimized-lookup does lookup from left to right as opposed to xfst\n" <<
+    "      and foma lookup which is carried out from right to left. In order to do\n" <<
+    "      lookup in a similar way as xfst and foma, invert the transducer first.\n" <<
     "\n" <<
     "  -h, --help                  Print this help message\n" <<
     "  -V, --version               Print version information\n" <<
@@ -43,15 +63,29 @@ bool print_usage(void)
     "  -u, --unique                Suppress duplicate analyses\n" <<
     "  -n N, --analyses=N          Output no more than N analyses\n" <<
     "                              (if the transducer is weighted, the N best analyses)\n" <<
+    "  -b, --beam=B                Output only analyses whose weight is within B from\n" <<
+    "                              the best analysis\n" <<
+    "  -t, --time-cutoff=S         Limit search after having used S seconds per input\n"
     "  -x, --xerox                 Xerox output format (default)\n" <<
     "  -f, --fast                  Be as fast as possible.\n" <<
     "                              (with this option enabled -u and -n don't work and\n" <<
     "                              output won't be ordered by weight).\n" <<
+    "  -p, --pipe-mode[=STREAM]    Control input and output streams.\n" <<
     "\n" <<
-    "Note that " << PACKAGE_NAME << " is *not* guaranteed to behave identically to\n" <<
-    "hfst-lookup (although it almost always does): input-side multicharacter symbols\n" <<
-    "are not fully supported. If the first character of such a symbol is an ASCII\n" <<
-    "symbol also matching a single-character symbol, it will be tokenized as such.\n" <<
+    "N must be a positive integer. B must be a non-negative float.\n" <<
+    "S must be a non-negative float. The default, 0.0, indicates no cutoff.\n"
+    "Options -n and -b are combined with AND, i.e. they both restrict the output.\n" <<
+    "\n" << 
+    "STREAM can be { input, output, both }. If not given, defaults to {both}.\n" <<
+#ifdef _MSC_VER
+    "Input is read interactively via the console, i.e. line by line from the user.\n" <<
+    "If you redirect input from a file, use --pipe-mode=input. Output is by default\n" << 
+    "printed to the console. If you redirect output to a file, use --pipe-mode=output.\n" <<
+#else
+    "Input is read interactively line by line from the user. If you redirect input\n" << 
+    "from a file, use --pipe-mode=input. --pipe-mode=output is ignored on non-windows\n" <<
+    "platforms.\n" <<
+#endif
     "\n" <<
     "Report bugs to " << PACKAGE_BUGREPORT << "\n" <<
     "\n";
@@ -76,8 +110,9 @@ bool print_short_help(void)
 
 int main(int argc, char **argv)
 {
+
   int c;
-  
+ 
   while (true)
     {
       static struct option long_options[] =
@@ -91,15 +126,18 @@ int main(int argc, char **argv)
           // the hfst-optimized-lookup-specific options
           {"echo-inputs",  no_argument,       0, 'e'},
           {"show-weights", no_argument,       0, 'w'},
+          {"beam",         required_argument, 0, 'b'},
+          {"time-cutoff",  required_argument, 0, 't'},
           {"unique",       no_argument,       0, 'u'},
           {"xerox",        no_argument,       0, 'x'},
           {"fast",         no_argument,       0, 'f'},
+          {"pipe-mode",    optional_argument,       0, 'p'},
           {"analyses",     required_argument, 0, 'n'},
           {0,              0,                 0,  0 }
         };
       
       int option_index = 0;
-      c = getopt_long(argc, argv, "hVvqsewuxfn:", long_options, &option_index);
+      c = getopt_long(argc, argv, "hVvqsewb:t:uxfn:p::", long_options, &option_index);
 
       if (c == -1) // no more options to look at
         break;
@@ -153,6 +191,22 @@ int main(int argc, char **argv)
           displayUniqueFlag = true;
           break;
           
+        case 'b':
+          beam = atof(optarg);
+          if (beam < 0)
+            {
+              std::cerr << "Invalid argument for --beam\n";
+              return EXIT_FAILURE;
+            }
+          break;
+        case 't':
+            time_cutoff = atof(optarg);
+            if (time_cutoff < 0.0)
+            {
+                std::cerr << "Invalid argument for --time-cutoff\n";
+                return EXIT_FAILURE;
+            }
+            break;
         case 'n':
           maxAnalyses = atoi(optarg);
           if (maxAnalyses < 1)
@@ -169,6 +223,22 @@ int main(int argc, char **argv)
         case 'f':
           beFast = true;
           break;
+
+        case 'p':
+          if (optarg == NULL)
+            { pipe_input = true; pipe_output = true; }
+          else if (strcmp(optarg, "both") == 0 || strcmp(optarg, "BOTH") == 0)
+            { pipe_input = true; pipe_output = true; }
+          else if (strcmp(optarg, "input") == 0 || strcmp(optarg, "INPUT") == 0 ||
+                   strcmp(optarg, "in") == 0 || strcmp(optarg, "IN") == 0)
+            { pipe_input = true; }
+          else if (strcmp(optarg, "output") == 0 || strcmp(optarg, "OUTPUT") == 0 ||
+                   strcmp(optarg, "out") == 0 || strcmp(optarg, "OUT") == 0)
+            { pipe_output = true; }
+          else
+            { std::cerr << "--pipe-mode argument " << std::string(optarg) << " unrecognised\n\n"; 
+              return EXIT_FAILURE; }
+          break;
           
         default:
           std::cerr << "Invalid option\n\n";
@@ -177,6 +247,11 @@ int main(int argc, char **argv)
           break;
         }
     }
+
+#ifdef _MSC_VER
+  //hfst::print_output_to_console(!pipe_output); // has no effect on windows or mac
+#endif
+
   // no more options, we should now be at the input filename
   if ( (optind + 1) < argc)
     {
@@ -325,6 +400,11 @@ void LetterTrie::add_string(const char * p, SymbolNumber symbol_key)
   letters[(unsigned char)(*p)]->add_string(p+1,symbol_key);
 }
 
+bool LetterTrie::has_key_starting_with(const char c) const
+{
+    return letters[(unsigned char) c] != NULL;
+}
+
 SymbolNumber LetterTrie::find_key(char ** p)
 {
   const char * old_p = *p;
@@ -350,10 +430,18 @@ void Encoder::read_input_symbols(KeyTable * kt)
       assert(kt->find(k) != kt->end());
 #endif
       const char * p = kt->operator[](k);
-      if ((strlen(p) == 1) && (unsigned char)(*p) <= 127)
-        {
+      if ((strlen(p) == 1) && (unsigned char)(*p) <= 127
+          // we have a single char ascii symbol
+          && !letters.has_key_starting_with(*p)) {
+          // make sure there isn't a longer symbol we would be shadowing
           ascii_symbols[(unsigned char)(*p)] = k;
-        }
+      }
+      // If there's an ascii tokenized symbol shadowing this, remove it
+      if (strlen(p) > 1 && 
+          (unsigned char)(*p) <= 127 && 
+          ascii_symbols[(unsigned char)(*p)] != NO_SYMBOL_NUMBER) {
+          ascii_symbols[(unsigned char)(*p)] = NO_SYMBOL_NUMBER;
+      }
       letters.add_string(p,k);
     }
 }
@@ -377,21 +465,38 @@ void runTransducer (genericTransducer T)
     {
       input_string[i] = NO_SYMBOL_NUMBER;
     }
-  
+
   char * str = (char*)(malloc(MAX_IO_STRING*sizeof(char)));  
   *str = 0;
   char * old_str = str;
 
-  while(std::cin.getline(str,MAX_IO_STRING))
+  while(true)
     {
-      // Carriage returns in Windows..
-      unsigned int last_char_index = (unsigned int) (std::cin.gcount() > 2)? (std::cin.gcount()) - 2: 0;
-      if (str[last_char_index] == '\r')
-        str[last_char_index] = '\0';
-
+#ifdef WINDOWS
+      if (!pipe_input)
+        {
+          free(str);
+          std::string linestr("");
+          if (! hfst::get_line_from_console(linestr, MAX_IO_STRING*sizeof(char)))
+            break;
+          str = strdup(linestr.c_str());
+          old_str = str;     
+        }
+      else
+#endif
+        {
+          if (! std::cin.getline(str,MAX_IO_STRING))
+            break;
+        }
+                        
       if (echoInputsFlag)
         {
-          std::cout << str << std::endl;
+#ifdef WINDOWS
+          if (!pipe_output)
+            hfst_fprintf_console(stdout, "%s\n", str); // fix: add \r?
+          else
+#endif
+            std::cout << str << std::endl;
         }
       int i = 0;
       SymbolNumber k = NO_SYMBOL_NUMBER;
@@ -414,20 +519,36 @@ void runTransducer (genericTransducer T)
           input_string[i] = k;
           ++i;
         }
-
       str = old_str;
       if (failed)
         { // tokenization failed
           if (outputType == xerox)
             {
-              std::cout << str << "\t+?" << std::endl;
-              std::cout << std::endl;
+#ifdef WINDOWS
+          if (!pipe_output)
+              hfst_fprintf_console(stdout, "%s\t+?\n\n", str);
+          else
+#endif
+              std::cout << str << "\t+?" << std::endl << std::endl;
+
+#ifdef WINDOWS
+          if (!pipe_output)
+            hfst_fprintf_console(stdout, "\n\n");
+          else
+#endif
+              std::cout << std::endl << std::endl;
             }
           continue;
         }
 
       input_string[i] = NO_SYMBOL_NUMBER;
 
+      if (time_cutoff > 0.0) {
+          start_clock = clock();
+          call_counter = 0;
+          limit_reached = false;
+      }
+      
       T.analyze(input_string);
       T.printAnalyses(std::string(str));
     }
@@ -435,6 +556,7 @@ void runTransducer (genericTransducer T)
 
 int setup(FILE * f)
 {
+  try {
   TransducerHeader header(f);
   TransducerAlphabet alphabet(f, header.symbol_count());
 
@@ -499,6 +621,14 @@ int setup(FILE * f)
             }
         }
     }
+  }
+  catch (const HeaderParsingException & e)
+    {
+      std::cerr << "Invalid transducer header.\n";
+      std::cerr << "The transducer must be in optimized lookup format.\n";
+      return EXIT_FAILURE;
+    }
+
   return 0;
 }
 
@@ -821,9 +951,20 @@ void Transducer::note_analysis(SymbolNumber * whole_output_string)
     {
       for (SymbolNumber * num = whole_output_string; *num != NO_SYMBOL_NUMBER; ++num)
         {
-          std::cout << symbol_table[*num];
+#ifdef WINDOWS
+          if (!pipe_output)
+            hfst_fprintf_console(stdout, "%s", symbol_table[*num]);
+          else
+#endif
+            std::cout << symbol_table[*num];
         }
-      std::cout << std::endl;
+
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "\n");
+      else
+#endif
+        std::cout << std::endl;
     } else
     {
       std::string str = "";
@@ -860,6 +1001,17 @@ void Transducer::get_analyses(SymbolNumber * input_symbol,
                               SymbolNumber * original_output_string,
                               TransitionTableIndex i)
 {
+    if (time_cutoff > 0.0) {
+        // Check to see if time has been overspent. For speed, only check every
+        // million calls and set a flag.
+        ++call_counter;
+        if (limit_reached ||
+            (call_counter % 1000000 == 0 &&
+             ((((double) clock() - start_clock) / CLOCKS_PER_SEC) > time_cutoff))) {
+            limit_reached = true;
+            return;
+        }
+    }
 #if OL_FULL_DEBUG
   std::cout << "get_analyses " << i << std::endl;
 #endif
@@ -936,8 +1088,19 @@ void Transducer::printAnalyses(std::string prepend)
     {
       if (outputType == xerox && display_vector.size() == 0)
         {
-          std::cout << prepend << "\t+?" << std::endl;
-          std::cout << std::endl;
+#ifdef WINDOWS
+          if (!pipe_output)
+            hfst_fprintf_console(stdout, "%s\t+?\n\n", prepend.c_str());
+          else
+#endif
+          std::cout << prepend << "\t+?" << std::endl << std::endl;
+
+#ifdef WINDOWS
+          if (!pipe_output)
+            hfst_fprintf_console(stdout, "\n\n");
+          else
+#endif
+          std::cout << std::endl << std::endl;
           return;
         }
       int i = 0;
@@ -946,14 +1109,33 @@ void Transducer::printAnalyses(std::string prepend)
         {
           if (outputType == xerox)
             {
-              std::cout << prepend << "\t";
-            }
-          std::cout << *it << std::endl;
+#ifdef WINDOWS
+              if (!pipe_output)
+                hfst_fprintf_console(stdout, "%s\t", prepend.c_str());
+              else
+#endif
+                std::cout << prepend << "\t";
+            }                   
+
+#ifdef WINDOWS
+          if (!pipe_output)
+            hfst_fprintf_console(stdout, "%s\n", it->c_str());
+          else
+#endif
+            std::cout << *it << std::endl;
+
           ++it;
           ++i;
         }
       display_vector.clear(); // purge the display vector
-      std::cout << std::endl;
+
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "\n");
+      else
+#endif
+        std::cout << std::endl;
+
     }
 }
 
@@ -961,8 +1143,21 @@ void TransducerUniq::printAnalyses(std::string prepend)
 {
   if (outputType == xerox && display_vector.size() == 0)
     {
-      std::cout << prepend << "\t+?" << std::endl;
-      std::cout << std::endl;
+
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "%s\t+?\n\n", prepend.c_str());
+      else
+#endif
+        std::cout << prepend << "\t+?" << std::endl << std::endl;
+
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "\n\n");
+      else
+#endif
+        std::cout << std::endl << std::endl;
+
       return;
     }
   int i = 0;
@@ -971,23 +1166,51 @@ void TransducerUniq::printAnalyses(std::string prepend)
     {
       if (outputType == xerox)
         {
-          std::cout << prepend << "\t";
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "%s\t", prepend.c_str());
+      else
+#endif
+        std::cout << prepend << "\t";
         }
-      std::cout << *it << std::endl;
+
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "%s\n", it->c_str());
+      else
+#endif
+        std::cout << *it << std::endl;
+
       ++it;
       ++i;
     }
   display_vector.clear(); // purge the display set
-  std::cout << std::endl;
+#ifdef WINDOWS
+  if (!pipe_output)
+    hfst_fprintf_console(stdout, "\n");
+  else
+#endif
+    std::cout << std::endl;
 }
 
 void TransducerFdUniq::printAnalyses(std::string prepend)
 {
   if (outputType == xerox && display_vector.size() == 0)
     {
-      std::cout << prepend << "\t+?" << std::endl;
-      std::cout << std::endl;
-      return;
+#ifdef WINDOWS
+  if (!pipe_output)
+    hfst_fprintf_console(stdout, "%s\t+?\n\n", prepend.c_str());
+  else
+#endif
+      std::cout << prepend << "\t+?" << std::endl << std::endl;
+
+#ifdef WINDOWS
+  if (!pipe_output)
+    hfst_fprintf_console(stdout, "\n\n");
+  else
+#endif
+      std::cout << std::endl << std::endl;
+  return;
     }
   int i = 0;
   DisplaySet::iterator it = display_vector.begin();
@@ -995,14 +1218,32 @@ void TransducerFdUniq::printAnalyses(std::string prepend)
     {
       if (outputType == xerox)
         {
-          std::cout << prepend << "\t";
+#ifdef WINDOWS
+          if (!pipe_output)
+            hfst_fprintf_console(stdout, "%s\t", prepend.c_str());
+          else
+#endif
+            std::cout << prepend << "\t";
         }
-      std::cout << *it << std::endl;
+
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "%s\n", it->c_str());
+      else
+#endif
+        std::cout << *it << std::endl;
+
       ++it;
       ++i;
     }
   display_vector.clear(); // purge the display set
-  std::cout << std::endl;
+
+#ifdef WINDOWS
+  if (!pipe_output)
+    hfst_fprintf_console(stdout, "\n");
+  else
+#endif
+    std::cout << std::endl;
 }
 
 /**
@@ -1198,7 +1439,7 @@ void TransducerW::try_epsilon_transitions(SymbolNumber * input_symbol,
       return;
     }
 
-  while ((transitions[i] != NULL) and (transitions[i]->get_input() == 0))
+  while ((transitions[i] != NULL) && (transitions[i]->get_input() == 0))
     {
       *output_symbol = transitions[i]->get_output();
       current_weight += transitions[i]->get_weight();
@@ -1393,45 +1634,111 @@ void TransducerW::printAnalyses(std::string prepend)
 {
   if (outputType == xerox && display_map.size() == 0)
     {
-      std::cout << prepend << "\t+?" << std::endl;
-      std::cout << std::endl;
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "%s\t+?\n\n", prepend.c_str());
+      else
+#endif
+          std::cout << prepend << "\t+?" << std::endl << std::endl;
+
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "\n\n");
+      else
+          std::cout << std::endl << std::endl;
+#endif
+
       return;
     }
   int i = 0;
+  float lowest_weight = -1;
   DisplayMultiMap::iterator it = display_map.begin();
   while ( (it != display_map.end()) && (i < maxAnalyses))
     {
-      if (outputType == xerox)
-        {
-          std::cout << prepend << "\t";
-        }
-      std::cout << (*it).second;
-      if (displayWeightsFlag)
-        {
-          std::cout << '\t' << (*it).first;
-        }
-      std::cout << std::endl;
+      if (it == display_map.begin())
+        lowest_weight = it->first;
+      // if beam is not set, i.e. has a negative value (-1.0), the only constraint
+      // is maxAnalyses
+      if (beam < 0 || it->first <= (lowest_weight + beam))
+      {
+        if (outputType == xerox)
+          {
+#ifdef WINDOWS
+            if (!pipe_output)
+              hfst_fprintf_console(stdout, "%s\t", prepend.c_str()); 
+            else
+#endif
+              std::cout << prepend << "\t";
+          }
+
+#ifdef WINDOWS
+        if (!pipe_output)
+          hfst_fprintf_console(stdout, "%s", (*it).second.c_str());
+        else
+#endif
+          std::cout << (*it).second;
+        
+        if (displayWeightsFlag)
+          {
+#ifdef WINDOWS
+            if (!pipe_output)
+              hfst_fprintf_console(stdout, "\t%f", (*it).first);
+            else
+#endif
+              std::cout << '\t' << (*it).first;
+          }
+
+#ifdef WINDOWS
+        if (!pipe_output)
+          hfst_fprintf_console(stdout, "\n");
+        else
+#endif
+          std::cout << std::endl;
+ 
+      }
       ++it;
       ++i;
     }
   display_map.clear();
-  std::cout << std::endl;
+
+#ifdef WINDOWS
+  if (!pipe_output)
+    hfst_fprintf_console(stdout, "\n");
+  else
+#endif
+    std::cout << std::endl;
 }
 
 void TransducerWUniq::printAnalyses(std::string prepend)
 {
   if (outputType == xerox && display_map.size() == 0)
     {
-      std::cout << prepend << "\t+?" << std::endl;
-      std::cout << std::endl;
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "%s\t+?\n", prepend.c_str());
+      else
+#endif
+        std::cout << prepend << "\t+?" << std::endl;
+
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "\n");
+      else
+#endif
+        std::cout << std::endl;
+
       return;
     }
   int i = 0;
+  float lowest_weight = -1 ;
   std::multimap<Weight, std::string> weight_sorted_map;
   DisplayMap::iterator it = display_map.begin();
   while (it != display_map.end())
     {
-      weight_sorted_map.insert(std::pair<Weight, std::string>((*it).second, (*it).first));
+      if (it == display_map.begin())
+        lowest_weight = it->second;
+      if (beam < 0 || it->second <= (lowest_weight + beam))
+        weight_sorted_map.insert(std::pair<Weight, std::string>((*it).second, (*it).first));
       ++it;
     }
   std::multimap<Weight, std::string>::iterator display_it = weight_sorted_map.begin();
@@ -1439,35 +1746,81 @@ void TransducerWUniq::printAnalyses(std::string prepend)
     {
       if (outputType == xerox)
         {
-          std::cout << prepend << "\t";
+#ifdef WINDOWS
+          if (!pipe_output)
+            hfst_fprintf_console(stdout, "%s\t", prepend.c_str());
+          else
+#endif
+            std::cout << prepend << "\t";
         }
-      std::cout << (*display_it).second;
+
+#ifdef WINDOWS
+          if (!pipe_output)
+            hfst_fprintf_console(stdout, "%s", (*display_it).second.c_str());
+          else
+#endif
+            std::cout << (*display_it).second;
+
       if (displayWeightsFlag)
         {
-          std::cout << '\t' << (*display_it).first;
+#ifdef WINDOWS
+          if (!pipe_output)
+            hfst_fprintf_console(stdout, "\t%f", (*display_it).first);
+          else
+#endif
+            std::cout << '\t' << (*display_it).first;
         }
-      std::cout << std::endl;
+
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "\n");
+      else
+#endif
+        std::cout << std::endl;
+
       ++display_it;
       ++i;
     }
   display_map.clear();
-  std::cout << std::endl;
+
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "\n");
+      else
+#endif
+        std::cout << std::endl;
 }
 
 void TransducerWFdUniq::printAnalyses(std::string prepend)
 {
   if (outputType == xerox && display_map.size() == 0)
     {
-      std::cout << prepend << "\t+?" << std::endl;
-      std::cout << std::endl;
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "%s\t+?", prepend);
+      else
+#endif
+        std::cout << prepend << "\t+?" << std::endl;
+
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "\n");
+      else
+#endif
+        std::cout << std::endl;
+
       return;
     }
   int i = 0;
+  float lowest_weight = -1 ;
   std::multimap<Weight, std::string> weight_sorted_map;
   DisplayMap::iterator it;
   for (it = display_map.begin(); it != display_map.end(); it++)
     {
-      weight_sorted_map.insert(std::pair<Weight, std::string>((*it).second, (*it).first));
+      if (it == display_map.begin())
+        lowest_weight = it->second;
+      if (beam < 0 || it->second <= (lowest_weight + beam))
+        weight_sorted_map.insert(std::pair<Weight, std::string>((*it).second, (*it).first));
     }
   std::multimap<Weight, std::string>::iterator display_it;
   for (display_it = weight_sorted_map.begin();
@@ -1476,17 +1829,46 @@ void TransducerWFdUniq::printAnalyses(std::string prepend)
     {
       if (outputType == xerox)
         {
-          std::cout << prepend << "\t";
+#ifdef WINDOWS
+          if (!pipe_output)
+            hfst_fprintf_console(stdout, "%s\t", prepend);
+          else
+#endif
+            std::cout << prepend << "\t";
         }
-      std::cout << (*display_it).second;
+
+#ifdef WINDOWS
+      if (!pipe_output)
+        hfst_fprintf_console(stdout, "%s", (*display_it).second);
+      else
+#endif
+        std::cout << (*display_it).second;
+
       if (displayWeightsFlag)
         {
-          std::cout << '\t' << (*display_it).first;
+#ifdef WINDOWS
+          if (!pipe_output)
+            hfst_fprintf_console(stdout, "\t%f", (*display_it).first);
+          else
+#endif
+            std::cout << '\t' << (*display_it).first;
         }
-      std::cout << std::endl;
+
+#ifdef WINDOWS
+          if (!pipe_output)
+            hfst_fprintf_console(stdout, "\n");
+          else
+#endif
+            std::cout << std::endl;
     }
   display_map.clear();
-  std::cout << std::endl;
+
+#ifdef WINDOWS
+  if (!pipe_output)
+    hfst_fprintf_console(stdout, "\n");
+  else
+#endif
+    std::cout << std::endl;
 }
 
 void TransducerW::get_analyses(SymbolNumber * input_symbol,
@@ -1497,6 +1879,17 @@ void TransducerW::get_analyses(SymbolNumber * input_symbol,
 #if OL_FULL_DEBUG
   std::cerr << "get analyses " << i << " " << current_weight << std::endl;
 #endif
+  if (time_cutoff > 0.0) {
+      // Check to see if time has been overspent. For speed, only check every
+      // million calls and set a flag.
+      ++call_counter;
+      if (limit_reached ||
+          (call_counter % 1000000 == 0 &&
+           ((((double) clock() - start_clock) / CLOCKS_PER_SEC) > time_cutoff))) {
+          limit_reached = true;
+          return;
+      }
+  }
   if (i >= TRANSITION_TARGET_TABLE_START )
     {
       i -= TRANSITION_TARGET_TABLE_START;

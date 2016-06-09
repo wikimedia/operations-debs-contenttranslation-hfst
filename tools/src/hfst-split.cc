@@ -121,6 +121,7 @@ parse_options(int argc, char** argv)
               free(inputfilename);
               inputfilename = hfst_strdup("<stdin>");
             }
+          inputNamed = true;
           break;
         case 'p':
           free(prefix);
@@ -160,6 +161,7 @@ process_stream(HfstInputStream& instream)
         //outstream->open();
         HfstTransducer trans(instream);
         *outstream << trans;
+        outstream->flush();
         outstream->close();
         delete outstream;
         free(outfilename);

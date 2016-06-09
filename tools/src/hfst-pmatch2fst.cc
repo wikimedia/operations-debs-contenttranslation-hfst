@@ -41,7 +41,13 @@ using std::pair;
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <getopt.h>
+
+#ifdef _MSC_VER
+#  include "hfst-getopt.h"
+#else
+#  include <getopt.h>
+#endif
+
 #include <math.h>
 #include <errno.h>
 #include <time.h>
@@ -101,7 +107,7 @@ print_usage()
         );
 
     fprintf(message_out, "Examples:\n"
-            "  echo \"Define TOP  UppercaseAlpha Alpha* LC(\\\"professor\\\") EndTag(ProfName);\" | %s \n"
+            "  echo \"Define TOP  UppercaseAlpha Alpha* LC({professor}) EndTag(ProfName);\" | %s \n"
             "  create matcher that tags \"professor Chomsky\" as \"professor <ProfName>Chomsky</ProfName>\"\n"
             "\n", program_name, program_name);
     print_report_bugs();
@@ -162,6 +168,15 @@ process_stream(HfstOutputStream& outstream)
     std::string file_contents;
     std::map<std::string, HfstTransducer*> definitions;
     int c;
+
+#ifdef _MSC_VER
+    if (inputfile == stdin && !silent)
+      {
+        warning(0, 0, "Reading from standard input. UTF-8 characters\n"
+                "outside ascii range are supported only if input comes from a file.");
+      }
+#endif
+
     while ((c = fgetc(inputfile)) != EOF) {
         file_contents.push_back(c);
     }
@@ -175,38 +190,36 @@ process_stream(HfstOutputStream& outstream)
         std::cerr << "Building hfst-ol alphabet... ";
     }
     
+    // A dummy transducer with an alphabet with all the symbols
+    HfstTransducer harmonizer(compilation_format);
+    
     // First we need to collect a unified alphabet from all the transducers.
-    std::string unified_alphabet;
     hfst::StringSet symbols_seen;
-    hfst::HfstTokenizer tok;
     for (std::map<std::string, HfstTransducer *>::const_iterator it =
              definitions.begin(); it != definitions.end(); ++it) {
         hfst::StringSet string_set = it->second->get_alphabet();
         for (hfst::StringSet::const_iterator sym = string_set.begin();
              sym != string_set.end(); ++sym) {
             if (symbols_seen.count(*sym) == 0) {
-                unified_alphabet.append(*sym);
-                tok.add_multichar_symbol(*sym);
+                harmonizer.disjunct(HfstTransducer(*sym, compilation_format));
                 symbols_seen.insert(*sym);
             }
         }
     }
-    if (unified_alphabet.empty()) {
+    if (symbols_seen.size() == 0) {
         // We don't recognise anything, go home early
         std::cerr << program_name << ": Empty ruleset, nothing to write\n";
         return EXIT_FAILURE;
     }
-    // Now we make a dummy transducer with that alphabet
-    HfstTransducer dummy(unified_alphabet, tok, compilation_format);
     
     // Then we convert it...
-    HfstTransducer * harmonizer = &dummy.convert(hfst::HFST_OLW_TYPE);
+    harmonizer.convert(hfst::HFST_OLW_TYPE);
     // Use these for naughty intermediate steps to make sure
     // everything has the same alphabet
     hfst::HfstBasicTransducer * intermediate_tmp;
     hfst_ol::Transducer * harmonized_tmp;
     hfst::HfstTransducer * output_tmp;
-
+    
     if (verbose) {
         double duration = (clock() - timer) /
             (double) CLOCKS_PER_SEC;
@@ -214,7 +227,7 @@ process_stream(HfstOutputStream& outstream)
         std::cerr << "built in " << duration << " seconds\n";
         std::cerr << "Converting TOP... ";
     }
-
+        
     // When done compiling everything, look for TOP and output it first.
     if (definitions.count("TOP") == 1) {
         intermediate_tmp = hfst::implementations::ConversionFunctions::
@@ -223,7 +236,7 @@ process_stream(HfstOutputStream& outstream)
             hfst_basic_transducer_to_hfst_ol(intermediate_tmp,
                                              true, // weighted
                                              "", // no special options
-                                             harmonizer); // harmonize with this
+                                             &harmonizer); // harmonize with this
         output_tmp = hfst::implementations::ConversionFunctions::
             hfst_ol_to_hfst_transducer(harmonized_tmp);
         output_tmp->set_name("TOP");
@@ -232,39 +245,43 @@ process_stream(HfstOutputStream& outstream)
         definitions.erase("TOP");
         delete intermediate_tmp;
         delete output_tmp;
-    }
-    if (verbose) {
-        double duration = (clock() - timer) /
-            (double) CLOCKS_PER_SEC;
-        timer = clock();
-        std::cerr << "converted in " << duration << " seconds\n";
-    }
 
-    for (std::map<std::string, HfstTransducer *>::iterator it =
-             definitions.begin(); it != definitions.end(); ++it) {
-        if (verbose) {
-            std::cerr << "Converting " << it->first << "... ";
-            timer = clock();
-        }
-        intermediate_tmp = hfst::implementations::ConversionFunctions::
-            hfst_transducer_to_hfst_basic_transducer(*(it->second));
-        harmonized_tmp = hfst::implementations::ConversionFunctions::
-            hfst_basic_transducer_to_hfst_ol(intermediate_tmp,
-                                             true, // weighted
-                                             "", // no special options
-                                             harmonizer); // harmonize with this
-        output_tmp = hfst::implementations::ConversionFunctions::
-            hfst_ol_to_hfst_transducer(harmonized_tmp);
-        output_tmp->set_name(it->first);
-        outstream << *output_tmp;;
-        delete it->second;
-        delete intermediate_tmp;
-        delete output_tmp;
         if (verbose) {
             double duration = (clock() - timer) /
                 (double) CLOCKS_PER_SEC;
+            timer = clock();
             std::cerr << "converted in " << duration << " seconds\n";
         }
+    
+        for (std::map<std::string, HfstTransducer *>::iterator it =
+                 definitions.begin(); it != definitions.end(); ++it) {
+            if (verbose) {
+                std::cerr << "Converting " << it->first << "... ";
+                timer = clock();
+            }
+            intermediate_tmp = hfst::implementations::ConversionFunctions::
+                hfst_transducer_to_hfst_basic_transducer(*(it->second));
+            harmonized_tmp = hfst::implementations::ConversionFunctions::
+                hfst_basic_transducer_to_hfst_ol(intermediate_tmp,
+                                                 true, // weighted
+                                                 "", // no special options
+                                                 &harmonizer); // harmonize with this
+            output_tmp = hfst::implementations::ConversionFunctions::
+                hfst_ol_to_hfst_transducer(harmonized_tmp);
+            output_tmp->set_name(it->first);
+            outstream << *output_tmp;;
+            delete it->second;
+            delete intermediate_tmp;
+            delete output_tmp;
+            if (verbose) {
+                double duration = (clock() - timer) /
+                    (double) CLOCKS_PER_SEC;
+                std::cerr << "converted in " << duration << " seconds\n";
+            }
+        }
+    } else {
+        std::cerr << program_name << ": Empty ruleset, nothing to write\n";
+        return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
 }

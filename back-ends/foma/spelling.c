@@ -34,7 +34,7 @@
 #define BITCLEAR(a,b) ((a)[BITSLOT(b)] &= ~BITMASK(b))
 #define BITTEST(a,b) ((a)[BITSLOT(b)] & BITMASK(b))
 #define BITNSLOTS(nb) ((nb + CHAR_BIT - 1) / CHAR_BIT)
-#define min(X, Y)  ((X) < (Y) ? (X) : (Y))
+#define min_(X, Y)  ((X) < (Y) ? (X) : (Y))
 
 static int calculate_h(struct apply_med_handle *medh, int *intword, int currpos, int state);
 static struct astarnode *node_delete_min();
@@ -314,7 +314,6 @@ char *apply_med(struct apply_med_handle *medh, char *word) {
                 break;
             }
             medh->lines++;
-            target = medh->curr_ptr->target;
             if (medh->curr_ptr->final_state && medh->curr_pos == medh->utf8len) {
                 if (medh->curr_node_has_match == 0) {
                     /* Found a match */
@@ -618,7 +617,7 @@ void fsm_create_letter_lookup(struct apply_med_handle *medh, struct fsm *net) {
         letterbits_union(v, vp, medh->letterbits,medh->bytes_per_letter_array);         /* add v' target bits to v */
         letterbits_add(v, curr_ptr->in, medh->letterbits,medh->bytes_per_letter_array); /* add current arc label to v */
 
-        (sccinfo+v)->lowlink = min((sccinfo+v)->lowlink,(sccinfo+vp)->lowlink);
+        (sccinfo+v)->lowlink = min_((sccinfo+v)->lowlink,(sccinfo+vp)->lowlink);
 
         if ((curr_ptr+1)->state_no != curr_ptr->state_no) {
             goto l4;
@@ -652,7 +651,7 @@ void fsm_create_letter_lookup(struct apply_med_handle *medh, struct fsm *net) {
             /* if v' visited */
             /* T: v.lowlink = min(v.lowlink, v'.lowlink), union v.list with e, move to next edge in v, goto loop */
         } else if ((sccinfo+vp)->on_t_stack) {
-            (sccinfo+v)->lowlink = min((sccinfo+v)->lowlink,(sccinfo+vp)->lowlink);
+            (sccinfo+v)->lowlink = min_((sccinfo+v)->lowlink,(sccinfo+vp)->lowlink);
         }
         /* If node is visited, copy its bits */
         letterbits_union(v,vp,medh->letterbits,medh->bytes_per_letter_array);
@@ -731,11 +730,10 @@ void fsm_create_letter_lookup(struct apply_med_handle *medh, struct fsm *net) {
 }
 
 void cmatrix_print_att(struct fsm *net, FILE *outfile) {
-    int lsymbol, i, j, *cm, maxsigma;
+    int i, j, *cm, maxsigma;
     maxsigma = sigma_max(net->sigma) + 1;
     cm = net->medlookup->confusion_matrix;
 
-    lsymbol = 0 ;
 
     for (i = 0; i < maxsigma ; i++) {        
         for (j = 0; j < maxsigma ; j++) {

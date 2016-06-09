@@ -1,3 +1,12 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 //! @file LexcCompiler.h
 //!
 //! @brief Functions for building trie representation of lexc data
@@ -8,18 +17,6 @@
 //! lexc functionality, it supports only the methods necessary to implement
 //! original lexc, e.g. deleting entries from a lexicon during compilation is
 //! not implemented.
-
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef GUARD_LexcCompiler_h
 #define GUARD_LexcCompiler_h
@@ -55,7 +52,7 @@ class LexcCompiler
 
   //! @brief create a lexc compiler with @c impl as transducer format and @c withFlags
   // as indicator as the trasnducer should be build with or without flags
-  LexcCompiler(hfst::ImplementationType impl, bool withFlags);
+  LexcCompiler(hfst::ImplementationType impl, bool withFlags, bool alignStrings);
 
   //! @brief compile lexc description from @c infile into current compiler
   LexcCompiler& parse(FILE* infile);
@@ -65,12 +62,35 @@ class LexcCompiler
   LexcCompiler& parse(const char* filename);
 
   //! @brief set verbosity options.
-  //! When verbose is true, LexcCompiler will output the messages that Xerox
+  //! 0 means quiet, 1 the default and 2 (or bigger) the verbose mode.
+  //! When verbose is 2, LexcCompiler will output the messages that Xerox
   //! lexc compiler does.
-  LexcCompiler& setVerbosity(bool verbose);
+  LexcCompiler& setVerbosity(unsigned int verbose);
+
+  unsigned int getVerbosity();
+
+  void set_error_stream(std::ostream * os);
+
+  std::ostream * get_error_stream();
+
+  void setOutputToConsole(bool);
+
+  bool getOutputToConsole();
+
+  bool isQuiet();
+
+  std::ostream * get_stream(std::ostream * oss);
+
+  void flush(std::ostream * oss);
 
   LexcCompiler& setTreatWarningsAsErrors(bool value);
 
+  bool areWarningsTreatedAsErrors();
+
+  LexcCompiler& setAllowMultipleSublexiconDefinitions(bool value);
+  
+  LexcCompiler& setAlignStrings(bool value);
+  
   LexcCompiler& setWithFlags(bool value);
 
   LexcCompiler& setMinimizeFlags(bool value);
@@ -127,16 +147,23 @@ class LexcCompiler
 
   //! @brief check that current morphotax is connected and print anomalies.
   //! Works like xerox lexc, for compatibility.
-  const LexcCompiler& printConnectedness(bool & warnings_printed) const;
-
+  const LexcCompiler& printConnectedness(bool & warnings_printed);
 
   private:
   bool quiet_;
   bool verbose_;
+  bool align_strings_;
   bool with_flags_;
   bool minimize_flags_;
   bool rename_flags_;
   bool treat_warnings_as_errors_;
+  bool allow_multiple_sublexicon_definitions_;
+  std::ostream * error_;
+#ifdef WINDOWS
+  bool output_to_console_;
+  std::ostringstream winoss_;
+  std::ostream * redirected_stream_;
+#endif
 
   hfst::ImplementationType format_;
   hfst::HfstTokenizer tokenizer_;

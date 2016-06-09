@@ -2,7 +2,7 @@ set precision 1
 set print-weight ON
 
 regex 0::1 -> b::2 || _ a a ;
-apply up
+apply down
 aa
 aaa
 aaaa

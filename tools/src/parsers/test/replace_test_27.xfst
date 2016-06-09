@@ -2,16 +2,16 @@ set precision 1
 set print-weight ON
 
 regex [[[a::1]+ [b::2]+]|[[b::2]+ [a::1]+]] @-> x ;
-apply up aabbaa
+apply down aabbaa
 echo --
 
 regex [[[a::1]+ [b::2]+]|[[b::2]+ [a::1]+]] ->@ x ;
-apply up aabbaa
+apply down aabbaa
 echo --
 
 regex [[[a::1]+ [b::2]+]|[[b::2]+ [a::1]+]] @> x ;
-apply up aabbaa
+apply down aabbaa
 echo --
 
 regex [[[a::1]+ [b::2]+]|[[b::2]+ [a::1]+]] >@ x ;
-apply up aabbaa
+apply down aabbaa

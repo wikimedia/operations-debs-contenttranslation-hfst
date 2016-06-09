@@ -3,4 +3,4 @@ set print-weight ON
 
 set encode-weights ON
 regex [ [. 0 .] -> a::1 \/ _ b a , a b _ ,, [. 0 .] -> b::2 \/ a _ a ];
-apply up abba
+apply down abba

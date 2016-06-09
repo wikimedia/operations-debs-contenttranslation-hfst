@@ -4,6 +4,6 @@ set lookup-cycle-cutoff 5
 set encode-weights ON
 
 regex a -> b::1 || ? _ ? ,, c -> d::2 || ? _ ;
-apply up 
+apply down 
 cac
 <ctrl-d>

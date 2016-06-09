@@ -1,0 +1,18 @@
+0       0       @P.FOO.FOO@     @P.FOO.FOO@
+0       0       @D.BAR.BAR@     @D.BAR.BAR@
+0       0       b       b
+0       1       a       a
+0       0       c       c
+0       0       @_IDENTITY_SYMBOL_@     @_IDENTITY_SYMBOL_@
+0       2       a       b
+0
+1       1       @P.FOO.FOO@     @P.FOO.FOO@
+1       1       @D.BAR.BAR@     @D.BAR.BAR@
+1       0       b       b
+1       1       a       a
+1       0       @_IDENTITY_SYMBOL_@     @_IDENTITY_SYMBOL_@
+1       2       a       b
+2       2       @P.FOO.FOO@     @P.FOO.FOO@
+2       2       @D.BAR.BAR@     @D.BAR.BAR@
+2       0       c       c
+2

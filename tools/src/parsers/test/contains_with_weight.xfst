@@ -3,7 +3,7 @@ set print-weight ON
 
 define foo [a b c];
 regex $::1[foo];
-apply up
+apply down
 bar
 ab
 abc
@@ -14,9 +14,19 @@ echo --
 
 # containment uses shortest matching
 regex $::1[a|[a a]];
-apply up
+apply down
 b
 ba
 aba
 abaa
+<ctrl-d>
+echo --
 
+# negative weight
+regex $::-1[a];
+apply down
+foo
+bar
+fooa
+afooa
+abara

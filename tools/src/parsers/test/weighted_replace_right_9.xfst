@@ -4,10 +4,10 @@ set lookup-cycle-cutoff 5
 
 regex [a::3] -> [b::5] || __ [a]* c ;
 
-apply up ac
+apply down ac
 echo --
 
-apply up aac
+apply down aac
 echo --
 
-apply up aaac
+apply down aaac

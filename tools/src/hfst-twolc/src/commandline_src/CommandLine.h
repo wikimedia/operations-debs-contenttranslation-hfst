@@ -17,10 +17,17 @@
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
+#else
+#  define PACKAGE_STRING ""
 #endif
 
 #include <iostream>
-#include <getopt.h>
+
+#ifndef _MSC_VER
+#  include <getopt.h>
+#else
+#  include "../../../hfst-getopt.h"
+#endif
 
 #include "HfstTransducer.h"
 using hfst::ImplementationType;

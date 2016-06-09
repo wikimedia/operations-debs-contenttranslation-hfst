@@ -27,7 +27,6 @@
 
 static struct flags *flag_extract (struct fsm *net);
 static char *flag_type_to_char (int type);
-// HFST change: this is visible in fomalib.h: static int flag_build(int ftype, char *fname, char *fvalue, int fftype, char *ffname, char *ffvalue);
 static void flag_purge (struct fsm *net, char *name);
 static struct fsm *flag_create_symbol(int type, char *name, char *value);
 
@@ -78,8 +77,12 @@ struct fsm *flag_eliminate(struct fsm *net, char *name) {
                 found = 1;
         }
         if (found == 0) {
-          //printf("Flag attribute '%s' does not occur in the network.\n",name);
-          return(net);
+#ifdef ORIGINAL
+	    fprintf(stderr,"Flag attribute '%s' does not occur in the network.\n",name);
+#else
+            // TODO: Handle this in some other way.
+#endif
+            return(net);
         }
     }
 
@@ -284,9 +287,9 @@ void flag_purge (struct fsm *net, char *name) {
         }
     }
     for (i = 0; i < sigmasize; i++) {
-        if (*(ftable+i)) {
-            net->sigma = sigma_remove_num(i, net->sigma);
-        }
+	if (*(ftable+i)) {
+	    net->sigma = sigma_remove_num(i, net->sigma);
+	}
     }
 
     for (i=0; (fsm+i)->state_no != -1; i++) {
@@ -367,25 +370,25 @@ int flag_check(char *s) {
 
 int flag_get_type(char *string) {
     if (strncmp(string+1,"U.",2) == 0) {
-        return FLAG_UNIFY;
+	return FLAG_UNIFY;
     }    
     if (strncmp(string+1,"C.",2) == 0) {
-        return FLAG_CLEAR;
+	return FLAG_CLEAR;
     }    
     if (strncmp(string+1,"D.",2) == 0) {
-        return FLAG_DISALLOW;
+	return FLAG_DISALLOW;
     }    
     if (strncmp(string+1,"N.",2) == 0) {
-        return FLAG_NEGATIVE;
+	return FLAG_NEGATIVE;
     }    
     if (strncmp(string+1,"P.",2) == 0) {
-        return FLAG_POSITIVE;
+	return FLAG_POSITIVE;
     }    
     if (strncmp(string+1,"R.",2) == 0) {
-        return FLAG_REQUIRE;
+	return FLAG_REQUIRE;
     }    
     if (strncmp(string+1,"E.",2) == 0) {
-        return FLAG_EQUAL;
+	return FLAG_EQUAL;
     }    
     return 0;
 }
@@ -396,17 +399,17 @@ char *flag_get_name(char *string) {
     len = strlen(string);
 
     for (i=0; i < len; i += (utf8skip(string+i) + 1)) {
-        if (*(string+i) == '.' && start == 0) {
-            start = i+1;
-            continue;
-        }
-        if ((*(string+i) == '.' || *(string+i) == '@')  && start != 0) {
-            end = i;
-            break;
-        }
+	if (*(string+i) == '.' && start == 0) {
+	    start = i+1;
+	    continue;
+	}
+	if ((*(string+i) == '.' || *(string+i) == '@')  && start != 0) {
+	    end = i;
+	    break;
+	}
     }
     if (start > 0 && end > 0) {
-        return(xxstrndup(string+start,end-start));
+	return(xxstrndup(string+start,end-start));
     }
     return NULL;
 }
@@ -417,21 +420,21 @@ char *flag_get_value(char *string) {
     len = strlen(string);
 
     for (i=0; i < len; i += (utf8skip(string+i) + 1)) {
-        if (*(string+i) == '.' && first == 0) {
-            first = i+1;
-            continue;
-        }
-        if (*(string+i) == '@' && start != 0) {
-            end = i;
-            break;
-        }
-        if (*(string+i) == '.' && first != 0) {
-            start = i+1;
-            continue;
-        }
+	if (*(string+i) == '.' && first == 0) {
+	    first = i+1;
+	    continue;
+	}
+	if (*(string+i) == '@' && start != 0) {
+	    end = i;
+	    break;
+	}
+	if (*(string+i) == '.' && first != 0) {
+	    start = i+1;
+	    continue;
+	}
     }
     if (start > 0 && end > 0) {
-        return(xxstrndup(string+start,end-start));
+	return(xxstrndup(string+start,end-start));
     }
     return NULL;
 }
@@ -492,22 +495,22 @@ struct fsm *flag_twosided(struct fsm *net) {
       continue;
     if ((*(isflag+(fsm+i)->in) || *(isflag+(fsm+i)->out)) && (fsm+i)->in != (fsm+i)->out) {
       if (*(isflag+(fsm+i)->in) && !*(isflag+(fsm+i)->out)) {
-        j = add_fsm_arc(fsm, j, maxstate, EPSILON, (fsm+i)->out, (fsm+i)->target, 0, 0);
-        (fsm+i)->out = (fsm+i)->in;
-        (fsm+i)->target = maxstate;
-        maxstate++;
+	j = add_fsm_arc(fsm, j, maxstate, EPSILON, (fsm+i)->out, (fsm+i)->target, 0, 0);
+	(fsm+i)->out = (fsm+i)->in;
+	(fsm+i)->target = maxstate;
+	maxstate++;
       }
       else if (*(isflag+(fsm+i)->out) && !*(isflag+(fsm+i)->in)) {
-        j = add_fsm_arc(fsm, j, maxstate, (fsm+i)->out, (fsm+i)->out, (fsm+i)->target, 0, 0);
-        (fsm+i)->out = EPSILON;
-        (fsm+i)->target = maxstate;
-        maxstate++;
+	j = add_fsm_arc(fsm, j, maxstate, (fsm+i)->out, (fsm+i)->out, (fsm+i)->target, 0, 0);
+	(fsm+i)->out = EPSILON;
+	(fsm+i)->target = maxstate;
+	maxstate++;
       }
       else if (*(isflag+(fsm+i)->in) && *(isflag+(fsm+i)->out)) {
-        j = add_fsm_arc(fsm, j, maxstate, (fsm+i)->out, (fsm+i)->out, (fsm+i)->target, 0, 0);
-        (fsm+i)->out = (fsm+i)->in;
-        (fsm+i)->target = maxstate;
-        maxstate++;
+	j = add_fsm_arc(fsm, j, maxstate, (fsm+i)->out, (fsm+i)->out, (fsm+i)->target, 0, 0);
+	(fsm+i)->out = (fsm+i)->in;
+	(fsm+i)->target = maxstate;
+	maxstate++;
       }
     }
   }

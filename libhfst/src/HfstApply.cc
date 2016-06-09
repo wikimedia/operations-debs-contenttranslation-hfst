@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 /* \file HfstApply.cc 
    \brief HFST transducer functions that take several parameters are 
@@ -37,6 +34,9 @@ namespace hfst
         return false;
       }
       if (converted == FOMA_TYPE) {
+        return false;
+      }
+      if (converted == XFSM_TYPE) {
         return false;
       }
     }
@@ -72,6 +72,9 @@ namespace hfst
 #endif
 #if HAVE_FOMA
  fsm * (*foma_funct)(fsm *),
+#endif
+#if HAVE_XFSM
+ NETptr (*xfsm_funct)(NETptr),
 #endif
  /* Add your library. */
  //#if HAVE_MY_TRANSDUCER_LIBRARY
@@ -122,6 +125,13 @@ namespace hfst
           break;
         }
 #endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        {
+          (void)xfsm_funct(implementation.xfsm);
+          break;
+        }
+#endif
         /* Add your library here. */
         //#if HAVE_MY_TRANSDUCER_LIBRARY
         //case MY_TRANSDUCER_LIBRARY_TYPE:
@@ -155,6 +165,9 @@ SFST::Transducer * (*sfst_funct)(SFST::Transducer *, unsigned int n),
 #endif
 #if HAVE_FOMA
    fsm * (*foma_funct)(fsm *, unsigned int n),
+#endif
+#if HAVE_XFSM
+NETptr (*xfsm_funct)(NETptr, unsigned int n),
 #endif
 /* Add your library here. */
 //#if HAVE_MY_TRANSDUCER_LIBRARY
@@ -205,6 +218,16 @@ SFST::Transducer * (*sfst_funct)(SFST::Transducer *, unsigned int n),
           break;
     }
 #endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        {
+      NETptr xfsm_temp = 
+            xfsm_funct(implementation.xfsm,n);
+      delete implementation.xfsm;
+          implementation.xfsm = xfsm_temp;
+          break;
+    }
+#endif
         /* Add your library here. */
         //#if HAVE_MY_TRANSDUCER_LIBRARY
         //case MY_TRANSDUCER_LIBRARY_TYPE:
@@ -238,6 +261,9 @@ SFST::Transducer * (*sfst_funct)(SFST::Transducer *, unsigned int n),
 #endif
 #if HAVE_FOMA
    fsm * (*foma_funct)(fsm *, String, String),
+#endif
+#if HAVE_XFSM
+   NETptr (*xfsm_funct)(NETptr, String, String),
 #endif
    /* Add your library here. */
    //#if HAVE_MY_TRANSDUCER_LIBRARY
@@ -288,6 +314,16 @@ SFST::Transducer * (*sfst_funct)(SFST::Transducer *, unsigned int n),
       break;
         }
 #endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        {
+      NETptr xfsm_temp = 
+            xfsm_funct(implementation.xfsm,s1,s2);
+          delete implementation.xfsm;
+          implementation.xfsm = xfsm_temp;
+      break;
+        }
+#endif
         /* Add your library here. */
         //#if HAVE_MY_TRANSDUCER_LIBRARY
         //case MY_TRANSDUCER_LIBRARY_TYPE:
@@ -325,6 +361,9 @@ SFST::Transducer * (*sfst_funct)(SFST::Transducer *, unsigned int n),
    fsm * (*foma_funct)(fsm *,
                                     fsm *),
 #endif
+#if HAVE_XFSM
+   NETptr (*xfsm_funct)(NETptr, NETptr),
+#endif
    /* Add your library here. */
    //#if HAVE_MY_TRANSDUCER_LIBRARY
    //my_namespace::MyFst * (*my_transducer_library_funct)(my_namespace::MyFst *,
@@ -347,7 +386,6 @@ SFST::Transducer * (*sfst_funct)(SFST::Transducer *, unsigned int n),
     /* special symbols are never harmonized */
     this->insert_missing_symbols_to_alphabet_from(another, true);
     another.insert_missing_symbols_to_alphabet_from(*this, true);
-
     HfstTransducer * another_ =
       this->harmonize_(another);        
     if (another_ == NULL) // foma
@@ -395,6 +433,16 @@ SFST::Transducer * (*sfst_funct)(SFST::Transducer *, unsigned int n),
             foma_funct(implementation.foma,another_->implementation.foma);
           delete implementation.foma;
           implementation.foma = foma_temp;
+          break;
+        }
+#endif
+#if HAVE_XFSM
+      case XFSM_TYPE:
+        {
+          NETptr xfsm_temp = 
+            xfsm_funct(implementation.xfsm,another_->implementation.xfsm);
+          //delete implementation.xfsm;
+          implementation.xfsm = xfsm_temp;
           break;
         }
 #endif

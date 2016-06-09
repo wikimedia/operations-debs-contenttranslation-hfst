@@ -54,6 +54,8 @@ using hfst::StringSet;
 #include "inc/globals-unary.h"
 
 // add tools-specific variables here
+static bool print_symbol_pair_statistics = false;
+static int symbol_pair_threshold = -1;
 
 void
 print_usage()
@@ -66,6 +68,9 @@ print_usage()
     print_common_program_options(message_out);
     print_common_unary_program_options(message_out);
     // fprintf(message_out, (tool-specific options and short descriptions)
+    fprintf(message_out, "Summarize options:\n");
+    fprintf(message_out, "  -S, --print-symbol-pair-statistics=N  Print info about symbol pairs that occur\n");
+    fprintf(message_out, "                                        at most N times (default is infinity)\n");
     fprintf(message_out, "\n");
     print_common_unary_program_parameter_instructions(message_out);
     fprintf(message_out, "\n");
@@ -89,13 +94,14 @@ parse_options(int argc, char** argv)
         {
         HFST_GETOPT_COMMON_LONG,
         HFST_GETOPT_UNARY_LONG,
-          // add tool-specific options here 
-            {0,0,0,0}
+        // add tool-specific options here 
+        {"print-symbol-pair-statistics", optional_argument, 0, 'S'},
+        {0,0,0,0}
         };
         int option_index = 0;
         // add tool-specific options here 
         char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
-                             HFST_GETOPT_UNARY_SHORT,
+                             HFST_GETOPT_UNARY_SHORT "S::",
                              long_options, &option_index);
         if (-1 == c)
         {
@@ -107,6 +113,25 @@ parse_options(int argc, char** argv)
 #include "inc/getopt-cases-common.h"
 #include "inc/getopt-cases-unary.h"
           // add tool-specific cases here
+        case 'S':
+          print_symbol_pair_statistics = true ;
+          if (optarg != NULL)
+            {
+              if (optarg[0] == '=')
+                {
+                  optarg++;
+                }
+              symbol_pair_threshold = hfst_strtoul(optarg, 10);
+              if (symbol_pair_threshold < 0)
+                {
+                  error(EXIT_FAILURE, 0, "%u is not a valid argument for option --print-symbol-pair-statistics\n", symbol_pair_threshold);
+                }
+              if (symbol_pair_threshold == 0)
+                {
+                  error(EXIT_FAILURE, 0, "0 is not a valid argument for option --print-symbol-pair-statistics\n");
+                }
+            }
+          break;
 #include "inc/getopt-cases-error.h"
         }
     }
@@ -208,6 +233,8 @@ process_stream(HfstInputStream& instream)
           is_mutable = false;
           break;
         }
+
+      std::map<std::pair<std::string, std::string>,unsigned int> symbol_pairs;
       // iterate states in random order
       HfstState source_state=0;
       for (HfstBasicTransducer::const_iterator it = mutt->begin();
@@ -232,6 +259,13 @@ process_stream(HfstInputStream& instream)
               arcs_here++;
               foundAlphabet.insert(tr_it->get_input_symbol());
               foundAlphabet.insert(tr_it->get_output_symbol());
+
+              // ADDED
+              if (print_symbol_pair_statistics)
+                {
+                  symbol_pairs[std::pair<std::string,std::string>(tr_it->get_input_symbol(), tr_it->get_output_symbol())]++;
+                }
+
               if (tr_it->get_input_symbol() != tr_it->get_output_symbol())
                 {
                   acceptor = false;
@@ -521,8 +555,30 @@ process_stream(HfstInputStream& instream)
                 }
               fprintf(outfile, "\n");
             }
+
+        } // if verbose
+
+          // ADDED
+          if (print_symbol_pair_statistics) 
+            {
+              if (symbol_pair_threshold > -1)
+                {
+                  fprintf(outfile, "symbol pairs that occur at most %u times:\n", symbol_pair_threshold);
+                }
+              else
+                {
+                  fprintf(outfile, "symbol pairs:\n");
+                }
+              for (std::map<std::pair<std::string,std::string>,unsigned int>::const_iterator it = symbol_pairs.begin(); it != symbol_pairs.end(); it++)
+                {
+                  if (it->second <= symbol_pair_threshold)
+                    {
+                      fprintf(outfile, "%s:%s\t%u\n", it->first.first.c_str(), it->first.second.c_str(), it->second);
+                    }
+                }
+              fprintf(outfile, "\n");
+            }
           delete trans;
-        }
     }
 
     fprintf(outfile, "\nRead " SIZE_T_SPECIFIER " transducers in total.\n", transducer_n);

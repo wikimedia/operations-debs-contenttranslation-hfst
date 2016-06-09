@@ -23,24 +23,26 @@ versions, development and non-supported operating systems and versions you
 will have to perform `installation from the sources`_.
 
 Installation packages for Debian and Ubuntu 
---------------------------------------------
+-------------------------------------------
 
-HFST and related software can be downloaded from `HFST download directory 
-<https://sourceforge.net/projects/hfst/files/hfst/>`_. This folder contains
-sources and debian packages for HFST API library and tool packages.
+Debian packages for HFST are distributed via `Apertium project 
+<http://apertium.projectjj.com/apt/nightly/pool/main/h/hfst/>`_. This folder 
+contains debian packages for HFST API library and tool packages.
 The debian packages are experimental; the requirements of debian or ubuntu
 installations are same as main packages. SFST is excluded from the packages
 as it has portability issues with hash_maps and hash_sets. The python packages
 contain binaries for swig-generated Python bindings for HFST. 
 
-Installation packages for Windows
----------------------------------
+Binaries for Windows
+--------------------
 
-`HFST download directory <https://sourceforge.net/projects/hfst/files/hfst/>`_
-contains an experimental installer for Windows, HfstInstaller.exe. It has 
-ready-compiled HFST library, tools and Python bindings. Performing 
+Binaries for Windows are distributed via `Apertium project 
+<http://apertium.projectjj.com/win32/nightly/>`_. This folder contains
+ready-compiled HFST library and command line tools. Performing 
 `installation from the sources`_ is also possible on Windows with MinGW 
-and Cygwin.
+and Cygwin. Python bindings for Windows are currently available only for 64-bit
+Python versions 3.3 and 3.4 on our `download page
+<https://hfst.github.io/downloads/index.html>`_.
 
 Installation for MacPorts
 -------------------------
@@ -107,7 +109,7 @@ Compilation requirements
     GCC version and pthread and m libraries
 
   - to disable OpenFST support, configure switch ``--without-openfst`` may
-    be used
+    be used (however, this seriously limits the use of HFST)
 
 - To use the SFST_ backend (default):
 
@@ -124,15 +126,14 @@ Compilation requirements
 
 - To use the foma_ backend (default):
 
-  - the foma library version 0.9.16alpha is bundled with HFST and included
+  - the foma library version 0.9.18alpha is bundled with HFST and included
     be default when building HFST
 
   - foma requires editline, termcap (or ncurses) and zlib libraries to compile
 
   - to disable foma backend, configure switch ``--without-foma`` may be used
 
-  - the *hfst-xfst* frontend currently **requires** foma binary; foma library
-    is not needed to be linked for this
+  - the *hfst-xfst* frontend does not require foma binary or foma library
 
 - For proper Unicode support in corpus tools:
 
@@ -144,7 +145,14 @@ Compilation requirements
     operations such as *case-folding* properly (default)
 
   - To compile corpus processing tool ``hfst-proc``, you need to use the
-    ``configure`` switch ``--enable-proc`` ??
+    ``configure`` switch ``--enable-proc`` (or ``--enable-all-tools``)
+
+- To use the Python interface:
+
+  - Compiling the bindings requires swig (tested with versions 2.0.4 and 3.0.0)
+
+  - *NOTE:* the Python API is not under autotools, you must compile it yourself;
+    for more information, see file ``python/README``
 
 Note that if you did install dependent libraries, such as libxml or glib
 to your home directory instead of using your system's package manager 
@@ -203,9 +211,6 @@ When running HFST software or using HFST libraries from HFST-enabled software:
   that operating system is aware of this; In linux this may happen by setting
   ``LD_LIBRARY_PATH``, on Mac ``DYLD_LIBRARY_PATH``
 
-- the *hfst-xfst* frontend currently **requires** foma binary 
-  (--with-foma to enable)
-
 - the *hfst-xfst* frontend needs GNU compatible getopt, or basic getopts
   *without* GNU-incompatible getopt installed
 
@@ -219,7 +224,6 @@ Installation from the sources
 INSTALL describes the GNU build system in detail, but for most users the usual::
 
     ./configure
-    ./scripts/generate-cc-files.sh
     make
     (as root) make install
 
@@ -227,9 +231,7 @@ should result in a local installation and::
 
     (as root) make uninstall
 
-in its uninstallation. The script *generate-cc-files.sh* compiles all 
-flex/bison-generated files and makes sure that the generated header 
-files have the right extension, i.e. hh and not h.
+in its uninstallation.
 
 If you aren't going to be linking to the library after
 building it and don't need to be able to send debugging information, you can
@@ -247,10 +249,7 @@ If you would rather install in e.g. your home directory
 
 The HFST library may link to numerous FST handling backends with varying
 licences. If you are going to redistribute the HFST library you compiled, make
-sure there are no clashes in the licences of the linked libraries; all
-of them are free and open source, but under strict interpretation you may not
-be able to redistribute combination of strict GNU GPLv2 and Apache APLv2 in the
-same binary (e.g. foma and OpenFST).
+sure there are no clashes in the licences of the linked libraries.
 
 If you are checking out the development versions from SVN you must first create
 and install the necessary autotools files from the host system:
@@ -271,9 +270,8 @@ Troubleshooting
 ===============
 
 In this section we list the errors that pop up commonly on `our support channel
-<irc://FreeNode/#hfst>`_, in `our bug tracker
-<https://sourceforge.net/tracker/?group_id=224521&atid=1061990>`_ or `on our
-development mailing list <hfst-development@lists.sf.net>`_.
+<irc://FreeNode/#hfst>`_ or in `our issue tracker
+<https://github.com/hfst/hfst/issues>`_,
 
 \::malloc has not been declared
 -------------------------------
@@ -450,8 +448,8 @@ Reporting bugs
 
 Bugs can be reported via email to `HFST team bug mail address
 <hfst-bugs@helsinki.fi>`_, or preferably to `HFST's bug tracking system
-at sourceforge
-<https://sourceforge.net/tracker/?atid=1061990&group_id=224521&func=browse>`_
+at Github
+<https://github.com/hfst/hfst/issues>`_
 When reporting, please include at least following:
 
 * version of software used, if command-line tool (hfst-toolname --version)

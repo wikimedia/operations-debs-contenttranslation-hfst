@@ -1,17 +1,13 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
-/** @file hfst_apply_schemas.h
-    \brief declarations for HFST functions that take two or more parameters */
+/** \brief declarations for HFST functions that take two or more parameters */
 
 HfstTransducer &apply(
 #if HAVE_SFST
@@ -26,6 +22,9 @@ HfstTransducer &apply(
 #endif
 #if HAVE_FOMA
  fsm * (*foma_funct)(fsm *),
+#endif
+#if HAVE_XFSM
+ NETptr (*xfsm_funct)(NETptr),
 #endif
  /* Add your library here */
  //#if HAVE_MY_TRANSDUCER_LIBRARY
@@ -50,6 +49,9 @@ HfstTransducer &apply(
 #if HAVE_FOMA
  fsm * (*foma_funct)(fsm *, unsigned int),
 #endif
+#if HAVE_XFSM
+ NETptr (*xfsm_funct)(NETptr, unsigned int),
+#endif
  /* Add your library here */
  //#if HAVE_MY_TRANSDUCER_LIBRARY
  //my_namespace::MyFst * (*my_transducer_library_funct)
@@ -72,6 +74,9 @@ HfstTransducer &apply(
 #endif
 #if HAVE_FOMA
  fsm * (*foma_funct)(fsm *, String, String),
+#endif
+#if HAVE_XFSM
+ NETptr (*xfsm_funct)(NETptr, String, String),
 #endif
  /* Add your library here */
  //#if HAVE_MY_TRANSDUCER_LIBRARY
@@ -97,6 +102,9 @@ HfstTransducer &apply(
 #if HAVE_FOMA
  fsm * (*foma_funct)(fsm *,
                      fsm *),
+#endif
+#if HAVE_XFSM
+ NETptr (*xfsm_funct)(NETptr, NETptr),
 #endif
  /* Add your library here */
  //#if HAVE_MY_TRANSDUCER_LIBRARY

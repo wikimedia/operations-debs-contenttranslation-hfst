@@ -35,5 +35,15 @@ if ((test -z "$i") || $TOOLDIR/hfst-format --list-formats | grep $i > /dev/null)
         fi
         rm test
     fi
+    # Disable test until option -T works in hfst-substitute
+    #if test -f cat$i -a -f substituted_transducer$i -a -f substituting_transducer$i; then
+    #    if ! $TOOLDIR/hfst-substitute -s cat$i -f 'a:a' -T $srcdir/substituting_transducer$i > test ; then
+    #        exit 1
+    #    fi
+    #    if ! $TOOLDIR/hfst-compare -s test substituted_transducer$i  ; then
+    #        exit 1
+    #    fi
+    #    rm test
+    #fi
 fi
 done

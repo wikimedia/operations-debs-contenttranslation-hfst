@@ -35,6 +35,12 @@
 #  include <error.h>
 #endif
 
+#ifdef _MSC_VER
+#  include <BaseTsd.h>
+   typedef SSIZE_T ssize_t;
+#endif
+
+
 #include "HfstDataTypes.h"
 namespace hfst { class HfstInputStream; } ;
 
@@ -90,6 +96,18 @@ void hfst_set_program_name(const char* argv0, const char* version,
 
 
 bool is_input_stream_in_ol_format(const hfst::HfstInputStream * is, const char * program);
+
+/* Common format into which transducers of types \a type1 and \a type2 will be converted,
+   when convert_transducers will be called. Possible return values are:
+
+   0   no conversion is needed
+   1   convert into type1
+   2   convert into type2
+   -1  convert into type1, loss of information is possible */
+int conversion_type(hfst::ImplementationType type1, hfst::ImplementationType type2);
+
+/* Convert transducers into common format, if needed. */
+void convert_transducers(hfst::HfstTransducer & first, hfst::HfstTransducer & second);
 
 /** 
  * @brief set @c program_name to program's executable name for error messages.

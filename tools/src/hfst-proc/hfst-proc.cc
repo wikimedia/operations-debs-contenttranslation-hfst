@@ -10,7 +10,16 @@
 //       You should have received a copy of the GNU General Public License
 //       along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <getopt.h>
+#ifdef _MSC_VER
+#  include "hfst-getopt.h"
+#  include "hfst-string-conversions.h"
+#else
+#  include <getopt.h>
+#endif
+
+#include <cstdio>
+#include "../inc/globals-common.h"
+
 #include <fstream>
 #include <cstdlib>
 #include "hfst-proc.h"
@@ -58,7 +67,7 @@ static bool handle_hfst3_header(std::istream& is)
       if (!strcmp(headervalue, "type")) {
           is.getline(headervalue, remaining_header_len + 1, '\0');
           remaining_header_len -= strlen(headervalue) + 1;
-          if (strcmp(headervalue, "HFST_OL") and
+          if (strcmp(headervalue, "HFST_OL") &&
           strcmp(headervalue, "HFST_OLW")) {
           delete headervalue;
           HFST_THROW(TransducerHasWrongTypeException);
@@ -129,7 +138,9 @@ bool print_usage(void)
     "  -X, --raw               Do not perform any mangling to:\n"
     "                          case, ``superblanks'' or anything else!!!\n"
     "\n" <<
+#ifdef HAVE_CONFIG_H
     "Report bugs to " << PACKAGE_BUGREPORT << "\n" <<
+#endif
     "\n";
   return true;
 }
@@ -138,8 +149,11 @@ bool print_version(void)
 {
   std::cout <<
     "\n" <<
-    "hfst-proc 0.0 (" << 
-    PACKAGE_STRING << ")" << std::endl <<
+    "hfst-proc 0.0" << 
+#ifdef HAVE_CONFIG_H
+    " (" << PACKAGE_STRING << ")" <<
+#endif
+    std::endl <<
     __DATE__ << " " __TIME__ << std::endl <<
     "copyright (C) 2009-2011 University of Helsinki\n";
   return true;
@@ -344,6 +358,17 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
     }
   }
+#ifdef _MSC_VER
+  else
+  {
+    hfst::set_console_cp_to_utf8();
+    if (!silentFlag)
+    {
+      std::cerr << "hfst-proc: warning: Reading from standard input. UTF-8 characters" << std::endl
+                << "outside ascii range are supported only if input comes from a file." << std::endl;
+    }
+  }
+#endif
   
   if(out_arg != -1)
   {
@@ -354,6 +379,19 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
     }
   }
+#ifdef _MSC_VER
+  else
+  {
+    hfst::set_console_cp_to_utf8();
+    if (!silentFlag)
+    {
+      std::cerr << "hfst-proc: warning: Writing to standard input. UTF-8 characters" << std::endl
+                << "outside ascii range are supported only if output is redirected to a file." << std::endl;
+    }
+  }
+#endif
+
+
   
   CapitalizationMode capitalization_mode;
   switch(capitalization)

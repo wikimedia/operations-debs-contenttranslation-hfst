@@ -1,0 +1,94 @@
+.TH HFST-FROBNICATE "1" "Monthname YEAR" "HFST" "User Commands"
+.SH NAME
+hfst-frobnicate \- manual page for hfst-frobnicate tool.version (hfst
+library.version)
+.SH SYNOPSIS
+.B hfst-frobnicate
+[\fIOPTIONS\fR...] [\fIINFILE\fR]
+.SH DESCRIPTION
+Do things to automata
+.SS "Common options:"
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help message
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Print version info
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Print verbosely while processing
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Do not print output
+.TP
+\fB\-s\fR, \fB\-\-silent\fR
+Alias of \fB\-\-quiet\fR
+.SS "Input/Output options:"
+.TP
+\fB\-i\fR, \fB\-\-input\fR=\fIINFILE\fR
+Read input transducer from \fIINFILE\fR
+.TP
+\fB\-o\fR, \fB\-\-output\fR=\fIOUTFILE\fR
+Write output transducer to \fIOUTFILE\fR
+.SS "Tool specific options"
+.TP
+\fB\-X\fR, \fB\-\-frobnicate\fR=\fIFQUANT\fR
+Frobnicate automaton by \fIFQUANT\fR
+.PP
+If \fIOUTFILE\fR or \fIINFILE\fR is missing or \-, standard streams will be
+used. Format of result depends on format of \fIINFILE\fR. If \fIFQUANT\fR is
+omitted, value of 3.141 will be used.
+.SS "Exit status:"
+.TP
+0
+if successful,
+.TP
+1
+on failure
+.SH FILES
+.I /etc/hfst.conf
+.RS
+system-wide configuration file
+.RE
+.I $HOME/.hfst.conf
+.RS
+user configuration
+.RE
+.SH ENVIRONMENT
+.IP HFSTFLAGS
+set default command line parameters for all HFST tools
+.SH EXAMPLES
+.TP
+.B hfst-frobnicate -i input.hfst -o output.hfst
+frobnicate input.hfst to produce output.hfst
+.SS "Specific tweaks"
+Controlling frobnication quantifier makes it go faster
+.TP
+.B hfst\-frobnicate \-X 0
+Frobnicate instantaneously, no benefits gained
+.TP
+.B hfst\-frobnicate \-X 10
+Frobnicate tightly, very slow but good end results
+.SH "REPORTING BUGS"
+Report bugs to <hfst\-bugs@helsinki.fi> or directly to our bug tracker at:
+<https://sourceforge.net/tracker/?atid=1061990&group_id=224521&func=browse>
+.br
+hfst\-frobnicate home page:
+<https://kitwiki.csc.fi/twiki/bin/view/KitWiki//HfstCommandLine>
+.br
+General help using HFST software:
+<https://kitwiki.csc.fi/twiki/bin/view/KitWiki//HfstHome>
+.SH NOTES
+The automaton to frobnicate must be indeterminate.
+.SH CAVEATS
+Frobnicating diagonal automata will lead to inconclusive results. Don't do it.
+.SH BUGS
+You cannot frobnicate automata of weighted backend formats.
+.SH COPYRIGHT
+Copyright \(co 2010 University of Helsinki,
+License GPLv3: GNU GPL version 3 <http://gnu.org/licenses/gpl.html>
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+.SH AUTHOR
+Written by HFST team <hfst\-bugs@helsinki.fi>.

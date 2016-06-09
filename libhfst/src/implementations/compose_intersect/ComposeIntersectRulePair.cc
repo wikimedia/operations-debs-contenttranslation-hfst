@@ -1,3 +1,11 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 #include "ComposeIntersectRulePair.h"
 
 #ifndef MAIN_TEST
@@ -6,7 +14,7 @@ namespace hfst
 {
   namespace implementations
   {
-    const HfstState ComposeIntersectRulePair::START;
+    const HfstState ComposeIntersectRulePair::START = 0;
     
     ComposeIntersectRulePair::ComposeIntersectRulePair
     (ComposeIntersectRule * fst1,ComposeIntersectRule * fst2):
@@ -34,9 +42,9 @@ namespace hfst
     ComposeIntersectRulePair::get_transitions
     (HfstState s,size_t symbol)
     {
-      if (not has_state(s))
+      if (! has_state(s))
     { HFST_THROW(StateNotDefined); }
-      if (not transitions_computed(s,symbol))
+      if (! transitions_computed(s,symbol))
     { compute_transition_set(s,symbol); }
       return state_transition_vector[s][symbol];
     }
@@ -55,7 +63,7 @@ namespace hfst
     
     HfstState ComposeIntersectRulePair::get_state(const StatePair &p)
     {
-      if (not has_pair(p))
+      if (! has_pair(p))
     { 
       pair_state_map[p] = state_pair_vector.size();
       state_pair_vector.push_back(p);
@@ -75,7 +83,7 @@ namespace hfst
 
     float ComposeIntersectRulePair::get_final_weight(HfstState s) const
     {
-      if (not has_state(s))
+      if (! has_state(s))
     { HFST_THROW(StateNotDefined); }
       const StatePair &state_pair = state_pair_vector[s];
       return fst1->get_final_weight(state_pair.first) +
@@ -97,7 +105,7 @@ namespace hfst
  
       (void)state_transition_vector[state][symbol];
       TransitionSet transitions;
-      while (it != fst1_transitions.end() and jt != fst2_transitions.end())
+      while (it != fst1_transitions.end() && jt != fst2_transitions.end())
     {
       if (it->olabel == jt->olabel)
         {
@@ -150,7 +158,7 @@ std::ostream &ComposeIntersectRulePair::print(std::ostream &out)
     }
       out << s << "\t" << get_final_weight(s) << std::endl;
       ++s;
-      if (not has_state(s))
+      if (! has_state(s))
     { break; }
     }
   return out;

@@ -210,7 +210,7 @@ int CommandLine::parse_options(int argc, char** argv)
       
     }
 
-  if (not inputNamed)
+  if (! inputNamed)
     {
       if ((argc - optind) == 1)
     { 
@@ -288,7 +288,7 @@ std::istream &CommandLine::set_input_file(void)
   if (has_input_file)
     {
       input_file = new std::ifstream(input_file_name.c_str());
-      if (not input_file->good())
+      if (! input_file->good())
     { 
       std::cerr << "File " << input_file_name << " could not be opened!"
             << std::endl;
@@ -305,7 +305,7 @@ std::ostream &CommandLine::set_output_file(void)
   if (has_output_file)
     {
       output_file = new std::ofstream(output_file_name.c_str());
-      if (not output_file->good())
+      if (! output_file->good())
     { 
       std::cerr << "File " << output_file_name << " could not be opened!"
             << std::endl;

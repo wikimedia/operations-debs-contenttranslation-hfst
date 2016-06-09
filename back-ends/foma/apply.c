@@ -1,5 +1,5 @@
 /*     Foma: a finite-state toolkit and library.                             */
-/*     Copyright © 2008-2011 Mans Hulden                                     */
+/*     Copyright © 2008-2015 Mans Hulden                                     */
 
 /*     This file is part of foma.                                            */
 
@@ -79,6 +79,23 @@ void apply_set_show_flags(struct apply_handle *h, int value) {
 
 void apply_set_print_space(struct apply_handle *h, int value) {
     h->print_space = value;
+    h->space_symbol = strdup(" ");
+}
+
+void apply_set_separator(struct apply_handle *h, char *symbol) {
+    h->separator = strdup(symbol);
+}
+
+void apply_set_epsilon(struct apply_handle *h, char *symbol) {
+    xxfree(h->epsilon_symbol);
+    h->epsilon_symbol = strdup(symbol);
+    (h->sigs+EPSILON)->symbol = h->epsilon_symbol;
+    (h->sigs+EPSILON)->length =  strlen(h->epsilon_symbol);
+}
+
+void apply_set_space_symbol(struct apply_handle *h, char *space) {
+    h->space_symbol = strdup(space);
+    h->print_space = 1;
 }
 
 void apply_set_print_pairs(struct apply_handle *h, int value) {
@@ -194,11 +211,13 @@ void apply_clear(struct apply_handle *h) {
     if (h->flagstates != NULL) {
 	xxfree(h->flagstates);
 	h->flagstates = NULL;
-    }
+    }    
     apply_clear_index(h);
     h->last_net = NULL;
     h->iterator = 0;
     xxfree(h->outstring);
+    xxfree(h->separator);
+    xxfree(h->epsilon_symbol);
     xxfree(h);
 }
 
@@ -226,7 +245,7 @@ char *apply_updown(struct apply_handle *h, char *word) {
 }
 
 char *apply_down(struct apply_handle *h, char *word) {
-
+    
     h->mode = DOWN;
     if (h->index_in) { 
 	h->indexed = 1;
@@ -265,9 +284,9 @@ struct apply_handle *apply_init(struct fsm *net) {
     h->show_flags = 0;
     h->print_space = 0;
     h->print_pairs = 0;
-
+    h->separator = strdup(":");
+    h->epsilon_symbol = strdup("0");
     h->last_net = net;
-
     h->outstring = xxmalloc(sizeof(char)*DEFAULT_OUTSTRING_SIZE);
     h->outstringtop = DEFAULT_OUTSTRING_SIZE;
     *(h->outstring) = '\0';
@@ -393,10 +412,19 @@ void apply_clear_index(struct apply_handle *h) {
 }
 
 void apply_index(struct apply_handle *h, int inout, int densitycutoff, int mem_limit, int flags_only) {
+#ifdef ORIGINAL
     struct fsm_state *fsm;
+#else
+    // variable initialization needed for cl.exe compiler
+    struct fsm_state *fsm = h->gstates;
+#endif
     unsigned int cnt = 0;
-    int i, j, maxtrans, numtrans, laststate, sym, stateno;
+    int i, j, maxtrans, numtrans, laststate, sym;
+#ifdef ORIGINAL
     fsm = h->gstates;
+#else
+    // variable already initialized
+#endif
 
     struct apply_state_index **indexptr, *iptr, *tempiptr;
 
@@ -501,7 +529,6 @@ void apply_index(struct apply_handle *h, int inout, int densitycutoff, int mem_l
 	    continue;
 	}
 	sym = inout == APPLY_INDEX_INPUT ? (fsm+i)->in : (fsm+i)->out;
-	stateno = (fsm+i)->state_no;
 
 	if (h->has_flags && (h->flag_lookup+sym)->type) {
 	    sym = EPSILON;
@@ -939,7 +966,8 @@ int apply_append(struct apply_handle *h, int cptr, int sym) {
     bstring = ((h->sigs)+symout)->symbol;
     blen =  ((h->sigs)+symout)->length;
     
-    while (alen + blen + h->opos + 3 >= h->outstringtop) {
+    while (alen + blen + h->opos + 2 + strlen(h->separator) >= h->outstringtop) {
+	//    while (alen + blen + h->opos + 3 >= h->outstringtop) {
 	h->outstring = xxrealloc(h->outstring, sizeof(char) * ((h->outstringtop) * 2));
 	(h->outstringtop) *= 2;
     }
@@ -960,9 +988,12 @@ int apply_append(struct apply_handle *h, int cptr, int sym) {
 		len = alen;
 	    } else {
 		strcpy(h->outstring+h->opos, astring);
-		strcpy(h->outstring+h->opos+alen,":");
-		strcpy(h->outstring+h->opos+alen+1,bstring);
-		len = alen+blen+1;
+		//		strcpy(h->outstring+h->opos+alen,":");
+		strcpy(h->outstring+h->opos+alen,h->separator);
+		//strcpy(h->outstring+h->opos+alen+1,bstring);
+		strcpy(h->outstring+h->opos+alen+strlen(h->separator),bstring);
+		//		len = alen+blen+1;
+		len = alen+blen+strlen(h->separator);
 	    }
 	}
 	
@@ -996,15 +1027,20 @@ int apply_append(struct apply_handle *h, int cptr, int sym) {
 		strncpy(bstring, h->instring+h->ipos, 1);
 	    strcpy(h->outstring+h->opos, "<");
 	    strcpy(h->outstring+h->opos+1, astring);
-	    strcpy(h->outstring+h->opos+alen+1,":");
-	    strcpy(h->outstring+h->opos+alen+2,bstring);
-	    strcpy(h->outstring+h->opos+alen+blen+2,">");
-	    len = alen+blen+3;
+	    //strcpy(h->outstring+h->opos+alen+1,":");
+	    strcpy(h->outstring+h->opos+alen+1,h->separator);
+	    //strcpy(h->outstring+h->opos+alen+2,bstring);
+	    strcpy(h->outstring+h->opos+alen+1+strlen(h->separator), bstring);
+	    //strcpy(h->outstring+h->opos+alen+blen+2,">");
+	    strcpy(h->outstring+h->opos+alen+blen+1+strlen(h->separator),">");
+	    //len = alen+blen+3;
+	    len = alen+blen+2+strlen(h->separator);
 	}
 
 	else if (sym == IDENTITY) {
 	    /* Apply up/down */
-	    idlen = utf8skip(h->instring+h->ipos)+1;
+	    //idlen = utf8skip(h->instring+h->ipos)+1;
+	    idlen = (h->sigmatch_array+h->ipos)->consumes; // here
 	    strncpy(h->outstring+h->opos, h->instring+h->ipos, idlen);
 	    strncpy(h->outstring+h->opos+idlen,"", 1);
 	    len = idlen;
@@ -1022,7 +1058,7 @@ int apply_append(struct apply_handle *h, int cptr, int sym) {
 	}
     }
     if (h->print_space && len > 0) {
-	strcpy(h->outstring+h->opos+len, " ");
+	strcpy(h->outstring+h->opos+len, h->space_symbol);
 	len++;
     }
     return(len);
@@ -1185,12 +1221,8 @@ void apply_mark_flagstates(struct apply_handle *h) {
 
 void apply_create_sigarray(struct apply_handle *h, struct fsm *net) {
     struct sigma *sig;
-    struct fsm_state *fsm;
-    
     int i, maxsigma;
     
-    fsm = net->states;
-
     maxsigma = sigma_max(net->sigma);
     h->sigma_size = maxsigma+1;
     // Default size created at init, resized later if necessary
@@ -1224,8 +1256,8 @@ void apply_create_sigarray(struct apply_handle *h, struct fsm *net) {
 	}
     }
     if (maxsigma >= IDENTITY) {
-	(h->sigs+EPSILON)->symbol = "0";
-	(h->sigs+EPSILON)->length =  1;
+	(h->sigs+EPSILON)->symbol = h->epsilon_symbol;
+	(h->sigs+EPSILON)->length =  strlen(h->epsilon_symbol);
 	(h->sigs+UNKNOWN)->symbol = "?";
 	(h->sigs+UNKNOWN)->length =  1;
 	(h->sigs+IDENTITY)->symbol = "@";
@@ -1262,7 +1294,7 @@ void apply_create_sigarray(struct apply_handle *h, struct fsm *net) {
 void apply_create_sigmatch(struct apply_handle *h) {
     char *symbol;
     struct sigma_trie *st;
-    int i, j, inlen, lastmatch, consumes;
+    int i, j, inlen, lastmatch, consumes, cons;
     /* We create a sigmatch array only in case we match against a real string */
     if (((h->mode) & ENUMERATE) == ENUMERATE) {
 	return;
@@ -1275,6 +1307,8 @@ void apply_create_sigmatch(struct apply_handle *h) {
 	h->sigmatch_array = xxmalloc(sizeof(struct sigmatch_array)*(inlen));
 	h->sigmatch_array_size = inlen;
     }
+    /* Find longest match in alphabet at current position */
+    /* by traversing the trie of alphabet symbols         */
     for (i=0; i < inlen; i += consumes ) {
 	st = h->sigma_trie;
 	for (j=0, lastmatch = 0; ; j++) {
@@ -1296,13 +1330,27 @@ void apply_create_sigmatch(struct apply_handle *h) {
 	if (lastmatch != 0) {
 	    (h->sigmatch_array+i)->signumber = lastmatch;
 	    consumes = (h->sigs+lastmatch)->length;
-	    (h->sigmatch_array+i)->consumes = consumes;
 	} else {
-	    /* Not found */
+	    /* Not found in trie */
 	    (h->sigmatch_array+i)->signumber = IDENTITY;
 	    consumes = utf8skip(symbol+i)+1;
-	    (h->sigmatch_array+i)->consumes = consumes;
 	}
+
+	/* If we now find trailing unicode combining characters (0300-036F):      */
+	/* (1) Merge them all with current symbol                                 */
+	/* (2) Declare the whole sequence one ? (IDENTITY) symbol                 */
+        /*     Step 2 is motivated by the fact that                               */
+	/*     if the input is S(symbol) + D(diacritic)                           */
+        /*     and SD were a symbol in the alphabet, then this would have been    */
+        /*     found when searching the alphabet symbols earlier, so SD+ => ?     */
+        /*     Note that this means that a multi-char symbol followed by a        */
+        /*     diacritic gets converted to a single ?, e.g.                       */
+        /*     [TAG] + D => ? if [TAG] is in the alphabet, but [TAG]+D isn't.     */
+
+	for (  ; (cons = utf8iscombining((unsigned char *)(symbol+i+consumes))); consumes += cons) {
+	    (h->sigmatch_array+i)->signumber = IDENTITY;
+	}
+	(h->sigmatch_array+i)->consumes = consumes;
     }
 }
 

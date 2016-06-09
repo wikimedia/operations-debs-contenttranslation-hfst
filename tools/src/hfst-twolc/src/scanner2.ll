@@ -20,7 +20,11 @@
 
 
   // The parser. Supplies flex with its symbol tables.
-  #include "htwolcpre2.hh" 
+#ifdef YACC_USE_PARSER_H_EXTENSION
+  #include "htwolcpre2.h"
+#else
+  #include "htwolcpre2.hh"
+#endif
 
   // input_defs.h declares the inputHandler, which is
   // an object that overrides flex' default input reading.

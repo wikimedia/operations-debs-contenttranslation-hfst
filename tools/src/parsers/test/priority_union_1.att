@@ -1,0 +1,28 @@
+0       1       a       b
+0       2       @_IDENTITY_SYMBOL_@     @_IDENTITY_SYMBOL_@
+0       2       b       b
+0       2       c       c
+0       3       a       c
+3       2       @_IDENTITY_SYMBOL_@     @_IDENTITY_SYMBOL_@
+3       2       b       b
+3       2       c       c
+3       4       a       c
+4       2       @_IDENTITY_SYMBOL_@     @_IDENTITY_SYMBOL_@
+4       2       b       b
+4       2       c       c
+4       5       a       c
+5       2       @_IDENTITY_SYMBOL_@     @_IDENTITY_SYMBOL_@
+5       2       b       b
+5       2       c       c
+5       2       a       c
+2       2       @_IDENTITY_SYMBOL_@     @_IDENTITY_SYMBOL_@
+2       2       b       b
+2       2       c       c
+2       2       a       c
+1       6       a       b
+6       7       a       @0@
+0
+3
+4
+2
+7

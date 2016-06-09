@@ -1,0 +1,21 @@
+set print-weight ON
+list V a e i o u ;
+regex [[a::1]+ i::5] .m>. {kVtVbV} ;
+write att
+echo --
+list C k t b ;
+regex [k::1 t::3 b::7] .m>. {CaCaCi} ;
+write att
+echo --
+regex [k t::2 b] .m>. [ [a+ i::1] .m>. {CVCVCV} ] ;
+write att
+echo --
+regex [[a::0.5]+ i] .m>. [ [k::0.3 t b::0.7] .m>. {CVCVCV} ] ;
+write att
+echo --
+regex [ {CVCVCV} .<m. [k t b]::1 ] .<m. [a+ i]::3 ;
+write att
+echo --
+regex [ {CVCVCV} .<m. [k t b]::-1 ] .<m. [a+ i]::3 ;
+write att
+quit

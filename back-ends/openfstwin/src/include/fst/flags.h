@@ -41,10 +41,14 @@ using std::string;
         #ifdef OPENFSTEXPORT
                 #define  OPENFSTDLL  __declspec(dllexport) 
         #else
-                #define  OPENFSTDLL __declspec(dllimport)
+                #ifdef OPENFSTIMPORT
+                       #define  OPENFSTDLL __declspec(dllimport)
+                #else
+                       #define OPENFSTDLL  
+                #endif
         #endif
 #else
-                #define OPENFSTDLL  
+   #define OPENFSTDLL 
 #endif
 //
 // FLAGS USAGE:

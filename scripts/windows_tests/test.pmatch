@@ -1,0 +1,5 @@
+Define CapWord UppercaseAlpha Alpha* ;
+Define StreetWordFr [{avenué} | {boûlevard} | {ruè}] ;
+Define DeFr [ [{dë} | {dù} | {dés} | {dê là}] Whitespace ] | [{d'} | {l'}] ;
+Define StreetFr StreetWordFr (Whitespace DeFr) CapWord+ ;
+Define TOP StreetFr EndTag(PseudoFrenchStreetName) ;

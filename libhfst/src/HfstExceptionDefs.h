@@ -1,3 +1,12 @@
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
+
 #ifndef _HFST_EXCEPTION_DEFS_H_
 #define _HFST_EXCEPTION_DEFS_H_
 
@@ -6,6 +15,8 @@
 
 void hfst_set_exception(std::string name);
 std::string hfst_get_exception();
+
+#include "hfstdll.h"
 
 //! @file HfstExceptionDefs.h
 //! @brief A file for exceptions
@@ -19,8 +30,9 @@ struct HfstException
   size_t line;
   HfstException(void);
   HfstException(const std::string &name,const std::string &file,size_t line);
+  ~HfstException();
   //! @brief Get the error message.
-  std::string operator() (void) const;
+  HFSTDLL std::string operator() (void) const;
 };
 
 //! @brief Macro to throw an exception of type @a E.
@@ -193,6 +205,8 @@ try {
 \endverbatim
 */
 HFST_EXCEPTION_CHILD_DECLARATION(NotTransducerStreamException);
+
+HFST_EXCEPTION_CHILD_DECLARATION(FileIsInGZFormatException);
 
 /** \brief The stream is not in valid AT&T format. 
 

@@ -1,0 +1,12 @@
+regex "^[":m a "+":t "^]":c 0:h ;
+compile-replace upper
+apply down a
+apply down aa
+apply down aaa
+apply down aaaaaaaaa
+apply down b
+apply down ab
+apply down ba
+apply down abba
+
+

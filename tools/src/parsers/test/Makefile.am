@@ -21,6 +21,7 @@ EXTRA_DIST=test.sh \
 	reverse_net.xfst reverse_net.att \
 	upper_side_net.xfst upper_side_net.att \
 	lower_side_net.xfst lower_side_net.att \
+	one_transition_regex.xfst one_transition_regex.att \
 	substitute_defined.xfst substitute_defined.att \
 	substitute_symbol_1.xfst substitute_symbol_1.att \
 	substitute_symbol_2.xfst substitute_symbol_2.att \
@@ -28,6 +29,8 @@ EXTRA_DIST=test.sh \
 	substitute_symbol_4.xfst substitute_symbol_4.att \
 	substitute_symbol_5.xfst substitute_symbol_5.att \
 	substitute_symbol_6.xfst substitute_symbol_6.att \
+	substitute_symbol_7.xfst substitute_symbol_7.att \
+	substitute_symbol_8.xfst substitute_symbol_8.att \
 	substitute_label_1.xfst substitute_label_1.att \
 	substitute_label_2.xfst substitute_label_2.att \
 	substitute_label_3.xfst substitute_label_3.att \
@@ -42,6 +45,8 @@ EXTRA_DIST=test.sh \
 	substitute_defined_4.xfst substitute_defined_4.att \
 	substitute_defined_5.xfst substitute_defined_5.att \
 	substitute_defined_6.xfst substitute_defined_6.att \
+	merge.xfst merge.att \
+	merge_weighted.xfst merge_weighted.att \
 	replace_identity.xfst replace_identity.att \
 	quoted_literals.xfst quoted_literals.att \
 	define.xfst define.att \
@@ -56,6 +61,7 @@ EXTRA_DIST=test.sh \
 	print_labels.xfst print_labels.output \
 	print_label_tally.xfst print_label_tally.output \
 	shortest_string.xfst shortest_string.output \
+	flag_with_unknown.xfst flag_with_unknown.output \
 	test_sublanguage_true.xfst test_sublanguage_false.xfst \
 	test_overlap_true.xfst test_overlap_false.xfst \
 	test_true.output test_false.output \
@@ -162,5 +168,19 @@ EXTRA_DIST=test.sh \
 	weighted_parallel_rules_9.xfst weighted_parallel_rules_9.output \
 	weighted_parallel_rules_10.xfst weighted_parallel_rules_10.output \
 	weighted_parallel_rules_11.xfst weighted_parallel_rules_11.output \
-	xerox_composition.xfst xerox_composition.output
+	xerox_composition.xfst xerox_composition.output \
+	compile_replace_1.xfst compile_replace_1.output \
+	compile_replace_2.xfst compile_replace_2.output \
+	compile_replace_3.xfst compile_replace_3.output \
+	replace_markup_1.att replace_markup_1.xfst \
+	replace_markup_2.att replace_markup_2.xfst \
+	replace_markup_3.att replace_markup_3.xfst \
+	replace_markup_4.att replace_markup_4.xfst \
+	replace_markup_5.att replace_markup_5.xfst \
+	replace_markup_6.att replace_markup_6.xfst \
+	replace_markup_7.att replace_markup_7.xfst \
+	priority_union_1.att priority_union_1.att \
+	priority_union_2.att priority_union_2.att \
+	priority_union_3.att priority_union_3.att \
+	priority_union_4.att priority_union_4.att
 check_DATA=test.sh

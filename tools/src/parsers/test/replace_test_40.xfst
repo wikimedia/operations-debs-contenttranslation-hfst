@@ -2,7 +2,7 @@ set precision 1
 set print-weight ON
 
 regex a* -> p::1 ;
-apply up alava
+apply down alava
 echo ---
 regex [. a* .] -> p::1 ;
-apply up alava
+apply down alava

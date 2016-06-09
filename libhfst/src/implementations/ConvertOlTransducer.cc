@@ -1,14 +1,11 @@
-//       This program is free software: you can redistribute it and/or modify
-//       it under the terms of the GNU General Public License as published by
-//       the Free Software Foundation, version 3 of the License.
-//
-//       This program is distributed in the hope that it will be useful,
-//       but WITHOUT ANY WARRANTY; without even the implied warranty of
-//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//       GNU General Public License for more details.
-//
-//       You should have received a copy of the GNU General Public License
-//       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2016 University of Helsinki                          
+//                                                                    
+// This library is free software; you can redistribute it and/or      
+// modify it under the terms of the GNU Lesser General Public         
+// License as published by the Free Software Foundation; either       
+// version 3 of the License, or (at your option) any later version.
+// See the file COPYING included with this distribution for more      
+// information.
 
 #if HAVE_CONFIG_H
 #  include <config.h>
@@ -171,23 +168,17 @@ void get_states_and_symbols(
     StringSet * flag_diacritics = new StringSet();
     StringSet * other_symbols = new StringSet();
     
-    std::map<unsigned int, unsigned int> * relabeled_states =
-        new std::map<unsigned int, unsigned int>();
     unsigned int first_transition = 0;
-    unsigned int source_state=0;
+    unsigned int state_number = 0;
     for (HfstBasicTransducer::const_iterator it = t->begin(); 
          it != t->end(); ++it) {
-        unsigned int state_number = state_placeholders.size();
-        if (state_number != source_state) {
-            relabeled_states->operator[](source_state) = state_number;
-        }
         hfst_ol::Weight final_w = 0.0;
-        if (t->is_final_state(source_state)) {
-            final_w = t->get_final_weight(source_state);    
+        if (t->is_final_state(state_number)) {
+            final_w = t->get_final_weight(state_number);    
         }
         state_placeholders.push_back(hfst_ol::StatePlaceholder(
                                          state_number,
-                                         t->is_final_state(source_state),
+                                         t->is_final_state(state_number),
                                          first_transition,
                                          final_w));
         ++first_transition; // there's a padding entry between states
@@ -207,7 +198,7 @@ void get_states_and_symbols(
                 other_symbols->insert(tr_it->get_output_symbol());
             }
         }
-        source_state++;
+        ++state_number;
     }
 
     std::map<std::string, SymbolNumber> string_symbol_map;
@@ -234,7 +225,8 @@ void get_states_and_symbols(
              it != flag_diacritics->end(); ++it) {
             if (!is_epsilon(*it)) {
                 string_symbol_map[*it] = symbol_table.size();
-                flag_symbols.insert(symbol_table.size());
+                // TODO: cl.exe: conversion from 'size_t' to 'char16_t'
+                flag_symbols.insert((unsigned short)symbol_table.size());
                 symbol_table.push_back(*it);
                 // don't increment seen_input_symbols - we use it for
                 // indexing
@@ -244,7 +236,7 @@ void get_states_and_symbols(
         // 4) non-input symbols
         for (std::set<std::string>::iterator it = other_symbols->begin();
              it != other_symbols->end(); ++it) {
-            if (!is_epsilon(*it) and input_symbols->count(*it) == 0 and
+            if (!is_epsilon(*it) && input_symbols->count(*it) == 0 &&
               flag_diacritics->count(*it) == 0) {
                 string_symbol_map[*it] = symbol_table.size();
                 symbol_table.push_back(*it);
@@ -265,41 +257,31 @@ void get_states_and_symbols(
     delete input_symbols;
     delete flag_diacritics;
     delete other_symbols;
-        
+
     // Do a second pass over the transitions, figuring out everything
     // about the states except starting indices
 
-    source_state=0;
+    state_number = 0;
     for (HfstBasicTransducer::const_iterator it = t->begin(); 
          it != t->end(); ++it) {
         for (HfstBasicTransducer::HfstTransitions::const_iterator tr_it 
                = it->begin();
              tr_it != it->end(); ++tr_it) {
-        unsigned int state_number = source_state;
-        if (relabeled_states->count(state_number) != 0) {
-        state_number = relabeled_states->operator[](state_number);
-        }
-            // check for previously unseen inputs
-            if (state_placeholders[state_number].inputs.count(
-                    string_symbol_map[tr_it->get_input_symbol()]) == 0) {
-                state_placeholders[state_number].inputs[
-                    string_symbol_map[tr_it->get_input_symbol()]] =
-                    std::vector<hfst_ol::TransitionPlaceholder>();
-            }
-        unsigned int target = tr_it->get_target_state();
-        if (relabeled_states->count(target) != 0) {
-        target = relabeled_states->operator[](target);
-        }
+            // add input in case we're seeing it the first time
+            state_placeholders[state_number].add_input(
+                string_symbol_map[tr_it->get_input_symbol()],
+                flag_symbols);
+            unsigned int target = tr_it->get_target_state();
             hfst_ol::TransitionPlaceholder trans(
                 target,
+                string_symbol_map[tr_it->get_input_symbol()],
                 string_symbol_map[tr_it->get_output_symbol()],
                 tr_it->get_weight());
-            state_placeholders[state_number]
-                .inputs[string_symbol_map[tr_it->get_input_symbol()]].push_back(trans);
+            SymbolNumber input_sym = string_symbol_map[tr_it->get_input_symbol()];
+            state_placeholders[state_number].add_transition(trans);
         }
-    source_state++;
+        ++state_number;
     }
-    delete relabeled_states;
 }
 
   /* Create an hfst_ol::Transducer equivalent to HfstBasicTransducer \a t.
@@ -333,12 +315,12 @@ void get_states_and_symbols(
                              flag_symbols,
                              harmonizer_ol);
 
-    // For determining the index table we first sort the states (excepting
+      // For determining the index table we first sort the states (excepting
     // the starting state) by number of different input symbols.
-    if (state_placeholders.begin() != state_placeholders.end()) {
-    std::sort(state_placeholders.begin() + 1, state_placeholders.end(),
-          hfst_ol::compare_states_by_input_size);
-    }
+    // if (state_placeholders.begin() != state_placeholders.end()) {
+    // std::sort(state_placeholders.begin() + 1, state_placeholders.end(),
+    //       hfst_ol::compare_states_by_input_size);
+    // }
 
     hfst_ol::IndexPlaceholders * used_indices =
         new hfst_ol::IndexPlaceholders();
@@ -360,107 +342,85 @@ void get_states_and_symbols(
     for (std::vector<hfst_ol::StatePlaceholder>::iterator it =
              state_placeholders.begin();
          it != state_placeholders.end(); ++it) {
-        if (it->is_simple(flag_symbols) and it->state_number != 0) {
+        if (it->is_simple()) {
             continue;
         }
         unsigned int i = first_available_index;
 
         // While this index is not suitable for a starting index, keep looking
-    if (!quick) {
         while (!used_indices->fits(*it, flag_symbols, i)) {
-        ++i;
+            ++i;
         }
-    }
         it->start_index = i;
-    previous_successful_index = i;
+        previous_successful_index = i;
         // Once we've found a starting index, insert a finality marker and
-    // mark all the used indices
-    used_indices->operator[](i) =
-        std::pair<unsigned int, SymbolNumber>(
-        it->state_number, NO_SYMBOL_NUMBER);
-        for (std::map<SymbolNumber,
-                 std::vector<hfst_ol::TransitionPlaceholder> >
-                 ::iterator sym_it = it->inputs.begin();
-             sym_it != it->inputs.end(); ++sym_it) {
-            SymbolNumber index_offset = sym_it->first;
+        // mark all the used indices
+        used_indices->assign(i, it->state_number, NO_SYMBOL_NUMBER);
+        for (std::vector<std::vector<hfst_ol::TransitionPlaceholder> >
+                 ::const_iterator tr_it = it->transition_placeholders.begin();
+             tr_it != it->transition_placeholders.end(); ++tr_it) {
+            SymbolNumber index_offset = tr_it->at(0).input;
             if (flag_symbols.count(index_offset) != 0) {
                 index_offset = 0;
             }
-            used_indices->operator[](i + index_offset + 1) =
-                std::pair<unsigned int, SymbolNumber>
-                (it->state_number, index_offset);
+            used_indices->assign(i + index_offset + 1, it->state_number, index_offset);
         }
-    if (quick) {
-        first_available_index = used_indices->rbegin()->first + 1;
-        continue;
-    }
-    while (used_indices->unsuitable(
-           first_available_index, seen_input_symbols,
-           packing_aggression)) {
-        ++first_available_index;
-    }
-    if (first_available_index == previous_first_index) {
-        if (floor_stuck_counter > floor_jump_threshold) {
-        SymbolNumber index_offset = it->inputs.rbegin()->first;
-        if (flag_symbols.count(index_offset) != 0) {
-            index_offset = 0;
-        }
-        first_available_index =
-            previous_successful_index + 1 + index_offset;
-        while (used_indices->unsuitable(
-               first_available_index,
-               seen_input_symbols, packing_aggression)) {
+
+        while (used_indices->unsuitable(first_available_index, seen_input_symbols, packing_aggression)) {
             ++first_available_index;
         }
-        floor_stuck_counter = 0;
-        previous_first_index = first_available_index;
+        if (first_available_index == previous_first_index) {
+            if (floor_stuck_counter > floor_jump_threshold) {
+                first_available_index = previous_successful_index + 1;
+                floor_stuck_counter = 0;
+                previous_first_index = first_available_index;
+            } else {
+                ++floor_stuck_counter;
+            }
         } else {
-        ++floor_stuck_counter;
+            previous_first_index = first_available_index;
+            floor_stuck_counter = 0;
         }
-    } else {
-        previous_first_index = first_available_index;
-        floor_stuck_counter = 0;
-    }
     }
 
     // Now resort by state number for the rest
     // (this could definitely be neater...)
-    if (state_placeholders.begin() != state_placeholders.end()) {
-    std::sort(state_placeholders.begin() + 1, state_placeholders.end(),
-          hfst_ol::compare_states_by_state_number);
-    }
+   // if (state_placeholders.begin() != state_placeholders.end()) {
+   // std::sort(state_placeholders.begin() + 1, state_placeholders.end(),
+   //       hfst_ol::compare_states_by_state_number);
+   // }
 
     // Now for each index entry we write its input symbol and target
 
     hfst_ol::TransducerTable<hfst_ol::TransitionWIndex> windex_table;
     
     unsigned int greatest_index = 0;
-    if (used_indices->size() != 0) {
-        greatest_index = used_indices->rbegin()->first;
+    if (used_indices->indices.size() != 0) {
+        greatest_index = used_indices->indices.size() - 1;
     }
 
     for(unsigned int i = 0; i <= greatest_index; ++i) {
-        if (used_indices->count(i) == 0) { // blank entries
+        if (!used_indices->used(i)) { // blank entries
             windex_table.append(hfst_ol::TransitionWIndex());
-        } else if (used_indices->operator[](i).second ==
-           NO_SYMBOL_NUMBER) { // finality markers
-        if (state_placeholders[used_indices->operator[](i).first].final) {
-        windex_table.append(
-            hfst_ol::TransitionWIndex::create_final(
-            state_placeholders[
-                used_indices->operator[](i).first].final_weight));
-        } else {
-        windex_table.append(hfst_ol::TransitionWIndex());
-        }
-    } else { // actual entries
-            unsigned int idx = used_indices->operator[](i).first;
-            SymbolNumber sym = used_indices->operator[](i).second;
+        } else if (used_indices->get_target(i).second ==
+                   NO_SYMBOL_NUMBER) { // finality markers
+            if (state_placeholders[used_indices->get_target(i).first].final) {
+                windex_table.append(
+                    hfst_ol::TransitionWIndex::create_final(
+                        state_placeholders[
+                            used_indices->get_target(i).first].final_weight));
+            } else {
+                windex_table.append(hfst_ol::TransitionWIndex());
+            }
+        } else { // actual entries
+            unsigned int idx = used_indices->get_target(i).first;
+            SymbolNumber sym = used_indices->get_target(i).second;
             windex_table.append(
-        hfst_ol::TransitionWIndex(
-            sym,
-            state_placeholders[idx].first_transition +
-            state_placeholders[idx].symbol_offset(
-            sym, flag_symbols) + TA_OFFSET));
+                hfst_ol::TransitionWIndex(
+                    sym,
+                    state_placeholders[idx].first_transition +
+                    state_placeholders[idx].symbol_offset(
+                        sym, flag_symbols) + TA_OFFSET));
         }
     }
 
@@ -496,12 +456,19 @@ HfstTransducer * ConversionFunctions::hfst_ol_to_hfst_transducer(
 {
     hfst::ImplementationType type = t->is_weighted() ? HFST_OLW_TYPE : HFST_OL_TYPE;
     HfstTransducer * retval = new HfstTransducer(type);
+    delete retval->implementation.hfst_ol;
     retval->implementation.hfst_ol = new hfst_ol::Transducer(*t);
     return retval;
 }
 
-
-
+hfst_ol::Transducer * ConversionFunctions::hfst_transducer_to_hfst_ol(
+    HfstTransducer * t)
+{
+    if (t->type != HFST_OL_TYPE && t->type != HFST_OLW_TYPE) {
+        t->convert(HFST_OLW_TYPE);
+    }
+    return t->implementation.hfst_ol;
+}
 
 }}
 #else // MAIN_TEST was defined

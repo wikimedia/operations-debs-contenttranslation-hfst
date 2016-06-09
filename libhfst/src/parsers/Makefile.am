@@ -1,19 +1,13 @@
 ## Process this file with automake to produce Makefile.in
 
-## Copyright (C) 2011 University of Helsinki
-
-## This program is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-
-## This program is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-## GNU General Public License for more details.
-
-## You should have received a copy of the GNU General Public License
-## along with this program. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2016 University of Helsinki                          
+#                                                                    
+# This library is free software; you can redistribute it and/or      
+# modify it under the terms of the GNU Lesser General Public         
+# License as published by the Free Software Foundation; either       
+# version 3 of the License, or (at your option) any later version.    
+# See the file COPYING included with this distribution for more      
+# information. 
 
 noinst_LTLIBRARIES=libhfstparsers.la
 
@@ -29,20 +23,33 @@ LEXC_SRCS=lexc-lexer.ll lexc-parser.yy lexc-utils.cc LexcCompiler.cc
 LEXC_HDRS=LexcCompiler.h lexc-utils.h
 LEXC_BUILT=lexc-parser.cc lexc-lexer.cc
 
-BUILT_SOURCES=$(XRE_BUILT) $(PMATCH_BUILT) $(LEXC_BUILT)
+# TODO: hfst-string-conversions.cc
+XFST_SRCS=xfst-lexer.ll xfst-parser.yy xfst-utils.cc XfstCompiler.cc xfst_help_message.cc
+XFST_HDRS=XfstCompiler.h xfst-utils.h xfst_help_message.h
+XFST_BUILT=xfst-parser.cc xfst-lexer.cc
 
-CLEANFILES=$(XRE_BUILT) $(PMATCH_BUILT) $(LEXC_BUILT) \
-             xre_parse.hh pmatch_parse.hh lexc-parser.hh
+BUILT_SOURCES=$(XRE_BUILT) $(PMATCH_BUILT) $(LEXC_BUILT) $(XFST_BUILT)
+
+if YACC_USE_PARSER_H_EXTENSION
+  HEADER=h
+else
+  HEADER=hh
+endif
+
+CLEANFILES=$(XRE_BUILT) $(PMATCH_BUILT) $(LEXC_BUILT) $(XFST_BUILT) \
+	xre_parse.$(HEADER) pmatch_parse.$(HEADER) lexc-parser.$(HEADER) xfst-parser.$(HEADER)
 
 AM_YFLAGS=-d
 AM_LFLAGS=--outfile=$(LEX_OUTPUT_ROOT).c
 
-CLEANFILES+=xre_parse.hh  pmatch_parse.hh  lexc-parser.hh
-xre_lex.ll: xre_parse.hh
-pmatch_lex.ll: pmatch_parse.hh
-lexc-lexer.ll: lexc-parser.hh
+#CLEANFILES+=xre_parse.hh  pmatch_parse.hh  lexc-parser.hh xfst-parser.hh
 
-libhfstparsers_la_SOURCES=$(SFST_SRCS) $(XRE_SRCS) $(PMATCH_SRCS) $(LEXC_SRCS)
+xre_lex.ll: xre_parse.$(HEADER)
+pmatch_lex.ll: pmatch_parse.$(HEADER)
+lexc-lexer.ll: lexc-parser.$(HEADER)
+xfst-lexer.ll: xfst-parser.$(HEADER)
+
+libhfstparsers_la_SOURCES=$(SFST_SRCS) $(XRE_SRCS) $(PMATCH_SRCS) $(LEXC_SRCS) $(XFST_SRCS)
 
 AM_CPPFLAGS=-I${top_srcdir}/libhfst/src/parsers -I${top_srcdir}/libhfst/src \
 		-I${top_srcdir}/back-ends/foma -I${top_srcdir}/back-ends \
@@ -58,7 +65,7 @@ endif
 hfstincludedir = $(includedir)/hfst
 extincludedir = $(hfstincludedir)/parsers
 
-extinclude_HEADERS = $(XRE_HDRS) $(PMATCH_HDRS) $(LEXC_HDRS)
+extinclude_HEADERS = $(XRE_HDRS) $(PMATCH_HDRS) $(LEXC_HDRS) $(XFST_HDRS)
 
 LIBHFST_PARSER_TSTS=XreCompiler LexcCompiler # PmatchCompiler
 
@@ -76,4 +83,5 @@ LexcCompiler_LDADD=../libhfst.la
 
 TESTS=$(LIBHFST_PARSER_TSTS)
 
-EXTRA_DIST=xre_parse.hh pmatch_parse.hh lexc-parser.hh $(BUILT_SOURCES)
+EXTRA_DIST=xre_parse.$(HEADER) pmatch_parse.$(HEADER) lexc-parser.$(HEADER) xfst-parser.$(HEADER) $(BUILT_SOURCES)
+

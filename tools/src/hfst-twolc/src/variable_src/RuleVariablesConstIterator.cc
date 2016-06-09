@@ -72,7 +72,7 @@ bool RuleVariablesConstIterator::operator==
 
 bool RuleVariablesConstIterator::operator!=
 (const RuleVariablesConstIterator &another)
-{ return not (*this == another); }
+{ return ! (*this == another); }
 
 void RuleVariablesConstIterator::operator++(void)
 {

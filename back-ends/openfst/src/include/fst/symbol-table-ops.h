@@ -21,7 +21,7 @@
 using std::vector;
 #include <string>
 
-#ifdef USE_TR1_UNORDERED_SET
+/*#ifdef USE_TR1_UNORDERED_SET
 #include <tr1/unordered_set>
 using std::tr1::unordered_set;
 using std::tr1::unordered_multiset;
@@ -29,7 +29,7 @@ using std::tr1::unordered_multiset;
 #include <unordered_set>
 using std::unordered_set;
 using std::unordered_multiset;
-#endif
+#endif*/
 
 #include <fst/fst.h>
 #include <fst/symbol-table.h>

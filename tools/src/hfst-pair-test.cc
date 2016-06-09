@@ -52,6 +52,7 @@ static FILE*  pair_test_file;
 static size_t linen = 0;
 static bool   pair_test_given = false;
 static bool   positive_test = true;
+static bool   xerox_mode = false;
 
 using hfst::HfstInputStream;
 using hfst::HfstTransducer;
@@ -80,8 +81,10 @@ print_usage()
         "Input/Output options:\n"
         "  -i, --input=INFILE     Read input rule file from INFILE\n"
         "  -o, --output=OUTFILE   Write test output to OUTFILE\n"
-    "  -N  --negative-test    Test fails if any of the pair strings is\n"
-    "                         accepted.\n");
+        "  -N  --negative-test    Test fails if any of the pair strings is\n"
+        "                         accepted.\n"
+        "  -X  --xerox-mode       In xerox mode, test cases are harvested\n"
+        "                         from a twolc source file.\n");
 
     fprintf(message_out, "Pair test options:\n"
             "  -I, --input-strings=SFILE        Read pair test strings from\n"
@@ -104,13 +107,15 @@ print_usage()
         "considered comment lines and skipped.\n");
     fprintf(message_out, "\n");
     fprintf(message_out,
-        "There are two test modes positive and negative. In positive\n"
-        "mode, all of the pair strings should be allowed and in negative\n"
-        "mode they should be disallowed.\n"
+        "There are three test modes positive, negative and Xerox mode. In\n"
+        "positive mode, all of the pair strings should be allowed and in\n"
+        "negative mode they should be disallowed. In Xerox mode the cases\n"
+        "are read from a twolc source file and both positive and negative\n"
+        "cases can occur.\n"       
         );
     fprintf(message_out, "\n");
     fprintf(message_out,
-       "Ordinarily, positive test mode is in use. Option -N switches to\n" 
+        "Ordinarily, positive test mode is in use. Option -N switches to\n" 
         "negative test mode. The exit code for a successful test is 0. \n"
         "The exit code is 1 otherwise. A successful test will print\n"
         "\"Test passed\". A failing test prints \"Test failed\" and\n"
@@ -122,6 +127,21 @@ print_usage()
         "it are printed as well as the positions in the string where the\n"
         "rules run out of possible transitions. In negative mode, only\n"
         "the strings that are allowed are printed.\n");
+    fprintf(message_out, "\n");
+    fprintf(message_out,
+        "In Xerox mode, the input should be a twolc file. Tests consist of\n"
+        "two lines: an input form and an output form. The test cases are\n"
+        "specialized comments prefixed with either '!!€' or '!!$' depeding on\n"
+        "whether the pair should succeed or fail. An example of a positive\n"
+        "test:\n\n"
+
+        "!!€ earlYer\n"
+        "!!€ earlier\n\n"
+
+        "An example of a negative test:\n\n"
+
+        "!!$ earlYer\n"
+        "!!$ earlyer\n");
     fprintf(message_out, "\n");
     fprintf(message_out,
         "In silent mode (-s), the program won't print anything. Only the\n"
@@ -146,12 +166,13 @@ parse_options(int argc, char** argv)
           // add tool-specific options here
             {"input-strings", required_argument, 0, 'I'},
             {"negative-test", no_argument, 0, 'N'},
+            {"xerox-mode", no_argument, 0, 'X'},
             {0,0,0,0}
         };
         int option_index = 0;
         // add tool-specific options here 
         char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
-                             HFST_GETOPT_UNARY_SHORT "I:N",
+                             HFST_GETOPT_UNARY_SHORT "I:NX",
                              long_options, &option_index);
         if (-1 == c)
         {
@@ -170,6 +191,9 @@ parse_options(int argc, char** argv)
             break;
         case 'N':
         positive_test = false;
+        break;
+        case 'X':
+        xerox_mode = true;
         break;
 #include "inc/getopt-cases-error.h"
         }
@@ -190,6 +214,31 @@ parse_options(int argc, char** argv)
               /*inputfilename*/);
       }
     return EXIT_CONTINUE;
+}
+
+std::string &replace_all_substr(const std::string &substr, 
+                                const std::string &repl,
+                                std::string &str)
+{
+  int pos = 0;
+  while ((pos = str.find(substr, pos)) != std::string::npos)
+    {
+      str.replace(pos, substr.size(), repl);
+    }
+  return str;
+}
+#define PTPP "PAIR_TEST_PERC_PERC"
+#define PTPC "PAIR_TEST_PERC_COL"
+// perc_escaped is a string where special symols are escaped using
+// %. Transform it into a string where specail symbols are escaped
+// using \. 
+std::string backslash_escape(std::string perc_escaped)
+{
+  replace_all_substr("%%", PTPP, perc_escaped);
+  replace_all_substr("%:", PTPC, perc_escaped);
+  replace_all_substr("%", "", perc_escaped);
+  replace_all_substr(PTPC, "\\:", perc_escaped);
+  return replace_all_substr(PTPP, "%", perc_escaped);
 }
 
 HfstState get_target(const std::string &isymbol,
@@ -429,6 +478,25 @@ void get_symbols(HfstBasicTransducer &t,SymbolSet &known_symbols)
     }
 }
 
+std::string strip_space(const std::string &line)
+{
+  int first_non_white_space_pos = line.find_first_not_of(" \t");
+  
+  if (first_non_white_space_pos == std::string::npos)
+    { return ""; }
+
+  int last_non_white_space_pos = line.find_last_not_of(" \t");
+  int len = last_non_white_space_pos - first_non_white_space_pos + 1;
+
+  return line.substr(first_non_white_space_pos, len);
+}
+
+bool is_positive_test_line(const std::string &line)
+{ return strip_space(line).substr(0,sizeof("!!€") - 1) == "!!€"; }
+
+bool is_negative_test_line(const std::string &line)
+{ return strip_space(line).substr(0,sizeof("!!$") - 1) == "!!$"; }
+
 int
 process_stream(HfstInputStream& inputstream, FILE* outstream)
 {
@@ -471,65 +539,225 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
     char* line = 0;
     size_t llen = 0;
 
-    // Define tokenizer with no multi character symbols and an
-    // empty epsilon representation.
-    StringVector empty_v;
-    HfstStrings2FstTokenizer input_tokenizer
-      (empty_v, std::string("0"));
 
     int exit_code = 0;
-    while (hfst_getline(&line, &llen, pair_test_file) != -1)
+
+    if (not xerox_mode)
       {
-        linen++;
-        char *p = line;
-        while (*p != '\0')
+        // Define tokenizer with no multi character symbols and an
+        // empty epsilon representation.
+        StringVector empty_v;
+        hfst::HfstStrings2FstTokenizer input_tokenizer
+          (empty_v, std::string("0"));
+        
+        while (hfst_getline(&line, &llen, pair_test_file) != -1)
           {
-            if (*p == '\n')
+            linen++;
+            char *p = line;
+            while (*p != '\0')
               {
-                *p = '\0';
-                break;
+                if (*p == '\n')
+                  {
+                    *p = '\0';
+                    break;
+                  }
+                p++;
               }
-            p++;
+            if (is_empty_or_comment(line))
+              { continue; }
+            verbose_printf("Pair test on %s...\n", line);
+            
+            int new_exit_code = 0;
+            
+            try
+              {
+                StringPairVector tokenized_pair_string =
+                  input_tokenizer.tokenize_pair_string(line,true);
+                
+                tokenized_pair_string.insert
+                  (tokenized_pair_string.begin(),
+                   StringPair("@#@",hfst::internal_epsilon));
+                tokenized_pair_string.insert
+                  (tokenized_pair_string.end(),
+                   StringPair("@#@",hfst::internal_epsilon));
+                
+                new_exit_code = 
+                  test(tokenized_pair_string,line,grammar,rule_names,
+                       positive_test,outfile,known_symbols);
+                
+              }
+            catch (const hfst::UnescapedColsFound &e)
+              {
+                error(EXIT_FAILURE, 0, 
+                      "The correspondence %s contains unquoted colon-symbols. If "
+                      "you want to input pairs where either symbol is epsilon, "
+                      "use 0 e.g. \"m a s s 0:e s\".\n",
+                      line);
+                
+              }
+            
+            
+            if (exit_code == 0)
+              { exit_code = new_exit_code; }
+            
+          } // while lines in input
+        free(line); 
+      }
+    else
+      {
+        /*
+          Read test cases from a twolc source file.
+
+          Positive test cases are prefixed by "!!€" and negative test
+          cases by "!!$".
+
+          Each test case spans two lines: the input and output cases.
+         */
+
+        StringVector positive_test_cases;
+        StringVector negative_test_cases;
+
+        StringVector symbols(known_symbols.begin(), known_symbols.end());
+
+        hfst::HfstStrings2FstTokenizer input_tokenizer
+          (symbols, std::string("0"));
+
+        while (hfst_getline(&line, &llen, pair_test_file) != -1)
+          {
+            linen++;
+            char *p = line;
+            while (*p != '\0')
+              {
+                if (*p == '\n')
+                  {
+                    *p = '\0';
+                    break;
+                  }
+                p++;
+              }
+
+            if (is_positive_test_line(line))
+              {
+                // "!!€ xyz" -> "xyz"
+                std::string test_case = strip_space(line).substr(sizeof("!!€") - 1);
+                test_case = strip_space(test_case);
+
+                positive_test_cases.push_back(test_case);
+                verbose_printf("Positive test case: %s...\n", 
+                               test_case.c_str());        
+              }
+            else if (is_negative_test_line(line))
+              {
+                // "!!$ xyz" -> "xyz"
+                std::string test_case = strip_space(line).substr(sizeof("!!$") - 1);
+                test_case = strip_space(test_case);
+                
+                negative_test_cases.push_back(test_case);
+                verbose_printf("Negative test case: %s %s...\n", 
+                               line, test_case.c_str());        
+              }
+            else
+              { continue; }
+                        
+            
+          } // while lines in input
+        free(line); 
+        
+        if (positive_test_cases.size() % 2 != 0)
+          {
+            error(EXIT_FAILURE, 0, 
+                  "Got an odd number of positive test cases. Every input string\n"
+                  "has to have an output string.\n");
           }
-    if (is_empty_or_comment(line))
-      { continue; }
-        verbose_printf("Pair test on %s...\n", line);
 
-    int new_exit_code = 0;
+        if (negative_test_cases.size() % 2 != 0)
+          {
+            error(EXIT_FAILURE, 0, 
+                  "Got an odd number of negative test cases. Every input string\n"
+                  "has to have an output string.\n");
+          }
 
-    try
-      {
-        StringPairVector tokenized_pair_string =
-          input_tokenizer.tokenize_pair_string(line,true);
-        
-        tokenized_pair_string.insert
-          (tokenized_pair_string.begin(),
-           StringPair("@#@",hfst::internal_epsilon));
-        tokenized_pair_string.insert
-          (tokenized_pair_string.end(),
-           StringPair("@#@",hfst::internal_epsilon));
+        for (int i = 0; i < positive_test_cases.size(); i += 2)
+          {
+            const std::string &input_case = positive_test_cases[i];
+            const std::string &output_case = positive_test_cases[i + 1];
 
-        new_exit_code = 
-          test(tokenized_pair_string,line,grammar,rule_names,
-           positive_test,outfile,known_symbols);
-        
+            StringPairVector test_case;
+            try 
+              {
+                // We need to convert the %-escaped input and output
+                // string to \-escpaed strings for input_toknizer.
+                test_case = input_tokenizer.tokenize_string_pair
+                  (backslash_escape(input_case) + ":" + 
+                   backslash_escape(output_case), false);
+                test_case.insert
+                  (test_case.begin(),
+                   StringPair("@#@",hfst::internal_epsilon));
+                test_case.insert
+                  (test_case.end(),
+                   StringPair("@#@",hfst::internal_epsilon));
+
+              }
+            catch (const hfst::UnescapedColsFound &e)
+              {
+                error(EXIT_FAILURE, 0, 
+                      "The correspondence %s %s contains unescaped "
+                      "colon-symbols. Escape them using %%.",
+                      input_case.c_str(), output_case.c_str(), line);
+              }
+
+            int new_exit_code = test(test_case,
+                                     input_case + " : " + output_case,
+                                     grammar,
+                                     rule_names,
+                                     true,
+                                     outfile,
+                                     known_symbols);
+            
+            if (exit_code == 0)
+              { exit_code = new_exit_code; }
+          }
+
+        for (int i = 0; i < negative_test_cases.size(); i += 2)
+          {
+            const std::string &input_case = negative_test_cases[i];
+            const std::string &output_case = negative_test_cases[i + 1];
+
+            StringPairVector test_case;
+            try
+              {
+                // We need to convert the %-escaped input and output
+                // string to \-escpaed strings for input_toknizer.
+                test_case = input_tokenizer.tokenize_string_pair
+                  (backslash_escape(input_case) + ":" + 
+                   backslash_escape(output_case), false);
+                test_case.insert
+                  (test_case.begin(),
+                   StringPair("@#@",hfst::internal_epsilon));
+                test_case.insert
+                  (test_case.end(),
+                   StringPair("@#@",hfst::internal_epsilon));
+              }
+            catch (const hfst::UnescapedColsFound &e)
+              {
+                error(EXIT_FAILURE, 0, 
+                      "The correspondence %s %s contains unquoted "
+                      "colon-symbols. Quote them using %%.",
+                      input_case.c_str(), output_case.c_str(), line);
+              }
+
+            int new_exit_code = test(test_case,
+                                     input_case + " : " + output_case,
+                                     grammar,
+                                     rule_names,
+                                     false,
+                                     outfile,
+                                     known_symbols);
+            
+            if (exit_code == 0)
+              { exit_code = new_exit_code; }
+          }
       }
-    catch (const UnescapedColsFound &e)
-      {
-        error(EXIT_FAILURE, 0, 
-          "The correspondence %s contains unquoted colon-symbols. If "
-          "you want to input pairs where either symbol is epsilon, "
-          "use 0 e.g. \"m a s s 0:e s\".\n",
-          line);
-        
-      }
-
-    
-    if (exit_code == 0)
-      { exit_code = new_exit_code; }
-
-      } // while lines in input
-    free(line); 
 
     return exit_code;
 }

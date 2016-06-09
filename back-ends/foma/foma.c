@@ -1,5 +1,5 @@
 /*     Foma: a finite-state toolkit and library.                             */
-/*     Copyright © 2008-2012 Mans Hulden                                     */
+/*     Copyright © 2008-2014 Mans Hulden                                     */
 
 /*     This file is part of foma.                                            */
 
@@ -15,47 +15,43 @@
 /*     You should have received a copy of the GNU General Public License     */
 /*     along with foma.  If not, see <http://www.gnu.org/licenses/>.         */
 
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <getopt.h>
 #include <time.h>
-
-#ifdef HAVE_READLINE
-#include <readline/readline.h>
-#endif // HAVE_READLINE
-
+#if defined(ORIGINAL) || defined(HAVE_READLINE)
+  #include <readline/readline.h>
+#endif
 #include "foma.h"
 
 /* Front-end behavior variables */
 int pipe_mode = 0;
 int quiet_mode = 0;
-
-#ifdef HAVE_READLINE
-static int use_readline = 1;
+#if defined(ORIGINAL) || defined(HAVE_READLINE)
+  static int use_readline = 1;
 #else
-static int use_readline = 0;
-#endif // HAVE_READLINE
+  static int use_readline = 0;
+#endif
 
 int promptmode = PROMPT_MAIN;
 int apply_direction;
 
 /* Variable to pass the position of rl completion to our completer */
-#ifdef HAVE_READLINE
-static int smatch;
-#endif // HAVE_READLINE
+#if defined(ORIGINAL) || defined(HAVE_READLINE)
+  static int smatch;
+#endif
 
 char *usagestring = "Usage: foma [-e \"command\"] [-f run-once-script] [-l startupscript] [-p] [-q] [-s] [-v]\n";
 
-#ifdef HAVE_READLINE
+#if defined(ORIGINAL) || defined(HAVE_READLINE)
 static char** my_completion(const char*, int ,int);
 char *my_generator(const char* , int);
-char *cmd [] = {"ambiguous upper","apply down","apply med","apply up","apropos","assert-stack","clear stack","compact sigma","complete net","compose net","concatenate net","crossproduct net","define","determinize net","echo","eliminate flags","eliminate flag","export cmatrix","extract ambiguous","extract unambiguous","factorize","help license","help warranty","ignore net","intersect net","invert net","label net","letter machine","load defined","lower-side net","minimize net","name net","negate net","one-plus net","pop stack","print defined","print dot","print lower-words","print cmatrix","print name","print net","print random-lower","print random-upper","print random-words","print sigma","print size","print shortest-string","print shortest-string-length","print upper-words","prune net","push defined","quit","read att","read cmatrix","read prolog","read lexc","read regex","read spaced-text","read text","reverse net","rotate stack","save defined","save stack","sequentialize","set","show variables","show variable","shuffle net","sigma","sigma net","source","sort in","sort net","sort out","substitute defined","substitute symbol","system","test unambiguous","test star-free","test equivalent","test functional","test identity","test lower-universal","test upper-universal","test non-null","test null","test sequential","turn stack","twosided flag-diacritics","undefine","union net","upper-side net","view net","write att","write prolog","zero-plus net",NULL};
+char *cmd [] = {"ambiguous upper","apply down","apply med","apply up","apropos","assert-stack","clear stack","close sigma","compact sigma","complete net","compose net","concatenate net","crossproduct net","define","determinize net","echo","eliminate flags","eliminate flag","export cmatrix","extract ambiguous","extract unambiguous","factorize","help license","help warranty","ignore net","intersect net","invert net","label net","letter machine","load defined","lower-side net","minimize net","name net","negate net","one-plus net","pop stack","print defined","print dot","print lower-words","print cmatrix","print name","print net","print random-lower","print random-upper","print random-words","print sigma","print size","print shortest-string","print shortest-string-length","print words","print pairs","print random-pairs","print upper-words","prune net","push defined","quit","read att","read cmatrix","read prolog","read lexc","read regex","read spaced-text","read text","reverse net","rotate stack","save defined","save stack","sequentialize","set","show variables","show variable","shuffle net","sigma","sigma net","source","sort in","sort net","sort out","substitute defined","substitute symbol","system","test unambiguous","test star-free","test equivalent","test functional","test identity","test lower-universal","test upper-universal","test non-null","test null","test sequential","turn stack","twosided flag-diacritics","undefine","union net","upper-side net","view net","write att","write prolog","zero-plus net",NULL};
 
-char *abbrvcmd [] = {"ambiguous","down","up","med","size","loadd","lower-words","upper-words","net","random-lower","random-upper","random-words","regex","rpl","au revoir","bye","exit","saved","seq","ss","stack","tunam","tid","tfu","tlu","tuu","tnu","tnn","tseq","tsf","equ","pss","psz","ratt","tfd","hyvästi","watt","wpl","examb","exunamb",NULL};
-#endif // HAVE_READLINE
+char *abbrvcmd [] = {"ambiguous","close","down","up","med","size","loadd","lower-words","upper-words","net","random-lower","random-upper","words","random-words","regex","rpl","au revoir","bye","exit","saved","seq","ss","stack","tunam","tid","tfu","tlu","tuu","tnu","tnn","tseq","tsf","equ","pss","psz","ratt","tfd","hyvästi","watt","wpl","examb","exunamb","pairs","random-pairs",NULL};
+#endif
 
 /* #include "yy.tab.h" */
 
@@ -66,7 +62,12 @@ extern int add_history (const char *);
 extern int my_yyparse(char *my_string);
 void print_help();
 void xprintf(char *string) { return ; printf("%s",string); }
-char disclaimer[] = "Foma, version 0.9.17alpha\nCopyright © 2008-2012 Mans Hulden\nThis is free software; see the source code for copying conditions.\nThere is ABSOLUTELY NO WARRANTY; for details, type \"help license\"\n\nType \"help\" to list all commands available.\nType \"help <topic>\" or help \"<operator>\" for further help.\n\n";
+char disclaimer1[] = "Foma, version ";
+char disclaimer2[] = "\nCopyright © 2008-2015 Mans Hulden\nThis is free software; see the source code for copying conditions.\nThere is ABSOLUTELY NO WARRANTY; for details, type \"help license\"\n\nType \"help\" to list all commands available.\nType \"help <topic>\" or help \"<operator>\" for further help.\n\n";
+
+#ifndef SVN_REV
+#define SVN_REV 0
+#endif
 
 /* A static variable for holding the line. */
 
@@ -82,24 +83,22 @@ char *rl_gets(char *prompt) {
     
     /* If the buffer has already been allocated,
        return the memory to the free pool. */
-#ifdef HAVE_READLINE
+#if defined(ORIGINAL) || defined(HAVE_READLINE)
     if (use_readline == 1) {
         if (line_read) {
             free(line_read);
             line_read = (char *)NULL;
         }
     }
-
     if (use_readline == 0) {
-#endif // HAVE_READLINE
+#endif
         printf("%s",prompt);
         line_read = fgets(no_readline_line, 511, stdin);
         if (line_read != NULL) {
             strip_newline(line_read);
         }
-#ifdef HAVE_READLINE
-    }
-    else {
+#if defined(ORIGINAL) || defined(HAVE_READLINE)
+    } else {
         line_read = readline(prompt);
     }
     
@@ -107,10 +106,9 @@ char *rl_gets(char *prompt) {
        save it on the history. */
     if (use_readline == 1) {
         if (line_read && *line_read)
-            add_history(line_read);
-        
+            add_history(line_read);        
     }
-#endif // HAVE_READLINE
+#endif
     return (line_read);
 }
 
@@ -122,6 +120,10 @@ int main(int argc, char *argv[]) {
     /*  YY_BUFFER_STATE flex_command; */
     stack_init();
     srand ((unsigned int)time(NULL));
+    /* Init defined_networks structures */
+    g_defines = defined_networks_init();
+    g_defines_f = defined_functions_init();
+
     while ((opt = getopt(argc, argv, "e:f:hl:pqrsv")) != -1) {
         switch(opt) {
         case 'e':
@@ -166,14 +168,12 @@ int main(int argc, char *argv[]) {
     }
 
     if (!pipe_mode && !quiet_mode) 
-        printf("%s",disclaimer);
-
-#ifdef HAVE_READLINE
+      printf("%s%i.%i.%i%s (svn r%i)%s",disclaimer1,MAJOR_VERSION,MINOR_VERSION,BUILD_VERSION,STATUS_VERSION,SVN_REV,disclaimer2);
+#if defined(ORIGINAL) || defined(HAVE_READLINE)
     rl_basic_word_break_characters = " >";
 
     rl_attempted_completion_function = my_completion;
-#endif // HAVE_READLINE
-
+#endif
     for(;;) {
         if (promptmode == PROMPT_MAIN)
             sprintf(prompt, "foma[%i]: ",stack_size());
@@ -184,8 +184,10 @@ int main(int argc, char *argv[]) {
         if (promptmode == PROMPT_A && apply_direction == AP_M)
             sprintf(prompt, "apply med> ");
         if (pipe_mode || quiet_mode)
-            prompt[0] = '\0';
+	    prompt[0] = '\0';
 
+	fflush(stdout);
+	
         command = rl_gets(prompt);
 
         if (command == NULL && promptmode == PROMPT_MAIN) {
@@ -216,7 +218,7 @@ void print_help() {
     printf("-v\t\tprint version number\n");
 }
 
-#ifdef HAVE_READLINE
+#if defined(ORIGINAL) || defined(HAVE_READLINE)
 static char **my_completion(const char *text, int start, int end) {
     char **matches;
 
@@ -261,4 +263,4 @@ char *my_generator(const char *text, int state) {
     /* If no names matched, then return NULL. */
     return ((char *)NULL);
 }
-#endif // HAVE_READLINE
+#endif
