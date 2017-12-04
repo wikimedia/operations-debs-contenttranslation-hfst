@@ -16,17 +16,17 @@
 //! stored as string vectors with an associated weight.
 //!
 //! Two kinds of training data can be read:
-//! 
-//! 1. Lexical training data lines have the form "WORDFORM\tTAG\tWEIGHT" 
+//!
+//! 1. Lexical training data lines have the form "WORDFORM\tTAG\tWEIGHT"
 //!    e.g. "cat\tNN\t1.0", which is stored as (("c", "a", "t", "NN"),1.0).
 //!
-//! 2. Sequence training data lines have the form 
+//! 2. Sequence training data lines have the form
 //!    "WORDFORM1\tTAG1\tWORDFORM2\tTAG2\t...\tWORDFORMM\tTAGM\tWEIGHT", e.g.
-//!    "the\tDT\tcar\tNN\t1.0" which is stored as 
+//!    "the\tDT\tcar\tNN\t1.0" which is stored as
 //!    (("the","DT","car","NN"),1.0).
 //!
 //! Lexical training data lines have to have 3 fields. Sequence training data
-//! lines have to have at least three fields and an odd number of fields.  
+//! lines have to have at least three fields and an odd number of fields.
 
 //   This program is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by

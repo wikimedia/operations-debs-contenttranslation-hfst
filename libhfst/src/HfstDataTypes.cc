@@ -1,15 +1,19 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include "HfstDataTypes.h"
+#include <limits.h>
+#include <float.h>
+#include <stdexcept>
+#include <cstdio>
 
-namespace hfst 
+namespace hfst
 {
 
   const char * implementation_type_to_string(ImplementationType type)
@@ -90,6 +94,56 @@ namespace hfst
         return "(implementation-type-not-recognized)";
         break;
       }
+  }
+
+  int size_t_to_int(size_t value)
+  {
+    if (value > INT_MAX)
+      {
+        throw std::overflow_error("data is larger than INT_MAX");
+      }
+    return static_cast<int>(value);
+  }
+
+  unsigned int size_t_to_uint(size_t value)
+  {
+    if (value > UINT_MAX)
+      {
+        throw std::overflow_error("data is larger than UINT_MAX");
+      }
+    return static_cast<unsigned int>(value);
+  }
+
+  unsigned short size_t_to_ushort(size_t value)
+  {
+    if (value > USHRT_MAX)
+      {
+        throw std::overflow_error("data is larger than USHRT_MAX");
+      }
+    return static_cast<unsigned short>(value);
+  }
+
+  float double_to_float(double value)
+  {
+    if (value > FLT_MAX)
+      {
+        throw std::overflow_error("data is larger than FLT_MAX");
+      }
+    return static_cast<float>(value);
+  }
+
+  FILE * hfst_fopen(const char * filename, const char * mode)
+  {
+#ifdef _MSC_VER
+    FILE * f = NULL;
+    errno_t err = fopen_s(&f, filename, mode);
+    if (err != 0)
+      return NULL;
+    else
+      return f;
+#else
+    return fopen(filename, mode);
+#endif
   }
 
 }

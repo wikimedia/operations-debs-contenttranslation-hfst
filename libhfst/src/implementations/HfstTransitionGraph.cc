@@ -1,16 +1,16 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
-#include "HfstTransitionGraph.h"
+#include "HfstBasicTransducer.h"
 
 #ifndef MAIN_TEST
 
-namespace hfst { 
+namespace hfst {
   namespace implementations {
 
 
@@ -20,7 +20,7 @@ namespace hfst {
 #else // MAIN_TEST was defined
 #include <iostream>
 
-int main(int argc, char * argv[]) 
+int main(int argc, char * argv[])
 {
   using namespace hfst::implementations;
   std::cout << "Unit tests for " __FILE__ ":" << std::endl;

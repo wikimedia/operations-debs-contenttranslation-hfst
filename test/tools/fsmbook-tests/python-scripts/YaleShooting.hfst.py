@@ -1,0 +1,114 @@
+exec(compile(open('CompileOptions.py', 'rb').read(), 'CompileOptions.py', 'exec'))
+
+comp = hfst.XreCompiler(hfst.get_default_fst_type())
+
+def regex(name, expression):
+    tr = comp.compile(expression)
+    if name == None:
+        return tr
+    else:
+        comp.define_transducer(name, tr)
+
+# We start our version of the Yale Shooting xfst script with a few simple 
+# definitions
+
+Proposition  = regex('Proposition', 'load | loaded | shoot | alive')
+Valuation  = regex('Valuation', '[%+ | %- | F] Proposition ')
+Frame  = regex('Frame', '%[ (Valuation [%, Valuation]*) %]')
+
+# With these definitions, the expression Frame+ describes an infinite language
+# of frame sequences including the one above for the Yale Shooting scenario.
+# In order to implement the constraints on inert fluents such as loaded and
+# alive, it is convenient to start with a few auxiliary definitions.
+
+Loaded  = regex('Loaded', 'Frame & $[%+ loaded] & ~$[%- loaded]')
+Load  = regex('Load', 'Frame & $[%+ load] & ~$[%- load]')
+Shoot  = regex('Shoot', 'Frame & $[%+ shoot] & ~$[%- shoot]')
+Alive  = regex('Alive', 'Frame & $[%+ alive] & ~$[%- alive]')
+FLoaded  = regex('FLoaded', 'Frame & $[F loaded]')
+FAlive  = regex('FAlive', 'Frame & $[F alive]')
+
+# Each of the definitions above is a constraint on frames denoting the set of
+# compatible frames. For example, Loaded picks out the frames where the gun
+# is loaded, FLoaded denotes the frames where the force F is applied to loaded.
+# The FLoaded frames may include +loaded or -loaded or neither. In the
+# following, the ordering of frames matters but the ordering of valuations
+# within a frame is irrelevant. For example, [+loaded,+alive] and 
+# [+alive,+loaded] are equivalent. In other words, frames are orderless
+# (= commutative), whereas sequences of frames are not.
+
+# The Inertia constraints on adjacent frames can be stated as follows. 
+# We start with loaded.
+
+InertLoaded = regex('InertLoaded', '[Loaded & ~FLoaded => _ Loaded | .#.] & [Loaded => .#. | Loaded | FLoaded _ ]')
+
+# The constraint consists of two restrictions. The first restriction says that a frame that contains +loaded and doesn't contain Floaded must be followed by a frame containing +loaded unless it is the last frame of the sequence. The second constraint says that a frame containing +loaded must be preceded by a frame containing +loaded or Floaded (possibly both) unless it is the first frame of the sequence. The first restriction prohibits frame pairs such as [+loaded][-loaded] where loadedness does not persist. The second restriction prohibits frame pairs such as [+alive][+loaded] where +loaded appears in a frame without a either +loaded or Floaded in the preceding frame. Note that the constraints allow both [+loaded,Floaded][-loaded] and [+loaded,Floaded][+loaded]. In the latter case, the F force was applied to loaded but it did not have any effect.
+
+# The inertness constraint on alive has the same form:
+
+InertAlive = regex('InertAlive', '[Alive & ~FAlive => _ Alive | .#.] & [Alive => .#. | Alive | FAlive _ ]')
+
+# To express the idea that a +load action in a frame enables +loaded in the next frame, we need a constraint that forces Floaded to be included in every frame that contains +load. Unlike the two inert rules that constrain pairs of adjacent frames, the next three principles constrain single frames.
+
+LoadFLoaded  = regex('LoadFLoaded', '~[Load & ~FLoaded]')
+
+# A frame such as [+load] is not allowed. To satisfy the constraint it must be expanded to [+load,Floaded] or reduced to []. Similarly, we want to say that shooting is always potentially life-threatening:
+
+ShootFAlive  = regex('ShootFAlive', '~[Shoot & ~FAlive]')
+
+# The ShootFAlive constraint prohibits frames such as [+alive,+shoot] where +shoot appears without Falive. Unless we are shooting with a fully loaded revolver, firing a gun might make the gun unloaded, so we need:
+
+ShootFLoaded  = regex('ShootFLoaded', '~[Shoot & ~FLoaded]')
+
+# To show that the five constraints, InertLoaded, InertAlive, LoadFLoaded, ShootFAlive, ShootFLoaded, have the intended effect, we can start with a partial description of the Yale Shooting problem. In the initial frame the target is alive and the gun unloaded. In the second frame the gun is loaded. After zero or more frames, a shooting occurs.
+
+YaleShooting  = regex('YaleShooting', '[Alive & ~Loaded] Load Frame* Shoot Frame')
+
+# The above description is incomplete in that the four or more frames in the sequence to not constrain each other in any way. Only three frames are partially specified. In order to enforce the principles we have set up, we intersect this underspecified frame sequence with our five contstraints:
+
+Result = regex(None, 'YaleShooting & InertLoaded & InertAlive & LoadFLoaded & ShootFAlive & ShootFLoaded')
+Result.minimize()
+Result.write_to_file('Result')
+
+# The resulting network contains an infinite number of valid instantiations of the Yale Shooting scenario. For example, it includes the following frame sequence where the target dies:
+
+# [+alive,-loaded]
+# [+load,Floaded,+alive]
+# [+loaded,+alive]
+# [+loaded,+shoot,Floaded,Falive,+alive]
+# [-alive]
+
+# It also includes a frame sequence just like the one above with [+alive] as the last frame. This is a case where the shot missed and the target survived. An empty frame, [], is also a legal terminating frame for the case where we do not know whether the target is still alive.
+
+# Here are some examples of illegal frame sequences that are eliminated by the constraints.
+
+# [+alive,-loaded]
+# [+load,Floaded,+alive]
+# [+loaded,+alive]
+# [+loaded,+shoot,Floaded,Falive]
+# []
+
+# The above sequence fails because +alive is missing in Frame 4 in violation of the InertAlive constraint because +alive is included in the preceding frame.
+
+# [+alive,-loaded]
+# [+load,Floaded,+alive]
+# [+alive]
+# [+loaded,+shoot,Floaded,Falive,+alive]
+# []
+
+# In the above case, Frame 3 should contain +loaded as required by InertLoaded because +loaded appears in the next frame.
+
+# [+alive,-loaded]
+# [+load,Floaded,+alive]
+# [+loaded,+alive]
+# [+loaded,+shoot,Falive,+alive]
+# []
+
+# This last example lacks Floaded in Frame 4, required by ShootFLoaded because of the inclusion of +shoot in the same frame.
+
+# To experiment with this script you can load a plain uncommented text version of the script from YaleShooting.txt. Place it in a directory where you can launch it with the simple command xfst -l YaleShooting.txt.
+
+# References
+# Tim Fernando and Rowan Nairn. Entailments in finite-state temporality. IWCS-6. Tilburg. 2005.
+# Steve Hanks and Drew McDermott. Nonmonotonic logic and temporal projection. Artificial Intelligence 33(3):379-412.1987.
+

@@ -63,8 +63,8 @@ parse_options(int argc, char** argv)
             {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "wDnf:",
                              long_options, &option_index);
         if (-1 == c)
@@ -99,7 +99,7 @@ parse_options(int argc, char** argv)
         case 'o':
           outfilename = hfst_strdup(optarg);
           outfile = hfst_fopen(outfilename, "w");
-          if (outfile == stdout) 
+          if (outfile == stdout)
             {
               free(outfilename);
               outfilename = hfst_strdup("<stdout>");
@@ -134,7 +134,7 @@ int process_input_data(std::string output_file_prefix)
   return EXIT_SUCCESS;
 }
 
-int main( int argc, char **argv ) 
+int main( int argc, char **argv )
 {
 #ifdef WINDOWS
     _setmode(1, _O_BINARY);

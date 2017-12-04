@@ -72,7 +72,7 @@ void fsm_sort_arcs(struct fsm *net, int direction) {
 		if (direction == 1)
 		    qsort(fsm+lasthead, numlines, sizeof(struct fsm_state), scin);
 		else
-		    qsort(fsm+lasthead, numlines, sizeof(struct fsm_state), scout);		
+		    qsort(fsm+lasthead, numlines, sizeof(struct fsm_state), scout);
 	    }
 	    numlines = 0;
 	    lasthead = i + 1;
@@ -92,7 +92,7 @@ void fsm_sort_arcs(struct fsm *net, int direction) {
     if (direction == 2) {
 	net->arcs_sorted_out = 1;
 	net->arcs_sorted_in = 0;
-    }    
+    }
 }
 
 struct state_array *map_firstlines(struct fsm *net) {
@@ -311,7 +311,7 @@ int fsm_isuniversal(struct fsm *net) {
     net = fsm_minimize(net);
     fsm_compact(net);
     fsm = net->states;
-    if ((fsm->target == 0 && fsm->final_state == 1 && (fsm+1)->state_no == 0) && 
+    if ((fsm->target == 0 && fsm->final_state == 1 && (fsm+1)->state_no == 0) &&
         (fsm->in == IDENTITY && fsm->out == IDENTITY) &&
         ((fsm+1)->state_no == -1) &&
         (sigma_max(net->sigma)<3) ) {
@@ -327,7 +327,7 @@ int fsm_isempty(struct fsm *net) {
     fsm = net->states;
     if (fsm->target == -1 && fsm->final_state == 0 && (fsm+1)->state_no == -1)
         return 1;
-    else 
+    else
         return 0;
 }
 
@@ -427,7 +427,7 @@ int fsm_isidentity(struct fsm *net) {
     struct discrepancy {
         short int *string;
         short int length;
-        _Bool visited;
+        Boolean visited;
     };
 
     struct state_array *state_array;
@@ -585,7 +585,7 @@ struct fsm *fsm_lowerdet(struct fsm *net) {
     }
     if (maxarc > (maxsigma-2)) {
         for (i=maxarc; i > (maxsigma-2); i--) {
-            sprintf(repstr,"%012X",newsym++);        
+            sprintf(repstr,"%012X",newsym++);
             sigma_add(repstr, net->sigma);
         }
         sigma_sort(net);
@@ -624,7 +624,7 @@ struct fsm *fsm_lowerdeteps(struct fsm *net) {
     }
     if (maxarc > (maxsigma-2)) {
         for (i=maxarc; i > (maxsigma-2); i--) {
-            sprintf(repstr,"%012X",newsym++);        
+            sprintf(repstr,"%012X",newsym++);
             sigma_add(repstr, net->sigma);
         }
         sigma_sort(net);
@@ -649,7 +649,7 @@ struct fsm *fsm_extract_nonidentity(struct fsm *net) {
     struct discrepancy {
         short int *string;
         short int length;
-        _Bool visited;
+        Boolean visited;
     };
 
     struct state_array *state_array;
@@ -768,11 +768,11 @@ struct fsm *fsm_extract_nonidentity(struct fsm *net) {
             goto nopop;
         }
         continue;
-    fail:        
+    fail:
         curr_ptr->out = killnum;
         if (curr_ptr->state_no == (curr_ptr+1)->state_no) {
             ptr_stack_push(curr_ptr+1);
-        }        
+        }
     }
     ptr_stack_clear();
     sigma_sort(net);
@@ -794,7 +794,7 @@ struct fsm *fsm_copy (struct fsm *net) {
 
     fsm_count(net);
     net_copy->sigma = sigma_copy(net->sigma);
-    net_copy->states = fsm_state_copy(net->states, net->linecount);      
+    net_copy->states = fsm_state_copy(net->states, net->linecount);
     return(net_copy);
 }
 
@@ -832,7 +832,7 @@ void add_quantifier (char *string) {
     if (quantifiers == NULL) {
 	q = xxmalloc(sizeof(struct defined_quantifiers));
 	quantifiers = q;
-    } else { 
+    } else {
 	for (q = quantifiers; q->next != NULL; q = q->next) {
 	    
 	}
@@ -882,7 +882,7 @@ char *find_quantifier (char *string) {
 }
 
 void purge_quantifier (char *string) {
-    struct defined_quantifiers *q, *q_prev;    
+    struct defined_quantifiers *q, *q_prev;
     for (q = quantifiers, q_prev = NULL; q != NULL; q_prev = q, q = q->next) {
 	if (strcmp(string, q->name) == 0) {
 	    if (q_prev != NULL) {

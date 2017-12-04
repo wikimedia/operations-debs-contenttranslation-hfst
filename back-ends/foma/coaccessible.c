@@ -129,7 +129,7 @@ struct fsm *fsm_coaccessible(struct fsm *net) {
 	*(added+(fsm+i)->state_no) = 1;
 	if ((fsm+i)->target != -1) {
 	  new_arccount++;
-	}	
+	}
       }
     }
 

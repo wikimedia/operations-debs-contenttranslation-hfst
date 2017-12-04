@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <queue>
+#include <math.h>
 
 using hfst::StringVector;
 using hfst::HfstOneLevelPaths;
@@ -21,10 +22,10 @@ NewLexicalModel::NewLexicalModel(const std::string &filename, std::istream * par
 
 void NewLexicalModel::initialize_tag_probabilities(void)
 {
-  HfstOneLevelPaths * upper_case_tag_paths = 
+  HfstOneLevelPaths * upper_case_tag_paths =
     lexical_model.lookup("<upper_suffix_and_tag>");
 
-  HfstOneLevelPaths * lower_case_tag_paths = 
+  HfstOneLevelPaths * lower_case_tag_paths =
     lexical_model.lookup("<lower_suffix_and_tag>");
 
   if (upper_case_tag_paths->empty())
@@ -40,8 +41,8 @@ void NewLexicalModel::initialize_tag_probabilities(void)
       float penalty = it->first;
 
       if (it->second.empty())
-	{ 
-	  lexical_model_is_broken = true; 
+	{
+	  lexical_model_is_broken = true;
 	  break;
 	}
 
@@ -60,8 +61,8 @@ void NewLexicalModel::initialize_tag_probabilities(void)
       float penalty = it->first;
 
       if (it->second.empty())
-	{ 
-	  lexical_model_is_broken = true; 
+	{
+	  lexical_model_is_broken = true;
 	  break;
 	}
 
@@ -95,23 +96,23 @@ const WeightedStringVector &NewLexicalModel::get_first_word_analysis
   delete paths;
 
   if (word_not_in_lexicon)
-    { 
+    {
       std::string lower_case_word = to_lower_case(word);
 
       lexicon_o_o_v_words.insert(word);
       if (not is_lexicon_oov(lower_case_word))
-	{ 
+	{
 	  o_o_v_words.insert(word);
-	  return operator[](lower_case_word); 
+	  return operator[](lower_case_word);
 	}
       else
 	{ return operator[](word); }
     }
   else
-    { return operator[](word); }  
+    { return operator[](word); }
 }
 
-const WeightedStringVector &NewLexicalModel::operator[] 
+const WeightedStringVector &NewLexicalModel::operator[]
 (const std::string &word)
 {
   if (lexical_model_is_broken)
@@ -120,9 +121,9 @@ const WeightedStringVector &NewLexicalModel::operator[]
   AnalysisCache::const_iterator word_it = analysis_cache.find(word);
 
   if (word_it == analysis_cache.end())
-    { 
+    {
       const WeightedStringVector & v = cache_word_analyses(word);
-      return v; 
+      return v;
     }
 
   return word_it->second;
@@ -186,7 +187,7 @@ const WeightedStringVector &NewLexicalModel::cache_word_analyses
     {
       if (word[0] >= 65 and word[0] <= 90)
         { upper_case = true; }
-      else if (word.find("Å") == 0 or word.find("Ä") == 0 or 
+      else if (word.find("Å") == 0 or word.find("Ä") == 0 or
 	       word.find("Ö") == 0)
         { upper_case = true; }
     }
@@ -209,17 +210,17 @@ const WeightedStringVector &NewLexicalModel::cache_word_analyses
 	      guesses = split(line);
 	    }
 	  if (line.find("+?") == std::string::npos)
-	    { 
-	      assert((guesses.size() + 1) % 2 == 0);	      
-	      return paradigm_guess(word,guesses); 
+	    {
+	      assert((guesses.size() + 1) % 2 == 0);
+	      return paradigm_guess(word,guesses);
 	    }
 	}
       o_o_v_words.insert(word);
       return guess(word,upper_case,rev_tokenized_word);
     }
   else
-    { 
-      return cache_analyses(word,paths,analysis_cache); 
+    {
+      return cache_analyses(word,paths,analysis_cache);
     }
 }
 
@@ -242,30 +243,30 @@ std::string NewLexicalModel::to_string(StringVector::const_iterator begin,
 }
 
 const WeightedStringVector &NewLexicalModel::guess
-(const std::string &word,bool upper_case, 
+(const std::string &word,bool upper_case,
  const StringVector &rev_tokenized_word)
 {
   WeightedStringVector &word_analyses = analysis_cache[word];
  
   word_analyses = upper_case ? upper_case_empty_suffix_null : lower_case_empty_suffix_null;
 
-  size_t suffix_length = std::min(rev_tokenized_word.size(), 
+  size_t suffix_length = std::min(rev_tokenized_word.size(),
 				  static_cast<size_t>(100));
 
   size_t last_found_suffix_length = suffix_length;
 
   for (size_t i = suffix_length; i > 0; --i)
     {
-      const WeightedStringVector &suffix_analyses = 
+      const WeightedStringVector &suffix_analyses =
 	get_suffix_analyses(word,
 			    rev_tokenized_word.begin(),
 			    rev_tokenized_word.begin() + i,
 			    upper_case);
       
       if (suffix_analyses.empty())
-	{ 
+	{
 	  --last_found_suffix_length;
-	  continue; 
+	  continue;
 	}
 
       merge_analyses(suffix_analyses,word_analyses,upper_case);
@@ -293,7 +294,7 @@ bool NewLexicalModel::is_oov(const std::string &word)
 { return o_o_v_words.find(word) != o_o_v_words.end(); }
 
 bool NewLexicalModel::is_lexicon_oov(const std::string &word)
-{ 
+{
   StringVector rev_tokenized_word = tokenizer.tokenize_one_level(word);
   std::reverse(rev_tokenized_word.begin(),rev_tokenized_word.end());
 
@@ -366,8 +367,8 @@ const WeightedStringVector &NewLexicalModel::cache_suffix_analyses
 }
 
 const WeightedStringVector &NewLexicalModel::cache_analyses
-(const std::string &word, 
- HfstOneLevelPaths * paths, 
+(const std::string &word,
+ HfstOneLevelPaths * paths,
  AnalysisCache &cache,
  bool convert_to_probabilities)
 {
@@ -383,9 +384,9 @@ const WeightedStringVector &NewLexicalModel::cache_analyses
        it != paths->end();
        ++it)
     {
-      // Each entry in paths, is a weight analysis pair. The last entry in 
+      // Each entry in paths, is a weight analysis pair. The last entry in
       // the analysis is the tag.
-      word_analyses[i].first  = 
+      word_analyses[i].first  =
 	convert_to_probabilities ? get_prob(it->first) : it->first;
       word_analyses[i].second = *(it->second.rbegin());
       ++i;
@@ -410,15 +411,15 @@ void NewLexicalModel::merge_analyses
   for (WeightedStringVector::reverse_iterator it = word_analyses.rbegin();
        it != word_analyses.rend();
        ++it)
-    { 
-      const IdWeightPair &id_weight_pair = 
+    {
+      const IdWeightPair &id_weight_pair =
 	suffix_tag_probability_hash[it->second];
 
       // Check this.
-      it->first = 
-	((upper_case ? upper_case_interpolator : lower_case_interpolator) * it->first + 
+      it->first =
+	((upper_case ? upper_case_interpolator : lower_case_interpolator) * it->first +
 	 (id == id_weight_pair.first ? id_weight_pair.second : 0.0)) /
-	(1 + (upper_case ? upper_case_interpolator : lower_case_interpolator)); 
+	(1 + (upper_case ? upper_case_interpolator : lower_case_interpolator));
     }
 }
 
@@ -429,14 +430,14 @@ float NewLexicalModel::get_suffix_penalty(const std::string &suffix,
 
   if (it == (upper_case ? upper_case_suffix_penalties.end() : lower_case_suffix_penalties.end()))
     {
-      HfstOneLevelPaths * suffix_penalty_paths = 
+      HfstOneLevelPaths * suffix_penalty_paths =
 	lexical_model.lookup(suffix + (upper_case ? "<upper_suffix>" : "<lower_suffix>"));
       
       if (suffix_penalty_paths->empty())
-	{ 
+	{
 	  std::cerr <<  suffix << std::endl;
 	  delete suffix_penalty_paths;
-	  throw InvalidKey(); 
+	  throw InvalidKey();
 	}
 
       float penalty = suffix_penalty_paths->begin()->first;
@@ -451,10 +452,10 @@ float NewLexicalModel::get_suffix_penalty(const std::string &suffix,
 float NewLexicalModel::get_tag_penalty(const std::string &tag,bool upper_case)
 {
   if (upper_case)
-    { 
+    {
       if (upper_case_tag_penalties.find(tag) == upper_case_tag_penalties.end())
 	{
-	  throw InvalidKey(); 
+	  throw InvalidKey();
 	}
     }
   else if(lower_case_tag_penalties.find(tag) == lower_case_tag_penalties.end())
@@ -484,7 +485,7 @@ void preserve_n_best_analyses(WeightedStringVector &word_analyses,size_t number_
   word_analyses.clear();
 
   for (size_t i = 0; i < number_of_guesses; ++i)
-    { 
+    {
       if (analysis_queue.empty())
 	{ break; }
       word_analyses.push_back(analysis_queue.top());
@@ -503,9 +504,9 @@ void NewLexicalModel::bayesian_invert(WeightedStringVector &word_analyses,
   for (WeightedStringVector::iterator it = word_analyses.begin();
        it != word_analyses.end();
        ++it)
-    { 
-      it->first = 
-	suffix_penalty + get_penalty(it->first) - get_tag_penalty(it->second,upper_case); 
+    {
+      it->first =
+	suffix_penalty + get_penalty(it->first) - get_tag_penalty(it->second,upper_case);
       it->first *= 0.2;
     }
 }

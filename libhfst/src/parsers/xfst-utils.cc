@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 //! @file xfst-utils.cc
@@ -36,6 +36,11 @@
 
 #include "xfst-utils.h"
 
+// for hfst::size_t_to_int
+#ifndef HAVE_GETLINE
+  #include "HfstDataTypes.h"
+#endif // HAVE_GETLINE
+
 using std::string;
 
 // flex stuffa
@@ -50,7 +55,7 @@ namespace hfst { namespace xfst {
     getline(char** s, size_t* n, FILE* f)
       {
         *s = static_cast<char*>(calloc(sizeof(char),*n));
-        char* r = fgets(*s, *n, f);
+        char* r = fgets(*s, hfst::size_t_to_int(*n), f);
         if (r == 0)
           {
             //fprintf(stderr, "unable to read in substitute getline\n");
@@ -59,27 +64,6 @@ namespace hfst { namespace xfst {
         return *n;
       }
 #endif
-
-    //void
-    //xfst_fclose(FILE * file, const char * name)
-    //{
-    //return fclose(file))
-    //{
-    //  //fprintf(stderr, "Unable to close %s: %s\n", name, strerror(errno));
-    //  throw strerr;
-    //}
-    //}
-
-    //FILE*
-    //xfst_fopen(const char* path, const char* mode)
-    //{
-    //FILE* f = fopen(path, mode);
-    //if (f == NULL)
-    //  {
-    //    fprintf(stderr, "Unable to open %s: %s\n", path, strerror(errno));
-    //  }
-    //return f;
-    //}
 
 char*
 strdup_token_part()
@@ -248,7 +232,7 @@ strdup_nonconst_part(const char* token, const char* prefix,
 }
 
 
-} } 
+} }
 
 // vim: set ft=cpp.doxygen:
 

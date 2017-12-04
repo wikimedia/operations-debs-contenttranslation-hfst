@@ -1,16 +1,50 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
+
+#ifndef MAIN_TEST
+
+#if HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#if HAVE_FOMA
+
+#ifndef _FOMALIB_H_
+#define _FOMALIB_H_
+#include "back-ends/foma/fomalib.h"
+#endif
 
 #include "FomaTransducer.h"
 
-#ifndef MAIN_TEST
+#ifdef PROFILE_FOMA
+#include <ctime>
+#endif
+
 namespace hfst { namespace implementations {
+
+    // add this to the beginning of code block to be profiled
+    //#ifdef PROFILE_FOMA
+    //clock_t startclock = clock();
+    //#endif
+
+    // and this to the end of the block
+    //#ifdef PROFILE_FOMA
+    //clock_t endclock = clock();
+    //foma_seconds = foma_seconds +
+    //      ( (float)(endclock - startclock) / CLOCKS_PER_SEC);
+    //#endif
+
+    float foma_seconds=0;
+    float FomaTransducer::get_profile_seconds() {
+      return foma_seconds;
+    }
+
 
 
   // ---------- FomaInputStream functions ----------
@@ -27,9 +61,9 @@ namespace hfst { namespace implementations {
     if (filename == std::string())
       { input_file = stdin; }
     else {
-      input_file = fopen(filename.c_str(),"r");
+      input_file = hfst::hfst_fopen(filename.c_str(),"r");
       if (input_file == NULL)
-        { 
+        {
           HFST_THROW(StreamNotReadableException); }
     }
   }
@@ -49,9 +83,9 @@ namespace hfst { namespace implementations {
   char FomaInputStream::stream_get() {
     return (char) fgetc(input_file); }
 
-  short FomaInputStream::stream_get_short() 
+  short FomaInputStream::stream_get_short()
   {
-    short i;
+    short i = 0;
     assert(1 == fread(&i,sizeof(i),1,input_file));
     return i;
   }
@@ -99,11 +133,11 @@ namespace hfst { namespace implementations {
 
   /* Skip the identifier string "FOMA_TYPE" */
   void FomaInputStream::skip_identifier_version_3_0(void)
-  { 
+  {
     char foma_identifier[10];
-    int foma_id_count = fread(foma_identifier,10,1,input_file);
+    int foma_id_count = hfst::size_t_to_int(fread(foma_identifier,10,1,input_file));
     if (foma_id_count != 1)
-      { 
+      {
         HFST_THROW(NotTransducerStreamException); }
     if (0 != strcmp(foma_identifier,"FOMA_TYPE"))
       {
@@ -113,9 +147,9 @@ namespace hfst { namespace implementations {
   void FomaInputStream::skip_hfst_header(void)
   {
     char hfst_header[6];
-    int header_count = fread(hfst_header,6,1,input_file);
+    int header_count = hfst::size_t_to_int(fread(hfst_header,6,1,input_file));
     if (header_count != 1)
-      {  
+      {
         HFST_THROW(NotTransducerStreamException); }
     try { skip_identifier_version_3_0(); }
     catch (const HfstException e)
@@ -123,7 +157,7 @@ namespace hfst { namespace implementations {
   }
 
     void FomaInputStream::ignore(unsigned int n)
-    { 
+    {
       for (unsigned int i=0; i<n; i++)
     fgetc(input_file);
     }
@@ -132,7 +166,7 @@ namespace hfst { namespace implementations {
   {
     if (is_eof())
       return NULL;
-    struct fsm * t = FomaTransducer::read_net(input_file);
+    fsm * t = FomaTransducer::read_net(input_file);
     if (t == NULL) {
       HFST_THROW(NotTransducerStreamException);
     }
@@ -148,17 +182,17 @@ namespace hfst { namespace implementations {
       filename(std::string(str))
   {
     if (filename != std::string()) {
-      ofile = fopen(filename.c_str(), "wb");
+      ofile = hfst::hfst_fopen(filename.c_str(), "wb");
       if (ofile == NULL) {
         HFST_THROW(StreamNotReadableException);
       }
-    } 
+    }
     else {
       ofile = stdout;
     }
   }
 
-  void FomaOutputStream::close(void) 
+  void FomaOutputStream::close(void)
   {
     if (filename != std::string())
       { fclose(ofile); }
@@ -169,8 +203,8 @@ namespace hfst { namespace implementations {
     fputc(c,ofile);
   }
     
-    void FomaOutputStream::write_transducer(struct fsm * transducer) 
-  { 
+    void FomaOutputStream::write_transducer(fsm * transducer)
+  {
     if (1 != FomaTransducer::write_net(transducer, ofile)) {
       HFST_THROW_MESSAGE
         (HfstFatalException,
@@ -180,8 +214,8 @@ namespace hfst { namespace implementations {
 
   
   fsm * FomaTransducer::create_empty_transducer(void)
-  {    
-    struct fsm * retval = fsm_empty_set();
+  {
+    fsm * retval = fsm_empty_set();
     return retval;
   }
   
@@ -190,18 +224,18 @@ namespace hfst { namespace implementations {
     return fsm_empty_string();
   }
   
-  void FomaTransducer::harmonize(struct fsm *net1, struct fsm *net2)
+  void FomaTransducer::harmonize(fsm *net1, fsm *net2)
   {
     fsm_merge_sigma(net1, net2);
   }
 
-  void FomaTransducer::delete_foma(struct fsm * net)
+  void FomaTransducer::delete_foma(fsm * net)
   {
     fsm_destroy(net);
   }
 
     fsm * FomaTransducer::define_transducer(const std::string &symbol)
-  {     
+  {
     /*if (symbol == hfst::internal_unknown) {
       return define_transducer(symbol, symbol);
       }*/
@@ -212,12 +246,12 @@ namespace hfst { namespace implementations {
 
   fsm * FomaTransducer::define_transducer
     (const std::string &isymbol, const std::string &osymbol)
-  { 
+  {
     // identity-to-identity gives wrong result if cross product is used
     if (isymbol == osymbol && isymbol == hfst::internal_identity) {
       return define_transducer(isymbol);
     }
-    return fsm_cross_product( fsm_symbol(const_cast<char*>(isymbol.c_str())), 
+    return fsm_cross_product( fsm_symbol(const_cast<char*>(isymbol.c_str())),
                               fsm_symbol(const_cast<char*>(osymbol.c_str())) );
     // should either argument be deleted?
   }
@@ -230,20 +264,23 @@ namespace hfst { namespace implementations {
     int state_number=0;
 
     struct fsm_construct_handle *h;
-    struct fsm *net;
-    h = fsm_construct_init(strdup(std::string("").c_str()));
+    fsm *net;
+    char * empty = strdup(std::string("").c_str());
+    h = fsm_construct_init(empty);
+    free(empty);
     
-    for (StringPairVector::const_iterator it = spv.begin(); 
-         it != spv.end(); it++) 
+    for (StringPairVector::const_iterator it = spv.begin();
+         it != spv.end(); it++)
       {
         char *in = strdup(it->first.c_str());
         char *out = strdup(it->second.c_str());
         fsm_construct_add_arc(h, state_number, state_number+1, in, out);
+        free(in); free(out);
         state_number++;
       }
     
     fsm_construct_set_initial(h, 0);
-    fsm_construct_set_final(h, state_number);    
+    fsm_construct_set_final(h, state_number);
 
     net = fsm_construct_done(h);
     fsm_count(net);
@@ -252,7 +289,7 @@ namespace hfst { namespace implementations {
     sigma_add_special (1, net->sigma);
     sigma_add_special (2, net->sigma);
     
-    return net;      
+    return net;
   }
 
   fsm * FomaTransducer::define_transducer(const StringPairSet &sps, bool cyclic)
@@ -264,10 +301,10 @@ namespace hfst { namespace implementations {
     int target = (cyclic) ? 0 : 1;
 
     struct fsm_construct_handle *h;
-    struct fsm *net;
+    fsm *net;
     h = fsm_construct_init(strdup(std::string("").c_str()));
     
-    for (StringPairSet::const_iterator it = sps.begin(); it != sps.end(); it++) 
+    for (StringPairSet::const_iterator it = sps.begin(); it != sps.end(); it++)
       {
     char *in = strdup(it->first.c_str());
     char *out = strdup(it->second.c_str());
@@ -275,12 +312,12 @@ namespace hfst { namespace implementations {
       }
     
     fsm_construct_set_initial(h, source);
-    fsm_construct_set_final(h, target);    
+    fsm_construct_set_final(h, target);
 
     net = fsm_construct_done(h);
     fsm_count(net);
     
-    return net;      
+    return net;
   }
 
   fsm * FomaTransducer::define_transducer
@@ -292,13 +329,13 @@ namespace hfst { namespace implementations {
     int state_number=0;
 
     struct fsm_construct_handle *h;
-    struct fsm *net;
+    fsm *net;
     h = fsm_construct_init(strdup(std::string("").c_str()));
     
-    for (std::vector<StringPairSet>::const_iterator it = spsv.begin(); 
-         it != spsv.end(); it++) 
+    for (std::vector<StringPairSet>::const_iterator it = spsv.begin();
+         it != spsv.end(); it++)
       {
-        for (StringPairSet::const_iterator it2 = (*it).begin(); 
+        for (StringPairSet::const_iterator it2 = (*it).begin();
              it2 != (*it).end(); it2++ ) {
           char *in = strdup(it2->first.c_str());
           char *out = strdup(it2->second.c_str());
@@ -308,31 +345,31 @@ namespace hfst { namespace implementations {
       }
     
     fsm_construct_set_initial(h, 0);
-    fsm_construct_set_final(h, state_number);    
+    fsm_construct_set_final(h, state_number);
 
     net = fsm_construct_done(h);
     fsm_count(net);
     
-    return net;      
+    return net;
   }
 
   fsm * FomaTransducer::copy(fsm * t)
-  {     
+  {
     return fsm_copy(t);
   }
   
   fsm * FomaTransducer::determinize(fsm * t)
-  {     
+  {
     // returns the argument, so a copy is taken here
     return fsm_determinize(fsm_copy(t));
   }
-  
+
   fsm * FomaTransducer::minimize(fsm * t)
-  {     
+  {
     // returns the argument, so a copy is taken here
     return fsm_minimize(fsm_copy(t));
   }
-  
+
   fsm * FomaTransducer::remove_epsilons(fsm * t)
   {
     // returns the argument, so a copy is taken here
@@ -340,27 +377,27 @@ namespace hfst { namespace implementations {
   }
   
   fsm * FomaTransducer::repeat_star(fsm * t)
-  {     
+  {
     return fsm_kleene_star(fsm_copy(t));
   }
   
   fsm * FomaTransducer::repeat_plus(fsm * t)
-  {     
+  {
     return fsm_kleene_plus(fsm_copy(t));
   }
   
   fsm * FomaTransducer::repeat_n(fsm * t, unsigned int n)
-  {     
+  {
     return fsm_concat_n(fsm_copy(t), n);
   }
   
   fsm * FomaTransducer::repeat_le_n(fsm * t, unsigned int n)
-  { 
+  {
     return fsm_concat_m_n(fsm_copy(t),0,n);
   }
   
   fsm * FomaTransducer::optionalize(fsm * t)
-  { 
+  {
     return fsm_optionality(fsm_copy(t));
   }
   
@@ -370,12 +407,12 @@ namespace hfst { namespace implementations {
   }
   
   fsm * FomaTransducer::reverse(fsm * t)
-  { 
+  {
     return fsm_reverse(fsm_copy(t));
   }
   
   fsm * FomaTransducer::extract_input_language(fsm * t)
-  { 
+  {
     // foma does not handle epsilon transducer properly..
     return fsm_upper(fsm_copy(t));
   }
@@ -388,8 +425,8 @@ namespace hfst { namespace implementations {
   
   fsm * FomaTransducer::substitute(fsm * t,String old_symbol,String new_symbol)
   {
-    return fsm_substitute_symbol(t, 
-                                 strdup(old_symbol.c_str()), 
+    return fsm_substitute_symbol(t,
+                                 strdup(old_symbol.c_str()),
                                  strdup(new_symbol.c_str()));
   }
   
@@ -399,13 +436,13 @@ namespace hfst { namespace implementations {
     const char * epsilon = internal_epsilon.c_str();
     char * epsilon_marker = strdup("@_EPSILON_SYMBOL_MARKER_@");
     const char * identity = internal_identity.c_str();
-    fsm * eps_marked = 
-      fsm_substitute_symbol(t, const_cast<char*>(epsilon), 
+    fsm * eps_marked =
+      fsm_substitute_symbol(t, const_cast<char*>(epsilon),
                 epsilon_marker);
     fsm * ins = fsm_kleene_star
-      ( 
-       fsm_union( 
-         fsm_symbol(const_cast<char*>(identity)), 
+      (
+       fsm_union(
+         fsm_symbol(const_cast<char*>(identity)),
          fsm_cross_product
          ( fsm_symbol(const_cast<char*>(epsilon)),
            fsm_symbol(const_cast<char*>(symbol_pair.second.c_str())
@@ -418,7 +455,7 @@ namespace hfst { namespace implementations {
                 epsilon_marker,
                 const_cast<char*>(epsilon));
   free(epsilon_marker);
-  // marker should be removed from sigma.. 
+  // marker should be removed from sigma..
   // (HfstBasicTransducer is now used instead)
   }
   
@@ -455,8 +492,12 @@ namespace hfst { namespace implementations {
   bool FomaTransducer::are_equivalent
   (fsm * t1, fsm * t2)
   {
-    return fsm_isempty(fsm_union(fsm_minus(fsm_copy(t1),fsm_copy(t2)),
-                                 fsm_minus(fsm_copy(t2),fsm_copy(t1))));    
+    fsm * test =
+      fsm_union(fsm_minus(fsm_copy(t1),fsm_copy(t2)),
+                fsm_minus(fsm_copy(t2),fsm_copy(t1)));
+    int eq = fsm_isempty(test);
+    //fsm_destroy(test);
+    return (eq == 1);
   }
 
   bool FomaTransducer::is_cyclic(fsm * t)
@@ -492,11 +533,11 @@ namespace hfst { namespace implementations {
   
   static bool extract_paths
   (fsm * t, int state,
-   std::map<int,unsigned short> all_visitations, 
+   std::map<int,unsigned short> all_visitations,
    std::map<int, unsigned short> path_visitations,
    ExtractStringsCb& callback, int cycles,
-   std::vector<hfst::FdState<int> >* fd_state_stack, 
-   bool filter_fd, 
+   std::vector<hfst::FdState<int> >* fd_state_stack,
+   bool filter_fd,
    StringPairVector &spv)
   {
 
@@ -541,7 +582,7 @@ namespace hfst { namespace implementations {
       {
         size_t j;
         for(j=0; j<sorted_arcs.size(); j++)
-          if (all_visitations[s->target] 
+          if (all_visitations[s->target]
               < all_visitations[sorted_arcs[j]->target])
             break;
         sorted_arcs.push_back(NULL);
@@ -570,7 +611,7 @@ namespace hfst { namespace implementations {
         }
       }
       
-      /* Handle spv here. Special symbols (flags, epsilons) 
+      /* Handle spv here. Special symbols (flags, epsilons)
          are always inserted. */
 
       std::string istring("");
@@ -578,7 +619,7 @@ namespace hfst { namespace implementations {
     
       //find the key in sigma
       char* c_in=NULL;
-      for(struct sigma* sig=t->sigma; sig!=NULL&&sig->symbol!=NULL; 
+      for(struct sigma* sig=t->sigma; sig!=NULL&&sig->symbol!=NULL;
           sig=sig->next)
         { if(sig->number == arc->in) {
             c_in = sig->symbol;
@@ -587,7 +628,7 @@ namespace hfst { namespace implementations {
 
       //find the key in sigma
       char* c_out=NULL;
-      for(struct sigma* sig=t->sigma; sig!=NULL&&sig->symbol!=NULL; 
+      for(struct sigma* sig=t->sigma; sig!=NULL&&sig->symbol!=NULL;
           sig=sig->next) {
         if(sig->number == arc->out) {
           c_out = sig->symbol;
@@ -600,7 +641,7 @@ namespace hfst { namespace implementations {
         istring = strdup(c_in);
       }
 
-      if (!filter_fd || 
+      if (!filter_fd ||
           fd_state_stack->back().get_table().get_operation(arc->out)==NULL) {
         assert(c_out != NULL);
         ostring = strdup(c_out);
@@ -627,11 +668,11 @@ namespace hfst { namespace implementations {
   
   void FomaTransducer::extract_paths
   (fsm * t, ExtractStringsCb& callback,
-   int cycles, FdTable<int>* fd, bool filter_fd)  
+   int cycles, FdTable<int>* fd, bool filter_fd)
   {
     std::map<int, unsigned short> all_visitations;
     std::map<int, unsigned short> path_visitations;
-    std::vector<hfst::FdState<int> >* fd_state_stack 
+    std::vector<hfst::FdState<int> >* fd_state_stack
       = (fd==NULL) ? NULL : new std::vector<hfst::FdState<int> >
       (1, hfst::FdState<int>(*fd));
 
@@ -640,7 +681,7 @@ namespace hfst { namespace implementations {
     StringPairVector spv;
     bool res = true;
     for (int i=0; ((t->states)+i)->state_no != -1 && res == true; i++) {
-      if (((t->states)+i)->start_state == 1 && 
+      if (((t->states)+i)->start_state == 1 &&
           (initial_states.find(((t->states)+i)->state_no)
            == initial_states.end()) ) {
 
@@ -648,12 +689,12 @@ namespace hfst { namespace implementations {
                 
         res = hfst::implementations::extract_paths
           (t, ((t->states)+i)->state_no, all_visitations, path_visitations,
-           callback, cycles, fd_state_stack, 
+           callback, cycles, fd_state_stack,
            filter_fd, spv);
       }
     }
     // add epsilon path, if needed
-    for (std::set<int>::const_iterator it = initial_states.begin(); 
+    for (std::set<int>::const_iterator it = initial_states.begin();
          it != initial_states.end(); it++)
       {
         bool final_initial = false;
@@ -687,7 +728,7 @@ namespace hfst { namespace implementations {
   void FomaTransducer::insert_to_alphabet(fsm * t, const std::string &symbol)
   {
     sigma_add(strdup(symbol.c_str()), t->sigma);
-  }    
+  }
 
   void FomaTransducer::remove_from_alphabet
   (fsm * t, const std::string &symbol)
@@ -713,7 +754,7 @@ namespace hfst { namespace implementations {
   }
     
   unsigned int FomaTransducer::get_symbol_number
-  (fsm *t, 
+  (fsm *t,
    const std::string &symbol)
   {
     if (symbol == internal_epsilon)
@@ -746,7 +787,7 @@ namespace hfst { namespace implementations {
       // epsilon, unknown and identity are always included and
       // get_symbol_number always returns a value for them
       if (biggest_number < 2)
-        return 2; 
+        return 2;
       return biggest_number;
     }
 
@@ -822,15 +863,15 @@ namespace hfst { namespace implementations {
   }
 #endif
 
-  struct fsm * FomaTransducer::eliminate_flags(struct fsm * t)
+  fsm * FomaTransducer::eliminate_flags(fsm * t)
   {
     return flag_eliminate(t, NULL);
   }
 
-  struct fsm * FomaTransducer::eliminate_flag(struct fsm * t, const std::string & flag)
+  fsm * FomaTransducer::eliminate_flag(fsm * t, const std::string & flag)
   {
     char * flag_ = strdup(flag.c_str());
-    struct fsm * retval = flag_eliminate(t, flag_);
+    fsm * retval = flag_eliminate(t, flag_);
     free(flag_);
     return retval;
   }
@@ -846,12 +887,12 @@ namespace hfst { namespace implementations {
     static inline int explode_line (char *buf, int *values);
 
     /* Read foma transducer . */
-    struct fsm * FomaTransducer::read_net(FILE *infile) {
+    fsm * FomaTransducer::read_net(FILE *infile) {
       
-    const unsigned int READ_BUF_SIZE=4096; 
+    const unsigned int READ_BUF_SIZE=4096;
     char buf[READ_BUF_SIZE];
-    struct fsm *net;
-    struct fsm_state *fsm;
+    fsm *net;
+    struct fsm_state * fsm_;
     
     char *new_symbol;
     int i, items, new_symbol_number, laststate, lineint[5], *cm;
@@ -876,24 +917,24 @@ namespace hfst { namespace implementations {
     }
     /* Properties */
     io_gets(infile, buf);
-    sscanf(buf, "%i %i %i %i %i " LONG_LONG_SPECIFIER " %i %i %i %i %i %i %s", 
-           &net->arity, 
-           &net->arccount, 
-           &net->statecount, 
-           &net->linecount, 
-           &net->finalcount, 
-           &net->pathcount, 
-           &net->is_deterministic, 
-           &net->is_pruned, 
-           &net->is_minimized, 
-           &net->is_epsilon_free, 
-           &net->is_loop_free, 
-           &net->is_completed, 
+    sscanf(buf, "%i %i %i %i %i " LONG_LONG_SPECIFIER " %i %i %i %i %i %i %s",
+           &net->arity,
+           &net->arccount,
+           &net->statecount,
+           &net->linecount,
+           &net->finalcount,
+           &net->pathcount,
+           &net->is_deterministic,
+           &net->is_pruned,
+           &net->is_minimized,
+           &net->is_epsilon_free,
+           &net->is_loop_free,
+           &net->is_completed,
            buf);
     // The following strcpy is commented out because we want to leave the
     // empty name we've written earlier and use HFST3's name scheme
     // for everything. NB: There's a limit of 40 chars for net->name.
-    //strcpy(net->name, buf); 
+    //strcpy(net->name, buf);
     io_gets(infile, buf);
 
     /* Sigma */
@@ -919,48 +960,48 @@ namespace hfst { namespace implementations {
     net->states = (fsm_state*) malloc(net->linecount*sizeof(struct fsm_state)); // error
     // DEBUG
     //fprintf(stderr, "Reserved space for %i state lines\n", net->linecount);
-    fsm = net->states;
+    fsm_ = net->states;
     laststate = -1;
     for (i=0; ;i++) {
       io_gets(infile, buf);
         if (buf[0] == '#') break;
 
         /* scanf is just too slow here */
-        //items = sscanf(buf, "%i %i %i %i %i",&lineint[0], 
+        //items = sscanf(buf, "%i %i %i %i %i",&lineint[0],
         //&lineint[1], &lineint[2], &lineint[3], &lineint[4]);
 
         items = explode_line(buf, &lineint[0]);
 
         switch (items) {
         case 2:
-            (fsm+i)->state_no = laststate;
-            (fsm+i)->in = lineint[0];
-            (fsm+i)->out = lineint[0];
-            (fsm+i)->target = lineint[1];
-            (fsm+i)->final_state = last_final;
+            (fsm_+i)->state_no = laststate;
+            (fsm_+i)->in = lineint[0];
+            (fsm_+i)->out = lineint[0];
+            (fsm_+i)->target = lineint[1];
+            (fsm_+i)->final_state = last_final;
             break;
         case 3:
-            (fsm+i)->state_no = laststate;
-            (fsm+i)->in = lineint[0];
-            (fsm+i)->out = lineint[1];
-            (fsm+i)->target = lineint[2];
-            (fsm+i)->final_state = last_final;
+            (fsm_+i)->state_no = laststate;
+            (fsm_+i)->in = lineint[0];
+            (fsm_+i)->out = lineint[1];
+            (fsm_+i)->target = lineint[2];
+            (fsm_+i)->final_state = last_final;
             break;
         case 4:
-            (fsm+i)->state_no = lineint[0];
-            (fsm+i)->in = lineint[1];
-            (fsm+i)->out = lineint[1];
-            (fsm+i)->target = lineint[2];
-            (fsm+i)->final_state = lineint[3];
+            (fsm_+i)->state_no = lineint[0];
+            (fsm_+i)->in = lineint[1];
+            (fsm_+i)->out = lineint[1];
+            (fsm_+i)->target = lineint[2];
+            (fsm_+i)->final_state = lineint[3];
             laststate = lineint[0];
             last_final = lineint[3];
             break;
         case 5:
-          (fsm+i)->state_no = lineint[0]; // error
-            (fsm+i)->in = lineint[1];
-            (fsm+i)->out = lineint[2];
-            (fsm+i)->target = lineint[3];
-            (fsm+i)->final_state = lineint[4];
+          (fsm_+i)->state_no = lineint[0]; // error
+            (fsm_+i)->in = lineint[1];
+            (fsm_+i)->out = lineint[2];
+            (fsm_+i)->target = lineint[3];
+            (fsm_+i)->final_state = lineint[4];
             laststate = lineint[0];
             last_final = lineint[4];
             break;
@@ -969,11 +1010,11 @@ namespace hfst { namespace implementations {
             return NULL;
         }
         if (laststate > 0) {
-            (fsm+i)->start_state = 0;
+            (fsm_+i)->start_state = 0;
         } else if (laststate == -1) {
-            (fsm+i)->start_state = -1;
+            (fsm_+i)->start_state = -1;
         } else {
-            (fsm+i)->start_state = 1;
+            (fsm_+i)->start_state = 1;
         }
 
     }
@@ -986,7 +1027,7 @@ namespace hfst { namespace implementations {
             sscanf(buf,"%i", &i);
             *cm = i;
             cm++;
-        }     
+        }
     }
     if (strcmp(buf, "##end##") != 0) {
         printf("File format error!\n");
@@ -1001,7 +1042,7 @@ static int io_gets(FILE *infile, char *target) {
     for (i = 0; c != '\n' && c != '\0'; i++) {
         *(target+i) = c;
         c = getc(infile);
-    }   
+    }
     *(target+i) = '\0';
 
     // Windows...
@@ -1037,7 +1078,7 @@ static inline int explode_line (char *buf, int *values) {
     int FomaTransducer::write_net(fsm * net, FILE * outfile) {
 
     struct sigma *sigma;
-    struct fsm_state *fsm;
+    struct fsm_state * fsm_;
     int i, maxsigma, laststate, *cm;
 
     // If this is not done, linecount can return a false value.
@@ -1049,50 +1090,50 @@ static inline int explode_line (char *buf, int *values) {
     /* Properties */
     fprintf(outfile, "%s","##props##\n");
     fprintf(outfile, "%i %i %i %i %i " LONG_LONG_SPECIFIER " %i %i %i %i %i %i %s\n",
-            net->arity, 
-            net->arccount, 
-            net->statecount, 
-            net->linecount, 
-            net->finalcount, 
-            net->pathcount, 
-            net->is_deterministic, 
-            net->is_pruned, 
-            net->is_minimized, 
-            net->is_epsilon_free, 
-            net->is_loop_free, 
-            net->is_completed, 
+            net->arity,
+            net->arccount,
+            net->statecount,
+            net->linecount,
+            net->finalcount,
+            net->pathcount,
+            net->is_deterministic,
+            net->is_pruned,
+            net->is_minimized,
+            net->is_epsilon_free,
+            net->is_loop_free,
+            net->is_completed,
             net->name);
     
     /* Sigma */
     fprintf(outfile, "%s","##sigma##\n");
-    for (sigma = net->sigma; sigma != NULL && sigma->number != -1; 
+    for (sigma = net->sigma; sigma != NULL && sigma->number != -1;
          sigma = sigma->next) {
         fprintf(outfile, "%i %s\n",sigma->number, sigma->symbol);
     }
 
     /* State array */
     laststate = -1;
-    fsm = net->states;
+    fsm_ = net->states;
     fprintf(outfile, "%s","##states##\n");
 
-    for (fsm = net->states; fsm->state_no !=-1; fsm++) {
-        if (fsm->state_no != laststate) {
-            if (fsm->in != fsm->out) {
+    for (fsm_ = net->states; fsm_->state_no !=-1; fsm_++) {
+        if (fsm_->state_no != laststate) {
+            if (fsm_->in != fsm_->out) {
                 fprintf(outfile, "%i %i %i %i %i\n",
-                        fsm->state_no, fsm->in, fsm->out, fsm->target, 
-                        fsm->final_state);
+                        fsm_->state_no, fsm_->in, fsm_->out, fsm_->target,
+                        fsm_->final_state);
             } else {
-                fprintf(outfile, "%i %i %i %i\n",fsm->state_no, fsm->in, 
-                        fsm->target, fsm->final_state);
+                fprintf(outfile, "%i %i %i %i\n",fsm_->state_no, fsm_->in,
+                        fsm_->target, fsm_->final_state);
             }
         } else {
-            if (fsm->in != fsm->out) {
-                fprintf(outfile, "%i %i %i\n", fsm->in, fsm->out, fsm->target);
+            if (fsm_->in != fsm_->out) {
+                fprintf(outfile, "%i %i %i\n", fsm_->in, fsm_->out, fsm_->target);
             } else {
-                fprintf(outfile, "%i %i\n", fsm->in, fsm->target);
+                fprintf(outfile, "%i %i\n", fsm_->in, fsm_->target);
             }
         }
-        laststate = fsm->state_no;
+        laststate = fsm_->state_no;
     }
     /* Sentinel for states */
     fprintf(outfile, "-1 -1 -1 -1 -1\n");
@@ -1122,18 +1163,20 @@ static inline int explode_line (char *buf, int *values) {
     }
 
   } }
+#endif // HAVE_FOMA
 
 #else // MAIN_TEST was defined
 #include <cstdlib>
 #include <cassert>
 #include <iostream>
-using namespace hfst::implementations;
 
-int main(int argc, char * argv[]) 
+int main(int argc, char * argv[])
 {
+#if HAVE_FOMA
     std::cout << "Unit tests for " __FILE__ ":";
 
-    fsm * epsilon 
+    using namespace hfst::implementations;
+    fsm * epsilon
       = FomaTransducer::define_transducer("@_EPSILON_SYMBOL_@");
     fsm * epsilon_i = FomaTransducer::extract_input_language(epsilon);
     fsm * epsilon_i_min = FomaTransducer::minimize(fsm_copy(epsilon_i));
@@ -1145,5 +1188,9 @@ int main(int argc, char * argv[])
     
     std::cout << std::endl << "ok" << std::endl;
     return EXIT_SUCCESS;
+#else // HAVE_FOMA
+    std::cout << "Skipping unit tests for " << __FILE__ << ", FomaTransducer has not been enabled" << std::endl;
+    return 77;
+#endif // HAVE_FOMA
 }
 #endif // MAIN_TEST

@@ -59,7 +59,7 @@ void print_common_unary_string_program_options(FILE *file);
 //        "  -W, --write-symbols-to=FILENAME    Write symbol table to file FILENAME\n"
 
 
-// Two transducers to one transducer: compose, concatenate, conjunct, disjunct, 
+// Two transducers to one transducer: compose, concatenate, conjunct, disjunct,
 void print_common_binary_program_options(FILE *file);
 void print_common_binary_program_parameter_instructions(FILE *file);
 #define HFST_GETOPT_BINARY_SHORT "1:2:o:C"

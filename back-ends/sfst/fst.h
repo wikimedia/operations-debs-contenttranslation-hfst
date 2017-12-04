@@ -41,7 +41,7 @@ namespace SFST {
   static const Index undef = (Index)(-1);
 
   // data type of the generation counter for transducer traversal
-  typedef unsigned short VType;  
+  typedef unsigned short VType;
 
   extern int Quiet;
 
@@ -100,7 +100,7 @@ namespace SFST {
       return first_epsilon_arcp != NULL;
     };
     bool non_epsilon_transition_exists( void ) const {
-      return first_arcp != NULL; 
+      return first_arcp != NULL;
     };
     int size( void ) const;
 
@@ -196,7 +196,7 @@ namespace SFST {
 
   private:
     struct hashf {
-      size_t operator()(const NodePair p) const { 
+      size_t operator()(const NodePair p) const {
         return (size_t)p.first ^ (size_t)p.second;
       }
     };
@@ -244,7 +244,7 @@ namespace SFST {
     };
     void reverse_node( Node *old_node, Transducer *new_node );
     Label recode_label( Label, bool lswitch, bool recode, Alphabet& );
-    Node *copy_nodes( Node *n, Transducer *a, 
+    Node *copy_nodes( Node *n, Transducer *a,
                       bool lswitch=false, bool recode=false );
     void rec_cat_nodes( Node*, Node* );
     void negate_nodes( Node*, Node* );
@@ -259,7 +259,7 @@ namespace SFST {
 
     void splice_nodes(Node*, Node*, Label sl, Transducer*, Transducer*);
     void splice_arc( Node*, Node*, Node*, Transducer* );
-    void enumerate_paths_node( Node*, vector<Label>&, NodeHashSet&, 
+    void enumerate_paths_node( Node*, vector<Label>&, NodeHashSet&,
                                vector<Transducer*>& );
     void replace_char2( Node*, Node*, Character, Character, Transducer* );
     Node *create_node( vector<Node*>&, char*, size_t line );
@@ -280,9 +280,9 @@ namespace SFST {
 
     Alphabet alphabet; // The set of all labels, i.e. character pairs
 
-  Transducer( bool empty=false ) : root(), mem() { 
-      vmark = 0; 
-      deterministic = minimised = empty; 
+  Transducer( bool empty=false ) : root(), mem() {
+      vmark = 0;
+      deterministic = minimised = empty;
       indexed = false;
       node_count = transition_count = 0;
     };
@@ -292,7 +292,7 @@ namespace SFST {
     // convertion of a string to an transducer
     Transducer( char *s, const Alphabet *a=NULL, bool extended=false );
     // reads a word list from a file and stores it in the transducer
-    Transducer( istream&, const Alphabet *a=NULL, bool verbose=false, 
+    Transducer( istream&, const Alphabet *a=NULL, bool verbose=false,
                 bool lexcomments=false );
     // reads a transducer from a binary or text file
     Transducer( FILE*, bool binary=true );
@@ -339,7 +339,7 @@ namespace SFST {
     Transducer &upper_level( void )   // creates an transducer for the "upper" language
       { return level(upper); };
     Transducer &determinise( bool copy_alphabet=true ); // creates a deterministic transducer
-    Transducer &rev_det_minimise( bool verbose ); 
+    Transducer &rev_det_minimise( bool verbose );
     Transducer &hopcroft_minimise( bool verbose );
     Transducer &minimise( bool verbose=true ) {
       if (hopcroft_minimisation)

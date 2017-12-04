@@ -91,7 +91,7 @@ print_usage()
           "If OUTFILE or INFILE is missing or -, "
       "standard streams will be used.\n"
           "Unless explicitly requested with option -w or -D, "
-      "weights are printed\n" 
+      "weights are printed\n"
           "if and only if the transducer is in weighted format.\n"
           "TFMT is one of {att, dot, prolog, pckimmo}.\n"
     );
@@ -120,8 +120,8 @@ parse_options(int argc, char** argv)
             {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "wDnf:",
                              long_options, &option_index);
         if (-1 == c)
@@ -145,13 +145,13 @@ parse_options(int argc, char** argv)
         break;
     case 'f':
         if ((strcmp(optarg, "att") == 0) || (strcmp(optarg, "AT&T") == 0) ||
-            (strcmp(optarg, "openfst") == 0) || 
+            (strcmp(optarg, "openfst") == 0) ||
             (strcmp(optarg, "OpenFst") == 0))
           {
             format = ATT_TEXT;
           }
-        else if ((strcmp(optarg, "dot") == 0) || 
-            (strcmp(optarg, "graphviz") == 0) || 
+        else if ((strcmp(optarg, "dot") == 0) ||
+            (strcmp(optarg, "graphviz") == 0) ||
             (strcmp(optarg, "GraphViz") == 0))
           {
             format = DOT_TEXT;
@@ -190,7 +190,7 @@ process_stream(HfstInputStream& instream, FILE* outf)
     {
         transducer_n++;
         HfstTransducer* t=NULL;
-        try 
+        try
           {
             t = new HfstTransducer(instream);
           }
@@ -205,17 +205,17 @@ process_stream(HfstInputStream& instream, FILE* outf)
           }
         if (transducer_n == 1)
         {
-          verbose_printf("Converting %s...\n", inputname); 
+          verbose_printf("Converting %s...\n", inputname);
         }
         else
-        { 
+        {
           if (instream.get_type() == hfst::XFSM_TYPE) {
             error(EXIT_FAILURE, 0, "Writing more than one transducer in text format to file not supported for xfsm transducers,\n"
                   "use [hfst-head|hfst-tail|hfst-split] to extract individual transducers from input");
-            return EXIT_FAILURE;             
+            return EXIT_FAILURE;
           }
           verbose_printf("Converting %s..." SIZE_T_SPECIFIER "\n", inputname,
-                         transducer_n); 
+                         transducer_n);
         }
 
 
@@ -255,7 +255,7 @@ process_stream(HfstInputStream& instream, FILE* outf)
         break;
       case PROLOG_TEXT:
         {
-          try 
+          try
             {
               if (type == hfst::XFSM_TYPE) {
                 t->write_xfsm_transducer_in_prolog_format(outfilename); // no name or weights printed
@@ -300,7 +300,7 @@ process_stream(HfstInputStream& instream, FILE* outf)
 }
 
 
-int main( int argc, char **argv ) 
+int main( int argc, char **argv )
 {
 #ifdef WINDOWS
   _setmode(0, _O_BINARY);
@@ -318,7 +318,7 @@ int main( int argc, char **argv )
         fclose(inputfile);
     }
     
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
         inputfilename, outfilename);
     // here starts the buffer handling part
     HfstInputStream* instream = NULL;
@@ -335,29 +335,29 @@ int main( int argc, char **argv )
       {
         if (format == DOT_TEXT) {
           error(EXIT_FAILURE, 0, "Output format 'dot' not supported for xfsm transducers, use 'prolog'");
-          return EXIT_FAILURE; 
+          return EXIT_FAILURE;
         }
         if (format == PCKIMMO_TEXT) {
           error(EXIT_FAILURE, 0, "Output format 'pckimmo' not supported for xfsm transducers, use 'prolog'");
-          return EXIT_FAILURE; 
+          return EXIT_FAILURE;
         }
         if (format == ATT_TEXT) {
           error(EXIT_FAILURE, 0, "Output format 'att' not supported for xfsm transducers, use 'prolog'");
-          return EXIT_FAILURE; 
+          return EXIT_FAILURE;
         }
         if (use_numbers) {
           error(EXIT_FAILURE, 0, "Option '--use-numbers' not supported for xfsm transducers");
-          return EXIT_FAILURE; 
+          return EXIT_FAILURE;
         }
         if (strcmp(inputfilename, "<stdin>") == 0) {
           error(EXIT_FAILURE, 0, "Reading from standard input not supported for xfsm transducers,\n"
                 "use 'hfst-fst2txt [--input|-i] INFILE' instead");
-          return EXIT_FAILURE; 
+          return EXIT_FAILURE;
         }
         if (strcmp(outfilename, "<stdout>") == 0) {
           error(EXIT_FAILURE, 0, "Writing to standard output not supported for xfsm transducers,\n"
                 "use 'hfst-fst2txt [--output|-o] OUTFILE' instead");
-          return EXIT_FAILURE; 
+          return EXIT_FAILURE;
         }
       }
     

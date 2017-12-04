@@ -58,7 +58,7 @@ echo '"<" @"Stems" "," @"Features" ">" ' | $2/hfst-regexp2fst -f $1 > VerbLex
 
 echo '[[. .] -> {mo} || "<" _ [$[@"Agr" & $@"Person3" & $Sg & $4]]]' | $2/hfst-regexp2fst -f $1 > RAgr1
 echo '[[. .] -> {li} || "<" _ [$[@"Agr" & $@"Person3" & $Sg & $5]]]' | $2/hfst-regexp2fst -f $1 > RAgr2
-echo '[[. .] -> e  || "<" _ [$[@"Agr" & $@"Person3" & $Sg & $[9a . "10a"]]]]' | $2/hfst-regexp2fst -f $1 > RAgr3
+echo '[[. .] -> e  || "<" _ [$[@"Agr" & $@"Person3" & $Sg & $[9a "." "10a"]]]]' | $2/hfst-regexp2fst -f $1 > RAgr3
 echo '[[. .] -> {lo} || "<" _ [$[@"Agr" & $@"Person3" & $Sg & $["10"|11]]]]' | $2/hfst-regexp2fst -f $1 > RAgr4
 echo '[[. .] -> {bo} || "<" _ [$[@"Agr" & $@"Person3" & $Sg & $14]]]' | $2/hfst-regexp2fst -f $1 > RAgr5
 # Common plural agreement markers

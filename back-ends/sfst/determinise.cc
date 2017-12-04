@@ -31,7 +31,7 @@ namespace SFST {
     typedef set<Node*>::iterator iterator;
     NodeSet() {};
     void add( Node* );
-    bool insert(Node *node) { 
+    bool insert(Node *node) {
       pair<iterator, bool> result = ht.insert(node);
       return result.second;
     };
@@ -78,7 +78,7 @@ namespace SFST {
 
   private:
     struct hashf {
-      size_t operator()(const NodeArray *na) const { 
+      size_t operator()(const NodeArray *na) const {
         size_t key=na->size() ^ na->is_final();
         for( size_t i=0; i<na->size(); i++)
           key = (key<<1) ^ (size_t)(*na)[i];
@@ -234,7 +234,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  static void determinise_node( NodeArray &na, Node *node, Transducer *a, 
+  static void determinise_node( NodeArray &na, Node *node, Transducer *a,
                                 NodeMapping &map )
   {
     node->set_final(na.is_final());

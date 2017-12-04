@@ -85,7 +85,7 @@ Frobnicating diagonal automata will lead to inconclusive results. Don't do it.
 .SH BUGS
 You cannot frobnicate automata of weighted backend formats.
 .SH COPYRIGHT
-Copyright \(co 2010 University of Helsinki,
+Copyright \(co 2017 University of Helsinki,
 License GPLv3: GNU GPL version 3 <http://gnu.org/licenses/gpl.html>
 .br
 This is free software: you are free to change and redistribute it.

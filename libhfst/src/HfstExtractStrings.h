@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #ifndef _EXTRACT_STRINGS_H_
@@ -12,7 +12,7 @@
 #include "HfstSymbolDefs.h"
 #include <string>
 #include <vector>
-#include <iostream>
+#include <iosfwd>
 #include <sstream>
 #include <set>
 
@@ -31,7 +31,7 @@ namespace hfst {
   /* \brief (Being replaced by HfstOneLevelPath and HfstTwoLevelPath)
       A weighted string pair that represents a path in a transducer.
 
-      @see WeightedPaths 
+      @see WeightedPaths
       @see HfstOneLevelPath
       @see HfstTransducer::extract_paths
   */
@@ -45,13 +45,13 @@ namespace hfst {
       std::string ostring;
       /* \brief The weight of the path. */
       W weight;
-      /* \brief An optional StringPairVector representation of the path. 
+      /* \brief An optional StringPairVector representation of the path.
 
           This can be used when we are interested in the exact alignment of
           symbols in a given path. If you are going to use this variable,
           set the value of \a is_spv_in_use 'true'. */
       StringPairVector spv;
-      /* \brief  Whether the StringPairVector representation is in use. 
+      /* \brief  Whether the StringPairVector representation is in use.
 
           This variable tells whether we are using the string pair vector
           representation. By default, it is 'false'. */
@@ -63,12 +63,12 @@ namespace hfst {
       bool operator< (const WeightedPath &another) const
         { if (weight == another.weight)
             { if (istring == another.istring)
-                { if (ostring == another.ostring) 
+                { if (ostring == another.ostring)
                   { /* Handle here spv. */
                     if (not is_spv_in_use)
                       return false; /* paths are equivalent */
-                    unsigned int common_length 
-                      = (spv.size()<another.spv.size())? 
+                    unsigned int common_length
+                      = (spv.size()<another.spv.size())?
                       spv.size() : another.spv.size();
                     /* Go through string pairs. */
                     for (unsigned int i=0; i<common_length; i++) {
@@ -87,7 +87,7 @@ namespace hfst {
       
       std::string to_string(void) const
         { stringstream s_stream(ios::out);
-          s_stream << istring << ":" << ostring << "\t" << weight; 
+          s_stream << istring << ":" << ostring << "\t" << weight;
           s_stream.flush();
           return s_stream.str();
         }
@@ -112,13 +112,13 @@ namespace hfst {
               weight = weight + another.weight;
               return *this;
             }
-          else 
+          else
             {
               istring = istring + another.istring;
               ostring = ostring + another.ostring;
               weight = weight + another.weight;
               return *this;
-            } 
+            }
         }
       void operator=(const WeightedPath &another)
         { if (this == &another) { return; }
@@ -128,8 +128,8 @@ namespace hfst {
     };
 
 
-  /* \brief A class for storing weighted string pairs that represent 
-      paths in a transducer. 
+  /* \brief A class for storing weighted string pairs that represent
+      paths in a transducer.
 
       Iterators to Vectors and Sets return paths in descending weight order
       (the string with the biggest weight is returned first). (check this)
@@ -141,9 +141,9 @@ namespace hfst {
     { public:
 
       /* \brief A vector of weighted string pairs. */
-      typedef std::vector< WeightedPath<W> > Vector; 
+      typedef std::vector< WeightedPath<W> > Vector;
       /* \brief A set of weighted string pairs. */
-      typedef std::set< WeightedPath<W> > Set; 
+      typedef std::set< WeightedPath<W> > Set;
 
       static void add(Vector &v,WeightedPath<W> &s)
       {
@@ -192,8 +192,8 @@ namespace hfst {
        * ends at a \a final state. The return value determines the future course
        * of the extraction search.
        *
-       * @returns A data structure indicating whether the search 
-       *          should continue, be broken off immediately, 
+       * @returns A data structure indicating whether the search
+       *          should continue, be broken off immediately,
        *          or whether the specific path should no longer be followed.
        */
       //virtual RetVal operator()(WeightedPath<float>& path, bool final) = 0;

@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #ifndef _LOOKUP_FLAG_DIACRITICS_H_
@@ -14,9 +14,9 @@
 #include <string>
 #include <cassert>
 #include <vector>
-#include <iostream>
+#include <iosfwd>
 #ifdef DEBUG
-#include <iostream>
+#include <iosfwd>
 #endif
 
 enum DiacriticOperator
@@ -30,7 +30,10 @@ typedef std::map<std::string,std::string> DiacriticValues;
 typedef std::map<std::string,bool> DiacriticSettingMap;
 typedef std::map<std::string,std::string> FeatureValues;
 typedef std::map<std::string,bool> FeaturePolarities;
-typedef std::vector<std::string> StringVector;
+
+namespace hfst {
+  typedef std::vector<std::string> StringVector; }
+
 class  FlagDiacriticTable
 {
   static DiacriticOperators diacritic_operators;
@@ -65,10 +68,10 @@ class  FlagDiacriticTable
   void reset(void);
   bool fails(void);
   static bool is_diacritic(const std::string &symbol);
-  bool is_valid_string(const StringVector & input_string);
-  StringVector filter_diacritics(const StringVector & input_string);
+  bool is_valid_string(const hfst::StringVector & input_string);
+  hfst::StringVector filter_diacritics(const hfst::StringVector & input_string);
 #ifdef DEBUG
-  static void display(short diacritic); 
+  static void display(short diacritic);
 #endif
 };
 

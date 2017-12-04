@@ -1,4 +1,6 @@
-char * cmd [] =
+#ifndef GUARD_cmd_h
+#define GUARD_cmd_h
+const char * cmd [] =
 {
 "add properties",
 "alias",
@@ -129,3 +131,4 @@ char * cmd [] =
 "zero-plus net",
 NULL,
 };
+#endif // GUARD_cmd_h

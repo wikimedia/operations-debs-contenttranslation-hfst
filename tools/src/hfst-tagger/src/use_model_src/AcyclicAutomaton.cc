@@ -116,10 +116,10 @@ void AcyclicAutomaton::clear(void)
       for (AcyclicStateVector::iterator jt = it->begin();
            jt != it->end();
            ++jt)
-        { 
+        {
           if (not jt->is_initialized())
             { break; }
-          jt->clear(); 
+          jt->clear();
         }
     }
   
@@ -187,7 +187,7 @@ int main(void)
 
   acyclic_automaton1.finalize_position();
 
-  WeightedSymbolVector weight_2_0_path_1_1 = 
+  WeightedSymbolVector weight_2_0_path_1_1 =
     acyclic_automaton1.get_best_path();
 
   assert(weight_2_0_path_1_1.second.size() == 2);

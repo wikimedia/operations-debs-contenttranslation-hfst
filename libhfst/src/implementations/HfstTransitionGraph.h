@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
  #ifndef _HFST_TRANSITION_GRAPH_H_
@@ -17,7 +17,7 @@
  #include <string>
  #include <set>
  #include <cassert>
- #include <iostream>
+ #include <iosfwd>
  #include <algorithm>
  #include <stack>
 
@@ -26,6 +26,7 @@
  #include "../HfstDataTypes.h"
  #include "../HarmonizeUnknownAndIdentitySymbols.h"
  #include "../HfstFlagDiacritics.h"
+ #include "../HfstLookupFlagDiacritics.h"
  #include "../HfstEpsilonHandler.h"
  #include "ConvertTransducerFormat.h"
  #include "HfstTransition.h"
@@ -65,15 +66,15 @@
      and #HfstBasicTransition
      (HfstTransition<HfstTropicalTransducerTransitionData>).
      The class HfstTropicalTransducerTransitionData contains an input string,
-     an output string and a float weight. HfstBasicTransducer is the 
+     an output string and a float weight. HfstBasicTransducer is the
      implementation that is used as an example in this documentation.
 
-     An example of creating a HfstBasicTransducer [foo:bar baz:baz] 
+     An example of creating a HfstBasicTransducer [foo:bar baz:baz]
      with weight 0.4 from scratch:
 
  \verbatim
    // Create an empty transducer
-   // The transducer has initially one start state (number zero) 
+   // The transducer has initially one start state (number zero)
    // that is not final
    HfstBasicTransducer fsm;
    // Add two states to the transducer
@@ -83,7 +84,7 @@
    HfstBasicTransition tr(1, "foo", "bar", 0.1);
    // ... and add it to state zero
    fsm.add_transition(0, tr);
-   // Add a transition [baz:baz] with weight 0 from state 1 to state 2 
+   // Add a transition [baz:baz] with weight 0 from state 1 to state 2
    fsm.add_transition(1, HfstBasicTransition(2, "baz", "baz", 0.0));
    // Set state 2 as final with weight 0.3
    fsm.set_final_weight(2, 0.3);
@@ -101,7 +102,7 @@
       it != fsm.end(); it++ )
        {
          // Go through all transitions
-     for (HfstBasicTransducer::HfstTransitions::const_iterator tr_it 
+     for (HfstBasicTransducer::HfstTransitions::const_iterator tr_it
             = it->begin(); tr_it != it->end(); tr_it++)
        {
          std::cerr << source_state << "\t"
@@ -111,19 +112,19 @@
                << tr_it->get_weight() << std::endl;
        }
 
-     if (fsm.is_final_state(source_state)) 
+     if (fsm.is_final_state(source_state))
        {
          std::cerr << source_state << "\t"
                << fsm.get_final_weight(source_state) << std::endl;
        }
 
-     // the next state is numbered source_state + 1  
+     // the next state is numbered source_state + 1
      source_state++;
        }
  \endverbatim
 
  @see #HfstBasicTransducer HfstBasicTransition */
-     template <class C> class HfstTransitionGraph 
+     template <class C> class HfstTransitionGraph
        {
 
      // --- Datatypes and variables ---
@@ -132,8 +133,8 @@
      /** @brief Datatype for a symbol in a transition. */
      typedef typename C::SymbolType HfstSymbol;
      /** @brief Datatype for a symbol pair in a transition. */
-     typedef std::pair<HfstSymbol, HfstSymbol> 
-       HfstSymbolPair; 
+     typedef std::pair<HfstSymbol, HfstSymbol>
+       HfstSymbolPair;
      /** @brief A set of symbol pairs. */
      typedef std::set<HfstSymbolPair> HfstSymbolPairSet;
      /** @brief A set of symbol pairs. */
@@ -147,7 +148,7 @@
      typedef std::vector<HfstTransition<C> > HfstTransitions;
 
      /* Datatype for the states of a graph and their transitions.
-        Each index of the vector is a state and the transitions 
+        Each index of the vector is a state and the transitions
         on that index are the transitions of that state. */
      typedef std::vector<HfstTransitions> HfstStates;
 
@@ -173,7 +174,7 @@
          typedef std::map<HfstNumberPair, HfstNumberPair> HfstNumberPairSubstitutions;
 
        protected:
-         /* @brief An iterator type that points to a state in a graph. 
+         /* @brief An iterator type that points to a state in a graph.
 
             The value pointed by the iterator is of type HfstTransitions. */
          typedef typename HfstStates::iterator iterator;
@@ -210,6 +211,7 @@
            initialize_alphabet(alphabet);
            HfstTransitions tr;
            state_vector.push_back(tr);
+           name = std::string("");
          }
 
        HFSTDLL HfstTransitionGraph(FILE *file) {
@@ -218,6 +220,7 @@
          state_vector.push_back(tr);
          unsigned int linecount=0;
          this->assign(read_in_att_format(file, "@0@", linecount));
+         name = std::string("");
        }
 
 
@@ -230,6 +233,7 @@
          final_weight_map = graph.final_weight_map;
          alphabet = graph.alphabet;
          assert(alphabet.count(HfstSymbol()) == 0);
+         name = graph.name;
          return *this;
        }
 
@@ -243,10 +247,11 @@
        state_vector = graph.state_vector;
        final_weight_map = graph.final_weight_map;
        alphabet = graph.alphabet;
+       name = graph.name;
        assert(alphabet.count(HfstSymbol()) == 0);
      }
 
-     /** @brief Create an HfstTransitionGraph equivalent to HfstTransducer 
+     /** @brief Create an HfstTransitionGraph equivalent to HfstTransducer
          \a transducer. FIXME: move to a separate file */
        HFSTDLL HfstTransitionGraph(const hfst::HfstTransducer &transducer) {
        HfstTransitionGraph<HfstTropicalTransducerTransitionData>
@@ -264,7 +269,7 @@
      // --------------------------------------------------
 
        protected:
-     /* Add epsilon, unknown and identity symbols to the alphabet 
+     /* Add epsilon, unknown and identity symbols to the alphabet
         \a alpha. */
      void initialize_alphabet(HfstTransitionGraphAlphabet &alpha) {
        alpha.insert(C::get_epsilon());
@@ -284,11 +289,11 @@
                  {
                    C data = tr_it->get_transition_data();
 
-                   if(alphabet.find(data.get_input_symbol()) 
+                   if(alphabet.find(data.get_input_symbol())
               == alphabet.end()) {
              return false;
            }
-                   if(alphabet.find(data.get_output_symbol()) 
+                   if(alphabet.find(data.get_output_symbol())
               == alphabet.end()) {
              return false;
            }
@@ -299,9 +304,9 @@
 
        public:
      /* Print the alphabet of the graph to standard error stream. */
-     HFSTDLL void print_alphabet() const 
+     HFSTDLL void print_alphabet() const
      {
-       for (typename HfstTransitionGraphAlphabet::const_iterator it 
+       for (typename HfstTransitionGraphAlphabet::const_iterator it
           = alphabet.begin(); it != alphabet.end(); it++)
          {
            if (it != alphabet.begin())
@@ -318,7 +323,7 @@
        return C::get_number(symbol);
      }
 
-     /* For internal optimization: Reserve space for 
+     /* For internal optimization: Reserve space for
         \a number_of_states states. */
      void initialize_state_vector
        (unsigned int number_of_states)
@@ -327,7 +332,7 @@
      }
 
      /* For internal optimization: Reserve space for
-        \a number_of_transitions transitions for state number 
+        \a number_of_transitions transitions for state number
         \a state_number. */
      void initialize_transition_vector
        (unsigned int state_number, unsigned int number_of_transitions)
@@ -350,7 +355,7 @@
            alphabet.insert(symbol);
          }
 
-     /** @brief Remove symbol \a symbol from the alphabet of the graph. 
+     /** @brief Remove symbol \a symbol from the alphabet of the graph.
 
          @note Use with care, removing symbols that occur in the transitions
          of the graph can have unexpected results. */
@@ -387,7 +392,7 @@
          }
      }
 
-     /* Remove all symbols that are given in \a symbols but do not occur 
+     /* Remove all symbols that are given in \a symbols but do not occur
         in transitions of the graph from its alphabet. */
      HFSTDLL void prune_alphabet_after_substitution(const std::set<unsigned int> &symbols)
      {
@@ -441,7 +446,7 @@
      }
 
          /** @brief Remove all symbols that do not occur in transitions of
-             the graph from its alphabet. 
+             the graph from its alphabet.
 
              @param force Whether unused symbols are removed even if
              unknown or identity symbols occur in transitions.
@@ -454,7 +459,7 @@
            HfstTransitionGraphAlphabet symbols_found = symbols_used();
 
            // Whether unknown or identity symbols are used
-           bool unknowns_or_identities_used = 
+           bool unknowns_or_identities_used =
              ( (symbols_found.find("@_UNKNOWN_SYMBOL_@") != symbols_found.end()) ||
                (symbols_found.find("@_IDENTITY_SYMBOL_@") != symbols_found.end()) );
 
@@ -464,17 +469,17 @@
              return;
 
            // Special symbols are always known
-           symbols_found.insert("@_EPSILON_SYMBOL_@"); 
-           symbols_found.insert("@_UNKNOWN_SYMBOL_@"); 
-           symbols_found.insert("@_IDENTITY_SYMBOL_@"); 
+           symbols_found.insert("@_EPSILON_SYMBOL_@");
+           symbols_found.insert("@_UNKNOWN_SYMBOL_@");
+           symbols_found.insert("@_IDENTITY_SYMBOL_@");
 
-           // Which symbols in the graph's alphabet did not occur in 
+           // Which symbols in the graph's alphabet did not occur in
            // the graph
            HfstTransitionGraphAlphabet symbols_not_found;
 
-           for (typename HfstTransitionGraphAlphabet::iterator it 
+           for (typename HfstTransitionGraphAlphabet::iterator it
                   = alphabet.begin();
-                it != alphabet.end(); it++) 
+                it != alphabet.end(); it++)
              {
                if (symbols_found.find(*it) == symbols_found.end())
                  symbols_not_found.insert(*it);
@@ -482,7 +487,7 @@
 
            // Remove the symbols that did not occur in the graph
            // from its alphabet
-           for (typename HfstTransitionGraphAlphabet::iterator it 
+           for (typename HfstTransitionGraphAlphabet::iterator it
                   = symbols_not_found.begin();
                 it != symbols_not_found.end(); it++)
              {
@@ -490,11 +495,11 @@
              }
          }
 
-         /** @brief Get the set of HfstSymbols in the alphabet 
-             of the graph. 
+         /** @brief Get the set of HfstSymbols in the alphabet
+             of the graph.
 
              The HfstSymbols do not necessarily occur in any transitions
-             of the graph. Epsilon, unknown and identity \link 
+             of the graph. Epsilon, unknown and identity \link
              hfst::String symbols\endlink are always included in the alphabet. */
          HFSTDLL const HfstTransitionGraphAlphabet &get_alphabet() const {
            return alphabet;
@@ -551,7 +556,7 @@
        return state_vector.size()-1;
      }
 
-         /** @brief Add a transition \a transition to state \a s. 
+         /** @brief Add a transition \a transition to state \a s.
 
              If state \a s does not exist, it is created. */
      HFSTDLL void add_transition(HfstState s, const HfstTransition<C> & transition,
@@ -598,7 +603,7 @@
                it->get_target_state() == transition.get_target_state())
              {
                // schedule transition to be removed
-               elements_to_remove.push(it); 
+               elements_to_remove.push(it);
              }
          }
        // remove the transitions in reverse order
@@ -606,7 +611,7 @@
          {
            state_vector[s].erase(elements_to_remove.top());
            elements_to_remove.pop();
-         }           
+         }
        
        if (remove_symbols_from_alphabet)
          {
@@ -618,7 +623,7 @@
          }
      }
 
-         /** @brief Whether state \a s is final. 
+         /** @brief Whether state \a s is final.
          FIXME: return positive infinity instead if not final. */
          HFSTDLL bool is_final_state(HfstState s) const {
            return (final_weight_map.find(s) != final_weight_map.end());
@@ -633,11 +638,11 @@
            HFST_THROW(StateIsNotFinalException);
          }
 
-         /** @brief Set the final weight of state \a s in this graph 
-             to \a weight. 
+         /** @brief Set the final weight of state \a s in this graph
+             to \a weight.
 
              If the state does not exist, it is created. */
-         HFSTDLL void set_final_weight(HfstState s, 
+         HFSTDLL void set_final_weight(HfstState s,
                    const typename C::WeightType & weight) {
            add_state(s);
            final_weight_map[s] = weight;
@@ -658,17 +663,17 @@
          return *this;
        }
 
-         /** @brief Get an iterator to the beginning of the states in 
-             the graph. 
+         /** @brief Get an iterator to the beginning of the states in
+             the graph.
 
              For an example, see #HfstTransitionGraph */
          HFSTDLL iterator begin() { return state_vector.begin(); }
 
-         /** @brief Get a const iterator to the beginning of 
+         /** @brief Get a const iterator to the beginning of
              states in the graph. */
          HFSTDLL const_iterator begin() const { return state_vector.begin(); }
 
-         /** @brief Get an iterator to the end of states (last state + 1) 
+         /** @brief Get an iterator to the end of states (last state + 1)
          in the graph. */
          HFSTDLL iterator end() { return state_vector.end(); }
 
@@ -677,17 +682,17 @@
          HFSTDLL const_iterator end() const { return state_vector.end(); }
 
 
-         /** @brief Get the set of transitions of state \a s in this graph. 
+         /** @brief Get the set of transitions of state \a s in this graph.
 
              If the state does not exist, a @a StateIndexOutOfBoundsException
              is thrown.
          */
          HFSTDLL const HfstTransitions & operator[](HfstState s) const
          {
-           if (s >= state_vector.size()) { 
+           if (s >= state_vector.size()) {
          HFST_THROW(StateIndexOutOfBoundsException); }
            return state_vector[s];
-         }        
+         }
 
          /** @brief Alternative name for operator[].
 
@@ -702,9 +707,9 @@
 
          /** @brief Get mutable transitions.
           */
-         HFSTDLL HfstTransitions & transitions(HfstState s) 
+         HFSTDLL HfstTransitions & transitions(HfstState s)
          {
-           if (s >= state_vector.size()) { 
+           if (s >= state_vector.size()) {
              HFST_THROW(StateIndexOutOfBoundsException); }
            return state_vector[s];
          }
@@ -778,7 +783,7 @@
          static void write_weight(FILE * file, float weight)
          {
            //if (weight == 0) // avoid unnecessary 0.000000's
-           //  fprintf(file, "%i", 0); 
+           //  fprintf(file, "%i", 0);
            //else
            fprintf(file, "%f", weight);
          }
@@ -786,7 +791,7 @@
          static void write_weight(std::ostream & os, float weight)
          {
            //if (weight == 0) // avoid unnecessary 0.000000's
-           //  os << 0; 
+           //  os << 0;
            //else
            os << weight;
          }
@@ -835,10 +840,10 @@
          {
            // replace all spaces, epsilons and tabs
            if (data.get_input_symbol() !=
-               data.get_output_symbol()) 
+               data.get_output_symbol())
              {
                os << "<";
-             } 
+             }
            std::string s = data.get_input_symbol();
            xfstize_symbol(s);
            os << s;
@@ -848,7 +853,7 @@
              {
                s = data.get_output_symbol();
                xfstize_symbol(s);
-               os << ":" << s; 
+               os << ":" << s;
              }
            if (data.get_input_symbol() !=
                data.get_output_symbol())
@@ -888,7 +893,7 @@
 
          /** @brief Write the graph in xfst text format to ostream \a os.
              \a write_weights defines whether weights are printed (todo). */
-         HFSTDLL void write_in_xfst_format(std::ostream &os, bool write_weights=true) 
+         HFSTDLL void write_in_xfst_format(std::ostream &os, bool write_weights=true)
          {
            (void)write_weights; // todo
            unsigned int source_state=0;
@@ -920,7 +925,7 @@
                  }
                os << "." << std::endl;
                source_state++;
-             }          
+             }
          }
 
          // note: unknown and identity are both '?'
@@ -968,7 +973,7 @@
            fprintf(file, "\"%s\"", symbol.c_str());
 
            if (data.get_input_symbol() !=
-               data.get_output_symbol() || 
+               data.get_output_symbol() ||
                data.get_input_symbol() == "@_UNKNOWN_SYMBOL_@")
              {
                symbol = prologize_symbol(data.get_output_symbol());
@@ -982,7 +987,7 @@
            os << "\"" << symbol << "\"";
 
            if (data.get_input_symbol() !=
-               data.get_output_symbol() || 
+               data.get_output_symbol() ||
                data.get_input_symbol() == "@_UNKNOWN_SYMBOL_@")
              {
                symbol = prologize_symbol(data.get_output_symbol());
@@ -992,8 +997,8 @@
 
          /** @brief Write the graph in prolog format to FILE \a file.
              \a write_weights defines whether weights are printed (todo). */
-         HFSTDLL void write_in_prolog_format(FILE * file, const std::string & name, 
-                                     bool write_weights=true) 
+         HFSTDLL void write_in_prolog_format(FILE * file, const std::string & name,
+                                     bool write_weights=true)
          {
            unsigned int source_state=0;
            const char * identifier = name.c_str();
@@ -1008,7 +1013,7 @@
            // Print symbols that are in the alphabet but not used in arcs.
            HfstTransitionGraphAlphabet symbols_used_ = symbols_used();
            initialize_alphabet(symbols_used_); // exclude special symbols
-           for (typename HfstTransitionGraphAlphabet::const_iterator it 
+           for (typename HfstTransitionGraphAlphabet::const_iterator it
                   = alphabet.begin(); it != alphabet.end(); it++)
              {
                if (symbols_used_.find(*it) == symbols_used_.end())
@@ -1038,12 +1043,12 @@
              }
 
            // Print final states.
-           for (typename FinalWeightMap::const_iterator it 
+           for (typename FinalWeightMap::const_iterator it
                   = this->final_weight_map.begin();
                 it != this->final_weight_map.end(); it++)
              {
                fprintf(file, "final(%s, %i", identifier, it->first);
-               if (write_weights) 
+               if (write_weights)
                  {
                    fprintf(file, ", ");
                    write_weight(file, it->second);
@@ -1054,8 +1059,8 @@
 
          /** @brief Write the graph in prolog format to ostream \a os.
              \a write_weights defines whether weights are printed (todo). */
-         HFSTDLL void write_in_prolog_format(std::ostream & os, const std::string & name, 
-                                     bool write_weights=true) 
+         HFSTDLL void write_in_prolog_format(std::ostream & os, const std::string & name,
+                                     bool write_weights=true)
          {
            unsigned int source_state=0;
 
@@ -1070,7 +1075,7 @@
            // Print symbols that are in the alphabet but not used in arcs.
            HfstTransitionGraphAlphabet symbols_used_ = symbols_used();
            initialize_alphabet(symbols_used_); // exclude special symbols
-           for (typename HfstTransitionGraphAlphabet::const_iterator it 
+           for (typename HfstTransitionGraphAlphabet::const_iterator it
                   = alphabet.begin(); it != alphabet.end(); it++)
              {
                if (symbols_used_.find(*it) == symbols_used_.end())
@@ -1091,7 +1096,7 @@
                    print_prolog_arc_symbols(os, data);
                    if (write_weights) {
                      os << ", ";
-                     write_weight(os, data.get_weight()); 
+                     write_weight(os, data.get_weight());
                    }
                    os << ")." << std::endl;
                  }
@@ -1099,7 +1104,7 @@
              }
 
            // Print final states.
-           for (typename FinalWeightMap::const_iterator it 
+           for (typename FinalWeightMap::const_iterator it
                   = this->final_weight_map.begin();
                 it != this->final_weight_map.end(); it++)
              {
@@ -1137,7 +1142,7 @@
            return true;
          }
 
-         HFSTDLL static bool parse_prolog_network_line(const std::string & line, std::string & name)
+         HFSTDLL static bool parse_prolog_network_line(const std::string & line, HfstTransitionGraph & graph)
          {
            // 'network(NAME).'
            char namearr[100];
@@ -1150,7 +1155,7 @@
            if (!strip_ending_parenthesis_and_comma(namestr))
              return false;
 
-           name = namestr;
+           graph.name = namestr;
            return true;
          }
 
@@ -1175,8 +1180,8 @@
            return retval;
          }
 
-         // Extract input and output symbols, if possible, from prolog arc 
-         // \a str and store them to \a isymbol and \a osymbol. 
+         // Extract input and output symbols, if possible, from prolog arc
+         // \a str and store them to \a isymbol and \a osymbol.
          // Return whether symbols were successfully extracted.
          // \a str must be of format "foo":"bar" or "foo"
          HFSTDLL static bool get_prolog_arc_symbols
@@ -1197,7 +1202,7 @@
            else if (quote_positions.size() == 4)
              {
                if (quote_positions[0] != 0 ||
-                   quote_positions[3] != str.length()-1) 
+                   quote_positions[3] != str.length()-1)
                  {
                    return false;  // extra characters outside quotes
                  }
@@ -1249,7 +1254,7 @@
              { return false; }
 
            if (last_space == std::string::npos) {
-             ; // no weight 
+             ; // no weight
            }
            else if (last_double_quote > last_space) {
              ; // no weight, last space is part of a symbol
@@ -1274,13 +1279,13 @@
            char namestr[100]; char sourcestr[100];
            char targetstr[100]; char symbolstr[100];
 
-           int n = sscanf(line.c_str(), "arc(%[^,], %[^,], %[^,], %[^\t\n]", 
+           int n = sscanf(line.c_str(), "arc(%[^,], %[^,], %[^,], %[^\t\n]",
                           namestr, sourcestr, targetstr, symbolstr);
 
            std::string symbol(symbolstr);
 
            // strip the ending ")." from symbolstr
-           if (!strip_ending_parenthesis_and_comma(symbol)) 
+           if (!strip_ending_parenthesis_and_comma(symbol))
              { return false; }
 
            if (n != 4)
@@ -1402,26 +1407,26 @@
              if (! is.getline(line,255).eof())
                HFST_THROW(EndOfStreamException);
            }
-           else { /* we use FILEs */            
+           else { /* we use FILEs */
              if (NULL == fgets(line, 255, file))
                HFST_THROW(EndOfStreamException);
            }
            linecount++;
 
            std::string linestr(line);
-           return strip_newlines(linestr);       
+           return strip_newlines(linestr);
          }
 
-         /* Create an HfstTransitionGraph as defined in prolog format 
+         /* Create an HfstTransitionGraph as defined in prolog format
             in istream \a is or FILE \a file.
 
-            The functions is called by functions 
+            The functions is called by functions
             read_in_prolog_format(istream&) and
-            read_in_prolog_format(FILE*). 
+            read_in_prolog_format(FILE*).
             If \a file is NULL, it is ignored and \a is is used.
             If \a file is not NULL, it is used and \a is is ignored. */
          HFSTDLL static HfstTransitionGraph read_in_prolog_format
-           (std::istream &is, FILE *file, unsigned int & linecount) 
+           (std::istream &is, FILE *file, unsigned int & linecount)
          {
 
            HfstTransitionGraph retval;
@@ -1429,13 +1434,13 @@
 
            while(true)
              {
-               try 
+               try
                  {
                    linestr = get_stripped_line(is, file, linecount);
-                 }             
-               catch (const EndOfStreamException & e) 
+                 }
+               catch (const EndOfStreamException & e)
                  {
-                   HFST_THROW(NotValidPrologFormatException); 
+                   HFST_THROW(NotValidPrologFormatException);
                  }
 
                if (linestr.length() != 0 && linestr[0] == '#')
@@ -1449,7 +1454,7 @@
              }
 
 
-           if (! parse_prolog_network_line(linestr, retval.name))
+           if (! parse_prolog_network_line(linestr, retval))
              {
                std::string message("first line not valid prolog: ");
                message.append(linestr);
@@ -1458,15 +1463,15 @@
 
            while(true)
              {
-               try 
+               try
                  {
                    linestr = get_stripped_line(is, file, linecount);
-                   if (linestr == "") // prolog separator 
+                   if (linestr == "") // prolog separator
                      {
                        return retval;
                      }
-                 }             
-               catch (const EndOfStreamException & e) 
+                 }
+               catch (const EndOfStreamException & e)
                  {
                    return retval;
                  }
@@ -1485,7 +1490,7 @@
 
          HFSTDLL static HfstTransitionGraph read_in_prolog_format
            (std::istream &is,
-            unsigned int & linecount) 
+            unsigned int & linecount)
          {
            return read_in_prolog_format
              (is, NULL /* a dummy variable */,
@@ -1493,18 +1498,18 @@
          }
 
          HFSTDLL static HfstTransitionGraph read_in_prolog_format
-           (FILE *file, 
-            unsigned int & linecount) 
+           (FILE *file,
+            unsigned int & linecount)
          {
            return read_in_prolog_format
              (std::cin /* a dummy variable */,
               file, linecount);
-         }       
+         }
 
 
          /** @brief Write the graph in xfst text format to FILE \a file.
              \a write_weights defines whether weights are printed (todo). */
-         HFSTDLL void write_in_xfst_format(FILE * file, bool write_weights=true) 
+         HFSTDLL void write_in_xfst_format(FILE * file, bool write_weights=true)
          {
            (void)write_weights;
            unsigned int source_state=0;
@@ -1537,7 +1542,7 @@
                  }
                fprintf(file, ".\n");
                source_state++;
-             }          
+             }
          }
 
          
@@ -1545,7 +1550,7 @@
 
          /** @brief Write the graph in AT&T format to ostream \a os.
              \a write_weights defines whether weights are printed. */
-         HFSTDLL void write_in_att_format(std::ostream &os, bool write_weights=true) 
+         HFSTDLL void write_in_att_format(std::ostream &os, bool write_weights=true)
          {
            unsigned int source_state=0;
            for (iterator it = begin(); it != end(); it++)
@@ -1566,7 +1571,7 @@
                    replace_all(osymbol, "@_EPSILON_SYMBOL_@", "@0@");
                    replace_all(osymbol, "\t", "@_TAB_@");
 
-                   os <<  source_state << "\t" 
+                   os <<  source_state << "\t"
                       <<  tr_it->get_target_state() << "\t"
                       <<  isymbol << "\t"
                       <<  osymbol;
@@ -1587,12 +1592,12 @@
                    os << "\n";
                  }
            source_state++;
-             }          
+             }
          }
 
          /** @brief Write the graph in AT&T format to FILE \a file.
              \a write_weights defines whether weights are printed. */
-         HFSTDLL void write_in_att_format(FILE *file, bool write_weights=true) 
+         HFSTDLL void write_in_att_format(FILE *file, bool write_weights=true)
          {
            unsigned int source_state=0;
            for (iterator it = begin(); it != end(); it++)
@@ -1622,23 +1627,23 @@
                    if (write_weights) {
                      fprintf(file, "\t");
                      write_weight(file, data.get_weight());
-                   } 
+                   }
                    fprintf(file, "\n");
                  }
                if (is_final_state(source_state))
                  {
                    fprintf(file, "%i", source_state);
                    if (write_weights) {
-                     fprintf(file, "\t"); 
+                     fprintf(file, "\t");
                      write_weight(file, get_final_weight(source_state));
                    }
                    fprintf(file, "\n");
                  }
            source_state++;
-             }          
+             }
          }
 
-         HFSTDLL void write_in_att_format(char * ptr, bool write_weights=true) 
+         HFSTDLL void write_in_att_format(char * ptr, bool write_weights=true)
          {
        unsigned int source_state=0;
        size_t cwt = 0; // characters written in total
@@ -1681,21 +1686,21 @@
                    cw = sprintf(ptr + cwt, "%i", source_state);
                    cwt = cwt + cw;
                    if (write_weights)
-                     cw = sprintf(ptr + cwt, "\t%f", 
+                     cw = sprintf(ptr + cwt, "\t%f",
                              get_final_weight(source_state));
                    cwt = cwt + cw;
                    cw = sprintf(ptr + cwt, "\n");
                    cwt = cwt + cw;
                  }
            source_state++;
-             }          
+             }
          }
 
 
          /** @brief Write the graph in AT&T format to FILE \a file using numbers
              instead of symbol names.
              \a write_weights defines whether weights are printed. */
-         HFSTDLL void write_in_att_format_number(FILE *file, bool write_weights=true) 
+         HFSTDLL void write_in_att_format_number(FILE *file, bool write_weights=true)
          {
            unsigned int source_state=0;
            for (iterator it = begin(); it != end(); it++)
@@ -1714,14 +1719,14 @@
 
                    if (write_weights)
                      fprintf(file, "\t%f",
-                             data.get_weight()); 
+                             data.get_weight());
                    fprintf(file, "\n");
 
                    if (is_final_state(source_state))
                      {
                        fprintf(file, "%i", source_state);
                        if (write_weights)
-                         fprintf(file, "\t%f", 
+                         fprintf(file, "\t%f",
                                  get_final_weight(source_state));
                        fprintf(file, "\n");
                      }
@@ -1731,13 +1736,63 @@
          }
 
 
-         /* Create an HfstTransitionGraph as defined in AT&T format 
-            in istream \a is or FILE \a file. \a epsilon_symbol defines
-            how epsilon is represented. 
+         bool add_att_line(char * line, const std::string & epsilon_symbol)
+         {
+           // scan one line that can have a maximum of five fields
+           char a1 [100]; char a2 [100]; char a3 [100];
+           char a4 [100]; char a5 [100];
+           // how many fields could be parsed
+           int n = sscanf(line, "%s%s%s%s%s", a1, a2, a3, a4, a5);
+           
+           // set value of weight
+           float weight = 0;
+           if (n == 2) // a final state line with weight
+             weight = atof(a2);
+           if (n == 5) // a transition line with weight
+             weight = atof(a5);
+           
+           if (n == 1 || n == 2)  // a final state line
+             set_final_weight( atoi(a1), weight );
+           
+           else if (n == 4 || n == 5) { // a transition line
+             std::string input_symbol=std::string(a3);
+             std::string output_symbol=std::string(a4);
+             
+             // replace "@_SPACE_@"s with " " and "@0@"s with
+             // "@_EPSILON_SYMBOL_@"
+             replace_all(input_symbol, "@_SPACE_@", " ");
+             replace_all(input_symbol, "@0@", "@_EPSILON_SYMBOL_@");
+             replace_all(input_symbol, "@_TAB_@", "\t");
+             replace_all(input_symbol, "@_COLON_@", ":");
+             
+             replace_all(output_symbol, "@_SPACE_@", " ");
+             replace_all(output_symbol, "@0@", "@_EPSILON_SYMBOL_@");
+             replace_all(output_symbol, "@_TAB_@", "\t");
+             replace_all(output_symbol, "@_COLON_@", ":");
+             
+             if (epsilon_symbol.compare(input_symbol) == 0)
+               input_symbol="@_EPSILON_SYMBOL_@";
+             if (epsilon_symbol.compare(output_symbol) == 0)
+               output_symbol="@_EPSILON_SYMBOL_@";
+             
+             HfstTransition <C> tr( atoi(a2), input_symbol,
+                                    output_symbol, weight );
+             add_transition( atoi(a1), tr );
+           }
+           
+           else  {  // line could not be parsed
+             return false;
+           }
+           return true;
+         }
 
-            The functions is called by functions 
+         /* Create an HfstTransitionGraph as defined in AT&T format
+            in istream \a is or FILE \a file. \a epsilon_symbol defines
+            how epsilon is represented.
+
+            The functions is called by functions
             read_in_att_format(istream&, std::string) and
-            read_in_att_format(FILE*, std::string). 
+            read_in_att_format(FILE*, std::string).
             If \a file is NULL, it is ignored and \a is is used.
             If \a file is not NULL, it is used and \a is is ignored. */
          HFSTDLL static HfstTransitionGraph read_in_att_format
@@ -1765,7 +1820,7 @@
                if (! is.getline(line,255).eof())
                  break;
              }
-             else { /* we use FILEs */            
+             else { /* we use FILEs */
                if (NULL == fgets(line, 255, file))
                  break;
              }
@@ -1775,7 +1830,7 @@
              // an empty line signifying an empty transducer,
              // a special case that is accepted if it is the only
              // transducer in the stream
-             if ( // empty line with or without a newline  
+             if ( // empty line with or without a newline
                  (line[0] == '\0') ||
                  (line[0] == '\n' && line[1] == '\0') ||
                  // windows newline
@@ -1793,90 +1848,49 @@
              if (*line == '-') // transducer separator line is "--"
                return retval;
 
-             // scan one line that can have a maximum of five fields
-             char a1 [100]; char a2 [100]; char a3 [100]; 
-             char a4 [100]; char a5 [100];
-             // how many fields could be parsed
-             int n = sscanf(line, "%s%s%s%s%s", a1, a2, a3, a4, a5);
-
-             // set value of weight
-             float weight = 0;
-             if (n == 2) // a final state line with weight
-               weight = atof(a2);
-             if (n == 5) // a transition line with weight
-               weight = atof(a5);
-
-             if (n == 1 || n == 2)  // a final state line
-               retval.set_final_weight( atoi(a1), weight );
-
-             else if (n == 4 || n == 5) { // a transition line
-               std::string input_symbol=std::string(a3);
-               std::string output_symbol=std::string(a4);
-
-               // replace "@_SPACE_@"s with " " and "@0@"s with 
-               // "@_EPSILON_SYMBOL_@" 
-               replace_all(input_symbol, "@_SPACE_@", " ");
-               replace_all(input_symbol, "@0@", "@_EPSILON_SYMBOL_@");
-               replace_all(input_symbol, "@_TAB_@", "\t");
-               replace_all(input_symbol, "@_COLON_@", ":");
-
-               replace_all(output_symbol, "@_SPACE_@", " ");
-               replace_all(output_symbol, "@0@", "@_EPSILON_SYMBOL_@");
-               replace_all(output_symbol, "@_TAB_@", "\t");
-               replace_all(output_symbol, "@_COLON_@", ":");
-
-               if (epsilon_symbol.compare(input_symbol) == 0)
-                 input_symbol="@_EPSILON_SYMBOL_@";
-               if (epsilon_symbol.compare(output_symbol) == 0)
-                 output_symbol="@_EPSILON_SYMBOL_@";
-
-               HfstTransition <C> tr( atoi(a2), input_symbol, 
-                                       output_symbol, weight );
-               retval.add_transition( atoi(a1), tr );
-             }
-
-             else  {  // line could not be parsed
-               std::string message(line);
-               HFST_THROW_MESSAGE
-                 (NotValidAttFormatException,
-                  message);
-             }    
+             if (! retval.add_att_line(line, epsilon_symbol))
+               {
+                 std::string message(line);
+                 HFST_THROW_MESSAGE
+                   (NotValidAttFormatException,
+                    message);
+               }
            }
            return retval;
          }
 
 
-         /** @brief Create an HfstTransitionGraph as defined in AT&T 
-             transducer format in istream \a is. \a epsilon_symbol 
-             defines how epsilon is represented. 
-             @pre \a is not at end, otherwise an exception is thrown. 
-             @note Multiple AT&T transducer definitions are separated with 
+         /** @brief Create an HfstTransitionGraph as defined in AT&T
+             transducer format in istream \a is. \a epsilon_symbol
+             defines how epsilon is represented.
+             @pre \a is not at end, otherwise an exception is thrown.
+             @note Multiple AT&T transducer definitions are separated with
              the line "--". */
          HFSTDLL static HfstTransitionGraph read_in_att_format
            (std::istream &is,
             std::string epsilon_symbol,
-            unsigned int & linecount) 
+            unsigned int & linecount)
          {
            return read_in_att_format
              (is, NULL /* a dummy variable */,
               epsilon_symbol, linecount);
          }
 
-         /** @brief Create an HfstTransitionGraph as defined 
-             in AT&T transducer format in FILE \a file. 
-             \a epsilon_symbol defines how epsilon is represented. 
-             @pre \a is not at end, otherwise an exception is thrown. 
-             @note Multiple AT&T transducer definitions are separated with 
+         /** @brief Create an HfstTransitionGraph as defined
+             in AT&T transducer format in FILE \a file.
+             \a epsilon_symbol defines how epsilon is represented.
+             @pre \a is not at end, otherwise an exception is thrown.
+             @note Multiple AT&T transducer definitions are separated with
              the line "--". */
          HFSTDLL static HfstTransitionGraph read_in_att_format
-           (FILE *file, 
+           (FILE *file,
             std::string epsilon_symbol,
-            unsigned int & linecount) 
+            unsigned int & linecount)
          {
            return read_in_att_format
              (std::cin /* a dummy variable */,
               file, epsilon_symbol, linecount);
-         }       
+         }
 
 
      // ----------------------------------------------
@@ -1889,7 +1903,7 @@
 
          void substitute_(HfstSymbol old_symbol,
                           HfstSymbol new_symbol,
-                          bool input_side=true, 
+                          bool input_side=true,
                           bool output_side=true)
          {
            // ----- Go through all states -----
@@ -1900,7 +1914,7 @@
                  {
                    HfstTransition<C> &tr_it = it->operator[](i);
 
-                   // The substituting input and output symbols for the 
+                   // The substituting input and output symbols for the
                    // current transition.
                    HfstSymbol substituting_input_symbol
                      = tr_it.get_input_symbol();
@@ -1946,7 +1960,7 @@
          /* A function that performs in-place substitutions in the graph
             as defined in \a substitutions.
 
-            substitutions[from_number] = to_number, 
+            substitutions[from_number] = to_number,
             if substitutions[from_number] = no_substitution, no substitution is made */
          void substitute_(const HfstNumberVector &substitutions,
                           unsigned int no_substitution)
@@ -1967,7 +1981,7 @@
 
                      // If a substitution is to be performed,
                    if (new_inumber != no_substitution ||
-                       new_onumber != no_substitution) 
+                       new_onumber != no_substitution)
                      {
                        if (new_inumber != no_substitution)
                          add_symbol_to_alphabet(C::get_symbol(new_inumber));
@@ -2068,7 +2082,7 @@
                    unsigned int out_tr = tr_it.get_output_number();
                    if (in_tr == in_match && out_tr == out_match) {
                      it->erase(it->begin()+i); }
-                   else 
+                   else
                      {
                        if (in_tr == in_match || out_tr == in_match) {
                          in_match_used=true; }
@@ -2088,7 +2102,7 @@
        protected:
 
          /* A function that performs in-place-substitution in the graph. */
-         void substitute_(const HfstSymbolPair &old_sp, 
+         void substitute_(const HfstSymbolPair &old_sp,
                           const HfstSymbolPairSet &new_sps)
          {
            if (new_sps.empty())
@@ -2121,7 +2135,7 @@
 
                        // change the current transition so that it is equivalent
                        // to the first substituting transition in new_sps
-                       typename HfstSymbolPairSet::const_iterator IT 
+                       typename HfstSymbolPairSet::const_iterator IT
                          = new_sps.begin();
 
                        HfstTransition<C> tr
@@ -2148,7 +2162,7 @@
                            IT++;
                          }
 
-                     } // (substitution and scheduling done)       
+                     } // (substitution and scheduling done)
 
                  } // (all transitions of a state gone through)
                
@@ -2208,7 +2222,7 @@
            // If a substitution is to be performed,
            bool perform_substitution=false;
            try {
-             perform_substitution = 
+             perform_substitution =
                (*func)(transition_symbol_pair, substituting_transitions);
            }
            catch (const HfstException & e)
@@ -2216,10 +2230,10 @@
                throw e;
              }
            if (perform_substitution)
-             {          
+             {
                // change the transition to the first element
                // in new_sps
-               typename HfstSymbolPairSet::const_iterator IT 
+               typename HfstSymbolPairSet::const_iterator IT
                  = substituting_transitions.begin();
 
                if (! C::is_valid_symbol(IT->first) ||
@@ -2264,7 +2278,7 @@
                IT++;
              }
 
-             } // Substitution and scheduling performed.   
+             } // Substitution and scheduling performed.
 
          } // All transitions gone through.
 
@@ -2287,16 +2301,16 @@
                The public substitution functions.
             ---------------------------------------- */
 
-         /** @brief Substitute \a old_symbol with \a new_symbol in 
+         /** @brief Substitute \a old_symbol with \a new_symbol in
              all transitions. \a input_side and \a output_side define
              whether the substitution is made on input and output sides. */
          HFSTDLL HfstTransitionGraph &
-           substitute(const HfstSymbol &old_symbol, 
+           substitute(const HfstSymbol &old_symbol,
                       const HfstSymbol  &new_symbol,
-                      bool input_side=true, 
+                      bool input_side=true,
                       bool output_side=true) {
 
-       if (! C::is_valid_symbol(old_symbol) || 
+       if (! C::is_valid_symbol(old_symbol) ||
            ! C::is_valid_symbol(new_symbol) ) {
          HFST_THROW_MESSAGE
            (EmptyStringException,
@@ -2313,7 +2327,7 @@
            // if the substitution is made on both sides.
            if (input_side && output_side) {
              /* Special symbols are always included in the alphabet */
-             if (! is_epsilon(old_symbol) && 
+             if (! is_epsilon(old_symbol) &&
                  ! is_unknown(old_symbol) &&
                  ! is_identity(old_symbol)) {
                alphabet.erase(old_symbol); }
@@ -2371,7 +2385,7 @@
 
          /** @brief Substitute all transitions as defined in \a substitutions.
 
-             For each transition x:y, \a substitutions is searched and if 
+             For each transition x:y, \a substitutions is searched and if
              a mapping x:y -> X:Y is found, the transition x:y is replaced
              with X:Y. If no mapping is found, the transition remains the same.
           */
@@ -2380,15 +2394,15 @@
            {
              // Convert from symbols to numbers
              HfstNumberPairSubstitutions substitutions_;
-             for (HfstSymbolPairSubstitutions::const_iterator it 
+             for (HfstSymbolPairSubstitutions::const_iterator it
                     = substitutions.begin();
                   it != substitutions.end(); it++)
                {
                  HfstNumberPair from_transition
-                   (get_symbol_number(it->first.first), 
+                   (get_symbol_number(it->first.first),
                     get_symbol_number(it->first.second));
                  HfstNumberPair to_transition
-                   (get_symbol_number(it->second.first), 
+                   (get_symbol_number(it->second.first),
                     get_symbol_number(it->second.second));
                  substitutions_[from_transition] = to_transition;
                }
@@ -2401,9 +2415,9 @@
          /** @brief Substitute all transitions \a sp with a set of transitions
              \a sps. */
          HFSTDLL HfstTransitionGraph &substitute
-           (const HfstSymbolPair &sp, const HfstSymbolPairSet &sps) 
+           (const HfstSymbolPair &sp, const HfstSymbolPairSet &sps)
        {
-         if (! C::is_valid_symbol(sp.first) || 
+         if (! C::is_valid_symbol(sp.first) ||
          ! C::is_valid_symbol(sp.second) ) {
            HFST_THROW_MESSAGE
          (EmptyStringException,
@@ -2412,7 +2426,7 @@
          for (typename HfstSymbolPairSet::const_iterator it = sps.begin();
           it != sps.end(); it++)
            {
-         if (! C::is_valid_symbol(it->first) || 
+         if (! C::is_valid_symbol(it->first) ||
              ! C::is_valid_symbol(it->second) ) {
            HFST_THROW_MESSAGE
              (EmptyStringException,
@@ -2424,15 +2438,15 @@
            return *this;
          }
 
-         /** @brief Substitute all transitions \a old_pair with 
+         /** @brief Substitute all transitions \a old_pair with
              \a new_pair. */
          HFSTDLL HfstTransitionGraph &substitute
-           (const HfstSymbolPair &old_pair, 
-            const HfstSymbolPair &new_pair) 
+           (const HfstSymbolPair &old_pair,
+            const HfstSymbolPair &new_pair)
          {
-       if (! C::is_valid_symbol(old_pair.first) || 
+       if (! C::is_valid_symbol(old_pair.first) ||
            ! C::is_valid_symbol(new_pair.first) ||
-           ! C::is_valid_symbol(old_pair.second) || 
+           ! C::is_valid_symbol(old_pair.second) ||
            ! C::is_valid_symbol(new_pair.second) ) {
          HFST_THROW_MESSAGE
            (EmptyStringException,
@@ -2443,10 +2457,10 @@
        substitute_(old_pair, new_pair_set);
 
            return *this;
-         } 
+         }
 
          /** @brief Substitute all transitions with a set of transitions as
-             defined by function \a func. 
+             defined by function \a func.
 
              \a func takes as its argument a transition \a sp and inserts
              into the set of transitions \a sps the transitions with which
@@ -2455,31 +2469,31 @@
              whether any transition was inserted into \a sps. */
          HFSTDLL HfstTransitionGraph &
            substitute(bool (*func)
-                      (const HfstSymbolPair &sp, HfstSymbolPairSet &sps) ) 
-         { 
+                      (const HfstSymbolPair &sp, HfstSymbolPairSet &sps) )
+         {
        substitute_(func);
            return *this;
          }
 
 
 
-         /* ----------------------------------------------------           
+         /* ----------------------------------------------------
                Substitute string pair with a transition graph
             ---------------------------------------------------- */
 
        protected:
-         /* Used in function 
+         /* Used in function
             substitute(const StringPair&, HfstTransitionGraph&) */
-         struct substitution_data 
+         struct substitution_data
          {
            HfstState origin_state;
            HfstState target_state;
            typename C::WeightType weight;
            HfstTransitionGraph * substituting_graph;
 
-           substitution_data(HfstState origin, 
+           substitution_data(HfstState origin,
                              HfstState target,
-                             typename C::WeightType weight, 
+                             typename C::WeightType weight,
                              HfstTransitionGraph * substituting)
            {
              origin_state=origin;
@@ -2489,15 +2503,15 @@
            }
          };
          
-         /* Used in function substitute(const StringPair&, 
+         /* Used in function substitute(const StringPair&,
                                         HfstTransitionGraph&)
-            Add a copy of substituting graph with epsilon transitions between 
+            Add a copy of substituting graph with epsilon transitions between
             states and with weight as defined in \a sub. */
          void add_substitution(const substitution_data &sub) {
            // Epsilon transition to initial state of \a graph
            HfstState s = add_state();
            HfstTransition <C> epsilon_transition
-             (s, C::get_epsilon(), C::get_epsilon(), 
+             (s, C::get_epsilon(), C::get_epsilon(),
               sub.weight);
            add_transition(sub.origin_state, epsilon_transition);
            
@@ -2507,7 +2521,7 @@
            // Copy \a graph
            const HfstTransitionGraph * graph = sub.substituting_graph;
            HfstState source_state=0;
-           for (const_iterator it = graph->begin(); 
+           for (const_iterator it = graph->begin();
                 it != graph->end(); it++)
              {
                for (typename HfstTransitions::const_iterator tr_it
@@ -2517,7 +2531,7 @@
                    C data = tr_it->get_transition_data();
 
                    HfstTransition <C> transition
-                     (tr_it->get_target_state() + offset, 
+                     (tr_it->get_target_state() + offset,
                       data.get_input_symbol(),
                       data.get_output_symbol(),
                       data.get_weight());
@@ -2528,7 +2542,7 @@
              }
 
            // Epsilon transitions from final states of \a graph
-           for (typename FinalWeightMap::const_iterator it 
+           for (typename FinalWeightMap::const_iterator it
                   = graph->final_weight_map.begin();
                 it != graph->final_weight_map.end(); it++)
              {
@@ -2546,28 +2560,28 @@
              with a copy of \a graph.
 
              Copies of \a graph are attached to this graph with
-             epsilon transitions. 
+             epsilon transitions.
 
              The weights of the transitions to be substituted are copied
              to epsilon transitions leaving from the source state of
              the transitions to be substituted to the initial state
              of a copy of \a graph.
 
-             The final weights in \a 
+             The final weights in \a
              graph are copied to epsilon transitions leading from
              the final states (after substitution non-final states)
              of \a graph to target states of transitions
              \a old_symbol : \a new_symbol (that are substituted)
-             in this graph.            
+             in this graph.
          */
          HFSTDLL HfstTransitionGraph &
-           substitute(const HfstSymbolPair &sp, 
+           substitute(const HfstSymbolPair &sp,
               const HfstTransitionGraph &graph) {
 
-           if ( ! ( C::is_valid_symbol(sp.first) &&              
+           if ( ! ( C::is_valid_symbol(sp.first) &&
                       C::is_valid_symbol(sp.second) ) ) {
              HFST_THROW_MESSAGE
-               (EmptyStringException, 
+               (EmptyStringException,
                 "HfstTransitionGraph::substitute(const HfstSymbolPair&, "
                 "const HfstTransitionGraph&)");
            }
@@ -2575,7 +2589,7 @@
 
            // If neither symbol to be substituted is known to the graph,
            // do nothing.
-           if (alphabet.find(sp.first) == alphabet.end() && 
+           if (alphabet.find(sp.first) == alphabet.end() &&
                alphabet.find(sp.second) == alphabet.end())
              return *this;
 
@@ -2589,7 +2603,7 @@
              {
 
                // The transitions that are substituted, i.e. removed
-               std::vector<typename HfstTransitions::iterator> 
+               std::vector<typename HfstTransitions::iterator>
                  old_transitions;
 
                // Go through all transitions
@@ -2599,28 +2613,28 @@
                  {
                    C data = tr_it->get_transition_data();
 
-                   // Whether there is anything to substitute 
+                   // Whether there is anything to substitute
                    // in this transition
                    if (data.get_input_symbol() == sp.first &&
-                       data.get_output_symbol() == sp.second) 
+                       data.get_output_symbol() == sp.second)
                      {
                        // schedule a substitution
                        substitutions.push_back(substitution_data
-                                               (source_state, 
-                                                tr_it->get_target_state(), 
+                                               (source_state,
+                                                tr_it->get_target_state(),
                                                 data.get_weight(),
                                                 const_cast<HfstTransitionGraph *>(&graph)));
                        // schedule the old transition to be deleted
                        old_transitions.push_back(tr_it);
                      }
                    // (one transition gone through)
-                 } 
+                 }
                // (all transitions in a state gone through)
 
                // Remove the substituted transitions
-               for (typename std::vector<typename 
+               for (typename std::vector<typename
                       HfstTransitions::iterator>::iterator IT =
-                      old_transitions.begin(); 
+                      old_transitions.begin();
                     IT != old_transitions.end(); IT++) {
                  it->erase(*IT);
                }
@@ -2630,7 +2644,7 @@
            // (all states gone trough)
 
            // Add the substitutions
-           for (typename std::vector<substitution_data>::iterator IT 
+           for (typename std::vector<substitution_data>::iterator IT
                   = substitutions.begin();
                 IT != substitutions.end(); IT++)
              {
@@ -2666,7 +2680,7 @@
            for (HfstState state = 0; state < limit; state++)
              {
                // The transitions that are substituted
-               std::stack<typename HfstTransitions::iterator> 
+               std::stack<typename HfstTransitions::iterator>
                  old_transitions;
                // The transitions that will substitute
                std::vector<HfstTransition <C> > new_transitions;
@@ -2678,21 +2692,21 @@
                  {
                    C data = tr_it->get_transition_data();
 
-                   // Whether there is anything to substitute 
+                   // Whether there is anything to substitute
                    // in this transition
                    if (data.get_weight() != 0 )
                      {
                        // schedule a substitution
                        new_transitions.push_back
-                         (HfstTransition <C> (tr_it->get_target_state(), 
-                                         data.get_input_symbol(), 
-                                         data.get_output_symbol(), 
+                         (HfstTransition <C> (tr_it->get_target_state(),
+                                         data.get_input_symbol(),
+                                         data.get_output_symbol(),
                                          data.get_weight()));
                        // schedule the old transition to be deleted
                        old_transitions.push(tr_it);
                      }
                    // (one transition gone through)
-                 } 
+                 }
                // (all transitions in a state gone through)
 
                // Remove the substituted transitions
@@ -2702,7 +2716,7 @@
                }
                
                // Add the substituting transitions
-               for (typename std::vector<HfstTransition <C> >::iterator IT 
+               for (typename std::vector<HfstTransition <C> >::iterator IT
                       = new_transitions.begin();
                     IT != new_transitions.end(); IT++)
                  {
@@ -2767,11 +2781,11 @@
              {
                if ( ! ( C::is_valid_symbol(it->first) ))
                  {
-                   HFST_THROW_MESSAGE(EmptyStringException, 
+                   HFST_THROW_MESSAGE(EmptyStringException,
                     "HfstTransitionGraph::substitute "
                     "(const std::map<HfstSymbol, HfstTransitionGraph> &)");
                  }
-               if (!symbol_found && alphabet.find(it->first) != alphabet.end()) 
+               if (!symbol_found && alphabet.find(it->first) != alphabet.end())
                  {
                    symbol_found = true;
                  }
@@ -2796,7 +2810,7 @@
              {
 
                // The transitions that are substituted, i.e. removed
-               std::stack<typename HfstTransitions::iterator> 
+               std::stack<typename HfstTransitions::iterator>
                  old_transitions;
 
                // Go through all transitions
@@ -2806,7 +2820,7 @@
                  {
                    C data = tr_it->get_transition_data();
 
-                   // Whether there is anything to substitute 
+                   // Whether there is anything to substitute
                    // in this transition
                    String istr = data.get_input_symbol();
                    String ostr = data.get_output_symbol();
@@ -2828,7 +2842,7 @@
                        // schedule a substitution
                        substitution_data sd
                          (source_state,
-                          tr_it->get_target_state(), 
+                          tr_it->get_target_state(),
                           data.get_weight(),
                           &(map_it_input->second));
                        substitutions.push_back(sd);
@@ -2838,11 +2852,11 @@
                        substitutions_performed_for_symbols.insert(istr);
                      }
                    // (one transition gone through)
-                 } 
+                 }
                // (all transitions in a state gone through)
 
                // Remove the substituted transitions
-               while (!old_transitions.empty()) 
+               while (!old_transitions.empty())
                  {
                    it->erase(old_transitions.top());
                    old_transitions.pop();
@@ -2871,7 +2885,7 @@
              }
 
            // Add the substitutions
-           for (typename std::vector<substitution_data>::iterator IT 
+           for (typename std::vector<substitution_data>::iterator IT
                   = substitutions.begin();
                 IT != substitutions.end(); IT++)
              {
@@ -2883,7 +2897,7 @@
 
 
 
-         HFSTDLL bool marker2weight(const std::string & str, float & weight) 
+         HFSTDLL bool marker2weight(const std::string & str, float & weight)
          {
            if (str.size() < 3)
              return false;
@@ -2895,9 +2909,9 @@
            sstream >> weight;
            if (sstream.fail()) {
              return false;
-           }           
+           }
            return true;
-         }         
+         }
 
          HFSTDLL HfstTransitionGraph & substitute_markers_with_weights() {
 
@@ -2906,7 +2920,7 @@
            for (HfstState state = 0; state < limit; state++)
              {
                // The transitions that are substituted
-               std::stack<typename HfstTransitions::iterator> 
+               std::stack<typename HfstTransitions::iterator>
                  old_transitions;
                // The transitions that will substitute
                std::vector<HfstTransition <C> > new_transitions;
@@ -2919,17 +2933,17 @@
                    C data = tr_it->get_transition_data();
 
                    float weight = 0;
-                   // Whether there is anything to substitute 
+                   // Whether there is anything to substitute
                    // in this transition
-                   if ( (!marker2weight(data.get_input_symbol(), weight)) && 
+                   if ( (!marker2weight(data.get_input_symbol(), weight)) &&
                         marker2weight(data.get_output_symbol(), weight) )
                      {
                        //std::cerr << "got weight '" << weight << "'" << std::endl;
                        // schedule a substitution
                        new_transitions.push_back
-                         (HfstTransition <C> (tr_it->get_target_state(), 
-                                              data.get_input_symbol(), 
-                                              hfst::internal_epsilon, 
+                         (HfstTransition <C> (tr_it->get_target_state(),
+                                              data.get_input_symbol(),
+                                              hfst::internal_epsilon,
                                               weight));
                        // schedule the old transition to be deleted
                        old_transitions.push(tr_it);
@@ -2944,7 +2958,7 @@
                      }
                    else {}
                    // (one transition gone through)
-                 } 
+                 }
                // (all transitions in a state gone through)
 
                // Remove the substituted transitions
@@ -2954,7 +2968,7 @@
                }
                
                // Add the substituting transitions
-               for (typename std::vector<HfstTransition <C> >::iterator IT 
+               for (typename std::vector<HfstTransition <C> >::iterator IT
                       = new_transitions.begin();
                     IT != new_transitions.end(); IT++)
                  {
@@ -2980,7 +2994,7 @@
                weight_markers.pop();
              }
 
-           return *this;           
+           return *this;
          }
 
 
@@ -3003,15 +3017,15 @@
             ---------------------------- */
 
 
-         /** @brief Insert freely any number of \a symbol_pair in 
+         /** @brief Insert freely any number of \a symbol_pair in
              the graph with weight \a weight. */
          HFSTDLL HfstTransitionGraph &insert_freely
-           (const HfstSymbolPair &symbol_pair, typename C::WeightType weight) 
-           {    
-         if ( ! ( C::is_valid_symbol(symbol_pair.first) &&           
+           (const HfstSymbolPair &symbol_pair, typename C::WeightType weight)
+           {
+         if ( ! ( C::is_valid_symbol(symbol_pair.first) &&
                 C::is_valid_symbol(symbol_pair.second) ) ) {
            HFST_THROW_MESSAGE
-         (EmptyStringException, 
+         (EmptyStringException,
           "HfstTransitionGraph::insert_freely"
           "(const HfstSymbolPair&, W)");
          }
@@ -3021,8 +3035,8 @@
 
          HfstState source_state=0;
              for (iterator it = begin(); it != end(); it++) {
-               HfstTransition <C> tr( source_state, symbol_pair.first, 
-                                      symbol_pair.second, weight );              
+               HfstTransition <C> tr( source_state, symbol_pair.first,
+                                      symbol_pair.second, weight );
                it->push_back(tr);
            source_state++;
              }
@@ -3030,20 +3044,20 @@
              return *this;
            }
 
-         /** @brief Insert freely any number of any symbol in \a symbol_pairs in 
+         /** @brief Insert freely any number of any symbol in \a symbol_pairs in
              the graph with weight \a weight. */
          HFSTDLL HfstTransitionGraph &insert_freely
-           (const HfstSymbolPairSet &symbol_pairs, 
-            typename C::WeightType weight) 
+           (const HfstSymbolPairSet &symbol_pairs,
+            typename C::WeightType weight)
            {
-             for (typename HfstSymbolPairSet::const_iterator symbols_it 
+             for (typename HfstSymbolPairSet::const_iterator symbols_it
                     = symbol_pairs.begin();
                   symbols_it != symbol_pairs.end(); symbols_it++)
                {
-                 if ( ! ( C::is_valid_symbol(symbols_it->first) &&           
+                 if ( ! ( C::is_valid_symbol(symbols_it->first) &&
                             C::is_valid_symbol(symbols_it->second) ) ) {
                    HFST_THROW_MESSAGE
-                     (EmptyStringException, 
+                     (EmptyStringException,
                       "HfstTransitionGraph::insert_freely"
                       "(const HfstSymbolPairSet&, W)");
                  }
@@ -3053,13 +3067,13 @@
                }
 
              HfstState source_state=0;
-             for (iterator it = begin(); it != end(); it++) 
+             for (iterator it = begin(); it != end(); it++)
                {
-                 for (typename HfstSymbolPairSet::const_iterator symbols_it 
+                 for (typename HfstSymbolPairSet::const_iterator symbols_it
                         = symbol_pairs.begin();
                       symbols_it != symbol_pairs.end(); symbols_it++)
                    {
-                     HfstTransition <C> tr( source_state, symbols_it->first, 
+                     HfstTransition <C> tr( source_state, symbols_it->first,
                                             symbols_it->second, weight );
                      it->push_back(tr);
                    }
@@ -3095,23 +3109,23 @@
 
          /** @brief Harmonize this HfstTransitionGraph and \a another.
 
-             In harmonization the unknown and identity symbols in 
+             In harmonization the unknown and identity symbols in
              transitions of both graphs are expanded according to
-             the symbols that are previously unknown to the graph. 
+             the symbols that are previously unknown to the graph.
 
              For example the graphs
- \verbatim 
+ \verbatim
     [a:b ?:?]
     [c:d ? ?:c]
  \endverbatim
              are expanded to
  \verbatim
-    [ a:b [?:? | ?:c | ?:d | c:d | d:c | c:? | d:?] ] 
+    [ a:b [?:? | ?:c | ?:d | c:d | d:c | c:? | d:?] ]
     [ c:d [? | a | b] [?:c| a:c | b:?] ]
  \endverbatim
              when harmonized.
-              The symbol "?" means \@_UNKNOWN_SYMBOL_\@ in either or 
-             both sides of a transition 
+              The symbol "?" means \@_UNKNOWN_SYMBOL_\@ in either or
+             both sides of a transition
              (transitions of type [?:x], [x:?] and [?:?]).
              The transition [?] means [\@_IDENTITY_SYMBOL_\@].
 
@@ -3119,7 +3133,7 @@
              that take two or more graphs as their arguments, unless otherwise
              said.
          */
-         HFSTDLL HfstTransitionGraph &harmonize(HfstTransitionGraph &another) 
+         HFSTDLL HfstTransitionGraph &harmonize(HfstTransitionGraph &another)
        {
          HarmonizeUnknownAndIdentitySymbols foo(*this, another);
          return *this;
@@ -3136,7 +3150,7 @@
             it is created as well as its target state.
 
             @return The final state of path \a spv, when \a it is at end. */
-         HfstState disjunct(const StringPairVector &spv, 
+         HfstState disjunct(const StringPairVector &spv,
                             StringPairVector::const_iterator &it,
                             HfstState s)
          {
@@ -3148,7 +3162,7 @@
            HfstTransitions tr = state_vector[s];
            bool transition_found=false;
            /* The target state of the transition followed or added */
-           HfstState next_state; 
+           HfstState next_state;
 
            // Find the transition
            // (Searching is slow?)
@@ -3181,15 +3195,15 @@
 
        public:
 
-         /** @brief Disjunct this graph with a one-path graph 
-             defined by string pair vector \a spv with weight \a weight. 
+         /** @brief Disjunct this graph with a one-path graph
+             defined by string pair vector \a spv with weight \a weight.
 
              @pre This graph must be a trie where all weights are in
-             final states, i.e. all transitions have a zero weight. 
+             final states, i.e. all transitions have a zero weight.
 
              There is no way to test whether a graph is a trie, so the use
-             of this function is probably limited to fast construction 
-             of a lexicon. Here is an example: 
+             of this function is probably limited to fast construction
+             of a lexicon. Here is an example:
 
              \verbatim
              HfstBasicTransducer lexicon;
@@ -3201,16 +3215,16 @@
 
          */
          HFSTDLL HfstTransitionGraph &disjunct
-           (const StringPairVector &spv, typename C::WeightType weight) 
+           (const StringPairVector &spv, typename C::WeightType weight)
          {
            StringPairVector::const_iterator it = spv.begin();
            HfstState final_state = disjunct(spv, it, INITIAL_STATE);
 
            // Set the weight of final state
-           if (is_final_state(final_state)) 
+           if (is_final_state(final_state))
              {
                float old_weight = get_final_weight(final_state);
-               if (old_weight < weight) 
+               if (old_weight < weight)
                  return *this; /* The same path with smaller weight remains */
              }
            set_final_weight(final_state, weight);
@@ -3250,8 +3264,8 @@
                  for (std::set<std::string>::const_iterator alpha_it = alphabet.begin();
                       alpha_it != alphabet.end(); alpha_it++)
                    {
-                     if (symbols_present.find(*alpha_it) == 
-                         symbols_present.end() && 
+                     if (symbols_present.find(*alpha_it) ==
+                         symbols_present.end() &&
                          ! is_special_symbol(*alpha_it))
                        {
                          add_transition
@@ -3268,7 +3282,7 @@
            {
              StringSet flags;
              for (StringSet::const_iterator it = alphabet.begin();
-                  it != alphabet.end(); it++) 
+                  it != alphabet.end(); it++)
                {
                  if (FdOperation::is_diacritic(*it)) {
                    flags.insert(*it);
@@ -3281,7 +3295,7 @@
          // of a transducer after \a flag has been eliminated from the transducer.
          // If \a flag is the empty string, all flags have been eliminated.
          HFSTDLL bool purge_symbol(const std::string & symbol, const std::string & flag)
-         {         
+         {
            if (! FdOperation::is_diacritic(symbol))
              return false;
            if (flag == "")
@@ -3292,7 +3306,7 @@
          }
 
          // Replace arcs in \a transducer that use flag \a flag with epsilon arcs
-         // and remove \a flag from alphabet of \a transducer. If \a flag is the empty                                                  
+         // and remove \a flag from alphabet of \a transducer. If \a flag is the empty
          // string, replace/remove all flags.
          HFSTDLL void flag_purge(const std::string & flag)
          {
@@ -3317,7 +3331,7 @@
            // (2) Go through the alphabet
            StringSet extra_symbols;
            for (StringSet::const_iterator it = alphabet.begin();
-                it != alphabet.end(); it++) 
+                it != alphabet.end(); it++)
              {
                if (purge_symbol(*it, flag))
                  extra_symbols.insert(*it);
@@ -3332,7 +3346,7 @@
            std::vector<int> distance_of_state;
            std::vector<std::set<HfstState> > states_at_distance;
 
-           /* Initialize the TopologicalSort by reserving space for a transducer 
+           /* Initialize the TopologicalSort by reserving space for a transducer
               with biggest state number \a biggest_state_number, */
            HFSTDLL void set_biggest_state_number(unsigned int biggest_state_number)
            {
@@ -3347,12 +3361,12 @@
              if (state > (distance_of_state.size() - 1))
                {
                  std::cerr << "ERROR in TopologicalSort::set_state_at_distance: first argument ("
-                           << state << ") is out of range (should be < " << distance_of_state.size() 
+                           << state << ") is out of range (should be < " << distance_of_state.size()
                            << ")" << std::endl;
                }
              // if there is nothing on index 'state',
              // push back empty sets of states up to index 'state', including
-             while (distance + 1 > (unsigned int)states_at_distance.size()) 
+             while (distance + 1 > (unsigned int)states_at_distance.size())
                {
                  std::set<HfstState> empty_set;
                  states_at_distance.push_back(empty_set);
@@ -3373,7 +3387,7 @@
            {
              // if there is nothing on index 'state',
              // push back empty sets of states up to index 'state', including
-             while (distance > (states_at_distance.size() - 1)) 
+             while (distance > (states_at_distance.size() - 1))
                {
                  std::set<HfstState> empty_set;
                  states_at_distance.push_back(empty_set);
@@ -3384,7 +3398,7 @@
 
          enum SortDistance { MaximumDistance, MinimumDistance };
 
-         /* 
+         /*
             Get a topological (maximum distance) sort of this graph.
             @return A vector of sets of states. At each vector index ind, the
             result contains the set of all states whose (maximum) distance from
@@ -3406,31 +3420,31 @@
                 std::set<HfstState> new_states;
 
                 // go through all states at current distance
-                const std::set<HfstState> & states = 
+                const std::set<HfstState> & states =
                   TopSort.get_states_at_distance(current_distance);
                 for (StateIt state_it = states.begin();
                      state_it != states.end(); state_it++)
                   {
                     // go through all transitions of each state
-                    const HfstTransitions & transitions 
+                    const HfstTransitions & transitions
                       = this->state_vector.at(*state_it);
-                    for (typename HfstTransitions::const_iterator transition_it 
+                    for (typename HfstTransitions::const_iterator transition_it
                            = transitions.begin();
                          transition_it != transitions.end(); transition_it++)
                       {
                         new_states_found = true;
                         new_states.insert(transition_it->get_target_state());
-                      } 
+                      }
                     // all transitions gone through
                   }
                 // all states gone through
                 
                 // set each accessible state at distance one higher than the
                 // current distance
-                for (StateIt it = new_states.begin(); 
+                for (StateIt it = new_states.begin();
                      it != new_states.end(); it++)
                   {
-                    TopSort.set_state_at_distance(*it, current_distance + 1, (dist == MaximumDistance)); 
+                    TopSort.set_state_at_distance(*it, current_distance + 1, (dist == MaximumDistance));
                   }
                 current_distance++;
               }
@@ -3439,7 +3453,7 @@
             return TopSort.states_at_distance;
           }
 
-        /** The length of longest string accepted by this graph. 
+        /** The length of longest string accepted by this graph.
             If no string is accepted, return -1. */
          HFSTDLL int longest_path_size()
         {
@@ -3448,7 +3462,7 @@
           // go through all sets of states in descending order
           for (int distance = states_sorted.size() - 1; distance >= 0; distance--)
             {
-              const std::set<HfstState> & states 
+              const std::set<HfstState> & states
                 = states_sorted.at((unsigned int)distance);
               // go through all states in a set
               for (std::set<HfstState>::const_iterator it = states.begin();
@@ -3466,7 +3480,7 @@
           return -1;
         }
 
-         /** The lengths of strings accepted by this graph, in descending order. 
+         /** The lengths of strings accepted by this graph, in descending order.
              If not string is accepted, return an empty vector. */
          HFSTDLL std::vector<unsigned int> path_sizes()
            {
@@ -3476,7 +3490,7 @@
              // go through all sets of states in descending order
              for (int distance = states_sorted.size() - 1; distance >= 0; distance--)
                {
-                 const std::set<HfstState> & states 
+                 const std::set<HfstState> & states
                    = states_sorted.at((unsigned int)distance);
                  // go through all states in a set
                  for (std::set<HfstState>::const_iterator it = states.begin();
@@ -3510,8 +3524,8 @@
              }
            state_weights[state] = total_weight;
            
-           // Go through all transitions in this state                                 
-           const HfstBasicTransducer::HfstTransitions &transitions 
+           // Go through all transitions in this state
+           const HfstBasicTransducer::HfstTransitions &transitions
              = this->operator[](state);
            for (HfstBasicTransducer::HfstTransitions::const_iterator it
                   = transitions.begin();
@@ -3555,27 +3569,27 @@
                if (has_negative_epsilon_cycles(state, 0, state_weights))
                  return true;
              }
-           return false;           
+           return false;
          }
 
          HFSTDLL bool is_infinitely_ambiguous
-           (HfstState state, 
+           (HfstState state,
             std::set<HfstState> &epsilon_path_states,
             std::vector<unsigned int> &states_handled)
          {
            if (states_handled[state] != 0)
              return false;
 
-           // Go through all transitions in this state                                 
-           const HfstBasicTransducer::HfstTransitions &transitions 
+           // Go through all transitions in this state
+           const HfstBasicTransducer::HfstTransitions &transitions
              = this->operator[](state);
            for (HfstBasicTransducer::HfstTransitions::const_iterator it
                   = transitions.begin();
                 it != transitions.end(); it++)
              {
-               // (Diacritics are also treated as epsilons, although it might cause false                                                   
-               //  positive results, because loops with diacritics can be invalidated by                                                    
-               //  other diacritics.)                                                  
+               // (Diacritics are also treated as epsilons, although it might cause false
+               //  positive results, because loops with diacritics can be invalidated by
+               //  other diacritics.)
                if ( is_epsilon(it->get_input_symbol()) ||
                     FdOperation::is_diacritic(it->get_input_symbol()) )
                  {
@@ -3591,7 +3605,7 @@
                        return true;
                      }
                    epsilon_path_states.erase(state);
-                 }               
+                 }
              }
            // mark state as handled
            states_handled[state] = 1;
@@ -3612,33 +3626,51 @@
            return false;
          }
 
+         bool is_possible_flag(std::string symbol, StringVector & fds, bool obey_flags)
+         {
+           if (FdOperation::is_diacritic(symbol))
+             {
+               FlagDiacriticTable FdT;
+               fds.push_back(symbol);
+               if ((!obey_flags) || FdT.is_valid_string(fds))
+                 { return true; }
+               else
+                 {
+                   fds.pop_back();
+                   return false;
+                 }
+             }
+           return false;
+         }
+
          HFSTDLL bool is_lookup_infinitely_ambiguous
            (const HfstOneLevelPath& s,
             unsigned int& index, HfstState state,
-            std::set<HfstState> &epsilon_path_states
-            )
+            std::set<HfstState> &epsilon_path_states,
+            StringVector & fds, bool obey_flags)
          {
-           // Whether the end of the lookup path s has been reached                    
+           // Whether the end of the lookup path s has been reached
            bool only_epsilons=false;
            if ((unsigned int)s.second.size() == index)
              {
                only_epsilons=true;
              }
            
-           // Go through all transitions in this state                                 
-           const HfstBasicTransducer::HfstTransitions &transitions 
+           // Go through all transitions in this state
+           const HfstBasicTransducer::HfstTransitions &transitions
              = this->operator[](state);
            for (HfstBasicTransducer::HfstTransitions::const_iterator it
                   = transitions.begin();
                 it != transitions.end(); it++)
              {
-               // CASE 1: Input epsilons do not consume a symbol in the lookup path s,               
-               //         so they can be added freely.                                 
-               // (Diacritics are also treated as epsilons, although it might cause false                                                   
-               //  positive results, because loops with diacritics can be invalidated by                                                    
-               //  other diacritics.)                                                  
+               // CASE 1: Input epsilons do not consume a symbol in the lookup path s,
+               //         so they can be added freely.
+               // (Diacritics are also treated as epsilons, although it might cause false
+               //  positive results, because loops with diacritics can be invalidated by
+               //  other diacritics.)
+               bool possible_flag = is_possible_flag(it->get_input_symbol(), fds, obey_flags);
                if ( is_epsilon(it->get_input_symbol()) ||
-                    FdOperation::is_diacritic(it->get_input_symbol()) )
+                    possible_flag )
                  {
                    epsilon_path_states.insert(state);
                    if (epsilon_path_states.find(it->get_target_state())
@@ -3647,23 +3679,25 @@
                        return true;
                      }
                    if (is_lookup_infinitely_ambiguous
-                       (s, index, it->get_target_state(), epsilon_path_states))
+                       (s, index, it->get_target_state(), epsilon_path_states, fds, obey_flags))
                      {
                        return true;
                      }
                    epsilon_path_states.erase(state);
+                   if (possible_flag)
+                     { fds.pop_back(); }
                  }
                
-               /* CASE 2: Other input symbols consume a symbol in the lookup path s,   
-                  so they can be added only if the end of the lookup path s has not    
+               /* CASE 2: Other input symbols consume a symbol in the lookup path s,
+                  so they can be added only if the end of the lookup path s has not
                   been reached. */
                else if (! only_epsilons)
                  {
                    bool continu = false;
                    if (it->get_input_symbol().compare(s.second.at(index)) == 0)
                      continu = true;
-                   else if ((it->get_input_symbol().compare("@_UNKNOWN_SYMBOL_@") || 
-                             it->get_input_symbol().compare("@_IDENTITY_SYMBOL_@"))
+                   else if (((it->get_input_symbol().compare("@_UNKNOWN_SYMBOL_@") == 0) ||
+                             (it->get_input_symbol().compare("@_IDENTITY_SYMBOL_@") == 0))
                             &&
                             (alphabet.find(s.second.at(index)) == alphabet.end()))
                      {
@@ -3672,39 +3706,41 @@
 
                    if (continu)
                      {
-                       index++; // consume an input symbol in the lookup path s            
+                       index++; // consume an input symbol in the lookup path s
                        std::set<HfstState> empty_set;
                        if (is_lookup_infinitely_ambiguous
-                           (s, index, it->get_target_state(), empty_set))
+                           (s, index, it->get_target_state(), empty_set, fds, obey_flags))
                          {
                            return true;
                          }
-                       index--; // add the input symbol back to the lookup path s.         
+                       index--; // add the input symbol back to the lookup path s.
                      }
                  }
              }
            return false;
          }
 
-         HFSTDLL bool is_lookup_infinitely_ambiguous(const HfstOneLevelPath & s)
+         HFSTDLL bool is_lookup_infinitely_ambiguous(const HfstOneLevelPath & s, bool obey_flags=false)
          {
            std::set<HfstState> epsilon_path_states;
            epsilon_path_states.insert(0);
            unsigned int index=0;
+           StringVector fds;
 
            return is_lookup_infinitely_ambiguous(s, index, INITIAL_STATE,
-                                                 epsilon_path_states);
+                                                 epsilon_path_states, fds, obey_flags);
          }
 
-         HFSTDLL bool is_lookup_infinitely_ambiguous(const StringVector & s)
+         HFSTDLL bool is_lookup_infinitely_ambiguous(const StringVector & s, bool obey_flags=false)
          {
            std::set<HfstState> epsilon_path_states;
            epsilon_path_states.insert(0);
            unsigned int index=0;
            HfstOneLevelPath path((float)0, s);
+           StringVector fds;
 
            return is_lookup_infinitely_ambiguous(path, index, INITIAL_STATE,
-                                                 epsilon_path_states);
+                                                 epsilon_path_states, fds, obey_flags);
          }
 
 
@@ -3712,16 +3748,29 @@
          HFSTDLL static void push_back_to_two_level_path
            (HfstTwoLevelPath &path,
             const StringPair &sp,
-            const float &weight)
+            const float &weight,
+            StringVector * fds_so_far = NULL)
          {
            path.second.push_back(sp);
            path.first = path.first + weight;
+           if (fds_so_far != NULL)
+             {
+               if (FdOperation::is_diacritic(sp.first))
+                 { fds_so_far->push_back(sp.first); }
+             }
          }
          
          HFSTDLL static void pop_back_from_two_level_path
            (HfstTwoLevelPath &path,
-            const float &weight)
+            const float &weight,
+            StringVector * fds_so_far = NULL)
          {
+           if (fds_so_far != NULL)
+             {
+               StringPair sp = path.second.back();
+               if (FdOperation::is_diacritic(sp.first))
+                 { fds_so_far->pop_back(); }
+             }
            path.second.pop_back();
            path.first = path.first - weight;
          }
@@ -3754,7 +3803,8 @@
             const StringVector &lookup_path,
             const unsigned int &lookup_index,
             const StringSet &alphabet,
-            bool &input_symbol_consumed)
+            bool &input_symbol_consumed,
+            StringVector * fds_so_far = NULL)
          {
            std::string isymbol = transition.get_input_symbol();
            
@@ -3769,8 +3819,8 @@
                     // the current symbol is not found in the alphabet
                     // of the transducer.
                     ( (is_identity(isymbol) || is_unknown(isymbol)) &&
-                      (alphabet.find(lookup_path.at(lookup_index)) 
-                       == alphabet.end()) ) 
+                      (alphabet.find(lookup_path.at(lookup_index))
+                       == alphabet.end()) )
                     )
                  {
                    input_symbol_consumed=true;
@@ -3780,18 +3830,37 @@
            // Whether there are more symbols in lookup_path or not,
            // we can always go further if the input symbol of the transition
            // is an epsilon or a flag diacritic.
-           if ( is_epsilon(isymbol) || 
-                FdOperation::is_diacritic(isymbol) )
+           if ( is_epsilon(isymbol) )
              {
                input_symbol_consumed=false;
                return true;
+             }
+           if ( FdOperation::is_diacritic(isymbol) )
+             {
+               if (fds_so_far == NULL)
+                 {
+                   input_symbol_consumed=false;
+                   return true;
+                 }
+               else
+                 {
+                   FlagDiacriticTable FdT;
+                   fds_so_far->push_back(isymbol);
+                   bool valid = FdT.is_valid_string(*fds_so_far);
+                   fds_so_far->pop_back();
+                   if (valid)
+                     {
+                       input_symbol_consumed=false;
+                       return true;
+                     }
+                 }
              }
            
            // No matches.
            return false;
          }
          
-         HFSTDLL void lookup_fd
+         HFSTDLL void lookup
            (const StringVector &lookup_path,
             HfstTwoLevelPaths &results,
             HfstState state,
@@ -3799,8 +3868,9 @@
             HfstTwoLevelPath &path_so_far,
             StringSet &alphabet,
             HfstEpsilonHandler Eh,
-            size_t infinite_cutoff,
-            float * max_weight = NULL)
+            size_t max_epsilon_cycles,
+            float * max_weight = NULL,
+            StringVector * flag_diacritic_path = NULL)
          {
            // Check whether the number of input epsilon cycles is exceeded
            if (! Eh.can_continue(state)) {
@@ -3814,8 +3884,8 @@
            // If we are at the end of lookup_path,
            if (lookup_index == lookup_path.size())
              {
-               // and if the current state is final, 
-               if (this->is_final_state(state)) 
+               // and if the current state is final,
+               if (this->is_final_state(state))
                  {
                    // path_so_far is a valid result if max_weight is not exceeded
                    add_to_results
@@ -3825,25 +3895,25 @@
            
            // Whether there are more symbols in lookup_path or not,
            // go through all transitions in the current state.
-           const HfstBasicTransducer::HfstTransitions &transitions 
+           const HfstBasicTransducer::HfstTransitions &transitions
              = this->operator[](state);
-           for (HfstBasicTransducer::HfstTransitions::const_iterator it 
+           for (HfstBasicTransducer::HfstTransitions::const_iterator it
                   = transitions.begin();
                 it != transitions.end(); it++)
              {
                bool input_symbol_consumed=false;
                if ( is_possible_transition
-                    (*it, lookup_path, lookup_index, alphabet, 
-                     input_symbol_consumed) )
+                    (*it, lookup_path, lookup_index, alphabet,
+                     input_symbol_consumed, flag_diacritic_path) )
                  {
                    // update path_so_far and lookup_index
                    std::string istr;
                    std::string ostr;
 
                    // identity symbol is replaced with the lookup symbol
-                   if (is_identity(it->get_input_symbol())) 
+                   if (is_identity(it->get_input_symbol()))
                      {
-                       istr = lookup_path.at(lookup_index); 
+                       istr = lookup_path.at(lookup_index);
                        ostr = istr;
                      }
                    else
@@ -3857,17 +3927,17 @@
                          ostr = std::string("?");
                          else*/
                        ostr = it->get_output_symbol();
-                     } 
+                     }
 
                    push_back_to_two_level_path
                      (path_so_far,
                       StringPair(istr, ostr),
-                      it->get_weight());
-                                      
+                      it->get_weight(), flag_diacritic_path);
+
                    HfstEpsilonHandler * Ehp = NULL;
                    if (input_symbol_consumed) {
                      lookup_index++;
-                     Ehp = new HfstEpsilonHandler(infinite_cutoff);
+                     Ehp = new HfstEpsilonHandler(max_epsilon_cycles);
                    }
                    else {
                      Eh.push_back(state);
@@ -3875,10 +3945,10 @@
                    }
                    
                    // call lookup for the target state of the transition
-                   lookup_fd(lookup_path, results, it->get_target_state(),
-                             lookup_index, path_so_far, alphabet, *Ehp, infinite_cutoff, max_weight);
+                   lookup(lookup_path, results, it->get_target_state(),
+                             lookup_index, path_so_far, alphabet, *Ehp, max_epsilon_cycles, max_weight, flag_diacritic_path);
                    
-                   // return to the original values of path_so_far 
+                   // return to the original values of path_so_far
                    // and lookup_index
                    if (input_symbol_consumed) {
                      lookup_index--;
@@ -3889,34 +3959,40 @@
                      // of Eh is automatically called next
                    }
                    
-                   pop_back_from_two_level_path(path_so_far, it->get_weight());
+                   pop_back_from_two_level_path(path_so_far, it->get_weight(), flag_diacritic_path);
                  }
              }
            
          }
          
-         HFSTDLL void lookup_fd
+         HFSTDLL void lookup
            (const StringVector &lookup_path,
             HfstTwoLevelPaths &results,
-            size_t * infinite_cutoff = NULL,
-            float * max_weight = NULL)
+            size_t * max_epsilon_cycles = NULL,
+            float * max_weight = NULL,
+            bool obey_flags = false)
          {
            HfstState state = 0;
            unsigned int lookup_index = 0;
            HfstTwoLevelPath path_so_far;
            StringSet alphabet = this->get_alphabet();
-           if (infinite_cutoff != NULL)
+           StringVector * flag_diacritic_path = (obey_flags)? new StringVector() : NULL;
+
+           if (max_epsilon_cycles != NULL)
              {
-               HfstEpsilonHandler Eh(*infinite_cutoff);
-               lookup_fd(lookup_path, results, state, lookup_index, path_so_far, 
-                     alphabet, Eh, *infinite_cutoff, max_weight);
+               HfstEpsilonHandler Eh(*max_epsilon_cycles);
+               lookup(lookup_path, results, state, lookup_index, path_so_far,
+                      alphabet, Eh, *max_epsilon_cycles, max_weight, flag_diacritic_path);
              }
            else
              {
                HfstEpsilonHandler Eh(100000);
-               lookup_fd(lookup_path, results, state, lookup_index, path_so_far, 
-                     alphabet, Eh, 100000, max_weight);
+               lookup(lookup_path, results, state, lookup_index, path_so_far,
+                      alphabet, Eh, 100000, max_weight, flag_diacritic_path);
              }
+           
+           if (flag_diacritic_path != NULL)
+             delete flag_diacritic_path;
          }
 
 
@@ -3941,8 +4017,8 @@
            else if ((input_side && is_special_symbol(istr)) || (!input_side && is_special_symbol(ostr)))
              {
                throw "error: special symbol detected in compile-replace regular expression";
-             } 
-           else 
+             }
+           else
              {}
 
            if ((input_side && ("^[" == istr)) || (!input_side && ("^[" == ostr)))
@@ -3969,9 +4045,9 @@
          // paths are stored in \a full_paths. \a path is used to keep track of each path so
          // far. Weights are currently ignored.
          HFSTDLL void find_regexp_paths
-           (HfstState s, 
-            std::set<HfstState> & states_visited, 
-            std::vector<std::pair<std::string, std::string> > & path, 
+           (HfstState s,
+            std::set<HfstState> & states_visited,
+            std::vector<std::pair<std::string, std::string> > & path,
             HfstReplacements & full_paths, bool input_side)
            {
              // no cycles allowed inside "^[" and "^]"
@@ -3979,9 +4055,9 @@
              states_visited.insert(s);
 
              // go through all transitions
-             const HfstBasicTransducer::HfstTransitions &transitions 
+             const HfstBasicTransducer::HfstTransitions &transitions
                = this->operator[](s);
-             for (HfstBasicTransducer::HfstTransitions::const_iterator it 
+             for (HfstBasicTransducer::HfstTransitions::const_iterator it
                     = transitions.begin();
                   it != transitions.end(); it++)
                {
@@ -4006,7 +4082,7 @@
                         path,
                         full_paths, input_side);
                      path.pop_back();
-                   }   
+                   }
                }
              // all transitions gone through
              states_visited.erase(s);
@@ -4023,13 +4099,13 @@
          // Weights are currently ignored.
          HFSTDLL void find_regexp_paths
            (HfstState s,
-            std::vector<std::pair<HfstState, std::vector<std::pair<std::string, std::string> > > > & full_paths, 
+            std::vector<std::pair<HfstState, std::vector<std::pair<std::string, std::string> > > > & full_paths,
             bool input_side)
          {
            // go through all transitions
-           const HfstBasicTransducer::HfstTransitions &transitions 
+           const HfstBasicTransducer::HfstTransitions &transitions
              = this->operator[](s);
-             for (HfstBasicTransducer::HfstTransitions::const_iterator it 
+             for (HfstBasicTransducer::HfstTransitions::const_iterator it
                     = transitions.begin();
                   it != transitions.end(); it++)
                {
@@ -4043,7 +4119,7 @@
                          }*/
                      std::set<HfstState> states_visited;
                      states_visited.insert(s);
-                     std::vector<std::pair<std::string, std::string> > path; 
+                     std::vector<std::pair<std::string, std::string> > path;
                      path.push_back(std::pair<std::string, std::string>(istr, ostr));
                      find_regexp_paths(it->get_target_state(), states_visited, path, full_paths, input_side);
                      //fprintf(stderr, "%u regexp paths found for state %u\n", (unsigned int)full_paths.size(), s); // debug
@@ -4080,7 +4156,7 @@
          // Todo: copy alphabet? harmonize graphs?
          HFSTDLL void insert_transducer(HfstState state1, HfstState state2, const HfstTransitionGraph & graph)
          {
-           HfstState offset = add_state(); 
+           HfstState offset = add_state();
            HfstState source_state=0;
            for (const_iterator it = graph.begin();
                 it != graph.end(); it++)
@@ -4126,7 +4202,7 @@
            // If not found, add a new state to \a intersection, add it to \a state_map and return it.
            // \a was_new_state specifies whether a new state was added.
            static HfstState find_target_state
-             (HfstState target1, HfstState target2, StateMap & state_map, 
+             (HfstState target1, HfstState target2, StateMap & state_map,
               HfstTransitionGraph & intersection, bool & was_new_state)
            {
              StatePair state_pair(target1, target2);
@@ -4158,8 +4234,8 @@
              // The sum of weight is copied to the resulting intersection.
              float transition_weight = tr1.get_weight() + tr2.get_weight();
              intersection.add_transition
-               (state, HfstTransition <C> 
-                (retval, tr1.get_input_symbol(), tr1.get_output_symbol(), transition_weight)); 
+               (state, HfstTransition <C>
+                (retval, tr1.get_input_symbol(), tr1.get_output_symbol(), transition_weight));
              // For each new state added, check if the corresponding states in \a graph1 and \a graph2
              // are final. If they are, make the new state final with the sum of final weights.
              if (was_new_state && (graph1.is_final_state(target1) && graph2.is_final_state(target2)))
@@ -4281,7 +4357,7 @@
              HfstState retval = find_target_state
                (graph_target, merger_target, state_map, result, was_new_state);
              result.add_transition
-               (result_state, HfstTransition <C> 
+               (result_state, HfstTransition <C>
                 (retval, graph_transition.get_input_symbol(), graph_transition.get_output_symbol(), graph_transition.get_weight()));
              // For each new state added, check if the corresponding states in \a graph and \a merger
              // are final. If they are, make the new state final with the sum of final weights.
@@ -4312,13 +4388,13 @@
              // testing: add a marker
              HfstState extra_state = result.add_state();
              result.add_transition
-               (result_state, HfstTransition <C> 
+               (result_state, HfstTransition <C>
                 (extra_state, "@" + graph_transition.get_input_symbol() + "@", "@" + graph_transition.get_output_symbol() + "@", 0));
              markers_added.insert("@" + graph_transition.get_input_symbol() + "@");
 
              result.add_transition
-               (extra_state /*result_state*/, HfstTransition <C> 
-                (retval, merger_transition.get_input_symbol(), merger_transition.get_output_symbol(), transition_weight)); 
+               (extra_state /*result_state*/, HfstTransition <C>
+                (retval, merger_transition.get_input_symbol(), merger_transition.get_output_symbol(), transition_weight));
              // For each new state added, check if the corresponding states in \a graph1 and \a graph2
              // are final. If they are, make the new state final with the sum of final weights.
              if (was_new_state && (graph.is_final_state(graph_target) && merger.is_final_state(merger_target)))
@@ -4451,7 +4527,7 @@
                    {
                      find_matches_for_merge(graph, graph_transition.get_target_state(), merger, /*merger_transition.get_target_state()*/ merger_state, result, target, state_map, agenda, list_symbols, markers_added);
                    }
-                 // --- A transition in graph compared for all corresponding transitions in merger, compare next transition. --- 
+                 // --- A transition in graph compared for all corresponding transitions in merger, compare next transition. ---
                }
              // *** All transitions in state gone through. ***
              return;
@@ -4473,7 +4549,7 @@
                result.set_final_weight(0, final_weight);
              }
            
-           try 
+           try
              {
                find_matches_for_merge(graph, 0, merger, 0, result, 0, state_map, agenda, list_symbols, markers_added);
              }
@@ -4519,15 +4595,15 @@
         friend class hfst::HarmonizeUnknownAndIdentitySymbols;
       };
    
-    /** @brief An HfstTransitionGraph with transitions of type 
+    /** @brief An HfstTransitionGraph with transitions of type
     HfstTropicalTransducerTransitionData and weight type float.
     
     This is probably the most useful kind of HfstTransitionGraph. */
-    typedef HfstTransitionGraph <HfstTropicalTransducerTransitionData> 
+    typedef HfstTransitionGraph <HfstTropicalTransducerTransitionData>
       HfstBasicTransducer;
     
     /** @brief A specialization for faster conversion. */
-    //typedef HfstTransitionGraph <HfstFastTransitionData> 
+    //typedef HfstTransitionGraph <HfstFastTransitionData>
     //  HfstFastTransducer;
 
    }

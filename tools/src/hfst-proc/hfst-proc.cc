@@ -60,7 +60,7 @@ static bool handle_hfst3_header(std::istream& is)
       HFST_THROW(HfstException);
       return false;
       }
-      char * headervalue = new char[remaining_header_len];
+      char * headervalue = (char*) malloc(remaining_header_len);
       while(remaining_header_len > 0) {
       is.getline(headervalue, remaining_header_len + 1, '\0');
       remaining_header_len -= strlen(headervalue) + 1;
@@ -69,13 +69,13 @@ static bool handle_hfst3_header(std::istream& is)
           remaining_header_len -= strlen(headervalue) + 1;
           if (strcmp(headervalue, "HFST_OL") &&
           strcmp(headervalue, "HFST_OLW")) {
-          delete headervalue;
+          free((void*)headervalue);
           HFST_THROW(TransducerHasWrongTypeException);
           return false;
           }
       }
       }
-      delete headervalue;
+      free((void*)headervalue);
       if (remaining_header_len == 0) {
       return true;
       } else {
@@ -149,7 +149,7 @@ bool print_version(void)
 {
   std::cout <<
     "\n" <<
-    "hfst-proc 0.0" << 
+    "hfst-proc 0.0" <<
 #ifdef HAVE_CONFIG_H
     " (" << PACKAGE_STRING << ")" <<
 #endif
@@ -189,6 +189,7 @@ int main(int argc, char **argv)
       {"non-marked-gen", no_argument,       0, 'n'},
       {"debugged-gen",   no_argument,       0, 'd'},
       {"tokenize",       no_argument,       0, 't'},
+      {"transliterate",  no_argument,       0, 'j'},
       {"apertium",       no_argument,       0, 'p'},
       {"xerox",          no_argument,       0, 'x'},
       {"cg",             no_argument,       0, 'C'},
@@ -198,7 +199,7 @@ int main(int argc, char **argv)
       {"show-raw-in-cg", no_argument,       0, 'r'},
       {"analyses",       required_argument, 0, 'N'},
       // -l is probably too error prone to document
-      {"weight-classes", required_argument, 0, 'l'}, 
+      {"weight-classes", required_argument, 0, 'l'},
       {"case-sensitive", no_argument,       0, 'c'},
       {"dictionary-case",no_argument,       0, 'w'},
       {"null-flush",     no_argument,       0, 'z'},
@@ -207,7 +208,7 @@ int main(int argc, char **argv)
     };
     
     int option_index = 0;
-    int c = getopt_long(argc, argv, "hVvqsagndtpxCkeWrN:l:cwzX", long_options, &option_index);
+    int c = getopt_long(argc, argv, "hVvqjsagndtpxCkeWrN:l:cwzX", long_options, &option_index);
 
     if (c == -1) // no more options to look at
       break;
@@ -263,6 +264,7 @@ int main(int argc, char **argv)
     case 'p':
     case 'C':
     case 'x':
+    case 'j':
       if(output_type == 0)
         output_type = c;
       else
@@ -303,7 +305,7 @@ int main(int argc, char **argv)
         }
       break;
     
-    case 'e': 
+    case 'e':
       processCompounds = true;
       break;
     case 'c':
@@ -420,7 +422,7 @@ int main(int argc, char **argv)
     catch (TransducerHasWrongTypeException &ex)
       {
         std::cerr << "Transducer must be in HFST optimized lookup format." << std::endl;
-        return EXIT_FAILURE;        
+        return EXIT_FAILURE;
       }
     ProcTransducer t(in);
     if(verboseFlag)
@@ -453,6 +455,9 @@ int main(int argc, char **argv)
             break;
           case 'x':
             output_formatter = (OutputFormatter*)new XeroxOutputFormatter(token_stream, filter_compound_analyses);
+            break;
+          case 'j':
+            output_formatter = (OutputFormatter*)new TransliterateOutputFormatter(token_stream, filter_compound_analyses);
             break;
           default:
             output_formatter = (OutputFormatter*)new ApertiumOutputFormatter(token_stream, filter_compound_analyses);

@@ -1,13 +1,13 @@
 ## Process this file with automake to produce Makefile.in
 
-# Copyright (c) 2016 University of Helsinki                          
-#                                                                    
-# This library is free software; you can redistribute it and/or      
-# modify it under the terms of the GNU Lesser General Public         
-# License as published by the Free Software Foundation; either       
-# version 3 of the License, or (at your option) any later version.    
-# See the file COPYING included with this distribution for more      
-# information. 
+# Copyright (c) 2016 University of Helsinki
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
+# See the file COPYING included with this distribution for more
+# information.
 
 SUBDIRS=implementations parsers
 AUTOMAKE_OPTIONS=subdir-objects
@@ -32,23 +32,22 @@ libhfst_la_SOURCES = $(HFST_SRCS)
 libhfst_la_LIBADD = implementations/libhfstimplementations.la \
 			parsers/libhfstparsers.la
 
-AM_CPPFLAGS += -I${top_srcdir}/back-ends/foma -I${top_srcdir}/back-ends
-
 if WANT_SFST
   libhfst_la_LIBADD += $(top_builddir)/back-ends/sfst/libsfst.la
+else
+if WANT_LEAN_SFST
+  libhfst_la_LIBADD += $(top_builddir)/back-ends/sfst/libsfst.la
+endif
 endif
 
 if WANT_FOMA
   libhfst_la_LIBADD +=$(top_builddir)/back-ends/foma/libfoma.la
 endif
 
-if WANT_MINGW	
-  AM_CPPFLAGS += -I${top_srcdir}/back-ends/openfstwin/src/include \
-			-I${top_srcdir}/back-ends/dlfcn -DWINDOWS
+if WANT_MINGW
   libhfst_la_LIBADD += $(top_builddir)/back-ends/dlfcn/libdl.la \
 			$(top_builddir)/back-ends/openfstwin/src/lib/libfst.la
 else
-  AM_CPPFLAGS += -I${top_srcdir}/back-ends/openfst/src/include
   libhfst_la_LIBADD += $(top_builddir)/back-ends/openfst/src/lib/libfst.la
 endif
 
@@ -76,7 +75,9 @@ HFST_HDRS = \
 	HfstTokenizer.h \
 	implementations/ConvertTransducerFormat.h \
 	implementations/HfstTransitionGraph.h \
+	implementations/HfstBasicTransducer.h \
 	implementations/HfstTransition.h \
+	implementations/HfstBasicTransition.h \
 	implementations/HfstTropicalTransducerTransitionData.h \
 	implementations/compose_intersect/ComposeIntersectRulePair.h \
 	implementations/compose_intersect/ComposeIntersectLexicon.h \
@@ -103,7 +104,7 @@ HFST_HDRS = \
 
 hfstinclude_HEADERS = $(HFST_HDRS)
 
-libhfst_la_LDFLAGS = -no-undefined -version-info 45:0:0
+libhfst_la_LDFLAGS = -no-undefined -version-info 50:0:0
 
 LIBHFST_TSTS=HfstApply HfstInputStream HfstTransducer \
 		HfstOutputStream HfstXeroxRules HfstRules HfstSymbolDefs \

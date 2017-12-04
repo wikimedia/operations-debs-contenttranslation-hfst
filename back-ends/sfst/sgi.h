@@ -45,7 +45,7 @@
 #endif
 
 // Hfst addition
-namespace SFST 
+namespace SFST
 {
 // from <http://gcc.gnu.org/onlinedocs/libstdc++/manual/backwards.html>
 #ifdef __GNUC__
@@ -57,7 +57,7 @@ namespace SFST
   using std::hash_map;
   using std::hash_set;
   using std::hash;
-#  else 
+#  else
   using __gnu_cxx::hash_map;
   using __gnu_cxx::hash_set;
   using __gnu_cxx::hash;

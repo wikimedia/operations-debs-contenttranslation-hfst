@@ -23,13 +23,13 @@ ModelBuilder::ModelBuilder
 	     model_weights.get_name()),
   depth(0)
 {
-  for (WeightedStringVectorCollection::const_iterator it = 
+  for (WeightedStringVectorCollection::const_iterator it =
 	 model_weights.begin();
        it != model_weights.end();
        ++it)
-    { 
+    {
       add_sequence(*it,
-		   (model_weights.is_lexical_model ? LEXICAL : SEQUENCE)); 
+		   (model_weights.is_lexical_model ? LEXICAL : SEQUENCE));
     }
 
   if (not model_weights.is_lexical_model)
@@ -54,13 +54,13 @@ void ModelBuilder::add_sequence(const WeightedStringVector &v,
 
   HfstState target_state =
     FstBuilder::add_sequence(symbol_sequence.begin(),
-			     symbol_sequence.end() - 1);     
+			     symbol_sequence.end() - 1);
   
   std::string last_output_symbol = symbol_sequence.back();
-  std::string last_input_symbol = 
+  std::string last_input_symbol =
     ((string_type == LEXICAL) ? internal_epsilon : symbol_sequence.back());
   
-  HfstState final_state = 
+  HfstState final_state =
     ((string_type == LEXICAL) ? model_fst.add_state() : START_STATE);
 
   FstBuilder::add_transition(target_state,
@@ -77,9 +77,9 @@ void ModelBuilder::complete_model
  StateVector::const_iterator default_state_vector_it,
  float penalty_weight)
 {
-  const HfstBasicTransducer::HfstTransitions &transitions = model_fst[s];
+  const hfst::implementations::HfstBasicTransitions &transitions = model_fst[s];
   
-  for (HfstBasicTransducer::HfstTransitions::const_iterator it = 
+  for (hfst::implementations::HfstBasicTransitions::const_iterator it =
 	 transitions.begin();
        it != transitions.end();
        ++it)
@@ -109,8 +109,8 @@ void ModelBuilder::complete_model(float penalty_weight)
   StateVector default_states;
 
   for (size_t i = 1; i < depth; ++i)
-    { 
-      default_states.push_back(model_fst.add_state()); 
+    {
+      default_states.push_back(model_fst.add_state());
     }
 
   default_states.push_back(START_STATE);
@@ -121,7 +121,7 @@ void ModelBuilder::complete_model(float penalty_weight)
 				 default_states[i+1],
 				 DEFAULT_SYMBOL,
 				 DEFAULT_SYMBOL,
-				 (default_states[i+1] == START_STATE ? 
+				 (default_states[i+1] == START_STATE ?
 				  penalty_weight :
 				  0.0));
     }

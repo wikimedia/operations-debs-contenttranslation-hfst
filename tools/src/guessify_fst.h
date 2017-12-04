@@ -34,7 +34,7 @@ using hfst::StringSet;
 #define CATEGORY_SYMBOL_PREFIX "[GUESS_CATEGORY="
 
 // Replace every flag diacritic symbol with an epsilon.
-void remove_flag_diacritics(HfstTransducer &morphological_analyzer, 
+void remove_flag_diacritics(HfstTransducer &morphological_analyzer,
 			    const StringSet &alphabet);
 
 // Return the set of all symbols in alphabet, which start "[GUESS_CATEGORY=".

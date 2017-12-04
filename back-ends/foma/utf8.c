@@ -78,8 +78,8 @@ char *escape_string(char *string, char chr) {
                 newstring[j] = chr;
             } else {
                 newstring[j] = string[i];
-            }            
-        }        
+            }
+        }
         return(newstring);
     } else {
         return(string);
@@ -94,7 +94,7 @@ void strip_newline(char *s) {
     for (i = 0; i < len; i++ ) {
         if (s[i] == '\n' ) {
             s[i] = '\0';
-            return;   
+            return;
         }
     }
 }
@@ -109,7 +109,7 @@ void dequote_string(char *s) {
         }
         *(s+j) = '\0';
         decode_quoted(s);
-    }    
+    }
 }
 
 /* Decode quoted strings. This includes: */
@@ -255,16 +255,16 @@ int hexstrtoint(char *str) {
   int hex;
 
   if (*str > 0x60) {
-    hex = (*str - 0x57) << 4; 
+    hex = (*str - 0x57) << 4;
   } else if (*str > 0x40) {
-    hex = (*str - 0x37) << 4; 
+    hex = (*str - 0x37) << 4;
   } else {
     hex = (*str - 0x30) << 4;
   }
   if (*(str+1) > 0x60) {
-    hex += (*(str+1) - 0x57); 
+    hex += (*(str+1) - 0x57);
   } else if (*(str+1) > 0x40) {
-    hex += (*(str+1) - 0x37); 
+    hex += (*(str+1) - 0x37);
   } else {
     hex += (*(str+1) - 0x30);
   }

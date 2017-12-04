@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 //! @file lexc-utils.h
@@ -47,7 +47,7 @@ const char REG_EX_END[] = "_$";
 
 //! @brief Strips lexc style percent escaping from a string.
 //!
-//! E.g. like stripslashes() in PHP. 
+//! E.g. like stripslashes() in PHP.
 std::string& stripPercents(std::string& s);
 
 //! @brief Percent encode critical characters in raw string for lexc.
@@ -102,7 +102,7 @@ char* strstrip(const char* s);
 
 //! @brief extracts the variable substring part from token.
 //! Omits constant string prefix, suffix and optionally strips spaces.
-char* strdup_nonconst_part(const char* token, 
+char* strdup_nonconst_part(const char* token,
                            const char* prefix,
                            const char* suffix,
                            bool strip);

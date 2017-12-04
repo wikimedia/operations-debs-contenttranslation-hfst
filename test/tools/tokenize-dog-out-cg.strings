@@ -1,0 +1,13 @@
+"<test>"
+	
+
+"<dog>"
+	"dog" N
+
+"<be dog>"
+	be Vdog N
+	bedog V
+
+"<catdog>"
+	cat N Cmp#dog N
+

@@ -102,7 +102,7 @@ class LookupState
    * @param input the input symbol to look up in the transition index table
    * @return whether the path has a continuation with the given input
    */
-  bool try_index(LookupPathVector& new_paths, 
+  bool try_index(LookupPathVector& new_paths,
                  const LookupPath& path, const SymbolNumber input) const;
   
   /**

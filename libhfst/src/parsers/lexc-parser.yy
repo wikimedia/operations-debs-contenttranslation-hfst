@@ -1,11 +1,11 @@
 %{
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 //! @file lexc-parser.yy
@@ -37,7 +37,7 @@ static
 void
 handle_multichar(const string& multichar)
 {
-    //in multichars @ZERO@ should right away be replaced with "0"        
+    //in multichars @ZERO@ should right away be replaced with "0"
     string str = multichar;
     string zero = "@ZERO@";
     size_t start_pos = str.find(zero);
@@ -67,12 +67,13 @@ static
 bool
 handle_lexicon_name(const string& lexiconName)
 {
-  try 
+  try
   {
     hfst::lexc::lexc_->setCurrentLexiconName(lexiconName);
   }
   catch(const char * msg)
   {
+    (void)msg;
     return false;
   }
   return true;
@@ -138,8 +139,9 @@ handle_string_pair_entry(const string& upper, const string& lower,
        try {
          hfst::lexc::lexc_->addStringPairEntry(upper, lower, cont, weight);
        } catch(const char * msg) {
+         (void)msg;
          return false;
-       } 
+       }
     }
     else
     {
@@ -152,6 +154,7 @@ handle_string_pair_entry(const string& upper, const string& lower,
        try {
          hfst::lexc::lexc_->addStringPairEntry(upper_, lower_, cont, weight);
        } catch(const char * msg) {
+         (void)msg;
          return false;
        }
     }
@@ -174,7 +177,7 @@ static
 void
 hlexcwarn(const char* text)
 {
-  if (! hfst::lexc::lexc_->isQuiet())      
+  if (! hfst::lexc::lexc_->isQuiet())
     { hfst::lexc::error_at_current_token(0, 0, text); }
 }
 
@@ -200,7 +203,7 @@ handle_end()
 // just cos I use the llloc struct
 %locations
 
-%union 
+%union
 {
     char* name;
     int number;
@@ -208,7 +211,7 @@ handle_end()
 
 %token <number> ERROR MULTICHARS_START
     DEFINITIONS_START END_START NOFLAGS_START
-%token <name>   LEXICON_START LEXICON_START_WRONG_CASE 
+%token <name>   LEXICON_START LEXICON_START_WRONG_CASE
     LEXICON_NAME ULSTRING ENTRY_GLOSS
     MULTICHAR_SYMBOL
     DEFINITION_NAME DEFINITION_EXPRESSION
@@ -225,7 +228,7 @@ MULTICHAR_PART: MULTICHAR_SYMBOLS2 MULTICHAR_SYMBOL_LIST
                  |
                  ;
 
-MULTICHAR_SYMBOLS2: MULTICHARS_START 
+MULTICHAR_SYMBOLS2: MULTICHARS_START
                 ;
 
 MULTICHAR_SYMBOL_LIST: MULTICHAR_SYMBOL_LIST MULTICHAR_SYMBOL2
@@ -242,7 +245,7 @@ NOFLAGS_PART: NOFLAG_LEXICONS2 NOFLAG_LEXICON_LIST
                  |
                  ;
 
-NOFLAG_LEXICONS2: NOFLAGS_START 
+NOFLAG_LEXICONS2: NOFLAGS_START
                 ;
 
 NOFLAG_LEXICON_LIST: NOFLAG_LEXICON_LIST NOFLAG_LEXICON2
@@ -259,7 +262,7 @@ DEFINITIONS_PART: DEFINITIONS_START2 DEFINITION_LIST
                   |
                   ;
 
-DEFINITIONS_START2: DEFINITIONS_START 
+DEFINITIONS_START2: DEFINITIONS_START
                   ;
 
 DEFINITION_LIST: DEFINITION_LIST DEFINITION_LINE
@@ -287,7 +290,7 @@ LEXICON2: LEXICON_START {
               { hlexcerror("Sublexicon defined more than once."); YYABORT; }
           }
           | LEXICON_START_WRONG_CASE {
-            if (hfst::lexc::lexc_->areWarningsTreatedAsErrors()) 
+            if (hfst::lexc::lexc_->areWarningsTreatedAsErrors())
               { hlexcerror("Keyword 'Lexicon' used instead of 'LEXICON'. [--Werror]"); YYABORT; }
             else
               { hlexcwarn("Titlecase Lexicon parsed as LEXICON"); }
@@ -393,7 +396,7 @@ LEXICON_LINE: ULSTRING LEXICON_NAME ';' {
               }
               ;
 
-END_PART: END_START { 
+END_PART: END_START {
             handle_end();
         }
         |

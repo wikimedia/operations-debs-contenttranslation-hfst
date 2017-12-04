@@ -8,8 +8,8 @@ TaggerBuilder::TaggerBuilder(void):
   in(NULL),
   lexical_model_builder(std::cin),
   sequence_model_builder(std::cin)
-{ 
-  delete in; 
+{
+  delete in;
 }
 
 TaggerBuilder::TaggerBuilder(const std::string &file_name):

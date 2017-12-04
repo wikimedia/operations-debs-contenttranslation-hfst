@@ -46,3 +46,5 @@ do
         fi
     fi
 done
+
+rm -f tmp1 tmp2 tmp1.txt tmp2.txt

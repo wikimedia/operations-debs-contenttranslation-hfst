@@ -1,21 +1,22 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #ifndef _HFST_OL_CONVERT_H_
 #define _HFST_OL_CONVERT_H_
 
-#if HAVE_OPENFST
-#include "fst/fstlib.h"
-#endif // HAVE_OPENFST
-
 #include "transducer.h"
 #include "pmatch.h"
+
+#ifdef OPENFST_VERSION_1_5_4
+  #include "back-ends/openfst/src/include/fst/fst-decl.h"
+  namespace fst { template <class F> class ArcIterator; }
+#endif
 
 namespace hfst_ol {
     
@@ -57,19 +58,19 @@ struct StatePlaceholder {
     state_number(state),
     start_index(UINT_MAX),
     first_transition(first),
-    final(finality),
-    final_weight(final_weight),
     type(state == 0 ? nonsimple: empty),
-    inputs(0)
+    inputs(0),
+    final(finality),
+    final_weight(final_weight)
         { }
     StatePlaceholder ():
     state_number(UINT_MAX),
     start_index(UINT_MAX),
     first_transition(UINT_MAX),
-    final(false),
-    final_weight(0.0),
     type(empty),
-    inputs(0)
+    inputs(0),
+    final(false),
+    final_weight(0.0)
     { }
     
     bool is_simple(void) const
@@ -82,7 +83,7 @@ struct StatePlaceholder {
         for(std::vector<std::vector<TransitionPlaceholder> >::const_iterator it
                 = transition_placeholders.begin();
             it != transition_placeholders.end(); ++it) {
-            count += it->size();
+            count += hfst::size_t_to_uint(it->size());
         }
         return count;
     }
@@ -100,7 +101,7 @@ struct StatePlaceholder {
             while (symbol_to_transition_placeholder_v.size() <= input) {
                 symbol_to_transition_placeholder_v.push_back(UINT_MAX);
             }
-            symbol_to_transition_placeholder_v[input] = transition_placeholders.size();
+            symbol_to_transition_placeholder_v[input] = hfst::size_t_to_uint(transition_placeholders.size());
             transition_placeholders.push_back(std::vector<TransitionPlaceholder>());
             ++inputs;
             if (type != nonsimple) {
@@ -158,16 +159,16 @@ struct StatePlaceholder {
         //     }
         // } else {
         if (input_present(0)) { // if there are epsilons
-            offset = get_transition_placeholders(0).size();
+            offset = hfst::size_t_to_uint(get_transition_placeholders(0).size());
         }
-        for(std::set<SymbolNumber>::iterator flag_it = flag_symbols.begin();
+        for(std::set<SymbolNumber>::const_iterator flag_it = flag_symbols.begin();
             flag_it != flag_symbols.end(); ++flag_it) {
             if (input_present(*flag_it)) {
                 if (symbol == *flag_it) {
                     // Flags go to 0 (even if there's no epsilon)
                     return 0;
                 }
-                offset += get_transition_placeholders(*flag_it).size();
+                offset += hfst::size_t_to_uint(get_transition_placeholders(*flag_it).size());
             }
         }
         for(unsigned int i = 1; i < symbol_to_transition_placeholder_v.size(); ++i) {
@@ -179,7 +180,7 @@ struct StatePlaceholder {
                 if (symbol == i) {
                     return offset;
                 }
-                offset += get_transition_placeholders(i).size();
+                offset += hfst::size_t_to_uint(get_transition_placeholders(i).size());
             }
         }
         std::string message("error in conversion between optimized lookup "
@@ -211,7 +212,7 @@ struct IndexPlaceholders
             while (position >= indices.size()) {
                 indices.push_back(NO_TABLE_INDEX);
             }
-            indices[position] = targets.size();
+            indices[position] = hfst::size_t_to_uint(targets.size());
             targets.push_back(std::pair<unsigned int, SymbolNumber>(target, sym));
         }
 
@@ -283,7 +284,7 @@ void add_transitions_with(SymbolNumber symbol,
               std::set<SymbolNumber> & flag_symbols);
 
 #if HAVE_OPENFST // Covers remainder of file
-typedef fst::StdArc::StateId StateId;
+typedef /*fst::StdArc::StateId*/ int StateId;
 typedef fst::StdArc StdArc;
 typedef fst::StdVectorFst TransduceR;
 typedef fst::ArcIterator<TransduceR> ArcIterator;
@@ -301,7 +302,7 @@ struct transition_label
   int64 output_symbol;
 };
 
-struct compare_transition_labels 
+struct compare_transition_labels
 {
   bool operator() ( const transition_label &l1,
             const transition_label &l2) const
@@ -333,7 +334,7 @@ private:
 
   void add_node(StateId n, TransduceR *tr);
   /*
-    Assign every node n in t a unique id number i. Assign the start node 
+    Assign every node n in t a unique id number i. Assign the start node
     t->root_node() id number 0. Set node_to_id[n] = i and
     id_to_node[i] = n.
   */
@@ -402,7 +403,7 @@ private:
   
   TransitionTableIndex table_index; // location in the transition table
 public:
-  /* 
+  /*
      Set the symbol numbers and set the indices of the states according
      to ConvertIdNumberMap nodes_to_id_numbers.
   */
@@ -461,18 +462,18 @@ public:
 struct ConvertTransitionCompare
 {
   bool operator() (const ConvertTransition * t1,
-           const ConvertTransition * t2) const 
-  { 
-    return t1->operator<(*t2); 
+           const ConvertTransition * t2) const
+  {
+    return t1->operator<(*t2);
   }
 };
 
 struct ConvertTransitionIndexCompare
 {
   bool operator() (const ConvertTransitionIndex * i1,
-           const ConvertTransitionIndex * i2) const 
+           const ConvertTransitionIndex * i2) const
   {
-    return i1->operator<(*i2); 
+    return i1->operator<(*i2);
   }
 };
 
@@ -526,9 +527,9 @@ public:
   SymbolNumberSet * get_input_symbols(void) const;
   
   SymbolNumber number_of_input_symbols(void) const
-  { return transition_indices.size(); }
+  { return hfst::size_t_to_uint(transition_indices.size()); }
   SymbolNumber number_of_transitions(void) const
-  { return transitions.size(); }
+  { return hfst::size_t_to_uint(transitions.size()); }
   bool is_final(void) const {return final;}
   bool is_big_state(void) const
   {
@@ -545,13 +546,13 @@ public:
   void insert_transition_indices(TransducerTable<T>& index_table) const;
   
   template<class T>
-  TransitionTableIndex append_transitions(TransducerTable<T>& transition_table, 
+  TransitionTableIndex append_transitions(TransducerTable<T>& transition_table,
                                           TransitionTableIndex place) const;
 };
 
  typedef std::vector<ConvertFstState*> ConvertFstStateVector;
 
-class ConvertTransitionTableIndices 
+class ConvertTransitionTableIndices
 {
 private:
   PlaceHolderVector indices;
@@ -641,7 +642,7 @@ public:
   Transducer* to_transducer() const;
   
   // exposed to this module during the constructor
-  static ConvertTransducer* constructing_transducer; 
+  static ConvertTransducer* constructing_transducer;
 };
 
 #endif // HAVE_OPENFST

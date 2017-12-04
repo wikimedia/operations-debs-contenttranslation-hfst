@@ -1,0 +1,45 @@
+#! /bin/bash
+
+function print_help()
+{
+    echo "Lemmatizes and morphologically labels running Finnish text on standard input."
+    echo
+    echo "This package is based on the statistical (CRF-based) tagger FinnPos,"
+    echo "the Finnish morphology package OmorFi and the FinnTreeBank corpus of"
+    echo "labeled text."
+    echo
+    echo "Process entire files with redirection, eg."
+    echo "  $ finnish-postag < mytext.txt > mytext_tagged.txt"
+    echo "or type into the terminal and terminate with EOF (usually ctrl-D on"
+    echo "your keyboard), or directly input a line of text with <<<. Example:"
+    echo
+    echo "$ finnish-postag <<< \"Voitteko ojentaa voita?\""
+    echo ""
+    echo "Voitteko	voida	[POS=VERB]|[VOICE=ACT]|[MOOD=INDV]|[TENSE=PRESENT]|[PERS=PL2]|[CLIT=KO]"
+    echo "ojentaa	ojentaa	[POS=VERB]|[VOICE=ACT]|[MOOD=INDV]|[TENSE=PRESENT]|[PERS=SG3]"
+    echo "voita	voi	[POS=NOUN]|[NUM=SG]|[CASE=PAR]"
+    echo "?	?	[POS=PUNCTUATION]"
+    exit 0
+}
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+if command -v hfst-tokenize 2 > /dev/null; then
+    TOKENIZE="hfst-tokenize $DIR/tokenize.pmatch"
+else
+    TOKENIZE="python3 $DIR/tokenize.py"
+fi
+
+case $1 in
+    "")
+	;;
+    *)
+	print_help ;;
+esac
+
+$TOKENIZE |
+$DIR/hfst-optimized-lookup $DIR/morphology.omor.hfst 2>/dev/null |
+python3 $DIR/omorfi2finnpos.py ftb                               |
+python3 $DIR/finnpos-ratna-feats.py $DIR/freq_words              |
+$DIR/finnpos-label $DIR/ftb.omorfi.model 2>/dev/null             |
+python3 $DIR/finnpos-restore-lemma.py                           |
+cut -f1,3,4

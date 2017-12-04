@@ -1,31 +1,50 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
+
+#ifndef MAIN_TEST
 
 #if HAVE_CONFIG_H
 #  include <config.h>
 #endif
 
-#include "ConvertTransducerFormat.h"
-#include "HfstTransitionGraph.h"
-#include "HfstTransducer.h"
+#if HAVE_OPENFST_LOG || HAVE_LEAN_OPENFST_LOG
 
-#ifndef MAIN_TEST
+#include "ConvertTransducerFormat.h"
+#include "HfstBasicTransducer.h"
+#include "LogWeightTransducer.h"
+
+#ifdef _MSC_VER
+#include "back-ends/openfstwin/src/include/fst/fstlib.h"
+#else
+#include "back-ends/openfst/src/include/fst/fstlib.h"
+#endif // _MSC_VER
+
+#ifndef _MSC_VER
+#if HAVE_OPENFST_LOG // if HAVE_LEAN_OPENFST_LOG is requested, these are not defined elsewhere (?)
+namespace fst
+{
+  extern template class LogWeightTpl<float>;
+  extern template class ArcTpl<LogWeight>;
+  extern template class VectorFst<LogArc>;
+  extern template class ArcIterator<LogFst>;
+  extern template class StateIterator<LogFst>;
+}
+#endif
+#endif // #ifndef _MSC_VER
+
 namespace hfst { namespace implementations
 {
-
-#if HAVE_OPENFST
-#if HAVE_OPENFST_LOG
 
   /* --- Conversion between log OpenFst and HfstBasicTransducer --- */
   
   /* Create an HfstBasicTransducer equivalent to an OpenFst log weight
-     transducer \a t. */  
+     transducer \a t. */
   HfstBasicTransducer * ConversionFunctions::
   log_ofst_to_hfst_basic_transducer
   (LogFst * t, bool has_hfst_header) {
@@ -42,34 +61,34 @@ namespace hfst { namespace implementations
 
   // An empty transducer
   if (t->Start() == fst::kNoStateId)
-    {      
+    {
       /* An empty OpenFst transducer does not necessarily have to have
          an input or output symbol table. */
       if (inputsym != NULL) {
-        for ( fst::SymbolTableIterator it = 
+        for ( fst::SymbolTableIterator it =
                 fst::SymbolTableIterator(*(inputsym));
-              not it.Done(); it.Next() ) {
+              ! it.Done(); it.Next() ) {
           if (it.Value() != 0) // epsilon is not inserted
             net->alphabet.insert( it.Symbol() );
-        }    
+        }
       }
       /* If the transducer is an OpenFst transducer, it might have an output
          symbol table. If the transducer is an HFST log transducer, it
-         can have an output symbol table, but it is equivalent to the 
+         can have an output symbol table, but it is equivalent to the
          input symbol table. */
-      if (not has_hfst_header && outputsym != NULL) {
-        for ( fst::SymbolTableIterator it = 
+      if (! has_hfst_header && outputsym != NULL) {
+        for ( fst::SymbolTableIterator it =
                 fst::SymbolTableIterator(*(outputsym));
-              not it.Done(); it.Next() ) {
+              ! it.Done(); it.Next() ) {
           if (it.Value() != 0) // epsilon is not inserted
             net->alphabet.insert( it.Symbol() );
-        }    
+        }
       }
       return net;
-    }      
+    }
 
   /* A non-empty OpenFst transducer must have at least an input symbol table.
-     If the output symbol table is missing, we assume that it would be 
+     If the output symbol table is missing, we assume that it would be
      equivalent to the input symbol table. */
   if (inputsym == NULL) {
     HFST_THROW(MissingOpenFstInputSymbolTableException);
@@ -88,8 +107,8 @@ namespace hfst { namespace implementations
   }
 
   /* Go through all states */
-  for (fst::StateIterator<LogFst> siter(*t); 
-       not siter.Done(); siter.Next()) 
+  for (fst::StateIterator<LogFst> siter(*t);
+       ! siter.Done(); siter.Next())
     {
       StateId s = siter.Value();
       if (s == initial_state) {
@@ -102,7 +121,7 @@ namespace hfst { namespace implementations
           origin = (int)s;
 
         /* Go through all transitions in a state */
-        for (fst::ArcIterator<LogFst> aiter(*t,s); 
+        for (fst::ArcIterator<LogFst> aiter(*t,s);
              !aiter.Done(); aiter.Next())
           {
             const fst::LogArc &arc = aiter.Value();
@@ -121,7 +140,7 @@ namespace hfst { namespace implementations
               istring = std::string(internal_epsilon);
             if (arc.olabel == 0)
               ostring = std::string(internal_epsilon);
-            net->add_transition(origin, 
+            net->add_transition(origin,
                                 HfstBasicTransition
                                 (target,
                                  istring,
@@ -137,8 +156,8 @@ namespace hfst { namespace implementations
       }
     }
 
-    for (fst::StateIterator<LogFst> siter(*t); 
-         not siter.Done(); siter.Next())
+    for (fst::StateIterator<LogFst> siter(*t);
+         ! siter.Done(); siter.Next())
       {
         StateId s = siter.Value();
         if (s != initial_state) {
@@ -149,7 +168,7 @@ namespace hfst { namespace implementations
             origin = 0;
           else
             origin = (int)s;
-          for (fst::ArcIterator<LogFst> aiter(*t,s); 
+          for (fst::ArcIterator<LogFst> aiter(*t,s);
                !aiter.Done(); aiter.Next())
             {
               const fst::LogArc &arc = aiter.Value();
@@ -167,7 +186,7 @@ namespace hfst { namespace implementations
                 istring = std::string(internal_epsilon);
               if (arc.olabel == 0)
                 ostring = std::string(internal_epsilon);
-              net->add_transition(origin, 
+              net->add_transition(origin,
                                   HfstBasicTransition
                                   (target,
                                    istring,
@@ -182,18 +201,18 @@ namespace hfst { namespace implementations
 
     /* Make sure that also the symbols that occur only in the alphabet
        but not in transitions are copied. */
-    for ( fst::SymbolTableIterator it = 
+    for ( fst::SymbolTableIterator it =
             fst::SymbolTableIterator(*(inputsym));
-          not it.Done(); it.Next() ) {
+          ! it.Done(); it.Next() ) {
       if (it.Value() != 0) // epsilon is not inserted
         net->alphabet.insert( it.Symbol() );
-    }    
-    for ( fst::SymbolTableIterator it = 
+    }
+    for ( fst::SymbolTableIterator it =
             fst::SymbolTableIterator(*(outputsym));
-          not it.Done(); it.Next() ) {
+          ! it.Done(); it.Next() ) {
       if (it.Value() != 0) // epsilon is not inserted
         net->alphabet.insert( it.Symbol() );
-    }    
+    }
 
     return net;
 }
@@ -201,10 +220,10 @@ namespace hfst { namespace implementations
 
 
   /* Get a state id for a state in transducer \a t that corresponds
-     to HfstState s as defined in \a state_map.     
+     to HfstState s as defined in \a state_map.
      Used by function hfst_basic_transducer_to_log_ofst. */
   StateId ConversionFunctions::hfst_state_to_state_id
-  (HfstState s, std::map<HfstState, StateId> &state_map, 
+  (HfstState s, std::map<HfstState, StateId> &state_map,
    LogFst * t)
   {
     std::map<HfstState, StateId>::iterator it = state_map.find(s);
@@ -242,12 +261,12 @@ namespace hfst { namespace implementations
          it != net->end(); it++)
       {
         // Go through the set of transitions in each state
-        for (HfstBasicTransducer::HfstTransitions::const_iterator tr_it 
+        for (HfstBasicTransitions::const_iterator tr_it
                = it->begin();
              tr_it != it->end(); tr_it++)
           {
             // Copy the transition
-            t->AddArc( hfst_state_to_state_id(source_state, state_map, t), 
+            t->AddArc( hfst_state_to_state_id(source_state, state_map, t),
                        fst::LogArc
                        ( st.AddSymbol(tr_it->get_input_symbol()),
                          st.AddSymbol(tr_it->get_output_symbol()),
@@ -258,30 +277,29 @@ namespace hfst { namespace implementations
       }
     
     // Go through the final states
-    for (HfstBasicTransducer::FinalWeightMap::const_iterator it 
+    for (HfstBasicTransducer::FinalWeightMap::const_iterator it
            = net->final_weight_map.begin();
-         it != net->final_weight_map.end(); it++) 
+         it != net->final_weight_map.end(); it++)
       {
-        t->SetFinal(hfst_state_to_state_id(it->first, state_map, t), 
+        t->SetFinal(hfst_state_to_state_id(it->first, state_map, t),
                     it->second);
       }
     
     // Add also symbols that do not occur in transitions
-    for (HfstBasicTransducer::HfstTransitionGraphAlphabet::iterator it 
+    for (HfstBasicTransducer::HfstAlphabet::const_iterator it
            = net->alphabet.begin();
          it != net->alphabet.end(); it++) {
         st.AddSymbol(*it);
       }
     
     t->SetInputSymbols(&st);
-    return t;  
+    return t;
   }
 
-#endif
-#endif // HAVE_OPENFST
-
-
   }}
+
+#endif // HAVE_OPENFST_LOG || HAVE_LEAN_OPENFST_LOG
+
 #else // MAIN_TEST was defined
 #include <iostream>
 

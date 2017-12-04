@@ -34,12 +34,12 @@ extern int g_lexc_align;
 
 struct multichar_symbols {
     char *symbol;
-    short int sigma_number;
+    short sigma_number;
     struct multichar_symbols *next;
 };
 
 struct lexstates {             /* Separate list of LEXICON states */
-    char *name;    
+    char *name;
     struct states *state;
     struct lexstates *next;
     unsigned char targeted;
@@ -48,8 +48,8 @@ struct lexstates {             /* Separate list of LEXICON states */
 
 struct states {
     struct trans {
-        short int in;
-        short int out;
+        short in;
+        short out;
         struct states *target;
         struct trans *next;
     } *trans;
@@ -58,7 +58,7 @@ struct states {
     unsigned int hashval;       /* Hash for remaining symbols until next lexstate */
     unsigned char mergeable;    /* Can this state be merged with other suffix */
                                 /* 0 = NO, 1 = YES, 2 = DELETED/MERGED */
-    unsigned short int distance;      /* Number of remaining symbols until lexstate */
+    unsigned short distance;      /* Number of remaining symbols until lexstate */
     struct states *merge_with;
 };
 
@@ -85,7 +85,7 @@ static struct lexc_hashtable *hashtable;
 static struct fsm *current_regex_network;
 
 static int cwordin[1000], cwordout[1000], medcwordin[2000], medcwordout[2000], carity, lexc_statecount, maxlen, hasfinal, current_entry, net_has_unknown;
-static _Bool *mchash;
+static Boolean *mchash;
 static struct lexstates *clexicon, *ctarget;
 
 static char *mystrncpy(char *dest, char *src, int len);
@@ -173,7 +173,7 @@ void lexc_init() {
 
     maxlen = 0;
 
-    mchash = xxcalloc(256*256, sizeof(_Bool));
+    mchash = xxcalloc(256*256, sizeof(Boolean));
     for (i=0; i< SIGMA_HASH_TABLESIZE; i++) {
         (hashtable+i)->symbol = NULL;
         (hashtable+i)->sigma_number = -1;
@@ -188,7 +188,7 @@ void lexc_clear_current_word() {
 }
 
 void lexc_add_state(struct states *s) {
-    struct statelist *sl;    
+    struct statelist *sl;
     sl = xxmalloc(sizeof(struct statelist));
     sl->state = s;
     s->number = -1;
@@ -222,7 +222,7 @@ void lexc_update_unknowns(int sigma_number) {
                 t->next = newtrans;
                 }
         }
-    }   
+    }
 }
 
 void lexc_add_network() {
@@ -391,7 +391,7 @@ void lexc_set_current_lexicon(char *name, int which) {
     if (which == 0) {
         clexicon = l;
 	l->has_outgoing = 1;
-    } else { 
+    } else {
         ctarget = l;
     }
 }
@@ -585,7 +585,7 @@ void lexc_pad() {
             break;
         }
         if (*(cwordin+i) == -1 && *(cwordout+i) != -1) {
-            pad = 1; /* Pad upper */ 
+            pad = 1; /* Pad upper */
         }
         else if (*(cwordin+i) != -1 && *(cwordout+i) == -1) {
             pad = 2; /* Pad lower */
@@ -685,7 +685,7 @@ void lexc_add_mc(char *symbol) {
             mcprev->next = mcnew;
         
         s = sigma_add(symbol, lexsigma);
-        mchashval = (unsigned int) ((unsigned char) *(symbol)) * 256 + (unsigned int) ((unsigned char) *(symbol+1));    
+        mchashval = (unsigned int) ((unsigned char) *(symbol)) * 256 + (unsigned int) ((unsigned char) *(symbol+1));
         lexc_add_sigma_hash(symbol, s);
         *(mchash+mchashval) = 1;
         mcnew->sigma_number = s;
@@ -795,10 +795,10 @@ void lexc_number_states() {
     }
     /* If there is no Root lexicon, the first lexicon mentioned is Root */
     if (!hasroot) {
-        for (s = statelist; s != NULL; s = s->next) {        
+        for (s = statelist; s != NULL; s = s->next) {
             if (s->next == NULL) {
                 s->state->number = 0;
-#ifdef ORIGINAL 
+#ifdef ORIGINAL
                 fprintf(stderr,"*Warning: no Root lexicon, using '%s' as Root.\n",s->state->lexstate->name);
 #else
                 if (verbose_lexc_ == 1)
@@ -824,7 +824,7 @@ void lexc_number_states() {
 	}
     }
 
-    for (s = statelist; s != NULL; s = s->next) { 
+    for (s = statelist; s != NULL; s = s->next) {
         if (s->state->number == -1) {
             s->state->number = n;
             n++;
@@ -837,11 +837,11 @@ void lexc_number_states() {
 	    fprintf(stderr,"*Warning: lexicon '%s' defined but not used\n",l->name);
             fflush(stdout);
 #else
-            if (verbose_lexc_) 
+            if (verbose_lexc_)
               {
                 fprintf(stderr,"*Warning: lexicon '%s' defined but not used\n",l->name);
                 fflush(stderr);
-              }            
+              }
 #endif
         }
         if (l->has_outgoing == 0 && strcmp(l->name, "#") != 0) {
@@ -899,7 +899,7 @@ void lexc_merge_states() {
     /* Find a suitable prime for hashing: proportional to the size of the */
     /* number of mergeable states */
 
-    for (i = 0; primes[i] < numstates/4; i++) { }    
+    for (i = 0; primes[i] < numstates/4; i++) { }
     tablesize = primes[i];
     hashstates = xxcalloc(tablesize,sizeof(struct hashstates));
 
@@ -914,7 +914,7 @@ void lexc_merge_states() {
                 newl->state = s->state;
                 newl->next = currentl->next;
                 currentl->next = newl;
-            }           
+            }
             s->state->hashval = s->state->hashval % tablesize;
             currenth = hashstates+s->state->hashval;
             if (currenth->state == NULL) {
@@ -923,7 +923,7 @@ void lexc_merge_states() {
                 newh = xxcalloc(1,sizeof(struct hashstates));
                 newh->state = s->state;
                 newh->next = currenth->next;
-                currenth->next = newh; 
+                currenth->next = newh;
             }
         }
     }
@@ -968,7 +968,7 @@ void lexc_merge_states() {
     for (s = statelist, sprev = NULL; s != NULL; ) {
         if (s->state->mergeable == 2) {
             if (sprev != NULL) {
-                sprev->next = s->next;                
+                sprev->next = s->next;
             } else {
                 statelist = s;
             }
@@ -1019,7 +1019,7 @@ struct fsm *lexc_to_fsm() {
     fprintf(stderr,"Building lexicon...\n");
     fflush(stdout);
 #else
-    if (verbose_lexc_) 
+    if (verbose_lexc_)
       {
         fprintf(stderr,"Building lexicon...\n");
         fflush(stderr);

@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #if HAVE_CONFIG_H
@@ -12,8 +12,8 @@
 #endif
 
 #include "ConvertTransducerFormat.h"
-#include "HfstTransitionGraph.h"
-#include "HfstTransducer.h"
+#include "HfstBasicTransducer.h"
+//#include "HfstTransducer.h"
 
 #ifndef MAIN_TEST
 namespace hfst { namespace implementations
@@ -21,7 +21,7 @@ namespace hfst { namespace implementations
 
   /* -----------------------------------------------------------
 
-      Conversion functions between HfstBasicTransducer and xfsm transducer. 
+      Conversion functions between HfstBasicTransducer and xfsm transducer.
 
       ---------------------------------------------------------- */
 
@@ -49,12 +49,12 @@ namespace hfst { namespace implementations
   
   /* ----------------------------------------------------------------------
 
-     Create an HfstBasicTransducer equivalent to foma transducer \a t. 
+     Create an HfstBasicTransducer equivalent to foma transducer \a t.
      
      ---------------------------------------------------------------------- */
 
   HfstBasicTransducer * ConversionFunctions::
-  xfsm_to_hfst_basic_transducer(NETptr t) 
+  xfsm_to_hfst_basic_transducer(NETptr t)
   {
     HfstBasicTransducer * result = new HfstBasicTransducer();
 
@@ -68,7 +68,7 @@ namespace hfst { namespace implementations
     while (state_ptr != NULL)
       {
         // initial state exists already
-        if (state_ptr != start_ptr) 
+        if (state_ptr != start_ptr)
           {
             (void)result->add_state();
           }
@@ -82,24 +82,24 @@ namespace hfst { namespace implementations
     HfstState result_state = result->get_max_state();
     while (state_ptr != NULL)
       {
-        if (state_ptr == start_ptr) 
+        if (state_ptr == start_ptr)
           {
             // initial state exists already in result
             xfsm_to_hfst_state.insert(std::pair<STATEptr, HfstState>(state_ptr, 0));
-            if (state_ptr->final != 0) 
+            if (state_ptr->final != 0)
               {
                 result->set_final_weight(0, 0);
               }
-          }            
+          }
         else
           {
             xfsm_to_hfst_state.insert(std::pair<STATEptr, HfstState>(state_ptr, result_state));
-            if (state_ptr->final != 0) 
+            if (state_ptr->final != 0)
               {
                 result->set_final_weight(result_state, 0);
               }
             --result_state;
-          }          
+          }
         state_ptr = state_ptr->next;
       }
 
@@ -133,12 +133,12 @@ namespace hfst { namespace implementations
 
   /* ------------------------------------------------------------------------
      
-     Create an xfsm transducer equivalent to HfstBasicTransducer \a hfst_fsm. 
+     Create an xfsm transducer equivalent to HfstBasicTransducer \a hfst_fsm.
 
      ------------------------------------------------------------------------ */
 
   NETptr ConversionFunctions::
-    hfst_basic_transducer_to_xfsm(const HfstBasicTransducer * hfst_fsm) 
+    hfst_basic_transducer_to_xfsm(const HfstBasicTransducer * hfst_fsm)
   {
     NETptr result = null_net();
 
@@ -225,7 +225,7 @@ namespace hfst { namespace implementations
         if (hfst::is_epsilon(*it) || hfst::is_unknown(*it) || hfst::is_identity(*it))
           continue;
         (void) alph_add_to(ap, XfsmTransducer::hfst_symbol_to_xfsm_symbol(it->c_str()), DONT_KEEP);
-      }    
+      }
 
     return result;
   }

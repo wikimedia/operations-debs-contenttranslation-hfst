@@ -1,0 +1,32 @@
+Multichar_Symbols
+
+% N
+% V
+% Foc
+% Cmp
+@PMATCH_INPUT_MARK@
+% Du3
+% Sg3
+% ErrSpace
+%#
+
+LEXICON Root
+DOG;
+cat% N% Cmp%#:cat DOG;
+be% V:be SPACEDOG;
+leat% V% Du3:lea UNSPACEDOG;
+leat% V% Sg3:leaba ENDLEX;
+bedog% V:be% dog ENDLEX;
+
+LEXICON ENDLEX
+#;
+
+LEXICON DOG
+dog% N:dog ENDLEX;
+ba% Foc:ba ENDLEX;
+
+LEXICON SPACEDOG
+@PMATCH_INPUT_MARK@:%  DOG;
+
+LEXICON UNSPACEDOG
+@PMATCH_INPUT_MARK@:0 DOG;

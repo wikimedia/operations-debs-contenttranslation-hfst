@@ -60,7 +60,7 @@ struct fsm *fsm_topsort (struct fsm *net) {
 	*(pathcount+i) = 0;
     }
 
-    for (i=0, lc=0; (fsm+i)->state_no != -1; i++) {        
+    for (i=0, lc=0; (fsm+i)->state_no != -1; i++) {
         lc++;
         if ((fsm+i)->target != -1) {
             (*(invcount+(fsm+i)->target))++;
@@ -117,7 +117,7 @@ struct fsm *fsm_topsort (struct fsm *net) {
                 }
             }
             curr_fsm++;
-        }       
+        }
     }
 
     /* Case (2) */
@@ -136,7 +136,7 @@ struct fsm *fsm_topsort (struct fsm *net) {
         if (curr_fsm->final_state == 1 && !overflow) {
             grand_pathcount += *(pathcount + curr_state);
             if (grand_pathcount < 0)
-                overflow = 1;           
+                overflow = 1;
         }
             
         for (; curr_fsm->state_no == curr_state; curr_fsm++) {

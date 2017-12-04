@@ -78,7 +78,7 @@ parse_options(int argc, char** argv)
           {0,0,0,0}
         };
         int option_index = 0;
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_BINARY_SHORT,
                              long_options, &option_index);
         if (-1 == c)
@@ -105,7 +105,7 @@ binaryoperate_streams(HfstInputStream& firststream, HfstInputStream& secondstrea
     firststream.open();
     secondstream.open();
     outstream.open();
-    // should be is_good? 
+    // should be is_good?
     bool bothInputs = firststream.is_good() && secondstream.is_good();
     if (firststream.get_type() != secondstream.get_type())
       {
@@ -118,7 +118,7 @@ binaryoperate_streams(HfstInputStream& firststream, HfstInputStream& secondstrea
         transducer_n++;
         if (transducer_n == 1)
         {
-            verbose_printf("Doing things with %s and %s...\n", firstfilename, 
+            verbose_printf("Doing things with %s and %s...\n", firstfilename,
                         secondfilename);
         }
         else
@@ -169,7 +169,7 @@ int main( int argc, char **argv ) {
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s and %s, writing to %s\n", 
+    verbose_printf("Reading from %s and %s, writing to %s\n",
         firstfilename, secondfilename, outfilename);
     // here starts the buffer handling part
     HfstInputStream* firststream = NULL;

@@ -8,7 +8,7 @@ rem copy ..\..\back-ends\foma\libfoma.* .
 rem copy ..\..\back-ends\openfstwin\src\lib\openfst.* .
 
 if not exist libhfst.i echo Error: missing file "libhfst.i" && ^
-exit /B 
+exit /B
 
 if not exist C:\python33\libs\python33.lib echo Error: missing file "C:\python33\libs\python33.lib" && ^
 exit /B
@@ -20,7 +20,7 @@ if not exist "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Include" echo 
 exit /B
 
 if exist "..\..\back-ends\foma\flags.c" echo Renaming foma's flags.c into _flags.c as there is a file with the same name in openfst ^
-move ..\..\back-ends\foma\flags.c ..\..\back-ends\foma\_flags.c 
+move ..\..\back-ends\foma\flags.c ..\..\back-ends\foma\_flags.c
 
 @echo ON
 
@@ -51,7 +51,9 @@ HfstStrings2FstTokenizer.cpp ^
 HfstPrintDot.cpp ^
 HfstPrintPCKimmo.cpp ^
 hfst-string-conversions.cpp ^
-implementations\HfstTransitionGraph.cpp ^
+string-utils.cpp ^
+implementations\HfstBasicTransducer.cpp ^
+implementations\HfstBasicTransition.cpp ^
 implementations\ConvertTransducerFormat.cpp ^
 implementations\HfstTropicalTransducerTransitionData.cpp ^
 implementations\ConvertTropicalWeightTransducer.cpp ^

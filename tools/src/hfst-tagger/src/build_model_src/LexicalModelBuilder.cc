@@ -40,7 +40,7 @@ void LexicalModelBuilder::store(HfstOutputStream &out, const std::string &file_n
   ModelBuilder::verbose_printf("Transforming the lexical model to "
 			       "optimized format.\n");
 
-  lexical_model.convert(HFST_OLW_TYPE); 
+  lexical_model.convert(HFST_OLW_TYPE);
  
   ModelBuilder::verbose_printf(std::string("Storing the lexical model in") +
 			       file_name + ".\n");

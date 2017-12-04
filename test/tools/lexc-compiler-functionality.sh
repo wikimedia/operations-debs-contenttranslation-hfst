@@ -15,6 +15,8 @@ LEXCTESTS="basic.cat-dog-bird.lexc basic.colons.lexc basic.comments.lexc
           basic.almost-reserved-words.lexc
           basic.regexps.lexc
           hfst.weights.lexc
+          xre.more-than-twice.lexc
+          xre.less-than-twice.lexc
           xre.automatic-multichar-symbols.lexc xre.basic.lexc 
           xre.definitions.lexc xre.months.lexc xre.nested-definitions.lexc 
           xre.numeric-star.lexc xre.sharp.lexc xre.quotations.lexc
@@ -87,7 +89,7 @@ for i in .sfst .ofst .foma ; do
             exit 1
         fi
         
-        RESULT="$f.result"
+        RESULT="$f.result.prolog"
 
      # create foma result     
      #   RESULT_GZ="$RESULT.gz"
@@ -99,7 +101,7 @@ for i in .sfst .ofst .foma ; do
      #   mv test.foma $RESULT
      #   rm tmp-foma-script
      
-        $TOOLDIR/hfst-fst2fst $FFLAG $RESULT -o $RESULT.tmp
+        $TOOLDIR/hfst-txt2fst --prolog $FFLAG -i $RESULT -o $RESULT.tmp
            
          #echo "comparing file: $f"
          if ! $TOOLDIR/hfst-compare -e -s $RESULT.tmp test ; then
@@ -111,7 +113,7 @@ for i in .sfst .ofst .foma ; do
         
         
         # check flag results
-        RESULT="$f.flag.result"
+        RESULT="$f.flag.result.prolog"
  
 
         if ! $TOOLDIR/hfst-lexc -F $FFLAG $srcdir/$f -o test 2> /dev/null; then
@@ -119,7 +121,7 @@ for i in .sfst .ofst .foma ; do
             exit 1
         fi
         
-        $TOOLDIR/hfst-fst2fst $FFLAG $RESULT -o $RESULT.tmp
+        $TOOLDIR/hfst-txt2fst --prolog $FFLAG -i $RESULT -o $RESULT.tmp
            
          #echo "comparing flag file: $f"
          if ! $TOOLDIR/hfst-compare -e -s $RESULT.tmp test ; then

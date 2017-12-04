@@ -1,13 +1,19 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
+// This is a swig interface file that is used to create python bindings for HFST.
+// Everything will be visible under module 'libhfst', but will be wrapped under
+// package 'hfst' and its subpackages 'hfst.exceptions' and 'hfst.rules' (see
+// folder 'hfst' in the current directory).
+
 %module libhfst
+// Needed for type conversions between c++ and python.
 %include "std_string.i"
 %include "std_vector.i"
 %include "std_pair.i"
@@ -15,12 +21,14 @@
 %include "std_map.i"
 %include "exception.i"
 
-%feature("autodoc", "3");
+// %feature("autodoc", "3");
 
+// We want warnings to be printed to standard error.
 %init %{
     hfst::set_warning_stream(&std::cerr);
 %}
 
+// Make swig aware of what hfst offers.
 %{
 #define HFSTIMPORT
 #include "HfstDataTypes.h"
@@ -30,621 +38,39 @@
 #include "HfstExceptionDefs.h"
 #include "HfstTokenizer.h"
 #include "HfstFlagDiacritics.h"
-//#include "HfstRules.h" ???
+#include "HfstXeroxRules.h"
 #include "parsers/XreCompiler.h"
 #include "parsers/LexcCompiler.h"
-#include "parsers/PmatchCompiler.h"
 #include "parsers/XfstCompiler.h"
-#include "implementations/HfstTransitionGraph.h"
+#include "parsers/SfstCompiler.h"
+#include "implementations/HfstBasicTransition.h"
+#include "implementations/HfstBasicTransducer.h"
 #include "implementations/optimized-lookup/pmatch.h"
+#include "parsers/TwolcCompiler.h"
+namespace hfst { typedef std::vector<hfst::xeroxRules::Rule> HfstRuleVector; }
 
-// todo instead: #include "hfst_extensions.h"
-
-namespace hfst {
-
-  class HfstFile {
-    private:
-      FILE * file;
-    public:  
-      HfstFile();
-      ~HfstFile();
-      void set_file(FILE * f);
-      FILE * get_file();
-      void close();
-      void write(const char * str);
-      bool is_eof(void);
-  };
-
-  HfstFile::HfstFile(): file(NULL){};
-  HfstFile::~HfstFile() {};
-  void HfstFile::set_file(FILE * f) { file = f; };
-  FILE * HfstFile::get_file() { return file; };
-  void HfstFile::close() { if (file != stdout && file != stderr && file != stdin) { fclose(file); } };
-  void HfstFile::write(const char * str) { fprintf(file, "%s", str); };
-  bool HfstFile::is_eof(void) { return (feof(file) != 0); }; 
-
-  HfstFile hfst_open(const char * filename, const char * mode) {
-    FILE * f = fopen(filename, mode);
-    HfstFile file;
-    file.set_file(f);
-    return file;
-  };
-
-  HfstFile hfst_stdin() {
-    HfstFile file;
-    file.set_file(stdin);
-    return file;
-  };
-
-  HfstFile hfst_stdout() {
-    HfstFile file;
-    file.set_file(stdout);
-    return file;
-  };
-
-typedef std::vector<float> FloatVector;
-
-// Add Default implementation type
-hfst::ImplementationType type = hfst::TROPICAL_OPENFST_TYPE;
-void set_default_fst_type(hfst::ImplementationType t) { type = t; }
-hfst::ImplementationType get_default_fst_type() { return type; }
-
-std::string fst_type_to_string(hfst::ImplementationType t)
-{
-        std::string retval = hfst::implementation_type_to_string(t);
-        return retval;
-}
-bool is_diacritic(const std::string & symbol)
-{
-        return hfst::FdOperation::is_diacritic(symbol);
-}
-
-// Copy functions       
-HfstTransducer * copy_hfst_transducer(const hfst::HfstTransducer & t)
-{
-        return new HfstTransducer(t);
-}
-HfstTransducer * copy_hfst_transducer_from_basic_transducer(const hfst::implementations::HfstBasicTransducer & t)
-{
-        return new HfstTransducer(t, type);
-}
-HfstTransducer * copy_hfst_transducer_from_basic_transducer(const hfst::implementations::HfstBasicTransducer & t, hfst::ImplementationType impl)
-{
-        return new HfstTransducer(t, impl);
-}
-
-// Mostly copied from file 'tools/src/hfst-pmatch2fst.cc'.
-// TODO: HfstTransducer pointers in variable 'definitions' need to be deleted manually?
-std::vector<hfst::HfstTransducer> compile_pmatch_expression(const std::string & pmatch)
-{
-    std::vector<hfst::HfstTransducer> retval;
-    hfst::pmatch::PmatchCompiler comp(get_default_fst_type());
-    comp.set_verbose(false/*verbose*/);
-    comp.set_flatten(false/*flatten*/);
-    std::map<std::string, hfst::HfstTransducer*> definitions = comp.compile(pmatch);
-
-    // A dummy transducer with an alphabet with all the symbols
-    hfst::HfstTransducer harmonizer(get_default_fst_type());
-
-    // First we need to collect a unified alphabet from all the transducers.
-    hfst::StringSet symbols_seen;
-    for (std::map<std::string, hfst::HfstTransducer *>::const_iterator it =
-             definitions.begin(); it != definitions.end(); ++it) {
-        hfst::StringSet string_set = it->second->get_alphabet();
-        for (hfst::StringSet::const_iterator sym = string_set.begin();
-             sym != string_set.end(); ++sym) {
-            if (symbols_seen.count(*sym) == 0) {
-                harmonizer.disjunct(hfst::HfstTransducer(*sym, get_default_fst_type()));
-                symbols_seen.insert(*sym);
-            }
-        }
-    }
-    if (symbols_seen.size() == 0) {
-        // We don't recognise anything, go home early
-        std::cerr << "Empty ruleset, nothing to write\n";
-        throw HfstException(); // TODO
-    }
-
-    // Then we convert it...
-    harmonizer.convert(hfst::HFST_OLW_TYPE);
-    // Use these for naughty intermediate steps to make sure
-    // everything has the same alphabet
-    hfst::HfstBasicTransducer * intermediate_tmp;
-    hfst_ol::Transducer * harmonized_tmp;
-    hfst::HfstTransducer * output_tmp;
-
-    // When done compiling everything, look for TOP and output it first.
-    if (definitions.count("TOP") == 1) {
-        intermediate_tmp = hfst::implementations::ConversionFunctions::
-            hfst_transducer_to_hfst_basic_transducer(*definitions["TOP"]);
-        harmonized_tmp = hfst::implementations::ConversionFunctions::
-            hfst_basic_transducer_to_hfst_ol(intermediate_tmp,
-                                             true, // weighted
-                                             "", // no special options
-                                             &harmonizer); // harmonize with this
-        output_tmp = hfst::implementations::ConversionFunctions::
-            hfst_ol_to_hfst_transducer(harmonized_tmp);
-        output_tmp->set_name("TOP");
-        retval.push_back(*output_tmp);
-        delete definitions["TOP"];
-        definitions.erase("TOP");
-        delete intermediate_tmp;
-        delete output_tmp;
-
-        for (std::map<std::string, hfst::HfstTransducer *>::iterator it =
-                 definitions.begin(); it != definitions.end(); ++it) {
-            intermediate_tmp = hfst::implementations::ConversionFunctions::
-                hfst_transducer_to_hfst_basic_transducer(*(it->second));
-            harmonized_tmp = hfst::implementations::ConversionFunctions::
-                hfst_basic_transducer_to_hfst_ol(intermediate_tmp,
-                                                 true, // weighted
-                                                 "", // no special options
-                                                 &harmonizer); // harmonize with this
-            output_tmp = hfst::implementations::ConversionFunctions::
-                hfst_ol_to_hfst_transducer(harmonized_tmp);
-            output_tmp->set_name(it->first);
-            retval.push_back(*output_tmp);
-            delete it->second;
-            delete intermediate_tmp;
-            delete output_tmp;
-        }
-    } else {
-        std::cerr << "Empty ruleset, nothing to write\n";
-        throw HfstException(); // TODO
-    }
-    return retval;
-}
-
-
-/* Wrapper variables for an IOString output. */
-std::string hfst_regex_error_message("");
-std::string get_hfst_regex_error_message() { return hfst::hfst_regex_error_message; }
-
-hfst::HfstTransducer * hfst_regex(hfst::xre::XreCompiler & comp, const std::string & regex_string, const std::string & error_stream)
-{
-        hfst_regex_error_message="";
-        
-        if (error_stream == "cout")
-        {
-          comp.set_error_stream(&std::cout);
-          return comp.compile(regex_string);
-        }
-        else if (error_stream == "cerr")
-        {
-          comp.set_error_stream(&std::cerr);
-          return comp.compile(regex_string);
-        }
-        else
-        {
-          std::ostringstream os(std::ostringstream::ate);
-          comp.set_error_stream(&os);
-          hfst::set_warning_stream(&os);
-          hfst::HfstTransducer * retval = comp.compile(regex_string);
-          hfst_regex_error_message = os.str();
-          hfst::set_warning_stream(&std::cerr);
-          return retval;
-        }
-}
-
-/* Wrapper variables for an IOString output. */
-std::string hfst_lexc_output("");
-std::string get_hfst_lexc_output() { return hfst::hfst_lexc_output; }
-
-hfst::HfstTransducer * hfst_compile_lexc(hfst::lexc::LexcCompiler & comp, const std::string & filename, const std::string & error_stream)
-{
-        hfst_lexc_output="";
-
-        if (error_stream == "cout")
-        {
-          comp.set_error_stream(&std::cout);
-          if (comp.getVerbosity() > 1)
-            std::cout << "Parsing the lexc file..." << std::endl;
-          comp.parse(filename.c_str());
-          if (comp.getVerbosity() > 1)
-            std::cout << "Compiling..." << std::endl;
-          hfst::HfstTransducer * retval = comp.compileLexical();
-          if (comp.getVerbosity() > 1)
-            std::cout << "Compilation done." << std::endl;
-          return retval;
-        }
-        else if (error_stream == "cerr")
-        {
-          comp.set_error_stream(&std::cerr);
-          if (comp.getVerbosity() > 1)
-            std::cerr << "Parsing the lexc file..." << std::endl;
-          comp.parse(filename.c_str());
-          if (comp.getVerbosity() > 1)
-            std::cerr << "Compiling..." << std::endl;
-          hfst::HfstTransducer * retval = comp.compileLexical();
-          if (comp.getVerbosity() > 1)
-            std::cerr << "Compilation done." << std::endl;
-          return retval;
-        }
-        else
-        {
-          std::ostringstream os(std::ostringstream::ate);
-          comp.set_error_stream(&os);
-          hfst::set_warning_stream(&os);
-          if (comp.getVerbosity() > 1)
-            os << "Parsing the lexc file..." << std::endl;
-          comp.parse(filename.c_str());
-          if (comp.getVerbosity() > 1)
-            os << "Compiling..." << std::endl;
-          hfst::HfstTransducer * retval = comp.compileLexical();
-          if (comp.getVerbosity() > 1)
-            os << "Compilation done." << std::endl;
-          hfst_lexc_output = os.str();
-          hfst::set_warning_stream(&std::cerr);
-          return retval;
-        }        
-}
-
-
-/* Wrapper variables for an IOString output. */
-std::string hfst_xfst_string_one("");
-char * get_hfst_xfst_string_one() { return strdup(hfst::hfst_xfst_string_one.c_str()); }
-std::string hfst_xfst_string_two("");
-char * get_hfst_xfst_string_two() { return strdup(hfst::hfst_xfst_string_two.c_str()); }
-
-int hfst_compile_xfst_to_string_one(hfst::xfst::XfstCompiler & comp, std::string input)
-{
-        hfst::hfst_xfst_string_one="";
-        hfst::hfst_xfst_string_two="";
-
-        std::ostringstream os(std::ostringstream::ate);
-        hfst::set_warning_stream(&os);
-        comp.set_output_stream(os);
-        comp.set_error_stream(os);
-        int retval = comp.parse_line(input);
-        hfst::hfst_xfst_string_one = os.str();
-        hfst::set_warning_stream(&std::cerr);
-        return retval;
-}
-
-int hfst_compile_xfst(hfst::xfst::XfstCompiler & comp, std::string input, const std::string & output_stream, const std::string & error_stream)
-{
-        hfst::hfst_xfst_string_one="";
-        hfst::hfst_xfst_string_two="";
-        std::ostringstream * os1 = NULL;
-        std::ostringstream * os2 = NULL;
-
-        if (output_stream == "cout")
-          comp.set_output_stream(std::cout);
-        else if (output_stream == "cerr")
-          comp.set_output_stream(std::cerr);
-        else {
-          os1 = new std::ostringstream(std::ostringstream::ate);
-          comp.set_output_stream(*os1);
-        }
-
-        if (error_stream == "cout") {
-          comp.set_error_stream(std::cout);
-          hfst::set_warning_stream(&std::cout);
-        }
-        else if (error_stream == "cerr")
-          comp.set_error_stream(std::cerr);
-        else {
-          os2 = new std::ostringstream(std::ostringstream::ate);
-          comp.set_error_stream(*os2);
-          hfst::set_warning_stream(os2);
-        }
-
-        int retval = comp.parse_line(input);
-        hfst::set_warning_stream(&std::cerr);
-        
-        if (output_stream == "") {
-          hfst::hfst_xfst_string_one = os1->str();
-          delete os1;
-        }
-        if (error_stream == "") {
-          hfst::hfst_xfst_string_two = os2->str();
-          delete os2;
-        }
-
-        return retval;
-}
-
-
-
-hfst_ol::PmatchContainer * create_pmatch_container(const std::string & filename)
-{
-    std::ifstream instream(filename.c_str(),
-                           std::ifstream::binary);
-    if (!instream.good()) {
-        return NULL;
-    }
-    return new hfst_ol::PmatchContainer(instream);
-}
-
-hfst::HfstOutputStream * create_hfst_output_stream(const std::string & filename, hfst::ImplementationType type, bool hfst_format)
-{
-        if (filename == "") { return new hfst::HfstOutputStream(type, hfst_format); }
-        else { return new hfst::HfstOutputStream(filename, type, hfst_format); }
-}
-
-hfst::HfstTransducer * read_att(hfst::HfstFile & f, std::string epsilon="@_EPSILON_SYMBOL_@")
-{
-      return new hfst::HfstTransducer(f.get_file(), type, epsilon);
-}
-
-hfst::HfstTransducer * read_prolog(hfst::HfstFile & f)
-{
-    unsigned int linecount = 0;
-    hfst::implementations::HfstBasicTransducer fsm = hfst::implementations::HfstBasicTransducer::read_in_prolog_format(f.get_file(), linecount);
-    return new hfst::HfstTransducer(fsm, hfst::type);
-}
-
-std::string one_level_paths_to_string(const hfst::HfstOneLevelPaths & paths)
-{
-    std::ostringstream oss;
-    for(hfst::HfstOneLevelPaths::const_iterator it = paths.begin(); it != paths.end(); it++)
-    {   
-      for (hfst::StringVector::const_iterator svit = it->second.begin(); svit != it->second.end(); svit++)
-      {
-        oss << *svit;
-      }
-      oss << "\t" << it->first << std::endl;
-    }
-    return oss.str();
-}
-
-hfst::HfstOneLevelPaths extract_output_side(const hfst::HfstTwoLevelPaths & paths)
-{
-    hfst::HfstOneLevelPaths result;
-    for(hfst::HfstTwoLevelPaths::const_iterator it = paths.begin(); it != paths.end(); it++)
-    {  
-      hfst::StringVector sv; 
-      for (hfst::StringPairVector::const_iterator svit = it->second.begin(); svit != it->second.end(); svit++)
-      {
-        sv.push_back(svit->second);
-      }
-      result.insert(std::pair<float, hfst::StringVector>(it->first, sv));
-    }
-    return result;
-}
-
-std::string two_level_paths_to_string(const hfst::HfstTwoLevelPaths & paths)
-{
-    std::ostringstream oss;
-    for(hfst::HfstTwoLevelPaths::const_iterator it = paths.begin(); it != paths.end(); it++)
-    {   
-      std::string input("");
-      std::string output("");
-      for (hfst::StringPairVector::const_iterator svit = it->second.begin(); svit != it->second.end(); svit++)
-      {
-        input += svit->first;
-        output += svit->second;
-      }
-      oss << input << ":" << output << "\t" << it->first << std::endl;
-    }
-    return oss.str();
-}
-
-/** Wrappers for lookup functions **/
-
-HfstOneLevelPaths lookup_vector_(const hfst::HfstTransducer * tr, bool fd, const StringVector& s, int limit = -1, double time_cutoff = 0.0) throw(FunctionNotImplementedException)
-{
-  if (tr->get_type() == hfst::HFST_OL_TYPE || tr->get_type() == hfst::HFST_OLW_TYPE)
-    {
-      if (fd) 
-        { return *(tr->lookup_fd(s, limit, time_cutoff)); }
-      else
-        { return *(tr->lookup(s, limit, time_cutoff)); }
-    }
-  hfst::HfstTransducer input(s, tr->get_type());
-  input.compose(*(tr));
-  input.minimize();
-  hfst::HfstTwoLevelPaths result;
-  if (fd)
-    { input.extract_paths_fd(result, limit, -1); }
-  else
-    { input.extract_paths(result, limit, -1); }
-  return hfst::extract_output_side(result);
-}
-
-HfstOneLevelPaths lookup_string_(const hfst::HfstTransducer * tr, bool fd, const std::string& s, int limit = -1, double time_cutoff = 0.0) throw(FunctionNotImplementedException)
-{
-  if (tr->get_type() == hfst::HFST_OL_TYPE || tr->get_type() == hfst::HFST_OLW_TYPE)
-    {
-      if (fd) 
-        { return *(tr->lookup_fd(s, limit, time_cutoff)); }
-      else
-        { return *(tr->lookup(s, limit, time_cutoff)); }
-    }
-  hfst::StringSet alpha = tr->get_alphabet();
-  hfst::HfstTokenizer tok;
-  for (hfst::StringSet::const_iterator it = alpha.begin(); it != alpha.end(); it++)
-    { tok.add_multichar_symbol(*it); }
-  hfst::HfstTransducer input(s, tok, tr->get_type());
-  input.compose(*(tr));
-  input.minimize();
-  hfst::HfstTwoLevelPaths result;
-  if (fd)
-    { input.extract_paths_fd(result, limit, -1); }
-  else
-    { input.extract_paths(result, limit, -1); }
-  return hfst::extract_output_side(result);
-}
-
-/** Wrappers for rule functions. **/
-
-namespace hfst_rules {
-
-  HfstTransducer two_level_if(const HfstTransducerPair & context, const StringPairSet & mappings, const StringPairSet & alphabet) 
-  {
-    hfst::HfstTransducerPair context_(context);
-    StringPairSet mappings_(mappings);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::two_level_if(context_, mappings_, alphabet_);
-  }
-  HfstTransducer two_level_only_if(const HfstTransducerPair &context, const StringPairSet &mappings, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPair context_(context);
-    StringPairSet mappings_(mappings);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::two_level_only_if(context_, mappings_, alphabet_);
-  }
-  HfstTransducer two_level_if_and_only_if(const HfstTransducerPair &context, const StringPairSet &mappings, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPair context_(context);
-    StringPairSet mappings_(mappings);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::two_level_if_and_only_if(context_, mappings_, alphabet_);
-  }
-  HfstTransducer replace_down(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPair context_(context);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::replace_down(context_, mapping_, optional, alphabet_);
-  }
-  HfstTransducer replace_down_karttunen(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPair context_(context);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::replace_down_karttunen(context_, mapping_, optional, alphabet_);
-  }
-  HfstTransducer replace_right(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPair context_(context);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::replace_right(context_, mapping_, optional, alphabet_);
-  }
-  HfstTransducer replace_left(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPair context_(context);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::replace_left(context_, mapping_, optional, alphabet_);
-  }
-  HfstTransducer replace_up(const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::replace_up(mapping_, optional, alphabet_);
-  }
-  HfstTransducer replace_down(const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet)  
-  {
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::replace_down(mapping_, optional, alphabet_);
-  }
-  HfstTransducer left_replace_up(const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::left_replace_up(mapping_, optional, alphabet_);
-  }
-  HfstTransducer left_replace_up(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPair context_(context);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::left_replace_up(context_, mapping_, optional, alphabet_);
-  }
-  HfstTransducer left_replace_down(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPair context_(context);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::left_replace_down(context_, mapping_, optional, alphabet_);
-  }
-  HfstTransducer left_replace_down_karttunen(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPair context_(context);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::left_replace_down_karttunen(context_, mapping_, optional, alphabet_);
-  }
-  HfstTransducer left_replace_left(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPair context_(context);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::left_replace_left(context_, mapping_, optional, alphabet_);
-  }
-  HfstTransducer left_replace_right(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPair context_(context);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::left_replace_right(context_, mapping_, optional, alphabet_);
-  }
-  HfstTransducer restriction(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPairVector contexts_(contexts);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::restriction(contexts_, mapping_, alphabet_);
-  }
-  HfstTransducer coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPairVector contexts_(contexts);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::coercion(contexts_, mapping_, alphabet_);
-  }
-  HfstTransducer restriction_and_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPairVector contexts_(contexts);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::restriction_and_coercion(contexts_, mapping_, alphabet_);
-  }
-  HfstTransducer surface_restriction(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPairVector contexts_(contexts);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::surface_restriction(contexts_, mapping_, alphabet_);
-  }
-  HfstTransducer surface_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPairVector contexts_(contexts);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::surface_coercion(contexts_, mapping_, alphabet_);
-  }
-  HfstTransducer surface_restriction_and_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPairVector contexts_(contexts);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::surface_restriction_and_coercion(contexts_, mapping_, alphabet_);
-  }
-  HfstTransducer deep_restriction(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPairVector contexts_(contexts);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::deep_restriction(contexts_, mapping_, alphabet_);
-  }
-  HfstTransducer deep_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPairVector contexts_(contexts);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::deep_coercion(contexts_, mapping_, alphabet_);
-  }
-  HfstTransducer deep_restriction_and_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet)
-  {
-    hfst::HfstTransducerPairVector contexts_(contexts);
-    hfst::HfstTransducer mapping_(mapping);
-    StringPairSet alphabet_(alphabet);
-    return hfst::rules::deep_restriction_and_coercion(contexts_, mapping_, alphabet_);
-  }
-
-}
-
-}
-
+// Most of C++ extension code is located in separate files.
+#include "hfst_regex_extensions.cpp"
+#include "hfst_extensions.cpp"
+#include "hfst_lexc_extensions.cpp"
+#include "hfst_xfst_extensions.cpp"
+#include "hfst_pmatch_extensions.cpp"
+#include "hfst_sfst_extensions.cpp"
+#include "hfst_lookup_extensions.cpp"
+#include "hfst_rules_extensions.cpp"
+#include "hfst_prolog_extensions.cpp"
 %}
 
 #ifdef _MSC_VER
 %include <windows.h>
 #endif
+
+// Templates needed for conversion between c++ and python datatypes.
+//
+// Note that templating order matters; simple templates used as part of
+// more complex templates must be defined first, e.g. StringPair must be
+// defined before StringPairSet. Also templates that are not used as such
+// but are used as part of other templates must be defined.
 
 %include "typemaps.i"
 
@@ -658,71 +84,69 @@ namespace std {
 %template(HfstTransducerVector) vector<hfst::HfstTransducer>;
 %template(HfstSymbolSubstitutions) map<string, string>;
 %template(HfstSymbolPairSubstitutions) map<pair<string, string>, pair<string, string> >;
-%template(FooBarBaz) vector<hfst::implementations::HfstBasicTransition>;
+// needed for HfstBasicTransducer.states()
 %template(BarBazFoo) vector<unsigned int>;
-%template(HfstBasicStates) vector<vector<hfst::implementations::HfstBasicTransition> >;
+%template(HfstBasicTransitions) vector<hfst::implementations::HfstBasicTransition>;
 %template(HfstOneLevelPath) pair<float, vector<string> >;
 %template(HfstOneLevelPaths) set<pair<float, vector<string> > >;
 %template(HfstTwoLevelPath) pair<float, vector<pair<string, string > > >;
 %template(HfstTwoLevelPaths) set<pair<float, vector<pair<string, string > > > >;
 %template(HfstTransducerPair) pair<hfst::HfstTransducer, hfst::HfstTransducer>;
 %template(HfstTransducerPairVector) vector<pair<hfst::HfstTransducer, hfst::HfstTransducer> >;
+%template(HfstRuleVector) vector<hfst::xeroxRules::Rule>;
 }
 
-//%ignore hfst::HfstTransducer::lookup_fd(const std::string & s) const;
+
+%include "docstrings.i"
+
+// ****************************************************** //
+// ********** WHAT IS MADE AVAILABLE ON PYTHON ********** //
+// ****************************************************** //
+
+// *** HfstException and its subclasses (will be wrapped under module hfst.exceptions). *** //
 
 class HfstException
 {
-public:
- HfstException();
- HfstException(const std::string&, const std::string&, size_t);
- ~HfstException();
+  public:
+    HfstException();
+    HfstException(const std::string&, const std::string&, size_t);
+    ~HfstException();
+    std::string what() const;
 };
 
-class HfstTransducerTypeMismatchException : public HfstException { public: HfstTransducerTypeMismatchException(const std::string&, const std::string&, size_t); ~HfstTransducerTypeMismatchException(); };
-class ImplementationTypeNotAvailableException : public HfstException { public: ImplementationTypeNotAvailableException(const std::string&, const std::string&, size_t); ~ImplementationTypeNotAvailableException(); };
-class FunctionNotImplementedException : public HfstException { public: FunctionNotImplementedException(const std::string&, const std::string&, size_t); ~FunctionNotImplementedException(); };
-class StreamNotReadableException : public HfstException { public: StreamNotReadableException(const std::string&, const std::string&, size_t); ~StreamNotReadableException(); };
-class StreamCannotBeWrittenException : public HfstException { public: StreamCannotBeWrittenException(const std::string&, const std::string&, size_t); ~StreamCannotBeWrittenException(); };
-class StreamIsClosedException : public HfstException { public: StreamIsClosedException(const std::string&, const std::string&, size_t); ~StreamIsClosedException(); };
-class EndOfStreamException : public HfstException { public: EndOfStreamException(const std::string&, const std::string&, size_t); ~EndOfStreamException(); };
-class TransducerIsCyclicException : public HfstException { public: TransducerIsCyclicException(const std::string&, const std::string&, size_t); ~TransducerIsCyclicException(); };
-class NotTransducerStreamException : public HfstException { public: NotTransducerStreamException(const std::string&, const std::string&, size_t); ~NotTransducerStreamException(); };
-class NotValidAttFormatException : public HfstException { public: NotValidAttFormatException(const std::string&, const std::string&, size_t); ~NotValidAttFormatException(); };
-class NotValidPrologFormatException : public HfstException { public: NotValidPrologFormatException(const std::string&, const std::string&, size_t); ~NotValidPrologFormatException(); };
-class NotValidLexcFormatException : public HfstException { public: NotValidLexcFormatException(const std::string&, const std::string&, size_t); ~NotValidLexcFormatException(); };
-class StateIsNotFinalException : public HfstException { public: StateIsNotFinalException(const std::string&, const std::string&, size_t); ~StateIsNotFinalException(); };
-class ContextTransducersAreNotAutomataException : public HfstException { public: ContextTransducersAreNotAutomataException(const std::string&, const std::string&, size_t); ~ContextTransducersAreNotAutomataException(); };
-class TransducersAreNotAutomataException : public HfstException { public: TransducersAreNotAutomataException(const std::string&, const std::string&, size_t); ~TransducersAreNotAutomataException(); };
-class StateIndexOutOfBoundsException : public HfstException { public: StateIndexOutOfBoundsException(const std::string&, const std::string&, size_t); ~StateIndexOutOfBoundsException(); };
-class TransducerHeaderException : public HfstException { public: TransducerHeaderException(const std::string&, const std::string&, size_t); ~TransducerHeaderException(); };
-class MissingOpenFstInputSymbolTableException : public HfstException { public: MissingOpenFstInputSymbolTableException(const std::string&, const std::string&, size_t); ~MissingOpenFstInputSymbolTableException(); };
-class TransducerTypeMismatchException : public HfstException { public: TransducerTypeMismatchException(const std::string&, const std::string&, size_t); ~TransducerTypeMismatchException(); };
-class EmptySetOfContextsException : public HfstException { public: EmptySetOfContextsException(const std::string&, const std::string&, size_t); ~EmptySetOfContextsException(); };
-class SpecifiedTypeRequiredException : public HfstException { public: SpecifiedTypeRequiredException(const std::string&, const std::string&, size_t); ~SpecifiedTypeRequiredException(); };
-class HfstFatalException : public HfstException { public: HfstFatalException(const std::string&, const std::string&, size_t); ~HfstFatalException(); };
-class TransducerHasWrongTypeException : public HfstException { public: TransducerHasWrongTypeException(const std::string&, const std::string&, size_t); ~TransducerHasWrongTypeException(); };
-class IncorrectUtf8CodingException : public HfstException { public: IncorrectUtf8CodingException(const std::string&, const std::string&, size_t); ~IncorrectUtf8CodingException(); };
-class EmptyStringException : public HfstException { public: EmptyStringException(const std::string&, const std::string&, size_t); ~EmptyStringException(); };
-class SymbolNotFoundException : public HfstException { public: SymbolNotFoundException(const std::string&, const std::string&, size_t); ~SymbolNotFoundException(); };
-class MetadataException : public HfstException { public: MetadataException(const std::string&, const std::string&, size_t); ~MetadataException(); };
-class FlagDiacriticsAreNotIdentitiesException : public HfstException { public: FlagDiacriticsAreNotIdentitiesException(const std::string&, const std::string&, size_t); ~FlagDiacriticsAreNotIdentitiesException(); };
+class HfstTransducerTypeMismatchException : public HfstException { public: HfstTransducerTypeMismatchException(const std::string&, const std::string&, size_t); ~HfstTransducerTypeMismatchException(); std::string what() const; };
+class ImplementationTypeNotAvailableException : public HfstException { public: ImplementationTypeNotAvailableException(const std::string&, const std::string&, size_t, hfst::ImplementationType type); ~ImplementationTypeNotAvailableException(); std::string what() const; hfst::ImplementationType get_type() const; };
+class FunctionNotImplementedException : public HfstException { public: FunctionNotImplementedException(const std::string&, const std::string&, size_t); ~FunctionNotImplementedException(); std::string what() const; };
+class StreamNotReadableException : public HfstException { public: StreamNotReadableException(const std::string&, const std::string&, size_t); ~StreamNotReadableException(); std::string what() const; };
+class StreamCannotBeWrittenException : public HfstException { public: StreamCannotBeWrittenException(const std::string&, const std::string&, size_t); ~StreamCannotBeWrittenException(); std::string what() const; };
+class StreamIsClosedException : public HfstException { public: StreamIsClosedException(const std::string&, const std::string&, size_t); ~StreamIsClosedException(); std::string what() const; };
+class EndOfStreamException : public HfstException { public: EndOfStreamException(const std::string&, const std::string&, size_t); ~EndOfStreamException(); std::string what() const; };
+class TransducerIsCyclicException : public HfstException { public: TransducerIsCyclicException(const std::string&, const std::string&, size_t); ~TransducerIsCyclicException(); std::string what() const; };
+class NotTransducerStreamException : public HfstException { public: NotTransducerStreamException(const std::string&, const std::string&, size_t); ~NotTransducerStreamException(); std::string what() const; };
+class NotValidAttFormatException : public HfstException { public: NotValidAttFormatException(const std::string&, const std::string&, size_t); ~NotValidAttFormatException(); std::string what() const; };
+class NotValidPrologFormatException : public HfstException { public: NotValidPrologFormatException(const std::string&, const std::string&, size_t); ~NotValidPrologFormatException(); std::string what() const; };
+class NotValidLexcFormatException : public HfstException { public: NotValidLexcFormatException(const std::string&, const std::string&, size_t); ~NotValidLexcFormatException(); std::string what() const; };
+class StateIsNotFinalException : public HfstException { public: StateIsNotFinalException(const std::string&, const std::string&, size_t); ~StateIsNotFinalException(); std::string what() const; };
+class ContextTransducersAreNotAutomataException : public HfstException { public: ContextTransducersAreNotAutomataException(const std::string&, const std::string&, size_t); ~ContextTransducersAreNotAutomataException(); std::string what() const; };
+class TransducersAreNotAutomataException : public HfstException { public: TransducersAreNotAutomataException(const std::string&, const std::string&, size_t); ~TransducersAreNotAutomataException(); std::string what() const; };
+class StateIndexOutOfBoundsException : public HfstException { public: StateIndexOutOfBoundsException(const std::string&, const std::string&, size_t); ~StateIndexOutOfBoundsException(); std::string what() const; };
+class TransducerHeaderException : public HfstException { public: TransducerHeaderException(const std::string&, const std::string&, size_t); ~TransducerHeaderException(); std::string what() const; };
+class MissingOpenFstInputSymbolTableException : public HfstException { public: MissingOpenFstInputSymbolTableException(const std::string&, const std::string&, size_t); ~MissingOpenFstInputSymbolTableException(); std::string what() const; };
+class TransducerTypeMismatchException : public HfstException { public: TransducerTypeMismatchException(const std::string&, const std::string&, size_t); ~TransducerTypeMismatchException(); std::string what() const; };
+class EmptySetOfContextsException : public HfstException { public: EmptySetOfContextsException(const std::string&, const std::string&, size_t); ~EmptySetOfContextsException(); std::string what() const; };
+class SpecifiedTypeRequiredException : public HfstException { public: SpecifiedTypeRequiredException(const std::string&, const std::string&, size_t); ~SpecifiedTypeRequiredException(); std::string what() const; };
+class HfstFatalException : public HfstException { public: HfstFatalException(const std::string&, const std::string&, size_t); ~HfstFatalException(); std::string what() const; };
+class TransducerHasWrongTypeException : public HfstException { public: TransducerHasWrongTypeException(const std::string&, const std::string&, size_t); ~TransducerHasWrongTypeException(); std::string what() const; };
+class IncorrectUtf8CodingException : public HfstException { public: IncorrectUtf8CodingException(const std::string&, const std::string&, size_t); ~IncorrectUtf8CodingException(); std::string what() const; };
+class EmptyStringException : public HfstException { public: EmptyStringException(const std::string&, const std::string&, size_t); ~EmptyStringException(); std::string what() const; };
+class SymbolNotFoundException : public HfstException { public: SymbolNotFoundException(const std::string&, const std::string&, size_t); ~SymbolNotFoundException(); std::string what() const; };
+class MetadataException : public HfstException { public: MetadataException(const std::string&, const std::string&, size_t); ~MetadataException(); std::string what() const; };
+class FlagDiacriticsAreNotIdentitiesException : public HfstException { public: FlagDiacriticsAreNotIdentitiesException(const std::string&, const std::string&, size_t); ~FlagDiacriticsAreNotIdentitiesException(); std::string what() const; };
 
 namespace hfst
 {
 
-class HfstFile {
-  public:
-    HfstFile();
-    ~HfstFile();
-    void write(const char * str);
-    void close();
-    bool is_eof(void);
-};
-
-HfstFile hfst_stdout();
-HfstFile hfst_stdin();
-HfstFile hfst_open(const char * filename, const char * mode);
+// Needed for conversion between c++ and python datatypes.
 
 typedef std::vector<std::string> StringVector;
 typedef std::pair<std::string, std::string> StringPair;
@@ -739,88 +163,110 @@ typedef std::map<std::pair<std::string, std::string>, std::pair<std::string, std
 typedef std::vector<hfst::HfstTransducer> HfstTransducerVector;
 typedef std::pair<hfst::HfstTransducer, hfst::HfstTransducer> HfstTransducerPair;
 typedef std::vector<std::pair<hfst::HfstTransducer, hfst::HfstTransducer> > HfstTransducerPairVector;
+typedef std::vector<hfst::xeroxRules::Rule> HfstRuleVector;
+
+// *** Some enumerations *** //
 
 enum ImplementationType
-{
-    SFST_TYPE,
-    TROPICAL_OPENFST_TYPE,
-    LOG_OPENFST_TYPE,
-    FOMA_TYPE,
-    XFSM_TYPE,
-    HFST_OL_TYPE,
-    HFST_OLW_TYPE,
-    HFST2_TYPE,
-    UNSPECIFIED_TYPE,
-    ERROR_TYPE
-};
+{ SFST_TYPE, TROPICAL_OPENFST_TYPE, LOG_OPENFST_TYPE, FOMA_TYPE,
+  XFSM_TYPE, HFST_OL_TYPE, HFST_OLW_TYPE, HFST2_TYPE,
+  UNSPECIFIED_TYPE, ERROR_TYPE };
 
-enum PushType { TO_INITIAL_STATE, TO_FINAL_STATE };
+  namespace xeroxRules
+  {
+    enum ReplaceType {REPL_UP, REPL_DOWN, REPL_RIGHT, REPL_LEFT};
 
-//std::ostream * get_warning_stream();
-//void set_warning_stream(std::ostream * os);
+    class Rule
+    {
+    public:
+      Rule();
+      Rule(const hfst::HfstTransducerPairVector&);
+      Rule(const hfst::HfstTransducerPairVector&, const hfst::HfstTransducerPairVector&, ReplaceType);
+      Rule(const Rule&);
+      hfst::HfstTransducerPairVector get_mapping() const;
+      hfst::HfstTransducerPairVector get_context() const;
+      ReplaceType get_replType() const;
+      void encodeFlags();
+      // friend std::ostream& operator<<(std::ostream &out, const Rule &r);
+    };
 
-/*
-%typemap(out) HfstOneLevelPaths* {
-        $result = PyList_New((*$1).size());
-        unsigned int i = 0;
-        for (hfst::HfstOneLevelPaths::const_iterator it = (*$1).begin(); it != (*$1).end(); it++)
-        {
-                std::string result_string("");
-                for (hfst::StringVector::const_iterator svit = it->second.begin(); svit != it->second.end(); svit++)
-                {
-                        result_string += *svit;
-                }
-                PyObject * res = PyTuple_New(2);
-                PyTuple_SetItem(res, 0, PyString_FromString(result_string.c_str()));
-                PyTuple_SetItem(res, 1, PyFloat_FromDouble(it->first));
-                PyList_SetItem($result, i, res);
-                i++;
-        }
-}
-*/
+    // replace up, left, right, down
+    hfst::HfstTransducer replace(const Rule &rule, bool optional);
+    // for parallel rules
+    hfst::HfstTransducer replace(const HfstRuleVector &ruleVector, bool optional);
+    // replace up, left, right, down
+%rename("xerox_replace_left") replace_left(const Rule &rule, bool optional);
+    hfst::HfstTransducer replace_left(const Rule &rule, bool optional);
+    // for parallel rules
+%rename("xerox_replace_left") replace_left(const HfstRuleVector &ruleVector, bool optional);
+    hfst::HfstTransducer replace_left(const HfstRuleVector &ruleVector, bool optional);
+    // left to right
+    hfst::HfstTransducer replace_leftmost_longest_match(const Rule &rule);
+    // left to right
+    hfst::HfstTransducer replace_leftmost_longest_match(const HfstRuleVector &ruleVector);
+    // right to left
+    hfst::HfstTransducer replace_rightmost_longest_match(const Rule &rule);
 
-/* instead, run:   
-      sed -i 's/class HfstException(_object):/class HfstException(Exception):/' libhfst.py
-   after build to make HfstException and its subclasses subclasses of Python's Exception.
+    // right to left
+    hfst::HfstTransducer replace_rightmost_longest_match(const HfstRuleVector &ruleVector);
 
-%typemap(throws) HfstTransducerTypeMismatchException %{ PyErr_SetString(PyExc_RuntimeError, "HfstTransducerTypeMismatchException"); SWIG_fail; %}
-... etc for all exception classes
-*/
+    hfst::HfstTransducer replace_leftmost_shortest_match(const Rule &rule);
+
+    hfst::HfstTransducer replace_leftmost_shortest_match(const HfstRuleVector &ruleVector);
+    hfst::HfstTransducer replace_rightmost_shortest_match(const Rule &rule);
+    hfst::HfstTransducer replace_rightmost_shortest_match(const HfstRuleVector &ruleVector);
+
+    // replace up, left, right, down
+    hfst::HfstTransducer replace_epenthesis(const Rule &rule, bool optional);
+    // replace up, left, right, down
+    hfst::HfstTransducer replace_epenthesis(const HfstRuleVector &ruleVector, bool optional);
+
+    // Restriction function "=>"
+%rename("xerox_restriction") restriction(const hfst::HfstTransducer &automata, const hfst::HfstTransducerPairVector &context);
+    hfst::HfstTransducer restriction(const hfst::HfstTransducer &automata, const hfst::HfstTransducerPairVector &context);
+    hfst::HfstTransducer before(const hfst::HfstTransducer &left, const hfst::HfstTransducer &right);
+    hfst::HfstTransducer after(const hfst::HfstTransducer &left, const hfst::HfstTransducer &right);
+
+  }
+
+// *** Some other functions *** //
 
 bool is_diacritic(const std::string & symbol);
+hfst::HfstTransducerVector compile_pmatch_expression(const std::string & pmatch) throw(HfstException);
 
+// internal functions
 %pythoncode %{
-  def is_string(s):
+  def _is_string(s):
       if isinstance(s, str):
          return True
       else:
-        return False   
-  def is_string_pair(sp):
+        return False
+  def _is_string_pair(sp):
       if not isinstance(sp, tuple):
          return False
       if len(sp) != 2:
          return False
-      if not is_string(sp[0]):
+      if not _is_string(sp[0]):
          return False
-      if not is_string(sp[1]):
+      if not _is_string(sp[1]):
          return False
       return True
-  def is_string_vector(sv):
+  def _is_string_vector(sv):
       if not isinstance(sv, tuple):
          return False
       for s in sv:
-          if not is_string(s):
+          if not _is_string(s):
              return False
       return True
-  def is_string_pair_vector(spv):
+  def _is_string_pair_vector(spv):
       if not isinstance(spv, tuple):
          return False
       for sp in spv:
-          if not is_string_pair(sp):
+          if not _is_string_pair(sp):
              return False
       return True
 
-  def two_level_paths_to_dict(tlps):
+  def _two_level_paths_to_dict(tlps):
       retval = {}
       for tlp in tlps:
           input = ""
@@ -834,7 +280,7 @@ bool is_diacritic(const std::string & symbol);
               retval[input] = [(output, tlp[0])]
       return retval
 
-  def one_level_paths_to_tuple(olps):
+  def _one_level_paths_to_tuple(olps):
       retval = []
       for olp in olps:
           path = ""
@@ -844,103 +290,35 @@ bool is_diacritic(const std::string & symbol);
       return tuple(retval)
 %}
 
-// NOTE: all functions returning an HfstTransducer& are commented out and extended by replacing them with equivalent functions that return void.
-// This is done in order to avoid use of references that are not handled well by swig/python.
+// *** HfstTransducer *** //
 
-class HfstTransducer 
+// NOTE: all functions returning an HfstTransducer& are commented out and extended
+// by replacing them with equivalent functions that return void. This is done in
+// order to avoid use of references that are not handled well by swig/python.
+// Some constructors and the destructor are also redefined.
+
+class HfstTransducer
 {
 public:
-HfstTransducer();
-// Redefined with %extend:
-//HfstTransducer(const hfst::HfstTransducer &);
-//HfstTransducer(const hfst::implementations::HfstBasicTransducer &, hfst::ImplementationType);
-//~HfstTransducer();
-
-void set_name(const std::string &name);
-std::string get_name() const;
-hfst::ImplementationType get_type() const;
-void set_property(const std::string& property, const std::string& value);
-std::string get_property(const std::string& property) const;
-const std::map<std::string,std::string>& get_properties() const;
-
-/* Basic binary operations */
-//HfstTransducer & concatenate(const HfstTransducer&, bool harmonize=true) throw(TransducerTypeMismatchException);
-//HfstTransducer & disjunct(const HfstTransducer&, bool harmonize=true) throw(TransducerTypeMismatchException);
-//HfstTransducer & subtract(const HfstTransducer&, bool harmonize=true) throw(TransducerTypeMismatchException);
-//HfstTransducer & intersect(const HfstTransducer&, bool harmonize=true) throw(TransducerTypeMismatchException);
-//HfstTransducer & compose(const HfstTransducer&, bool harmonize=true) throw(TransducerTypeMismatchException);
-
-/* More binary operations */
-//HfstTransducer & compose_intersect(const HfstTransducerVector &v, bool invert=false, bool harmonize=true);
-//HfstTransducer & priority_union(const HfstTransducer &another);
-//HfstTransducer & lenient_composition(const HfstTransducer &another, bool harmonize=true);
-//HfstTransducer & cross_product(const HfstTransducer &another, bool harmonize=true) throw(TransducersAreNotAutomataException);
-//HfstTransducer & shuffle(const HfstTransducer &another, bool harmonize=true);
-
-/* Testing */
-bool compare(const HfstTransducer&, bool harmonize=true) const throw(TransducerTypeMismatchException);
-unsigned int number_of_states() const;
-unsigned int number_of_arcs() const;
-StringSet get_alphabet() const;
-bool is_cyclic() const;
-bool is_automaton() const;
-bool is_infinitely_ambiguous() const;
-bool is_lookup_infinitely_ambiguous(const std::string &) const;
-bool has_flag_diacritics() const;
-
-void insert_to_alphabet(const std::string &);
-void remove_from_alphabet(const std::string &);
-
-static bool is_implementation_type_available(hfst::ImplementationType type);
-
-/* Optimization */
-//HfstTransducer & remove_epsilons();
-//HfstTransducer & determinize();
-//HfstTransducer & minimize();
-//HfstTransducer & prune();
-//HfstTransducer & eliminate_flags();
-//HfstTransducer & eliminate_flag(const std::string&) throw(HfstException);
-//HfstTransducer & n_best(unsigned int n);
-//HfstTransducer & convert(ImplementationType impl);
-
-/* Repeat */
-//HfstTransducer & repeat_star();
-//HfstTransducer & repeat_plus();
-//HfstTransducer & repeat_n(unsigned int);
-//HfstTransducer & repeat_n_to_k(unsigned int, unsigned int);
-//HfstTransducer & repeat_n_minus(unsigned int);
-//HfstTransducer & repeat_n_plus(unsigned int);
-
-/* Other basic operations */
-//HfstTransducer & invert();
-//HfstTransducer & reverse();
-//HfstTransducer & input_project();
-//HfstTransducer & output_project();
-//HfstTransducer & optionalize();
-
-/* Insert freely, substitute */
-
-//HfstTransducer & insert_freely(const StringPair &symbol_pair, bool harmonize=true);
-//HfstTransducer & insert_freely(const HfstTransducer &tr, bool harmonize=true);
-
-//HfstTransducer & substitute(bool (*func)(const StringPair &sp, hfst::StringPairSet &sps));
-
-//HfstTransducer & substitute_symbol(const std::string &old_symbol, const std::string &new_symbol, bool input_side=true, bool output_side=true);
-//HfstTransducer & substitute_symbol_pair(const StringPair &old_symbol_pair, const StringPair &new_symbol_pair);
-//HfstTransducer & substitute_symbol_pair_with_set(const StringPair &old_symbol_pair, const hfst::StringPairSet &new_symbol_pair_set);
-//HfstTransducer & substitute_symbol_pair_with_transducer(const StringPair &symbol_pair, HfstTransducer &transducer, bool harmonize=true);
-//HfstTransducer & substitute_symbols(const hfst::HfstSymbolSubstitutions &substitutions); // alias for the previous function which is shadowed
-//HfstTransducer & substitute_symbol_pairs(const hfst::HfstSymbolPairSubstitutions &substitutions); // alias for the previous function which is shadowed
-
-
-/* Weight handling */
-//HfstTransducer & set_final_weights(float weight, bool increment=false);
-// Can 'transform_weights' be wrapped?  It maybe needs to be rewritten in python.
-//HfstTransducer & push_weights(hfst::PushType type);
-
-//void extract_shortest_paths(HfstTwoLevelPaths &results) const;
-//bool extract_longest_paths(HfstTwoLevelPaths &results, bool obey_flags=true) const;
-int longest_path_size(bool obey_flags=true) const;
+  void set_name(const std::string &name);
+  std::string get_name() const;
+  hfst::ImplementationType get_type() const;
+  void set_property(const std::string& property, const std::string& value);
+  std::string get_property(const std::string& property) const;
+  const std::map<std::string,std::string>& get_properties() const;
+  bool compare(const HfstTransducer&, bool harmonize=true) const throw(TransducerTypeMismatchException);
+  unsigned int number_of_states() const;
+  unsigned int number_of_arcs() const;
+  StringSet get_alphabet() const;
+  bool is_cyclic() const;
+  bool is_automaton() const;
+  bool is_infinitely_ambiguous() const;
+  bool is_lookup_infinitely_ambiguous(const std::string &) const;
+  bool has_flag_diacritics() const;
+  void insert_to_alphabet(const std::string &);
+  void remove_from_alphabet(const std::string &);
+  static bool is_implementation_type_available(hfst::ImplementationType type);
+  int longest_path_size(bool obey_flags=true) const;
 
 %extend {
 
@@ -977,49 +355,31 @@ int longest_path_size(bool obey_flags=true) const;
   void optionalize() { self->optionalize(); }
   void insert_freely(const StringPair &symbol_pair, bool harmonize=true) { self->insert_freely(symbol_pair, harmonize); }
   void insert_freely(const HfstTransducer &tr, bool harmonize=true) { self->insert_freely(tr, harmonize); }
-  void substitute_symbol(const std::string &old_symbol, const std::string &new_symbol, bool input_side=true, bool output_side=true) { self->substitute_symbol(old_symbol, new_symbol, input_side, output_side); }
-  void substitute_symbol_pair(const StringPair &old_symbol_pair, const StringPair &new_symbol_pair) { self->substitute_symbol_pair(old_symbol_pair, new_symbol_pair); }
-  void substitute_symbol_pair_with_set(const StringPair &old_symbol_pair, const hfst::StringPairSet &new_symbol_pair_set) { self->substitute_symbol_pair_with_set(old_symbol_pair, new_symbol_pair_set); }
-  void substitute_symbol_pair_with_transducer(const StringPair &symbol_pair, HfstTransducer &transducer, bool harmonize=true) { self->substitute_symbol_pair_with_transducer(symbol_pair, transducer, harmonize); }
-  void substitute_symbols(const hfst::HfstSymbolSubstitutions &substitutions) { self->substitute_symbols(substitutions); } // alias for the previous function which is shadowed
-  void substitute_symbol_pairs(const hfst::HfstSymbolPairSubstitutions &substitutions) { self->substitute_symbol_pairs(substitutions); } // alias for the previous function which is shadowed
+  void _substitute_symbol(const std::string &old_symbol, const std::string &new_symbol, bool input_side=true, bool output_side=true) { self->substitute_symbol(old_symbol, new_symbol, input_side, output_side); }
+  void _substitute_symbol_pair(const StringPair &old_symbol_pair, const StringPair &new_symbol_pair) { self->substitute_symbol_pair(old_symbol_pair, new_symbol_pair); }
+  void _substitute_symbol_pair_with_set(const StringPair &old_symbol_pair, const hfst::StringPairSet &new_symbol_pair_set) { self->substitute_symbol_pair_with_set(old_symbol_pair, new_symbol_pair_set); }
+  void _substitute_symbol_pair_with_transducer(const StringPair &symbol_pair, HfstTransducer &transducer, bool harmonize=true) { self->substitute_symbol_pair_with_transducer(symbol_pair, transducer, harmonize); }
+  void _substitute_symbols(const hfst::HfstSymbolSubstitutions &substitutions) { self->substitute_symbols(substitutions); } // alias for the previous function which is shadowed
+  void _substitute_symbol_pairs(const hfst::HfstSymbolPairSubstitutions &substitutions) { self->substitute_symbol_pairs(substitutions); } // alias for the previous function which is shadowed
   void set_final_weights(float weight, bool increment=false) { self->set_final_weights(weight, increment); };
-  void push_weights(hfst::PushType type) { self->push_weights(type); };
+
+  void push_weights_to_start() { self->push_weights(hfst::TO_INITIAL_STATE); };
+  void push_weights_to_end() { self->push_weights(hfst::TO_FINAL_STATE); };
 
   // And some aliases:
-
-  // 'union' is a reserved word in python, so it cannot be used as an alias for function 'disjunct' 
+  // 'union' is a reserved word in python, so it cannot be used as an alias for function 'disjunct'
   void minus(const HfstTransducer& t, bool harmonize=true) { $self->subtract(t, harmonize); }
   void conjunct(const HfstTransducer& t, bool harmonize=true) { $self->intersect(t, harmonize); }
 
   // Then the actual extensions:
 
-    hfst::HfstTwoLevelPaths extract_shortest_paths_()
-    {
-        hfst::HfstTwoLevelPaths results;
-        $self->extract_shortest_paths(results);
-        return results;
-    }
+  void lookup_optimize() { self->convert(hfst::HFST_OLW_TYPE); }
+  void remove_optimization() { self->convert(hfst::get_default_fst_type()); }
 
-    hfst::HfstTwoLevelPaths extract_longest_paths_(bool obey_flags)
-    {
-        hfst::HfstTwoLevelPaths results;
-        $self->extract_longest_paths(results, obey_flags);
-        return results;
-    }
-
-    HfstTransducer(const hfst::HfstTransducer & t)
-    {
-        return hfst::copy_hfst_transducer(t);
-    }
-    HfstTransducer(const hfst::implementations::HfstBasicTransducer & t)
-    {
-        return hfst::copy_hfst_transducer_from_basic_transducer(t);
-    }
-    HfstTransducer(const hfst::implementations::HfstBasicTransducer & t, hfst::ImplementationType impl)
-    {
-        return hfst::copy_hfst_transducer_from_basic_transducer(t, impl);
-    }
+    HfstTransducer() { return hfst::empty_transducer(); }
+    HfstTransducer(const hfst::HfstTransducer & t) { return hfst::copy_hfst_transducer(t); }
+    HfstTransducer(const hfst::implementations::HfstBasicTransducer & t) { return hfst::copy_hfst_transducer_from_basic_transducer(t); }
+    HfstTransducer(const hfst::implementations::HfstBasicTransducer & t, hfst::ImplementationType impl) { return hfst::copy_hfst_transducer_from_basic_transducer(t, impl); }
     ~HfstTransducer()
     {
         if ($self->get_type() == hfst::UNSPECIFIED_TYPE || $self->get_type() == hfst::ERROR_TYPE)
@@ -1028,80 +388,173 @@ int longest_path_size(bool obey_flags=true) const;
         }
         delete $self;
     }
-
+    // For python's 'print'
     char *__str__() {
-         static char tmp[1024];
-         $self->write_in_att_format(tmp);
-         return tmp;
+         std::ostringstream oss;
+         hfst::implementations::HfstBasicTransducer fsm(*$self);
+         fsm.write_in_att_format(oss,true);
+         return strdup(oss.str().c_str());
     }
-    void write(hfst::HfstOutputStream & os) {
-         (void) os.redirect(*$self);
-         //return *$self;
-    }
+    void write(hfst::HfstOutputStream & os) { (void) os.redirect(*$self); }
 
-    void write_att(hfst::HfstFile & f, bool write_weights=true)
+    hfst::HfstTwoLevelPaths _extract_shortest_paths()
     {
-      $self->write_in_att_format(f.get_file(), write_weights);
+        hfst::HfstTwoLevelPaths results;
+        $self->extract_shortest_paths(results);
+        return results;
     }
-
-    void write_prolog(hfst::HfstFile & f, const std::string & name, bool write_weights=true)
+    hfst::HfstTwoLevelPaths _extract_longest_paths(bool obey_flags)
     {
-      $self->write_in_prolog_format(f.get_file(), name, write_weights);
+        hfst::HfstTwoLevelPaths results;
+        $self->extract_longest_paths(results, obey_flags);
+        return results;
     }
-
-    hfst::HfstTwoLevelPaths extract_paths_(int max_num=-1, int cycles=-1) const throw(TransducerIsCyclicException)
+    hfst::HfstTwoLevelPaths _extract_paths(int max_num=-1, int cycles=-1) const throw(TransducerIsCyclicException)
     {
       hfst::HfstTwoLevelPaths results;
       $self->extract_paths(results, max_num, cycles);
       return results;
     }
-
-    hfst::HfstTwoLevelPaths extract_paths_fd_(int max_num=-1, int cycles=-1, bool filter_fd=true) const throw(TransducerIsCyclicException)
+    hfst::HfstTwoLevelPaths _extract_paths_fd(int max_num=-1, int cycles=-1, bool filter_fd=true) const throw(TransducerIsCyclicException)
     {
       hfst::HfstTwoLevelPaths results;
       $self->extract_paths_fd(results, max_num, cycles, filter_fd);
       return results;
     }
-
-    hfst::HfstTwoLevelPaths extract_random_paths_(int max_num) const
+    hfst::HfstTwoLevelPaths _extract_random_paths(int max_num) const
     {
       hfst::HfstTwoLevelPaths results;
       $self->extract_random_paths(results, max_num);
       return results;
     }
-
-    hfst::HfstTwoLevelPaths extract_random_paths_fd_(int max_num, bool filter_fd) const
+    hfst::HfstTwoLevelPaths _extract_random_paths_fd(int max_num, bool filter_fd) const
     {
       hfst::HfstTwoLevelPaths results;
       $self->extract_random_paths_fd(results, max_num, filter_fd);
       return results;
     }
 
-HfstOneLevelPaths lookup_vector(const StringVector& s, int limit = -1, double time_cutoff = 0.0) const throw(FunctionNotImplementedException)
-{ 
-  return hfst::lookup_vector_($self, false /*fd*/, s, limit, time_cutoff);
-}
-
-HfstOneLevelPaths lookup_fd_vector(const StringVector& s, int limit = -1, double time_cutoff = 0.0) const throw(FunctionNotImplementedException)
-{ 
-  return hfst::lookup_vector_($self, true /*fd*/, s, limit, time_cutoff);
-}
-
-HfstOneLevelPaths lookup_fd_string(const std::string& s, int limit = -1, double time_cutoff = 0.0) const throw(FunctionNotImplementedException)
-{ 
-  return hfst::lookup_string_($self, true /*fd*/, s, limit, time_cutoff);
-}
-
-HfstOneLevelPaths lookup_string(const std::string & s, int limit = -1, double time_cutoff = 0.0) const throw(FunctionNotImplementedException)
-{ 
-  return hfst::lookup_string_($self, false /*fd*/, s, limit, time_cutoff);
-}
-
+    HfstOneLevelPaths _lookup_vector(const StringVector& s, int limit = -1, double time_cutoff = 0.0) const throw(FunctionNotImplementedException)
+    {
+      return hfst::lookup_vector($self, false /*fd*/, s, limit, time_cutoff);
+    }
+    HfstOneLevelPaths _lookup_fd_vector(const StringVector& s, int limit = -1, double time_cutoff = 0.0) const throw(FunctionNotImplementedException)
+    {
+      return hfst::lookup_vector($self, true /*fd*/, s, limit, time_cutoff);
+    }
+    HfstOneLevelPaths _lookup_fd_string(const std::string& s, int limit = -1, double time_cutoff = 0.0) const throw(FunctionNotImplementedException)
+    {
+      return hfst::lookup_string($self, true /*fd*/, s, limit, time_cutoff);
+    }
+    HfstOneLevelPaths _lookup_string(const std::string & s, int limit = -1, double time_cutoff = 0.0) const throw(FunctionNotImplementedException)
+    {
+      return hfst::lookup_string($self, false /*fd*/, s, limit, time_cutoff);
+    }
 
 %pythoncode %{
 
+  def copy(self):
+      """
+      Return a deep copy of the transducer.
+      """
+      return HfstTransducer(self)
+
+  def write_to_file(self, filename_):
+      """
+      Write the transducer in binary format to file *filename_*.
+      """
+      ostr = HfstOutputStream(filename=filename_, type=self.get_type(), hfst_format=True)
+      ostr.write(self)
+      ostr.close()
+
+  def read_from_file(filename_):
+      """
+      Read a binary transducer from file *filename_*.
+      """
+      istr = HfstInputStream(filename_)
+      tr = istr.read()
+      istr.close()
+      return tr
+
+  def write_prolog(self, f, write_weights=True):
+      """
+      Write the transducer in prolog format with name *name* to file *f*,
+      *write_weights* defined whether weights are written.
+
+      Parameters
+      ----------
+      * `f` :
+          A python file where the transducer is written.
+      * `write_weights` :
+          Whether weights are written.
+      """
+      fsm = HfstBasicTransducer(self)
+      fsm.name = self.get_name()
+      prologstr = fsm.get_prolog_string(write_weights)
+      f.write(prologstr)
+
+  def write_xfst(self, f, write_weights=True):
+      """
+      Write the transducer in xfst format to file *f*, *write_weights* defined whether
+      weights are written.
+
+      Parameters
+      ----------
+      * `f` :
+          A python file where transducer is written.
+      * `write_weights` :
+          Whether weights are written.
+      """
+      fsm = HfstBasicTransducer(self)
+      fsm.name = self.get_name()
+      xfststr = fsm.get_xfst_string(write_weights)
+      f.write(xfst)
+
+  def write_att(self, f, write_weights=True):
+      """
+      Write the transducer in AT&T format to file *f*, *write_weights* defined whether
+      weights are written.
+
+      Parameters
+      ----------
+      * `f` :
+          A python file where transducer is written.
+      * `write_weights` :
+          Whether weights are written.
+      """
+      fsm = HfstBasicTransducer(self)
+      fsm.name = self.get_name()
+      attstr = fsm.get_att_string(write_weights)
+      f.write(attstr)
+
   def lookup(self, input, **kvargs):
-      
+      """
+      Lookup string *input*.
+
+      Parameters
+      ----------
+      * `input` :
+          The input. A string or a pre-tokenized tuple of symbols (i.e. a tuple of strings).
+      * `kvargs` :
+          Possible parameters and their default values are: obey_flags=True,
+          max_number=-1, time_cutoff=0.0, output='tuple'
+      * `obey_flags` :
+          Whether flag diacritics are obeyed. Always True for HFST_OL(W)_TYPE transducers.
+      * `max_number` :
+          Maximum number of results returned, defaults to -1, i.e. infinity.
+      * `time_cutoff` :
+          How long the function can search for results before returning, expressed in
+          seconds. Defaults to 0.0, i.e. infinitely. Always 0.0 for transducers that are
+          not of HFST_OL(W)_TYPE.
+      * `output` :
+          Possible values are 'tuple', 'text' and 'raw', 'tuple' being the default.
+
+      Note: This function has an efficient implementation only for optimized lookup format
+      (hfst.ImplementationType.HFST_OL_TYPE or hfst.ImplementationType.HFST_OLW_TYPE). Other formats perform the
+      lookup via composition. Consider converting the transducer to optimized lookup format
+      or to a HfstBasicTransducer. Conversion to HFST_OL(W)_TYPE might take a while but the
+      lookup is fast. Conversion to HfstBasicTransducer is quick but lookup is slower.
+      """
       obey_flags=True
       max_number=-1
       time_cutoff=0.0
@@ -1137,31 +590,45 @@ HfstOneLevelPaths lookup_string(const std::string & s, int limit = -1, double ti
 
       if isinstance(input, tuple):
          if obey_flags:
-            retval=self.lookup_fd_vector(input, max_number, time_cutoff)
+            retval=self._lookup_fd_vector(input, max_number, time_cutoff)
          else:
-            retval=self.lookup_vector(input, max_number, time_cutoff)
+            retval=self._lookup_vector(input, max_number, time_cutoff)
       elif isinstance(input, str):
          if obey_flags:
-            retval=self.lookup_fd_string(input, max_number, time_cutoff)
+            retval=self._lookup_fd_string(input, max_number, time_cutoff)
          else:
-            retval=self.lookup_string(input, max_number, time_cutoff)
+            retval=self._lookup_string(input, max_number, time_cutoff)
       else:
          try:
             if obey_flags:
-                retval=self.lookup_fd_string(str(input), max_number, time_cutoff)
+                retval=self._lookup_fd_string(str(input), max_number, time_cutoff)
             else:
-                retval=self.lookup_string(str(input), max_number, time_cutoff)         
+                retval=self._lookup_string(str(input), max_number, time_cutoff)
          except:
             raise RuntimeError('Input argument must be string or tuple.')
 
       if output == 'text':
          return one_level_paths_to_string(retval)
       elif output == 'tuple':
-         return one_level_paths_to_tuple(retval)
+         return _one_level_paths_to_tuple(retval)
       else:
          return retval
 
   def extract_longest_paths(self, **kvargs):
+      """
+      Extract longest paths of the transducer.
+
+      Parameters
+      ----------
+      * `kvargs` :
+          Possible parameters and their default values are: obey_flags=True,
+          output='dict'
+      * `obey_flags` :
+          Whether flag diacritics are obeyed. The default is True.
+      * `output` :
+          Possible values are 'dict', 'text' and 'raw', 'dict' being the default.
+
+      """
       obey_flags=True
       output='dict' # 'dict' (default), 'text', 'raw'
 
@@ -1187,16 +654,27 @@ HfstOneLevelPaths lookup_string(const std::string & s, int limit = -1, double ti
           else:
              print('Warning: ignoring unknown argument %s.' % (k))
 
-      retval = self.extract_longest_paths_(obey_flags)
+      retval = self._extract_longest_paths(obey_flags)
 
       if output == 'text':
          return two_level_paths_to_string(retval)
       elif output == 'dict':
-         return two_level_paths_to_dict(retval)
+         return _two_level_paths_to_dict(retval)
       else:
          return retval
 
   def extract_shortest_paths(self, **kvargs):
+      """
+      Extract shortest paths of the transducer.
+
+      Parameters
+      ----------
+      * `kvargs` :
+          Possible parameters and their default values are: obey_flags=True.
+      * `output` :
+          Possible values are 'dict', 'text' and 'raw', 'dict' being the default.
+
+      """
       output='dict' # 'dict' (default), 'text', 'raw'
 
       for k,v in kvargs.items():
@@ -1213,17 +691,89 @@ HfstOneLevelPaths lookup_string(const std::string & s, int limit = -1, double ti
           else:
              print('Warning: ignoring unknown argument %s.' % (k))
 
-      retval = self.extract_shortest_paths_()
+      retval = self._extract_shortest_paths()
 
       if output == 'text':
          return two_level_paths_to_string(retval)
       elif output == 'dict':
-         return two_level_paths_to_dict(retval)
+         return _two_level_paths_to_dict(retval)
       else:
          return retval
 
   def extract_paths(self, **kvargs):
+      """
 
+      Extract paths that are recognized by the transducer.
+
+      Parameters
+      ----------
+      * `kvargs` :
+          Arguments recognized are filter_flags, max_cycles, max_number, obey_flags,
+          output, random.
+      * `filter_flags` :
+          Whether flags diacritics are filtered out from the result (default True).
+      * `max_cycles` :
+          Indicates how many times a cycle will be followed, with negative numbers
+          indicating unlimited (default -1 i.e. unlimited).
+      * `max_number` :
+          The total number of resulting strings is capped at this value, with 0 or
+          negative indicating unlimited (default -1 i.e. unlimited).
+      * `obey_flags` :
+          Whether flag diacritics are validated (default True).
+      * `output` :
+          Output format. Values recognized: 'text' (as a string, separated by
+          newlines), 'raw' (a dictionary that maps each input string into a list of
+          tuples of an output string and a weight), 'dict' (a dictionary that maps
+          each input string into a tuple of tuples of an output string and a weight,
+          the default).
+      * `random` :
+          Whether result strings are fetched randomly (default False).
+
+      Returns
+      -------
+      The extracted strings. *output* controls how they are represented.
+
+      pre: The transducer must be acyclic, if both *max_number* and *max_cycles* have
+      unlimited values. Else a hfst.exceptions.TransducerIsCyclicException will be
+      thrown.
+
+      An example:
+
+      >>> tr = hfst.regex('a:b+ (a:c+)')
+      >>> print(tr)
+      0       1       a       b       0.000000
+      1       1       a       b       0.000000
+      1       2       a       c       0.000000
+      1       0.000000
+      2       2       a       c       0.000000
+      2       0.000000
+
+      >>> print(tr.extract_paths(max_cycles=1, output='text'))
+      a:b     0
+      aa:bb   0
+      aaa:bbc 0
+      aaaa:bbcc       0
+      aa:bc   0
+      aaa:bcc 0
+
+      >>> print(tr.extract_paths(max_number=4, output='text'))
+      a:b     0
+      aa:bc   0
+      aaa:bcc 0
+      aaaa:bccc       0
+
+      >>> print(tr.extract_paths(max_cycles=1, max_number=4, output='text'))
+      a:b     0
+      aa:bb   0
+      aa:bc   0
+      aaa:bcc 0
+
+      Exceptions
+      ----------
+      * `TransducerIsCyclicException` :
+
+      See also: hfst.HfstTransducer.n_best
+      """
       obey_flags=True
       filter_flags=True
       max_cycles=-1
@@ -1277,24 +827,51 @@ HfstOneLevelPaths lookup_string(const std::string & s, int limit = -1, double ti
 
       if obey_flags :
          if random :
-            retval=self.extract_random_paths_fd_(max_number, filter_flags)
+            retval=self._extract_random_paths_fd(max_number, filter_flags)
          else :
-            retval=self.extract_paths_fd_(max_number, max_cycles)
+            retval=self._extract_paths_fd(max_number, max_cycles)
       else :
          if random :
-            retval=self.extract_random_paths_(max_number)  
-         else :   
-            retval=self.extract_paths_(max_number, max_cycles)
+            retval=self._extract_random_paths(max_number)
+         else :
+            retval=self._extract_paths(max_number, max_cycles)
 
       if output == 'text':
          return two_level_paths_to_string(retval)
       elif output == 'dict':
-         return two_level_paths_to_dict(retval)
+         return _two_level_paths_to_dict(retval)
       else:
          return retval
 
   def substitute(self, s, S=None, **kvargs):
+      """
+      Substitute symbols or transitions in the transducer.
 
+      Parameters
+      ----------
+      * `s` :
+          The symbol or transition to be substituted. Can also be a dictionary of
+          substitutions, if S == None.
+      * `S` :
+          The symbol, transition, a tuple of transitions or a transducer
+          (hfst.HfstTransducer) that substitutes *s*.
+      * `kvargs` :
+          Arguments recognized are 'input' and 'output', their values can be False or
+          True, True being the default. These arguments are valid only if *s* and *S*
+          are strings, else they are ignored.
+      * `input` :
+          Whether substitution is performed on input side, defaults to True. Valid
+          only if *s* and *S* are strings.
+      * `output` :
+          Whether substitution is performed on output side, defaults to True. Valid
+          only if *s* and \\ S are strings.
+
+      For more information, see hfst.HfstBasicTransducer.substitute. The function
+      works similarly, with the exception of argument *S*, which must be
+      hfst.HfstTransducer instead of hfst.HfstBasicTransducer.
+
+      See also: hfst.HfstBasicTransducer.substitute
+      """
       if S == None:
          if not isinstance(s, dict):
             raise RuntimeError('Sole input argument must be a dictionary.')
@@ -1302,30 +879,30 @@ HfstOneLevelPaths lookup_string(const std::string & s, int limit = -1, double ti
          subst_type=""
 
          for k, v in s.items():
-             if is_string(k):
+             if _is_string(k):
                 if subst_type == "":
                    subst_type="string"
                 elif subst_type == "string pair":
                    raise RuntimeError('')
-                if not is_string(v):
+                if not _is_string(v):
                    raise RuntimeError('')
-             elif is_string_pair(k):
+             elif _is_string_pair(k):
                 if subst_type == "":
                    subst_type="string pair"
                 elif subst_type == "string":
                    raise RuntimeError('')
-                if not is_string_pair(v):
+                if not _is_string_pair(v):
                    raise RuntimeError('')
              else:
                 raise RuntimeError('')
 
          if subst_type == "string":
-            return self.substitute_symbols(s)
+            return self._substitute_symbols(s)
          else:
-            return self.substitute_symbol_pairs(s)
+            return self._substitute_symbol_pairs(s)
 
-      if is_string(s):
-         if is_string(S):
+      if _is_string(s):
+         if _is_string(S):
             input=True
             output=True
             for k,v in kvargs.items():
@@ -1337,16 +914,16 @@ HfstOneLevelPaths lookup_string(const std::string & s, int limit = -1, double ti
                       output=False
                 else:
                    raise RuntimeError('Free argument not recognized.')
-            return self.substitute_symbol(s, S, input, output)
+            return self._substitute_symbol(s, S, input, output)
          else:
             raise RuntimeError('...')
-      elif is_string_pair(s):
-         if is_string_pair(S):
-            return self.substitute_symbol_pair(s, S)
-         elif is_string_pair_vector(S):
-            return self.substitute_symbol_pair_with_set(s, S)
+      elif _is_string_pair(s):
+         if _is_string_pair(S):
+            return self._substitute_symbol_pair(s, S)
+         elif _is_string_pair_vector(S):
+            return self._substitute_symbol_pair_with_set(s, S)
          elif isinstance(S, HfstTransducer):
-            return self.substitute_symbol_pair_with_transducer(s, S, True)
+            return self._substitute_symbol_pair_with_transducer(s, S, True)
          else:
             raise RuntimeError('...')
       else:
@@ -1355,34 +932,66 @@ HfstOneLevelPaths lookup_string(const std::string & s, int limit = -1, double ti
 
 };
 
-};
+}; // class HfstTransducer
+
+
+// *** HfstOutputStream *** //
 
 hfst::HfstOutputStream * create_hfst_output_stream(const std::string & filename, hfst::ImplementationType type, bool hfst_format);
 
 class HfstOutputStream
 {
 public:
-//HfstOutputStream(ImplementationType type, bool hfst_format=true);
-//HfstOutputStream(const std::string &filename, ImplementationType type, bool hfst_format=true);
 ~HfstOutputStream(void);
 HfstOutputStream &flush();
-//HfstOutputStream &operator<< (HfstTransducer &transducer);
-//HfstOutputStream& redirect (HfstTransducer &transducer);
 void close(void);
-
 
 %extend {
 
-void write(hfst::HfstTransducer & transducer) throw(StreamIsClosedException)
-{
-  $self->redirect(transducer);
-}
-
+void write(hfst::HfstTransducer transducer) throw(StreamIsClosedException) { $self->redirect(transducer); }
 HfstOutputStream() { return new hfst::HfstOutputStream(hfst::get_default_fst_type()); }
 
 %pythoncode %{
 
 def __init__(self, **kvargs):
+    """
+    Open a stream for writing binary transducers. Note: hfst.HfstTransducer.write_to_file
+    is probably the easiest way to write a single binary transducer to a file.
+
+    Parameters
+    ----------
+    * `kvargs` :
+        Arguments recognized are filename, hfst_format, type.
+    * `filename` :
+        The name of the file where transducers are written. If the file exists, it
+        is overwritten. If *filename* is not given, transducers are written to
+        standard output.
+    * `hfst_format` :
+        Whether transducers are written in hfst format (default is True) or as such
+        in their backend format.
+    * `type` :
+        The type of the transducers that will be written to the stream. Default is
+        hfst.get_default_fst_type().
+
+    Examples:
+
+        # a stream for writing default type transducers in hfst format to standard output
+        ostr = hfst.HfstOutputStream()
+        transducer = hfst.regex('foo:bar::0.5')
+        ostr.write(transducer)
+        ostr.flush()
+
+        # a stream for writing native sfst type transducers to a file
+        ostr = hfst.HfstOutputStream(filename='transducer.sfst', hfst_format=False, type=hfst.ImplementationType.SFST_TYPE)
+        transducer1 = hfst.regex('foo:bar')
+        transducer1.convert(hfst.ImplementationType.SFST_TYPE)  # if not set as the default type
+        transducer2 = hfst.regex('bar:baz')
+        transducer2.convert(hfst.ImplementationType.SFST_TYPE)  # if not set as the default type
+        ostr.write(transducer1)
+        ostr.write(transducer2)
+        ostr.flush()
+        ostr.close()
+    """
     filename = ""
     hfst_format = True
     type = _libhfst.get_default_fst_type()
@@ -1401,7 +1010,9 @@ def __init__(self, **kvargs):
 
 }
 
-};
+}; // class HfstOutputStream
+
+// *** HfstInputStream *** //
 
 class HfstInputStream
 {
@@ -1417,48 +1028,42 @@ public:
 
 %extend {
 
-hfst::HfstTransducer * read() throw (EndOfStreamException)
-{
-  return new hfst::HfstTransducer(*($self));
-}
+hfst::HfstTransducer * read() throw (EndOfStreamException) { return new hfst::HfstTransducer(*($self)); }
 
 %pythoncode %{
 
 def __iter__(self):
+    """
+    Return *self*. Needed for 'for ... in' statement.
+    """
     return self
 
-# Python 2
 def next(self):
+    """
+    Read next transducer from stream and return it. Needed for 'for ... in' statement.
+    """
     if self.is_eof():
         raise StopIteration
     else:
         return self.read();
 
-# Python 3
 def __next__(self):
+    """
+    Read next transducer from stream and return it. Needed for 'for ... in' statement.
+    """
     return self.next()
 
 %}
 
 }
 
-};
+}; // class HfstInputStream
 
-  /* class MultiCharSymbolTrie;
-  typedef std::vector<MultiCharSymbolTrie*> MultiCharSymbolTrieVector;
-  typedef std::vector<bool> SymbolEndVector;
 
-  class MultiCharSymbolTrie
-  {
-  public:
-    MultiCharSymbolTrie(void);
-    ~MultiCharSymbolTrie(void);
-    void add(const char * p);
-    const char * find(const char * p) const;  
-  }; */
+// *** HfstTokenizer *** //
   
   class HfstTokenizer
-  {    
+  {
   public:
      HfstTokenizer();
      void add_skip_symbol(const std::string &symbol);
@@ -1477,20 +1082,20 @@ namespace implementations {
   class HfstBasicTransition;
   typedef unsigned int HfstState;
 
-  typedef std::vector<std::vector<hfst::implementations::HfstBasicTransition> > HfstBasicStates;
+  typedef std::vector<hfst::implementations::HfstBasicTransition> HfstBasicTransitions;
+
+
+// *** HfstBasicTransducer *** //
 
 class HfstBasicTransducer {
 
   public:
 
-    typedef std::vector<HfstBasicTransition> HfstTransitions;
-
     HfstBasicTransducer(void);
-    //HfstBasicTransducer(FILE *file);
-    //HfstBasicTransducer &assign(const HfstBasicTransducer &graph);
     HfstBasicTransducer(const HfstBasicTransducer &graph);
     HfstBasicTransducer(const hfst::HfstTransducer &transducer);
 
+    std::string name;
     void add_symbol_to_alphabet(const std::string &symbol);
     void remove_symbol_from_alphabet(const std::string &symbol);
     void remove_symbols_from_alphabet(const StringSet &symbols);
@@ -1504,81 +1109,68 @@ class HfstBasicTransducer {
     HfstState add_state(HfstState s);
     HfstState get_max_state() const;
     std::vector<HfstState> states() const;
-    void add_transition(HfstState s, const hfst::implementations::HfstBasicTransition & transition,
-                         bool add_symbols_to_alphabet=true);
-    void remove_transition(HfstState s, const hfst::implementations::HfstBasicTransition & transition,
-                            bool remove_symbols_from_alphabet=false);
+    void add_transition(HfstState s, const hfst::implementations::HfstBasicTransition & transition, bool add_symbols_to_alphabet=true);
+    void remove_transition(HfstState s, const hfst::implementations::HfstBasicTransition & transition, bool remove_symbols_from_alphabet=false);
     bool is_final_state(HfstState s) const;
     float get_final_weight(HfstState s) const throw(StateIsNotFinalException, StateIndexOutOfBoundsException);
     void set_final_weight(HfstState s, const float & weight);
-    //HfstBasicTransducer &sort_arcs(void);
-    const std::vector<HfstBasicTransition> & transitions(HfstState s) const;
-    //HfstBasicTransducer &disjunct(const StringPairVector &spv, float weight);
-    //HfstBasicTransducer &harmonize(HfstBasicTransducer &another);
-
+    void remove_final_weight(HfstState s);
+%rename("_transitions") transitions(HfstState s);
+    hfst::implementations::HfstBasicTransitions & transitions(HfstState s);
     bool is_infinitely_ambiguous();
     bool is_lookup_infinitely_ambiguous(const StringVector & s);
     int longest_path_size();
 
-    //HfstBasicTransducer & substitute_symbol(const std::string &old_symbol, const std::string &new_symbol, bool input_side=true, bool output_side=true);
-    //HfstBasicTransducer & substitute_symbol_pair(const StringPair &old_symbol_pair, const StringPair &new_symbol_pair);
-    //HfstBasicTransducer & substitute_symbol_pair_with_set(const StringPair &old_symbol_pair, const hfst::StringPairSet &new_symbol_pair_set);
-    //HfstBasicTransducer & substitute_symbol_pair_with_transducer(const StringPair &symbol_pair, HfstBasicTransducer &transducer);
-    //HfstBasicTransducer & substitute_symbols(const hfst::HfstSymbolSubstitutions &substitutions); // alias for the previous function which is shadowed
-    //HfstBasicTransducer & substitute_symbol_pairs(const hfst::HfstSymbolPairSubstitutions &substitutions); // alias for the previous function which is shadowed
-
-    //HfstBasicTransducer & insert_freely(const StringPair &symbol_pair, float weight);
-    //HfstBasicTransducer & insert_freely(const HfstBasicTransducer &tr);
-    
-    // void lookup_fd(const StringVector &lookup_path, HfstTwoLevelPaths &results, size_t infinite_cutoff, float * max_weight = NULL)
-
-    hfst::implementations::HfstBasicStates states_and_transitions() const;
-
-
-
 %extend {
 
-    void substitute_symbol(const std::string &old_symbol, const std::string &new_symbol, bool input_side=true, bool output_side=true) { self->substitute_symbol(old_symbol, new_symbol, input_side, output_side); }
-    void substitute_symbol_pair(const StringPair &old_symbol_pair, const StringPair &new_symbol_pair) { self->substitute_symbol_pair(old_symbol_pair, new_symbol_pair); }
-    void substitute_symbol_pair_with_set(const StringPair &old_symbol_pair, const hfst::StringPairSet &new_symbol_pair_set) { self->substitute_symbol_pair_with_set(old_symbol_pair, new_symbol_pair_set); }
-    void substitute_symbol_pair_with_transducer(const StringPair &symbol_pair, HfstBasicTransducer &transducer) { self->substitute_symbol_pair_with_transducer(symbol_pair, transducer); }
-    void substitute_symbols(const hfst::HfstSymbolSubstitutions &substitutions) { self->substitute_symbols(substitutions); } // alias for the previous function which is shadowed
-    void substitute_symbol_pairs(const hfst::HfstSymbolPairSubstitutions &substitutions) { self->substitute_symbol_pairs(substitutions); } // alias for the previous function which is shadowed
+    void _substitute_symbol(const std::string &old_symbol, const std::string &new_symbol, bool input_side=true, bool output_side=true) { self->substitute_symbol(old_symbol, new_symbol, input_side, output_side); }
+    void _substitute_symbol_pair(const StringPair &old_symbol_pair, const StringPair &new_symbol_pair) { self->substitute_symbol_pair(old_symbol_pair, new_symbol_pair); }
+    void _substitute_symbol_pair_with_set(const StringPair &old_symbol_pair, const hfst::StringPairSet &new_symbol_pair_set) { self->substitute_symbol_pair_with_set(old_symbol_pair, new_symbol_pair_set); }
+    void _substitute_symbol_pair_with_transducer(const StringPair &symbol_pair, HfstBasicTransducer &transducer) { self->substitute_symbol_pair_with_transducer(symbol_pair, transducer); }
+    void _substitute_symbols(const hfst::HfstSymbolSubstitutions &substitutions) { self->substitute_symbols(substitutions); } // alias for the previous function which is shadowed
+    void _substitute_symbol_pairs(const hfst::HfstSymbolPairSubstitutions &substitutions) { self->substitute_symbol_pairs(substitutions); } // alias for the previous function which is shadowed
     void insert_freely(const StringPair &symbol_pair, float weight) { self->insert_freely(symbol_pair, weight); }
     void insert_freely(const HfstBasicTransducer &tr) { self->insert_freely(tr); }
     void sort_arcs() { self->sort_arcs(); }
     void disjunct(const StringPairVector &spv, float weight) { self->disjunct(spv, weight); }
     void harmonize(HfstBasicTransducer &another) { self->harmonize(another); }
 
-  HfstTwoLevelPaths lookup_fd_(const StringVector &lookup_path, size_t * infinite_cutoff, float * max_weight)
+  HfstTwoLevelPaths _lookup(const StringVector &lookup_path, size_t * infinite_cutoff, float * max_weight, bool obey_flags)
   {
     hfst::HfstTwoLevelPaths results;
-    $self->lookup_fd(lookup_path, results, infinite_cutoff, max_weight);
+    $self->lookup(lookup_path, results, infinite_cutoff, max_weight, obey_flags);
     return results;
   }
-  void write_prolog(hfst::HfstFile & f, const std::string & name, bool write_weights=true) {
-    $self->write_in_prolog_format(f.get_file(), name, write_weights);
+
+  std::string get_prolog_string(bool write_weights)
+  {
+    std::ostringstream oss;
+    $self->write_in_prolog_format(oss, self->name, write_weights);
+    return oss.str();
   }
-  static HfstBasicTransducer read_prolog(hfst::HfstFile & f) {
-    unsigned int linecount = 0;
-    return hfst::implementations::HfstBasicTransducer::read_in_prolog_format(f.get_file(), linecount);
+
+  std::string get_xfst_string(bool write_weights)
+  {
+    std::ostringstream oss;
+    $self->write_in_xfst_format(oss, write_weights);
+    return oss.str();
   }
-  void write_xfst(hfst::HfstFile & f, bool write_weights=true) {
-    $self->write_in_xfst_format(f.get_file(), write_weights);
-  }
-  void write_att(hfst::HfstFile & f, bool write_weights=true) {
-    $self->write_in_att_format(f.get_file(), write_weights);
-  }
-  static HfstBasicTransducer read_att(hfst::HfstFile & f, std::string epsilon="@_EPSILON_SYMBOL_@") throw(EndOfStreamException, NotValidAttFormatException) {
-    unsigned int linecount = 0;
-    return hfst::implementations::HfstBasicTransducer::read_in_att_format(f.get_file(), epsilon, linecount);
+
+  std::string get_att_string(bool write_weights)
+  {
+    std::ostringstream oss;
+    $self->write_in_att_format(oss, write_weights);
+    std::string retval = oss.str();
+    if (retval == "") // empty transducer must be represented as empty line in python, else read_att fails...
+      retval = std::string("\n");
+    return retval;
   }
 
   char * __str__()
   {
-    static char str[1024];
-    $self->write_in_att_format(str, true); // write_weights=true  
-    return str;
+    std::ostringstream oss;
+    $self->write_in_att_format(oss, true);
+    return strdup(oss.str().c_str());
   }
 
   void add_transition(HfstState source, HfstState target, std::string input, std::string output, float weight=0) {
@@ -1587,22 +1179,111 @@ class HfstBasicTransducer {
   }
 
 %pythoncode %{
+  def transitions(self, s):
+      """
+      ...
+      """
+      tr = self._transitions(s)
+      retval = []
+      for i in range(0, len(tr)):
+          retval.append(tr[i])
+      return retval
+
+  def states_and_transitions(self):
+      """
+      ...
+      """
+      retval = []
+      for s in self.states():
+          retval.append(self.transitions(s))
+      return retval
+
   def __iter__(self):
+      """
+      Return states and transitions of the transducer.
+      """
       return self.states_and_transitions().__iter__()
 
   def __enumerate__(self):
+      """
+      Return an enumeration of states and transitions of the transducer.
+      """
       return enumerate(self.states_and_transitions())
 
-  def lookup_fd(self, lookup_path, **kvargs):
+  def write_prolog(self, f, write_weights=True):
+      """
+      Write the transducer in prolog format with name *name* to file *f*,
+      *write_weights* defined whether weights are written.
+
+      Parameters
+      ----------
+      * `f` :
+          A python file where the transducer is written.
+      * `write_weights` :
+          Whether weights are written.
+      """
+      prologstr = self.get_prolog_string(write_weights)
+      f.write(prologstr)
+
+  def write_xfst(self, f, write_weights=True):
+      """
+      Write the transducer in xfst format to file *f*, *write_weights* defined whether
+      weights are written.
+
+      Parameters
+      ----------
+      * `f` :
+          A python file where transducer is written.
+      * `write_weights` :
+          Whether weights are written.
+      """
+      xfststr = self.get_xfst_string(write_weights)
+      f.write(prologstr)
+
+  def write_att(self, f, write_weights=True):
+      """
+      Write the transducer in AT&T format to file *f*, *write_weights* defined whether
+      weights are written.
+
+      Parameters
+      ----------
+      * `f` :
+          A python file where transducer is written.
+      * `write_weights` :
+          Whether weights are written.
+      """
+      attstr = self.get_att_string(write_weights)
+      f.write(attstr)
+
+  def lookup(self, lookup_path, **kvargs):
+      """
+      Lookup tokenized input *input* in the transducer.
+
+      Parameters
+      ----------
+      * `str` :
+          A list/tuple of strings to look up.
+      * `kvargs` :
+          infinite_cutoff=-1, max_weight=None, obey_flags=False
+      * `max_epsilon_loops` :
+          How many times epsilon input loops are followed. Defaults to -1, i.e. infinitely.
+      * `max_weight` :
+          What is the maximum weight of a result allowed. Defaults to None, i.e. infinity.
+      * `obey_flags` :
+          Whether flag diacritic constraints are obeyed. Defaults to False.
+      """
       max_weight = None
-      infinite_cutoff = None
+      max_epsilon_loops = None
+      obey_flags = False
       output='dict' # 'dict' (default), 'text', 'raw'
 
       for k,v in kvargs.items():
           if k == 'max_weight' :
              max_weight=v
-          elif k == 'infinite_cutoff' :
+          elif k == 'max_epsilon_loops' :
              infinite_cutoff=v
+          elif k == 'obey_flags' :
+             obey_flags=v
           elif k == 'output':
              if v == 'text':
                 output == 'text'
@@ -1616,17 +1297,70 @@ class HfstBasicTransducer {
           else:
              print('Warning: ignoring unknown argument %s.' % (k))
 
-      retval = self.lookup_fd_(lookup_path, infinite_cutoff, max_weight)
+      retval = self._lookup(lookup_path, max_epsilon_loops, max_weight, obey_flags)
 
       if output == 'text':
-         return two_level_paths_to_string(retval)
+         return _two_level_paths_to_string(retval)
       elif output == 'dict':
-         return two_level_paths_to_dict(retval)
+         return _two_level_paths_to_dict(retval)
       else:
          return retval
 
   def substitute(self, s, S=None, **kvargs):
+      """
 
+      Substitute symbols or transitions in the transducer.
+
+      Parameters
+      ----------
+      * `s` :
+          The symbol or transition to be substituted. Can also be a dictionary of
+          substitutions, if S == None.
+      * `S` :
+          The symbol, transition, a tuple of transitions or a transducer
+          (hfst.HfstBasicTransducer) that substitutes *s*.
+      * `kvargs` :
+          Arguments recognized are 'input' and 'output', their values can be False or
+          True, True being the default. These arguments are valid only if *s* and *S*
+          are strings, else they are ignored.
+      * `input` :
+          Whether substitution is performed on input side, defaults to True. Valid
+          only if *s* and *S* are strings.
+      * `output` :
+          Whether substitution is performed on output side, defaults to True. Valid
+          only if *s* and *S* are strings.
+
+      Possible combinations of arguments and their types are:
+
+      (1) substitute(str, str, input=bool, output=bool): substitute symbol with symbol
+      on input, output or both sides of each transition in the transducer. (2)
+      substitute(strpair, strpair): substitute transition with transition (3)
+      substitute(strpair, strpairtuple): substitute transition with several
+      transitions (4) substitute(strpair, transducer): substitute transition with a
+      transducer (5) substitute(dict): perform several symbol-to-symbol substitutions
+      (6) substitute(dict): perform several transition-to-transition substitutions
+
+      Examples:
+
+      (1) tr.substitute('a', 'A', input=True, output=False): substitute lowercase a:s
+      with uppercase ones (2) tr.substitute(('a','b'),('A','B')): substitute
+      transitions that map lowercase a into lowercase b with transitions that map
+      uppercase a into uppercase b (3) tr.substitute(('a','b'),
+      (('A','B'),('a','B'),('A','b'))): change either or both sides of a transition
+      [a:b] to uppercase (4) tr.substitute(('a','b'), hfst.regex('[a:b]+')) change
+      [a:b] transition into one or more consecutive [a:b] transitions (5)
+      tr.substitute({'a':'A', 'b':'B', 'c':'C'}) change lowercase a, b and c into
+      their uppercase variants (6) tr.substitute( {('a','a'):('A','A'),
+      ('b','b'):('B','B'), ('c','c'):('C','C')} ): change lowercase a, b and c into
+      their uppercase variants
+
+      In case (4), epsilon transitions are used to attach copies of transducer *S*
+      between the SOURCE and TARGET state of each transition that is substituted. The
+      transition itself is deleted, but its weight is copied to the epsilon transition
+      leading from SOURCE to the initial state of *S*. Each final state of *S* is made
+      non-final and an epsilon transition leading to TARGET is attached to it. The
+      final weight is copied to the epsilon transition.
+      """
       if S == None:
          if not isinstance(s, dict):
             raise RuntimeError('First input argument must be a dictionary.')
@@ -1634,30 +1368,30 @@ class HfstBasicTransducer {
          subst_type=""
 
          for k, v in s.items():
-             if is_string(k):
+             if _is_string(k):
                 if subst_type == "":
                    subst_type="string"
                 elif subst_type == "string pair":
                    raise RuntimeError('')
-                if not is_string(v):
+                if not _is_string(v):
                    raise RuntimeError('')
-             elif is_string_pair(k):
+             elif _is_string_pair(k):
                 if subst_type == "":
                    subst_type="string pair"
                 elif subst_type == "string":
                    raise RuntimeError('')
-                if not is_string_pair(v):
+                if not _is_string_pair(v):
                    raise RuntimeError('')
              else:
                 raise RuntimeError('')
 
          if subst_type == "string":
-            return self.substitute_symbols(s)
+            return self._substitute_symbols(s)
          else:
-            return self.substitute_symbol_pairs(s)
+            return self._substitute_symbol_pairs(s)
 
-      if is_string(s):
-         if is_string(S):
+      if _is_string(s):
+         if _is_string(S):
             input=True
             output=True
             for k,v in kvargs.items():
@@ -1669,16 +1403,16 @@ class HfstBasicTransducer {
                       output=False
                 else:
                    raise RuntimeError('Free argument not recognized.')
-            return self.substitute_symbol(s, S, input, output)
+            return self._substitute_symbol(s, S, input, output)
          else:
             raise RuntimeError('...')
-      elif is_string_pair(s):
-         if is_string_pair(S):
-            return self.substitute_symbol_pair(s, S)
-         elif is_string_pair_vector(S):
-            return self.substitute_symbol_pair_with_set(s, S)
+      elif _is_string_pair(s):
+         if _is_string_pair(S):
+            return self._substitute_symbol_pair(s, S)
+         elif _is_string_pair_vector(S):
+            return self._substitute_symbol_pair_with_set(s, S)
          elif isinstance(S, HfstBasicTransducer):
-            return self.substitute_symbol_pair_with_transducer(s, S)
+            return self._substitute_symbol_pair_with_transducer(s, S)
          else:
             raise RuntimeError('...')
       else:
@@ -1688,7 +1422,9 @@ class HfstBasicTransducer {
 
 }
         
-};
+}; // class HfstBasicTransducer
+
+// *** HfstBasicTransition *** //
 
 class HfstBasicTransition {
   public:
@@ -1697,8 +1433,11 @@ class HfstBasicTransition {
     ~HfstBasicTransition();
     HfstState get_target_state() const;
     std::string get_input_symbol() const;
+    void set_input_symbol(const std::string & symbol);
     std::string get_output_symbol() const;
+    void set_output_symbol(const std::string & symbol);
     float get_weight() const;
+    void set_weight(float f);
   
 %extend{
     char *__str__() {
@@ -1708,22 +1447,12 @@ class HfstBasicTransition {
     }
 }
 
-};
+}; // class HfstBasicTransition
 
-}
+} // namespace implementations
 
-namespace pmatch {
-  class PmatchCompiler
-  {
-    public:
-      PmatchCompiler();
-      PmatchCompiler(hfst::ImplementationType impl);
-      void set_flatten(bool val) { flatten = val; }
-      void set_verbose(bool val) { verbose = val; }
-      void define(const std::string& name, const std::string& pmatch);
-      std::map<std::string, HfstTransducer*> compile(const std::string& pmatch);
-  };
-}
+
+// *** XreCompiler: offer only a limited set of functions ***
 
 namespace xre {
 class XreCompiler
@@ -1731,30 +1460,38 @@ class XreCompiler
   public:
   XreCompiler();
   XreCompiler(hfst::ImplementationType impl);
-  //XreCompiler(const struct XreConstructorArguments & args);
-  void define(const std::string& name, const std::string& xre);
   void define_list(const std::string& name, const std::set<std::string>& symbol_list);
-  bool define_function(const std::string& name, 
-                       unsigned int arguments,
-                       const std::string& xre);
+  bool define_function(const std::string& name, unsigned int arguments, const std::string& xre);
   bool is_definition(const std::string& name);
   bool is_function_definition(const std::string& name);
-  void define(const std::string& name, const HfstTransducer & transducer);
   void undefine(const std::string& name);
   HfstTransducer* compile(const std::string& xre);
-  HfstTransducer* compile_first(const std::string& xre, unsigned int & chars_read);
-  bool contained_only_comments();
-  bool get_positions_of_symbol_in_xre
-    (const std::string & symbol, const std::string & xre, std::set<unsigned int> & positions);
-  void set_expand_definitions(bool expand);
-  void set_harmonization(bool harmonize);
-  void set_flag_harmonization(bool harmonize_flags);
   void set_verbosity(bool verbose);
-  XreCompiler& setOutputToConsole(bool value);
   bool getOutputToConsole();
+  void set_expand_definitions(bool expand); // TODO: should this be set automatically to True?
+
+  // *** Some wrappers *** //
+%extend{
+  void define_xre(const std::string& name, const std::string& xre)
+  {
+    self->set_expand_definitions(true);
+    self->define(name, xre);
+  }
+  void define_transducer(const std::string& name, const HfstTransducer & transducer)
+  {
+    self->set_expand_definitions(true);
+    self->define(name, transducer);
+  }
+  void setOutputToConsole(bool value)
+  {
+    (void)self->setOutputToConsole(value);
+  }
+}
+
 };
 }
 
+// *** The LexcCompiler functions are offered only because they are needed in some python functions... *** //
 
 namespace lexc {
   class LexcCompiler
@@ -1763,44 +1500,13 @@ namespace lexc {
       LexcCompiler();
       LexcCompiler(hfst::ImplementationType impl);
       LexcCompiler(hfst::ImplementationType impl, bool withFlags, bool alignStrings);
-      LexcCompiler& parse(FILE* infile);
-      LexcCompiler& parse(const char* filename);
       LexcCompiler& setVerbosity(unsigned int verbose);
-      unsigned int getVerbosity();
-      bool isQuiet();
-      LexcCompiler& setTreatWarningsAsErrors(bool value);
-      bool areWarningsTreatedAsErrors();
-      LexcCompiler& setAllowMultipleSublexiconDefinitions(bool value);
-      LexcCompiler& setWithFlags(bool value);
-      LexcCompiler& setMinimizeFlags(bool value);
-      LexcCompiler& setRenameFlags(bool value);
-      LexcCompiler& addAlphabet(const std::string& alphabet);
-      LexcCompiler& addNoFlag(const std::string& lexname);
-      LexcCompiler& setCurrentLexiconName(const std::string& lexicon_name);
-      LexcCompiler& addStringEntry(const std::string& entry,
-                                   const std::string& continuation,
-                                   const double weight);
-      LexcCompiler& addStringPairEntry(const std::string& upper,
-                                       const std::string& lower,
-                                       const std::string& continuation,
-                                       const double weight);
-      LexcCompiler& addXreEntry(const std::string& xre,
-                                const std::string& continuation, 
-                                const double weight);
-      LexcCompiler& addXreDefinition(const std::string& name,
-                                     const std::string& xre);
-      LexcCompiler& setInitialLexiconName(const std::string& lexicon_name);
-      hfst::HfstTransducer* compileLexical();
-      // not implemented?: const std::map<std::string,hfst::HfstTransducer>& getStringTries() const;
-      // not implemented?: const std::map<std::string,hfst::HfstTransducer>& getRegexpUnions() const;
-      const LexcCompiler& printConnectedness(bool & warnings_printed);
       void setOutputToConsole(bool);
-      bool getOutputToConsole();
   };
-// ugh, the global
-//extern LexcCompiler* lexc_;
+
 }
 
+// *** The XfstCompiler functions are offered only because they are needed in some python functions... *** //
 
 namespace xfst {
   class XfstCompiler
@@ -1808,27 +1514,20 @@ namespace xfst {
     public:
       XfstCompiler();
       XfstCompiler(hfst::ImplementationType impl);
-      //XfstCompiler& compile_regex(const char * indata, unsigned int & chars_read);
-      //int parse(FILE * infile);
-      //int parse(const char * filename);
-      //int parse_line(char line []);
-      int parse_line(std::string line);
-      //XfstCompiler& setReadline(bool readline);
-      XfstCompiler& setReadInteractiveTextFromStdin(bool value);
       XfstCompiler& setOutputToConsole(bool value);
-      //bool getReadline();
-      //bool getReadInteractiveTextFromStdin();
-      //bool getOutputToConsole();
+      XfstCompiler& setReadInteractiveTextFromStdin(bool Value);
+      XfstCompiler& setReadline(bool value);
       XfstCompiler& setVerbosity(bool verbosity);
-      XfstCompiler& setPromptVerbosity(bool verbosity);
-      bool quit_requested();
-      std::string get(const char *);
-      const XfstCompiler& prompt();
-      char* get_prompt() const;
       XfstCompiler& set(const char* name, const char* text);
+      char * get_prompt() const;
+      XfstCompiler& apply_up(const char* indata);
+      XfstCompiler& apply_down(const char* indata);
+      int parse_line(std::string line);
+      bool quit_requested() const;
   };
 }
 
+// internal functions
 
 std::string hfst::get_hfst_regex_error_message();
 hfst::HfstTransducer * hfst::hfst_regex(hfst::xre::XreCompiler & comp, const std::string & regex_string, const std::string & error_stream);
@@ -1841,49 +1540,52 @@ int hfst::hfst_compile_xfst(hfst::xfst::XfstCompiler & comp, std::string input, 
 std::string hfst::get_hfst_lexc_output();
 hfst::HfstTransducer * hfst::hfst_compile_lexc(hfst::lexc::LexcCompiler & comp, const std::string & filename, const std::string & error_stream);
 
-void hfst::set_default_fst_type(hfst::ImplementationType t);
-hfst::ImplementationType hfst::get_default_fst_type();
-std::string hfst::fst_type_to_string(hfst::ImplementationType t);
-
-hfst::HfstTransducer * hfst::read_att(hfst::HfstFile & f, std::string epsilon="@_EPSILON_SYMBOL_@") throw(EndOfStreamException, NotValidAttFormatException);
-hfst::HfstTransducer * hfst::read_prolog(hfst::HfstFile & f) throw(EndOfStreamException);
+std::string hfst::get_hfst_sfst_output();
+hfst::HfstTransducer * hfst::hfst_compile_sfst(const std::string & filename, const std::string & error_stream, bool verbose, bool output_to_console);
 
 std::string hfst::one_level_paths_to_string(const HfstOneLevelPaths &);
 std::string hfst::two_level_paths_to_string(const HfstTwoLevelPaths &);
 
+bool parse_prolog_network_line(const std::string & line, hfst::implementations::HfstBasicTransducer * graph);
+bool parse_prolog_arc_line(const std::string & line, hfst::implementations::HfstBasicTransducer * graph);
+bool parse_prolog_symbol_line(const std::string & line, hfst::implementations::HfstBasicTransducer * graph);
+bool parse_prolog_final_line(const std::string & line, hfst::implementations::HfstBasicTransducer * graph);
 
-hfst_ol::PmatchContainer * create_pmatch_container(const std::string & filename);
 
-namespace rules {
-  enum ReplaceType {REPL_UP, REPL_DOWN, REPL_RIGHT, REPL_LEFT, REPL_DOWN_KARTTUNEN};
-  enum TwolType {twol_right, twol_left, twol_both};
-}
+// fuctions visible under module hfst
+
+void hfst::set_default_fst_type(hfst::ImplementationType t);
+hfst::ImplementationType hfst::get_default_fst_type();
+std::string hfst::fst_type_to_string(hfst::ImplementationType t);
+
+
+// *** hfst_rules (will be wrapped under module hfst.rules) *** //
 
 namespace hfst_rules {
 
   HfstTransducer two_level_if(const HfstTransducerPair & context, const StringPairSet & mappings, const StringPairSet & alphabet);
-  HfstTransducer two_level_only_if(const HfstTransducerPair &context, const StringPairSet &mappings, const StringPairSet &alphabet); 
-  HfstTransducer two_level_if_and_only_if(const HfstTransducerPair &context, const StringPairSet &mappings, const StringPairSet &alphabet); 
-  HfstTransducer replace_down(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet); 
-  HfstTransducer replace_down_karttunen(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet); 
-  HfstTransducer replace_right(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet); 
-  HfstTransducer replace_left(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet); 
-  HfstTransducer replace_up(const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet); 
-  HfstTransducer replace_down(const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet); 
-  HfstTransducer left_replace_up(const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet); 
-  HfstTransducer left_replace_up(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet); 
-  HfstTransducer left_replace_down(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet); 
-  HfstTransducer left_replace_down_karttunen(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet); 
-  HfstTransducer left_replace_left(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet); 
-  HfstTransducer left_replace_right(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet); 
-  HfstTransducer restriction(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet); 
-  HfstTransducer coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet); 
-  HfstTransducer restriction_and_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet); 
-  HfstTransducer surface_restriction(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet); 
-  HfstTransducer surface_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet); 
-  HfstTransducer surface_restriction_and_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet); 
-  HfstTransducer deep_restriction(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet); 
-  HfstTransducer deep_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet); 
+  HfstTransducer two_level_only_if(const HfstTransducerPair &context, const StringPairSet &mappings, const StringPairSet &alphabet);
+  HfstTransducer two_level_if_and_only_if(const HfstTransducerPair &context, const StringPairSet &mappings, const StringPairSet &alphabet);
+  HfstTransducer replace_down(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet);
+  HfstTransducer replace_down_karttunen(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet);
+  HfstTransducer replace_right(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet);
+  HfstTransducer replace_left(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet);
+  HfstTransducer replace_up(const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet);
+  HfstTransducer replace_down(const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet);
+  HfstTransducer left_replace_up(const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet);
+  HfstTransducer left_replace_up(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet);
+  HfstTransducer left_replace_down(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet);
+  HfstTransducer left_replace_down_karttunen(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet);
+  HfstTransducer left_replace_left(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet);
+  HfstTransducer left_replace_right(const HfstTransducerPair &context, const HfstTransducer &mapping, bool optional, const StringPairSet &alphabet);
+  HfstTransducer restriction(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet);
+  HfstTransducer coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet);
+  HfstTransducer restriction_and_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet);
+  HfstTransducer surface_restriction(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet);
+  HfstTransducer surface_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet);
+  HfstTransducer surface_restriction_and_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet);
+  HfstTransducer deep_restriction(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet);
+  HfstTransducer deep_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet);
   HfstTransducer deep_restriction_and_coercion(const HfstTransducerPairVector &contexts, const HfstTransducer &mapping, const StringPairSet &alphabet);
 
 } // namespace hfst_rules
@@ -1891,366 +1593,82 @@ namespace hfst_rules {
 
 } // namespace hfst
 
+namespace hfst {
+  namespace twolc {
+    class TwolcCompiler
+    {
+    public:
+      static int compile(const std::string & inputfile, const std::string & outputfile,
+			 bool silent, bool verbose, bool resolve_left_conflicts,
+			 bool resolve_right_conflicts, hfst::ImplementationType type);
+    };
+  }
+}
+
+// *** PmatchContainer *** //
+
 namespace hfst_ol {
     class PmatchContainer
     {
     public:
-        //PmatchContainer(std::istream & is);
         PmatchContainer(void);
+        PmatchContainer(hfst::HfstTransducerVector transducers);
         ~PmatchContainer(void);
         std::string match(const std::string & input, double time_cutoff = 0.0);
         std::string get_profiling_info(void);
         void set_verbose(bool b);
-        void set_extract_tags_mode(bool b);
+        //void set_extract_tags_mode(bool b);
         void set_profile(bool b);
 
-%extend {
-
-%pythoncode %{
-
-def __init__(self, filename):
-    self.this = _libhfst.create_pmatch_container(filename)
-
-%}
-
-}
-
-    };
-}
-
-
-%pythoncode %{
-
-from sys import stdout
+}; // class PmatchContainer
+} // namespace hfst_ol
  
-EPSILON='@_EPSILON_SYMBOL_@'
-UNKNOWN='@_UNKNOWN_SYMBOL_@'
-IDENTITY='@_IDENTITY_SYMBOL_@'
+%pythoncode %{
 
-OUTPUT_TO_CONSOLE=False
-def set_output_to_console(val):
-    global OUTPUT_TO_CONSOLE
-    OUTPUT_TO_CONSOLE=val
-def get_output_to_console():
-    return OUTPUT_TO_CONSOLE
+class ImplementationType:
+    """
+    Back-end implementation.
 
-def regex(re, **kvargs):
-    type = _libhfst.get_default_fst_type()
-    to_console=get_output_to_console()
-    import sys
-    err=None
+    Attributes:
 
-    for k,v in kvargs.items():
-      if k == 'output_to_console':
-          to_console=v
-      if k == 'error':
-          err=v
-      else:
-        print('Warning: ignoring unknown argument %s.' % (k))
+        SFST_TYPE:               SFST type, unweighted
+        TROPICAL_OPENFST_TYPE:   OpenFst type with tropical weights
+        LOG_OPENFST_TYPE:        OpenFst type with logarithmic weights (limited support)
+        FOMA_TYPE:               FOMA type, unweighted
+        XFSM_TYPE:               XFST type, unweighted (limited support)
+        HFST_OL_TYPE:            HFST optimized-lookup type, unweighted
+        HFST_OLW_TYPE:           HFST optimized-lookup type, weighted
+        HFST2_TYPE:              HFST version 2 legacy type
+        UNSPECIFIED_TYPE:        type not specified
+        ERROR_TYPE:              (something went wrong)
 
-    comp = XreCompiler(type)
-    comp.setOutputToConsole(to_console)
+    """
+    SFST_TYPE = _libhfst.SFST_TYPE
+    TROPICAL_OPENFST_TYPE = _libhfst.TROPICAL_OPENFST_TYPE    
+    LOG_OPENFST_TYPE = _libhfst.LOG_OPENFST_TYPE
+    FOMA_TYPE = _libhfst.FOMA_TYPE
+    XFSM_TYPE = _libhfst.XFSM_TYPE
+    HFST_OL_TYPE = _libhfst.HFST_OL_TYPE
+    HFST_OLW_TYPE = _libhfst.HFST_OLW_TYPE
+    HFST2_TYPE = _libhfst.HFST2_TYPE
+    UNSPECIFIED_TYPE = _libhfst.UNSPECIFIED_TYPE
+    ERROR_TYPE = _libhfst.ERROR_TYPE
 
-    if err == None:
-       return _libhfst.hfst_regex(comp, re, "")
-    elif err == sys.stdout:
-       return _libhfst.hfst_regex(comp, re, "cout")
-    elif err == sys.stderr:
-       return _libhfst.hfst_regex(comp, re, "cerr")
-    else:
-       retval = _libhfst.hfst_regex(comp, re, "")
-       err.write(_libhfst.get_hfst_regex_error_message())
-       return retval
+class ReplaceType:
+    """
+    Replace type in Xerox-type rules.
 
-def replace_symbols(symbol):
-    if symbol == "@0@":
-       return EPSILON
-    symbol = symbol.replace("@_SPACE_@", " ")
-    symbol = symbol.replace("@_TAB_@", "\t")
-    symbol = symbol.replace("@_COLON_@", ":")
-    return symbol
+    Attributes:
 
-def parse_att_line(line, fsm):
-    # get rid of extra whitespace
-    line = line.replace('\t',' ')
-    line = " ".join(line.split())
-    fields = line.split(' ')
-    if len(fields) == 1:
-           fsm.add_state(int(fields[0]))
-           fsm.set_final_weight(int(fields[0]), 0)
-    elif len(fields) == 2:
-           fsm.add_state(int(fields[0]))
-           fsm.set_final_weight(int(fields[0]), float(fields[1]))
-    elif len(fields) == 4:
-           fsm.add_transition(int(fields[0]), int(fields[1]), replace_symbols(fields[2]), replace_symbols(fields[3]), 0)
-    elif len(fields) == 5:
-           fsm.add_transition(int(fields[0]), int(fields[1]), replace_symbols(fields[2]), replace_symbols(fields[3]), float(fields[4]))
-    else:
-           return False
-    return True
+        REPL_UP:      Match contexts on input level
+        REPL_DOWN:    Match contexts on output level
+        REPL_RIGHT:   Match left contexts on input level and right contexts on output level
+        REPL_LEFT:    Match left contexts on output level and right contexts on input level
 
-def read_att_string(att):
-    fsm = HfstBasicTransducer()
-    lines = att.split('\n')
-    for line in lines:
-        if not parse_att_line(line, fsm):
-           raise NotValidAttFormatException()
-    return HfstTransducer(fsm, _libhfst.get_default_fst_type())
-
-def read_att_input():
-    fsm = HfstBasicTransducer()
-    while True:
-        line = input().rstrip()
-        if line == "":
-           break
-        if not parse_att_line(line, fsm):
-           raise NotValidAttFormatException()
-    return HfstTransducer(fsm, _libhfst.get_default_fst_type())
-
-def start_xfst(**kvargs):
-    import sys
-    idle = 'idlelib' in sys.modules
-    if idle:
-        print('It seems that you are running python in in IDLE. Note that all output from xfst will be buffered.')
-        print('This means that all warnings, e.g. about time-consuming operations, will be printed only after the operation is carried out.')
-        print('Consider running python from shell, for example command prompt, if you wish to see output with no delays.')
-
-    type = _libhfst.get_default_fst_type()
-    quit_on_fail = 'OFF'
-    to_console=get_output_to_console()
-    for k,v in kvargs.items():
-      if k == 'type':
-        type = v
-      elif k == 'output_to_console':
-        to_console=v
-      elif k == 'quit_on_fail':
-        if v == True:
-          quit_on_fail='ON'
-      else:
-        print('Warning: ignoring unknown argument %s.' % (k))
-
-    comp = XfstCompiler(type)
-    comp.setReadInteractiveTextFromStdin(True)
-
-    if to_console and idle:
-        print('Cannot output to console when running libhfst from IDLE.')
-        to_console=False
-    comp.setOutputToConsole(to_console)
-    comp.set('quit-on-fail', quit_on_fail)
-
-    expression=""
-    import sys
-    while True:
-        expression += input(comp.get_prompt()).rstrip()
-        if expression[-1] == '\\':
-           expression = expression[:-2] + '\n'
-           continue
-        retval = -1
-        if idle:
-            retval = _libhfst.hfst_compile_xfst_to_string_one(comp, expression)
-            stdout.write(_libhfst.get_hfst_xfst_string_one())
-        else:
-            retval = comp.parse_line(expression + "\n")
-        if retval != 0:
-           print("expression '%s' could not be parsed" % expression)
-           if comp.get("quit-on-fail") == "ON":
-              return
-        if comp.quit_requested():
-           break
-        expression = ""
-
-def compile_xfst_file(filename, **kvargs):
-    verbosity=0
-    quit_on_fail='ON'
-    type = _libhfst.get_default_fst_type()
-    output=None
-    error=None
-    to_console=get_output_to_console()
-
-    for k,v in kvargs.items():
-      if k == 'verbosity':
-        verbosity=v
-      elif k == 'quit_on_fail':
-        if v == False:
-          quit_on_fail='OFF'
-      elif k == 'output':
-          output=v
-      elif k == 'error':
-          error=v
-      elif k == 'output_to_console':
-          to_console=v
-      else:
-        print('Warning: ignoring unknown argument %s.' % (k))
-
-    if verbosity > 1:
-      print('Compiling with %s implementation...' % _libhfst.fst_type_to_string(type))
-    xfstcomp = XfstCompiler(type)
-    xfstcomp.setOutputToConsole(to_console)
-    xfstcomp.setVerbosity(verbosity > 0)
-    xfstcomp.set('quit-on-fail', quit_on_fail)
-    if verbosity > 1:
-      print('Opening xfst file %s...' % filename)
-    f = open(filename, 'r', encoding='utf-8')
-    data = f.read()
-    f.close()
-    if verbosity > 1:
-      print('File closed...')
-
-    retval=-1
-    import sys
-    from io import StringIO
-
-    # check special case
-    if isinstance(output, StringIO) and isinstance(error, StringIO) and output == error:
-       retval =_libhfst.hfst_compile_xfst_to_string_one(xfstcomp, data)
-       output.write(_libhfst.get_hfst_xfst_string_one())
-    else:
-       arg1 = ""
-       arg2 = ""
-       if output == None or output == sys.stdout:
-          arg1 = "cout"
-       if output == sys.stderr:
-          arg1 == "cerr"
-       if error == None or error == sys.stderr:
-          arg2 = "cerr"
-       if error == sys.stdout:
-          arg2 == "cout"
-
-       retval = _libhfst.hfst_compile_xfst(xfstcomp, data, arg1, arg2)
-
-       if isinstance(output, StringIO):
-          output.write(_libhfst.get_hfst_xfst_string_one())
-       if isinstance(error, StringIO):
-          error.write(_libhfst.get_hfst_xfst_string_two())
-
-    if verbosity > 1:
-      print('Parsed file with return value %i (0 indicating succesful parsing).' % retval)
-    return retval
-
-def compile_lexc_file(filename, **kvargs):
-    verbosity=0
-    withflags=False
-    alignstrings=False
-    type = _libhfst.get_default_fst_type()
-    output=None
-    to_console=get_output_to_console()
-
-    for k,v in kvargs.items():
-      if k == 'verbosity':
-        verbosity=v
-      elif k == 'with_flags':
-        if v == True:
-          withflags = v
-      elif k == 'align_strings':
-          alignstrings = v
-      elif k == 'output':
-          output=v
-      elif k == 'output_to_console':
-          to_console=v
-      else:
-        print('Warning: ignoring unknown argument %s.' % (k))
-
-    lexccomp = LexcCompiler(type, withflags, alignstrings)
-    lexccomp.setVerbosity(verbosity)
-    lexccomp.setOutputToConsole(to_console)
-
-    retval=-1
-    import sys
-    if output == None:
-       retval = _libhfst.hfst_compile_lexc(lexccomp, filename, "")
-    elif output == sys.stdout:
-       retval = _libhfst.hfst_compile_lexc(lexccomp, filename, "cout")
-    elif output == sys.stderr:
-       retval = _libhfst.hfst_compile_lexc(lexccomp, filename, "cerr")
-    else:
-       retval = _libhfst.hfst_compile_lexc(lexccomp, filename, "")
-       output.write(_libhfst.get_hfst_lexc_output())
-
-    return retval
-
-def is_weighted_word(arg):
-    if isinstance(arg, tuple) and len(arg) == 2 and isinstance(arg[0], str) and isinstance(arg[1], (int, float)):
-       return True
-    return False
-
-def check_word(arg):
-    if len(arg) == 0:
-       raise RuntimeError('Empty word.')
-    return arg
-
-def fsa(arg):
-    deftok = HfstTokenizer()
-    retval = HfstBasicTransducer()
-    if isinstance(arg, str):
-       retval.disjunct(deftok.tokenize(check_word(arg)), 0)
-    elif is_weighted_word(arg):
-       retval.disjunct(deftok.tokenize(check_word(arg[0])), arg[1])
-    elif isinstance(arg, tuple) or isinstance(arg, list):
-       for word in arg:
-           if is_weighted_word(word):
-              retval.disjunct(deftok.tokenize(check_word(word[0])), word[1])
-           elif isinstance(word, str):
-              retval.disjunct(deftok.tokenize(check_word(word)), 0)
-           else:
-              raise RuntimeError('Tuple/list element not a string or tuple of string and weight.')           
-    else:
-       raise RuntimeError('Not a string or tuple/list of strings.')
-    return HfstTransducer(retval, _libhfst.get_default_fst_type())
-
-def fst(arg):
-    if isinstance(arg, dict):
-       retval = regex('[0-0]') # empty transducer
-       for input, output in arg.items():
-           if not isinstance(input, str):
-              raise RuntimeError('Key not a string.')
-           left = fsa(input)
-           right = 0
-           if isinstance(output, str):
-              right = fsa(output)
-           elif isinstance(output, list) or isinstance(output, tuple):
-              right = fsa(output)
-           else:
-              raise RuntimeError('Value not a string or tuple/list of strings.')
-           left.cross_product(right)
-           retval.disjunct(left)
-       return retval
-    return fsa(arg)
-
-def tokenized_fst(arg, weight=0):
-    retval = HfstBasicTransducer()
-    state = 0 
-    if isinstance(arg, list) or isinstance(arg, tuple):
-       for token in arg:
-           if isinstance(token, str):
-              new_state = retval.add_state()
-              retval.add_transition(state, new_state, token, token, 0)
-              state = new_state
-           elif isinstance(token, list) or isinstance(token, tuple):
-              if len(token) == 2:
-                 new_state = retval.add_state()
-                 retval.add_transition(state, new_state, token[0], token[1], 0)
-                 state = new_state
-              elif len(token) == 1:
-                 new_state = retval.add_state()
-                 retval.add_transition(state, new_state, token, token, 0)
-                 state = new_state
-              else:
-                 raise RuntimeError('Symbol or symbol pair must be given.')
-       retval.set_final_weight(state, weight)
-       return HfstTransducer(retval, _libhfst.get_default_fst_type())
-    else:
-       raise RuntimeError('Argument must be a list or a tuple')
-
-def empty_fst():
-    return regex('[0-0]')
-
-def epsilon_fst(weight=0):
-    return regex('[0]::' + str(weight))
-
-def concatenate(transducers):
-    retval = empty_fst()
-    for tr in transducers:
-      retval.concatenate(tr)
-    return retval.minimize()
+    """
+    REPL_UP = _libhfst.REPL_UP
+    REPL_DOWN = _libhfst.REPL_DOWN
+    REPL_RIGHT = _libhfst.REPL_RIGHT
+    REPL_LEFT = _libhfst.REPL_LEFT
 
 %}

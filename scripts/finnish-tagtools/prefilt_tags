@@ -1,0 +1,22 @@
+#!/bin/sh
+# 1) Do some unification to the Omorfi tagging
+#  a) Add missing NUM & CASE tags
+# 2) Fix defective guessed lemmas
+# 3) Correct some >90% sure tagging errors
+#  a) 'Juhani' != Juha+PX
+#  b) 'Mari(tt)a' != Mari+PAR/ABE
+#  c) 'Kansa' != 'Ka'
+#  d) 'Line' != 'Li'
+#  e) 'noin' != 'noki'
+# 4) Add a TAB char to ends of non-empty lines
+sed -r -e 's/^(.*\t.*\t\[POS=NOUN\](\[SUBCAT=[^]]+\])*)\t/\1[NUM=SG][CASE=NOM]\t/' \
+       -e 's/^([^\t]*)\t\[POS=ADJECTIVE/\1\t\1/' \
+       -e 's/^([^\t]*[^t]\t\S+[A-ZÄÖ])t\t/\1\t/' \
+       -e 's/^([^\t]*\t\S+[0-9.])t\t/\1\t/' \
+       -e 's/^Juhani\tJuha\t(.*)\[CASE=...\]\[POSS=SG1\]/Juhani\tJuhani\t\1[CASE=NOM]/' \
+       -e 's/^Maria\t[^\t]+\t(.*)\[CASE=PAR\]/Maria\tMaria\t\1[CASE=NOM]/' \
+       -e 's/^Maritta\t[^\t]+\t(.*)\[CASE=ABE\]/Maritta\tMaritta\t\1[CASE=NOM]/' \
+       -e 's/^Kansa\tKa\t(.*)\[CASE=...\]\[POSS=3\]/Kansa\tKansa\t\1[CASE=NOM]/' \
+       -e 's/^Line\tLi\t(.*)\[CASE=COM\]/Line\tLine\t\1[CASE=NOM]/' \
+       -e 's/^([Nn])oin\tnoki\t.*\t/\1oin\tnoin\t[POS=PARTICLE][SUBCAT=ADVERB]\t/' \
+       -e 's/.$/&\t/'

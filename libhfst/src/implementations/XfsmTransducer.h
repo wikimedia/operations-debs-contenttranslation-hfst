@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #ifndef _XFSM_TRANSDUCER_H_
@@ -23,7 +23,7 @@
 #include <cstdio>
 #include <string>
 #include <sstream>
-#include <iostream>
+#include <iosfwd>
 
 #include "../FormatSpecifiers.h"
 
@@ -41,7 +41,7 @@ namespace hfst {
   private:
     /* The name of the file where transducers will be read from. */
     std::string filename;
-    /* A list of transducers that will return transducers one by one when 
+    /* A list of transducers that will return transducers one by one when
        read_transducer() is called. */
     NVptr net_list;
     /* The size of net_list. */
@@ -86,7 +86,7 @@ namespace hfst {
     /* Does nothing. */
     void close();
     /* Delayed write, stores a copy of \a transducer in net_list. */
-    void write_transducer(NETptr transducer); 
+    void write_transducer(NETptr transducer);
   };
 
   class XfsmTransducer {

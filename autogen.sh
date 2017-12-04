@@ -584,7 +584,7 @@ else
 	_version="0.0.0"
     fi
     $ECHO "Found GNU Automake version $_version"
-    version_check "$AUTOMAKE_VERSION" "$_version" 
+    version_check "$AUTOMAKE_VERSION" "$_version"
     if [ $? -ne 0 ] ; then
 	_report_error=yes
     fi
@@ -686,7 +686,7 @@ else
 	_version="0.0.0"
     fi
     $ECHO "Found GNU Libtool version $_version"
-    version_check "$LIBTOOL_VERSION" "$_version" 
+    version_check "$LIBTOOL_VERSION" "$_version"
     if [ $? -ne 0 ] ; then
 	_report_error=yes
     fi

@@ -65,7 +65,7 @@ class FunctionalTransducer
   void follow_epsilon_transitions
     (StringVector::iterator it,StringVector::iterator end,
      HfstState,bool,StringStringVector &,StateSet &);
-  void follow_transitions    
+  void follow_transitions
     (StringVector::iterator it,StringVector::iterator end,
      HfstState,bool,StringStringVector &);
   void join_and_uniquify(StringVectorVector &);

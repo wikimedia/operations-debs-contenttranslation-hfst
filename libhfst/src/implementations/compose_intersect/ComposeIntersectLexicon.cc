@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 #include "ComposeIntersectLexicon.h"
 
@@ -25,7 +25,7 @@ namespace hfst
 
     bool ComposeIntersectLexicon::is_flag_diacritic(size_t symbol)
     { return FdOperation::is_diacritic
-    (HfstTropicalTransducerTransitionData::get_symbol(symbol)); }
+        (HfstTropicalTransducerTransitionData::get_symbol(hfst::size_t_to_uint(symbol))); }
 
     void ComposeIntersectLexicon::clear_all_info(void)
     {
@@ -74,12 +74,12 @@ namespace hfst
       return compute_composition_result(rules);
     }
 
-    HfstState ComposeIntersectLexicon::get_state(const StatePair &p, 
+    HfstState ComposeIntersectLexicon::get_state(const StatePair &p,
                                                  bool allow_lexicon_epsilons)
-    { 
+    {
       if (state_pair_map.find(p) == state_pair_map.end())
-    { 
-      return map_state_and_add_to_agenda(p, allow_lexicon_epsilons); 
+    {
+      return map_state_and_add_to_agenda(p, allow_lexicon_epsilons);
     }
 
       return state_pair_map[p];
@@ -94,13 +94,13 @@ namespace hfst
       float rules_weight = rules->get_final_weight(pair_vector[s].second);
       if (lexicon_weight != std::numeric_limits<float>::infinity() &&
           rules_weight != std::numeric_limits<float>::infinity())
-        { result.set_final_weight(s,lexicon_weight+rules_weight); }
+        { result.set_final_weight(hfst::size_t_to_uint(s),lexicon_weight+rules_weight); }
     }
     }
 
     HfstBasicTransducer &ComposeIntersectLexicon::compute_composition_result
     (ComposeIntersectRule * rules)
-    { 
+    {
       while (! agenda.empty())
         {
           HfstState s = agenda.front();
@@ -110,7 +110,7 @@ namespace hfst
         }
       
       set_final_state_weights(rules);
-      return result; 
+      return result;
     }
 
     ComposeIntersectLexicon::StatePair ComposeIntersectLexicon::get_pair
@@ -127,32 +127,32 @@ namespace hfst
     {
       StatePair p = get_pair(state);
 
-      bool lexicon_eps_transition_found = false;
+      //bool lexicon_eps_transition_found = false;
       
-      for (SymbolTransitionMap::const_iterator it = 
+      for (SymbolTransitionMap::const_iterator it =
          transition_map_vector[p.first].begin();
        it != transition_map_vector[p.first].end();
        ++it)
-    { 
+    {
       if (it->first == HfstTropicalTransducerTransitionData::get_number
           ("@_EPSILON_SYMBOL_@"))
-        { 
+        {
           if (allow_lexicon_epsilons)
             {
               lexicon_skip_symbol_compose(it->second,p.second,state);
-              lexicon_eps_transition_found = true;
+              //lexicon_eps_transition_found = true;
             }
         }
       else if (is_flag_diacritic(it->first) &&
            (! rules->known_symbol(it->first)))
-        { 
-          lexicon_skip_symbol_compose(it->second,p.second,state); 
-          lexicon_eps_transition_found = true;
+        {
+          lexicon_skip_symbol_compose(it->second,p.second,state);
+          //lexicon_eps_transition_found = true;
         }
       else
-        { 
+        {
           compose(it->second,rules->get_transitions
-                  (p.second,it->first),state); 
+                  (p.second,it->first),state);
         }
     }
       
@@ -169,10 +169,10 @@ namespace hfst
       for (TransitionSet::const_iterator it = transitions.begin();
            it != transitions.end();
            ++it)
-        { 
+        {
           add_transition
             (origin,it->ilabel,it->olabel,it->weight,
-             get_state(StatePair(it->target,rule_state))); 
+             get_state(StatePair(it->target,rule_state)));
         }
     }
 
@@ -182,10 +182,10 @@ namespace hfst
       for (TransitionSet::const_iterator it = transitions.begin();
        it != transitions.end();
        ++it)
-    { 
+    {
       add_transition
         (origin,it->ilabel,it->olabel,it->weight,
-         get_state(StatePair(lex_state,it->target), false)); 
+         get_state(StatePair(lex_state,it->target), false));
     }
 
     }
@@ -205,7 +205,7 @@ namespace hfst
            ++jt)
         { add_transition
         (origin,it->ilabel,jt->olabel,it->weight + jt->weight,
-         get_state(StatePair(it->target,jt->target))); } 
+         get_state(StatePair(it->target,jt->target))); }
     }
     }
 
@@ -216,8 +216,8 @@ namespace hfst
     (origin,
      HfstBasicTransition
      (target,
-      HfstTropicalTransducerTransitionData::get_symbol(input),
-      HfstTropicalTransducerTransitionData::get_symbol(output),
+      HfstTropicalTransducerTransitionData::get_symbol(hfst::size_t_to_uint(input)),
+      HfstTropicalTransducerTransitionData::get_symbol(hfst::size_t_to_uint(output)),
       weight)); }
 
   }
@@ -272,7 +272,7 @@ int main(int argc, char * argv[])
   
   HfstTransducer right_rule(universal);
   right_rule.subtract(inv_right_rule).minimize();
-  ComposeIntersectRule * ci_right_rule = 
+  ComposeIntersectRule * ci_right_rule =
     new ComposeIntersectRule(right_rule);
 
   HfstTransducer left_rule_abstract_center_pair(x);

@@ -17,15 +17,6 @@
 
 AM_CPPFLAGS = -I${top_srcdir}/libhfst/src -I${top_srcdir}/lib -I${top_builddir}/lib $(GLIB_CPPFLAGS)
 
-AM_CPPFLAGS+= -I${top_srcdir}/back-ends/foma \
-		-I${top_srcdir}/back-ends
-
-if WANT_MINGW
-  AM_CPPFLAGS+= -I${top_srcdir}/back-ends/openfstwin/src/include  -DWINDOWS
-else
-  AM_CPPFLAGS+= -I${top_srcdir}/back-ends/openfst/src/include
-endif
-
 if WANT_PROC
 MAYBE_PROC=hfst-apertium-proc
 endif

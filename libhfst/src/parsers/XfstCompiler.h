@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 //! @file XfstCompiler.h
@@ -33,7 +33,7 @@
 #include "XreCompiler.h"
 #include "LexcCompiler.h"
 
-namespace hfst { 
+namespace hfst {
 //! @brief hfst::xfst namespace contains all functions needed to parse XFST scritpts
 namespace xfst {
 
@@ -67,6 +67,8 @@ class XfstCompiler
   XfstCompiler();
   //! @brief Create compiler for @a impl format transducers
   XfstCompiler(hfst::ImplementationType impl);
+  //! @brief Destructor.
+  ~XfstCompiler();
 
   //! @brief Add properties from file, one property per line
   //! @todo properties cannot be stored in HFST automata
@@ -448,10 +450,10 @@ class XfstCompiler
 
 
   /* Compile a regex string starting from \a indata, store the resulting
-     transducer to variable XfstCompiler::latest_regex_compiled and 
+     transducer to variable XfstCompiler::latest_regex_compiled and
      store the number of characters read from \a indata to \a chars_read.
      
-     This function is used by the xfst lexer to determine where a regex 
+     This function is used by the xfst lexer to determine where a regex
      starting from \a indata ends. For example, if we have the input
      
      regex foo:bar ! this is a comment with a semicolon;
@@ -461,7 +463,7 @@ class XfstCompiler
      the xfst lexer would read "regex" and then call 'compile_regex' on
      the substring starting right after "regex". 'compile_regex' would
      then read until the semicolon ending the regex, i.e. the one right
-     after "baz" and store the resulting transducer to 
+     after "baz" and store the resulting transducer to
      'latest_regex_compiled'.
 
      The xfst lexer could then put back all characters after index
@@ -503,11 +505,16 @@ class XfstCompiler
   //! @brief Get the prompt string.
   char* get_prompt() const;
 
+  //! @brief Allow read and write operations only in current directory, do not allow system calls.
+  XfstCompiler& setRestrictedMode(bool value);
+  //! @brief Whether restricted mode is on.
+  bool getRestrictedMode() const;
+  
   //! @brief Whether it has been requested to quit the program.
   //  Needed in interactive mode where user input is read line by line.
   bool quit_requested() const;
   //! @brief Handle unknown command \a s.
-  //  @return Whether the parser should go on, 0 signifying true. 
+  //  @return Whether the parser should go on, 0 signifying true.
   int unknown_command(const char * s);
   // For xfst parser.
   bool get_fail_flag() const;
@@ -530,7 +537,7 @@ class XfstCompiler
      On Unix and Mac, output() and error() just return members output_ and error_,
      and flush(std::ostream *) does nothing. On windows, it is possible that
      output() and error() return an ostringstream which is actually printed when
-     flush(std::ostream *) is called. 
+     flush(std::ostream *) is called.
 
      This delayed printing is needed because Windows makes a difference between
      standard output and error streams and console output and error streams.
@@ -546,26 +553,28 @@ class XfstCompiler
   /* Flush the stream. */
   void flush(std::ostream * oss);
 
+  bool check_filename(const char * filename);
+  
  protected:
-  //! @brief Get the prompt that is used when applying up or down 
+  //! @brief Get the prompt that is used when applying up or down
   //! (as specified by \a direction).
   const char* get_apply_prompt(ApplyDirection direction);
   //! @brief Get the print symbol for \a symbol.
   //! @see print_flags
   const char* get_print_symbol(const char* symbol);
-  //! @brief Print \a n first paths (or all, if n is negative) 
+  //! @brief Print \a n first paths (or all, if n is negative)
   //! from \a paths to \a outfile.
-  bool print_paths(const hfst::HfstTwoLevelPaths &paths, 
+  bool print_paths(const hfst::HfstTwoLevelPaths &paths,
                    std::ostream * oss = &std::cout, int n=-1);
-  //! @brief Print \a n first paths (or all, if n is negative) 
+  //! @brief Print \a n first paths (or all, if n is negative)
   //! from \a paths to \a outfile.
-  bool print_paths(const hfst::HfstOneLevelPaths &paths, 
+  bool print_paths(const hfst::HfstOneLevelPaths &paths,
                    std::ostream * oss = &std::cout, int n=-1);
   // A method used by function print_longest_string_or_its_size.
   XfstCompiler& print_one_string_or_its_size
     (std::ostream * oss, const HfstTwoLevelPaths & paths, const char * level, bool print_size);
   //! @brief Print the longest string of topmost transducer in the stack
-  //! (if print_size is false) or the size of that string (if print_size is true) 
+  //! (if print_size is false) or the size of that string (if print_size is true)
   //! to \a outfile.
   XfstCompiler& print_longest_string_or_its_size(std::ostream * oss, bool print_size);
   //! @brief Try to extract a maximum of \a number paths from topmost
@@ -579,7 +588,7 @@ class XfstCompiler
   XfstCompiler& read_text_or_spaced(const char * filename, bool spaces);
 
   //! @brief Convert format of \a t read from file \a filename to common
-  //! format used by this xfst compiler and print a warning message 
+  //! format used by this xfst compiler and print a warning message
   //! about loss of information during conversion, if needed.
   void convert_to_common_format
     (HfstTransducer * t, const char * filename = NULL);
@@ -593,7 +602,7 @@ class XfstCompiler
   //! (if \a definitions is true).
   //!
   //! Transducers are pushed to the stack in the order they are read from the file.
-  //! This is because 'write_stack' writes the transducers starting from the 
+  //! This is because 'write_stack' writes the transducers starting from the
   //! bottom-most transducer in the stack.
   //!
   //! Definitions are added using the function 'add_loaded_definition'.
@@ -606,7 +615,7 @@ class XfstCompiler
   //! In both cases, a warning message is printed.
   XfstCompiler& add_loaded_definition(HfstTransducer * t);
 
-  //! @brief Set fail flag to true if quit-on-fail is ON, 
+  //! @brief Set fail flag to true if quit-on-fail is ON,
   //! else do nothing.
   void xfst_fail();
 
@@ -627,10 +636,10 @@ class XfstCompiler
 
   bool can_arc_be_followed(int number, unsigned int number_of_arcs);
 
-  unsigned int print_arcs(const HfstBasicTransducer::HfstTransitions & transitions);
+  unsigned int print_arcs(const hfst::implementations::HfstBasicTransitions & transitions);
 
   //! @brief Perform lookup on the top transducer using strings in \a infile.
-  //! \a direction specifies whether apply is done on input (up) or output (down) 
+  //! \a direction specifies whether apply is done on input (up) or output (down)
   //! side. If infile is stdin, interactive mode with prompts is used.
   //! The results are printed to standard output.
   XfstCompiler& apply(FILE* infile, ApplyDirection direction);
@@ -639,8 +648,8 @@ class XfstCompiler
   //! If the stack is empty, print a warning.
   XfstCompiler& apply_unary_operation(UnaryOperation operation);
   //! @brief Apply \a operation on two top transducers in the stack.
-  //! The top transducers are popped, the operation is applied 
-  //! (the topmost transducer is the first transducer in the operation), 
+  //! The top transducers are popped, the operation is applied
+  //! (the topmost transducer is the first transducer in the operation),
   //! and the result is pushed to the top of the stack.
   //! If the stack has less than two transducers, print a warning.
   XfstCompiler& apply_binary_operation(BinaryOperation operation);
@@ -664,7 +673,7 @@ class XfstCompiler
   //! Use \a promptstr as prompt for readline, or print it to stderr if readline is not in use.
   char * xfst_getline(FILE * file, const std::string & promptstr = "");
   
-  //! @brief Remove newline ('\n' and '\r') from the end of \a str. 
+  //! @brief Remove newline ('\n' and '\r') from the end of \a str.
   char * remove_newline(char * str);
 
   //! @brief Print weight.
@@ -673,12 +682,12 @@ class XfstCompiler
   //! @brief Get current readline history index.
   int current_history_index();
 
-  //! @brief Remove all readline history after \a index. 
+  //! @brief Remove all readline history after \a index.
   void ignore_history_after_index(int index);
 
   //! @brief Get the precision that is used when printing weights.
   int get_precision();
-
+  
   private:
   /* */
   const XfstCompiler& error(const char* message) const;
@@ -694,7 +703,7 @@ class XfstCompiler
 
   XfstCompiler& print_bool(bool value);
   XfstCompiler& read_prop_line(char* line);
-
+  
   /* A wrapper around stream objects, see flush(std::ostream *) for more information. */
   std::ostream * get_stream(std::ostream * oss);
 
@@ -723,7 +732,6 @@ class XfstCompiler
   std::map<std::string,std::string> variables_;
   std::map<std::string,std::string> properties_;
   std::map<std::string,std::set<std::string> > lists_;
-  hfst::HfstTransducer* last_defined_;
   hfst::ImplementationType format_;
   bool verbose_;
   bool verbose_prompt_;
@@ -752,6 +760,7 @@ class XfstCompiler
   // and actually written when flush(std::ostream *) is called.
   std::ostringstream winoss_stderr_;
 #endif
+  bool restricted_mode_;
 }
 ;
 

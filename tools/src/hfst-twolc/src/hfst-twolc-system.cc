@@ -16,12 +16,12 @@ int main(int argc, char* argv[]) {
     arguments.append(std::string(" "));
   }
 
-  (void)sprintf(command, 
+  (void)sprintf(command,
                 "htwolcpre1.exe %s | "
                 "htwolcpre2.exe %s | "
-                "htwolcpre3.exe %s", 
-                arguments.c_str(), 
-                arguments.c_str(), 
+                "htwolcpre3.exe %s",
+                arguments.c_str(),
+                arguments.c_str(),
                 arguments.c_str());
 
   int retval = system(command);

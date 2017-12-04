@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 #ifndef COMPOSE_INTERSECT_FST_H
 #define COMPOSE_INTERSECT_FST_H
 
@@ -13,7 +13,7 @@
 
 #include "ComposeIntersectUtilities.h"
 #include "../../HfstExceptionDefs.h"
-#include "../HfstTransitionGraph.h"
+#include "../HfstBasicTransducer.h"
 
 HFST_EXCEPTION_CHILD_DECLARATION(StateNotDefined);
 
@@ -22,8 +22,8 @@ namespace hfst
   namespace implementations
   {
     class ComposeIntersectFst
-    {   
-    public:      
+    {
+    public:
       struct Transition
       {
         size_t ilabel;
@@ -38,12 +38,12 @@ namespace hfst
       struct CompareTransitions
       {
     bool operator() (const Transition &transition1,
-             const Transition &transition2) const; 
+             const Transition &transition2) const;
       };
 
       typedef compose_intersect_utilities::SpaceSavingSet
-    <Transition,CompareTransitions> 
-    TransitionSet; 
+    <Transition,CompareTransitions>
+    TransitionSet;
       typedef std::set<size_t> SymbolSet;
       static const HfstState START; // = 0;
       ComposeIntersectFst(const HfstBasicTransducer &, bool input_keys);

@@ -36,14 +36,16 @@ int remove_defined(struct defined_networks *def, char *string) {
     int exists = 0;
     /* Undefine all */
     if (string == NULL) {
-	for (d = def; d != NULL; d = d_next) {
-	    d_next = d->next;	    
-	    fsm_destroy(d->net);
-	    xxfree(d->name);
-	}
-	return 0;
+      for (d = def; d != NULL; d = d_next) {
+        d_next = d->next;
+        if (d->net != NULL)
+          fsm_destroy(d->net);
+        if (d->name != NULL)
+          xxfree(d->name);
+      }
+      return 0;
     }
-    d_prev = NULL; 
+    d_prev = NULL;
     for (d = def; d != NULL; d_prev = d, d = d->next) {
 	if (d->name != NULL && strcmp(d->name, string) == 0) {
 	    exists = 1;
@@ -65,8 +67,9 @@ int remove_defined(struct defined_networks *def, char *string) {
 	} else {
 	    fsm_destroy(d->net);
 	    xxfree(d->name);
-	    d->next = NULL;
-	    d->name = NULL;
+            d->next = NULL;
+            d->name = NULL;
+            d->net = NULL;
 	}
     } else {
 	fsm_destroy(d->net);

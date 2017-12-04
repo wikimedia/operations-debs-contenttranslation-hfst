@@ -64,24 +64,24 @@ namespace SFST {
     Transducer *pi_machine( Alphabet &alph );
     Transducer *cp( Range *lower_range, Range *upper_range );
     Transducer *anti_cp( Range *lower_range, Range *upper_range );
-    Transducer *twol_right_rule( Transducer *lc, Range *lower_range, 
+    Transducer *twol_right_rule( Transducer *lc, Range *lower_range,
                                  Range *upper_range, Transducer *rc);
     Transducer *twol_left_rule( Transducer *lc, Range *lower_range,
                                 Range *upper_range, Transducer *rc );
     Transducer *restriction_transducer( Transducer *l1, Transducer *l2,
                                         Character marker );
-    Transducer *marker_transducer( Transducer *t, Contexts *c, 
+    Transducer *marker_transducer( Transducer *t, Contexts *c,
                                    Character &marker );
-    Transducer *center_transducer( Transducer *t, Transducer *pi, 
+    Transducer *center_transducer( Transducer *t, Transducer *pi,
                                    Transducer *mt );
     Transducer *context_transducer( Transducer *t, Transducer *pi,
                                     Transducer *mt, Contexts *c );
     Transducer *constrain_boundary_transducer( Character leftm, Character rm );
-    Transducer *extended_left_transducer( Transducer *t, 
+    Transducer *extended_left_transducer( Transducer *t,
                                           Character m1, Character m2 );
     Transducer *left_context( Transducer *t, Character m1, Character m2 );
     Transducer *make_optional( Transducer *t, Repl_Type type );
-    Transducer *replace_transducer( Transducer *ct, Character lm, 
+    Transducer *replace_transducer( Transducer *ct, Character lm,
                                     Character rm, Repl_Type type );
 
     Transducer *result_transducer( Transducer *l1, Transducer *l2,
@@ -141,7 +141,7 @@ namespace SFST {
     Transducer *composition( Transducer *a1, Transducer *a2 );
     Transducer *restriction( Transducer *a, Twol_Type type, Contexts *c, int );
     Transducer *replace( Transducer *a, Repl_Type type, bool optional );
-    Transducer *replace_in_context( Transducer *a, Repl_Type type, 
+    Transducer *replace_in_context( Transducer *a, Repl_Type type,
                                     Contexts *c, bool optional );
     Transducer *negation( Transducer *a );
     Transducer *upper_level( Transducer *a );

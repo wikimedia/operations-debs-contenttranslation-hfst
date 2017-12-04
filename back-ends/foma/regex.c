@@ -158,6 +158,7 @@ void clear_rewrite_ruleset(struct rewrite_set *rewrite_rules) {
 	    fsm_destroy(r->left);
 	    fsm_destroy(r->right);
 	    fsm_destroy(r->right2);
+	    fsm_destroy(r->cross_product);
 	    rp = r->next;
 	    xxfree(r);
 	}
@@ -185,7 +186,6 @@ void add_rewrite_rule() {
         new_rewrite_rule->rewrite_contexts = contexts;
         new_rewrite_rule->next = rewrite_rules;
         new_rewrite_rule->rule_direction = rule_direction;
-        new_rewrite_rule->cpunion = NULL;
 
         rewrite_rules = new_rewrite_rule;
         rules = NULL;
@@ -194,6 +194,18 @@ void add_rewrite_rule() {
     }
 }
 
+void add_eprule(struct fsm *R, struct fsm *R2, int type) {
+    struct fsmrules *newrule;
+    rewrite = 1;
+    newrule = xxmalloc(sizeof(struct fsmrules));
+    newrule->left = fsm_empty_string();
+    newrule->right = R;
+    newrule->right2 = R2;
+    newrule->arrow_type = type;
+    newrule->next = rules;
+    rules = newrule;
+}
+ 
 void add_rule(struct fsm *L, struct fsm *R, struct fsm *R2, int type) {
     struct fsm *test;
     struct fsmrules *newrule;
@@ -236,7 +248,7 @@ void add_rule(struct fsm *L, struct fsm *R, struct fsm *R2, int type) {
 
 
 /* Line 268 of yacc.c  */
-#line 240 "regex.c"
+#line 252 "regex.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -357,7 +369,7 @@ typedef union YYSTYPE
 {
 
 /* Line 293 of yacc.c  */
-#line 186 "regex.y"
+#line 198 "regex.y"
 
      char *string;
      struct fsm *net;
@@ -366,7 +378,7 @@ typedef union YYSTYPE
 
 
 /* Line 293 of yacc.c  */
-#line 370 "regex.c"
+#line 382 "regex.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -391,7 +403,7 @@ typedef struct YYLTYPE
 
 
 /* Line 343 of yacc.c  */
-#line 395 "regex.c"
+#line 407 "regex.c"
 
 #ifdef short
 # undef short
@@ -756,20 +768,20 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   240,   240,   241,   244,   246,   247,   248,   249,   251,
-     253,   254,   255,   256,   257,   258,   259,   260,   261,   262,
-     263,   264,   265,   266,   268,   269,   270,   271,   272,   273,
-     274,   275,   276,   277,   279,   281,   282,   283,   284,   285,
-     286,   287,   288,   289,   290,   291,   292,   295,   296,   297,
-     298,   300,   302,   304,   305,   306,   307,   308,   309,   310,
-     311,   313,   314,   315,   317,   318,   319,   320,   322,   323,
-     324,   325,   326,   327,   329,   330,   331,   332,   333,   335,
-     337,   338,   339,   340,   341,   342,   343,   344,   345,   347,
-     348,   349,   350,   352,   353,   355,   356,   357,   358,   359,
-     360,   361,   362,   363,   364,   366,   367,   369,   370,   371,
-     372,   373,   374,   375,   376,   377,   378,   379,   380,   381,
-     382,   383,   384,   385,   386,   387,   388,   389,   390,   391,
-     393,   395,   398,   399,   401,   403,   405
+       0,   252,   252,   253,   256,   258,   259,   260,   261,   263,
+     265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
+     275,   276,   277,   278,   280,   281,   282,   283,   284,   285,
+     286,   287,   288,   289,   291,   293,   294,   295,   296,   297,
+     298,   299,   300,   301,   302,   303,   304,   307,   308,   309,
+     310,   312,   314,   316,   317,   318,   319,   320,   321,   322,
+     323,   325,   326,   327,   329,   330,   331,   332,   334,   335,
+     336,   337,   338,   339,   341,   342,   343,   344,   345,   347,
+     349,   350,   351,   352,   353,   354,   355,   356,   357,   359,
+     360,   361,   362,   364,   365,   367,   368,   369,   370,   371,
+     372,   373,   374,   375,   376,   378,   379,   381,   382,   383,
+     384,   385,   386,   387,   388,   389,   390,   391,   392,   393,
+     394,   395,   396,   397,   398,   399,   400,   401,   402,   403,
+     405,   407,   410,   411,   413,   415,   417
 };
 #endif
 
@@ -1958,7 +1970,7 @@ YYLTYPE yylloc;
 /* User initialization code.  */
 
 /* Line 1590 of yacc.c  */
-#line 199 "regex.y"
+#line 211 "regex.y"
 {
     clear_quantifiers();
     rewrite = 0;
@@ -1970,7 +1982,7 @@ YYLTYPE yylloc;
 }
 
 /* Line 1590 of yacc.c  */
-#line 1974 "regex.c"
+#line 1986 "regex.c"
 
   goto yysetstate;
 
@@ -2157,938 +2169,938 @@ yyreduce:
         case 4:
 
 /* Line 1806 of yacc.c  */
-#line 244 "regex.y"
+#line 256 "regex.y"
     { current_parse = (yyvsp[(1) - (2)].net);              }
     break;
 
   case 5:
 
 /* Line 1806 of yacc.c  */
-#line 246 "regex.y"
+#line 258 "regex.y"
     { }
     break;
 
   case 6:
 
 /* Line 1806 of yacc.c  */
-#line 247 "regex.y"
+#line 259 "regex.y"
     { (yyval.net) = fsm_compose((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net));         }
     break;
 
   case 7:
 
 /* Line 1806 of yacc.c  */
-#line 248 "regex.y"
+#line 260 "regex.y"
     { (yyval.net) = fsm_lenient_compose((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net)); }
     break;
 
   case 8:
 
 /* Line 1806 of yacc.c  */
-#line 249 "regex.y"
+#line 261 "regex.y"
     { (yyval.net) = fsm_cross_product((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net));   }
     break;
 
   case 9:
 
 /* Line 1806 of yacc.c  */
-#line 251 "regex.y"
+#line 263 "regex.y"
     { if (rewrite) { add_rewrite_rule(); (yyval.net) = fsm_rewrite(rewrite_rules); clear_rewrite_ruleset(rewrite_rules); } rewrite = 0; contexts = NULL; rules = NULL; rewrite_rules = NULL; }
     break;
 
   case 10:
 
 /* Line 1806 of yacc.c  */
-#line 253 "regex.y"
+#line 265 "regex.y"
     { }
     break;
 
   case 11:
 
 /* Line 1806 of yacc.c  */
-#line 254 "regex.y"
+#line 266 "regex.y"
     { (yyval.net) = NULL; add_context_pair((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net));}
     break;
 
   case 12:
 
 /* Line 1806 of yacc.c  */
-#line 255 "regex.y"
+#line 267 "regex.y"
     { add_context_pair((yyvsp[(1) - (2)].net),fsm_empty_string()); }
     break;
 
   case 13:
 
 /* Line 1806 of yacc.c  */
-#line 256 "regex.y"
+#line 268 "regex.y"
     { add_context_pair((yyvsp[(1) - (4)].net),fsm_empty_string()); }
     break;
 
   case 14:
 
 /* Line 1806 of yacc.c  */
-#line 257 "regex.y"
+#line 269 "regex.y"
     { add_context_pair(fsm_empty_string(),fsm_empty_string());}
     break;
 
   case 15:
 
 /* Line 1806 of yacc.c  */
-#line 258 "regex.y"
+#line 270 "regex.y"
     { add_rewrite_rule(); add_context_pair(fsm_empty_string(),fsm_empty_string());}
     break;
 
   case 16:
 
 /* Line 1806 of yacc.c  */
-#line 259 "regex.y"
+#line 271 "regex.y"
     { add_rewrite_rule(); add_context_pair((yyvsp[(1) - (4)].net),fsm_empty_string());}
     break;
 
   case 17:
 
 /* Line 1806 of yacc.c  */
-#line 260 "regex.y"
+#line 272 "regex.y"
     { add_context_pair(fsm_empty_string(),fsm_empty_string());}
     break;
 
   case 18:
 
 /* Line 1806 of yacc.c  */
-#line 261 "regex.y"
+#line 273 "regex.y"
     { add_context_pair(fsm_empty_string(),(yyvsp[(2) - (2)].net)); }
     break;
 
   case 19:
 
 /* Line 1806 of yacc.c  */
-#line 262 "regex.y"
+#line 274 "regex.y"
     { add_context_pair(fsm_empty_string(),(yyvsp[(2) - (4)].net)); }
     break;
 
   case 20:
 
 /* Line 1806 of yacc.c  */
-#line 263 "regex.y"
+#line 275 "regex.y"
     { add_context_pair((yyvsp[(1) - (5)].net),(yyvsp[(3) - (5)].net)); }
     break;
 
   case 21:
 
 /* Line 1806 of yacc.c  */
-#line 264 "regex.y"
+#line 276 "regex.y"
     { (yyval.net) = fsm_context_restrict((yyvsp[(1) - (3)].net),contexts); fsm_clear_contexts(contexts);}
     break;
 
   case 22:
 
 /* Line 1806 of yacc.c  */
-#line 265 "regex.y"
+#line 277 "regex.y"
     { add_rule((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net),NULL,(yyvsp[(2) - (3)].type)); if ((yyvsp[(1) - (3)].net)->arity == 2) { printf("Error: LHS is transducer\n"); YYERROR;}}
     break;
 
   case 23:
 
 /* Line 1806 of yacc.c  */
-#line 266 "regex.y"
+#line 278 "regex.y"
     { add_rule((yyvsp[(1) - (2)].net),NULL,NULL,(yyvsp[(2) - (2)].type)); }
     break;
 
   case 24:
 
 /* Line 1806 of yacc.c  */
-#line 268 "regex.y"
+#line 280 "regex.y"
     { add_rule((yyvsp[(2) - (5)].net),(yyvsp[(5) - (5)].net),NULL,(yyvsp[(4) - (5)].type)|ARROW_DOTTED); if ((yyvsp[(5) - (5)].net) == NULL) { YYERROR;}}
     break;
 
   case 25:
 
 /* Line 1806 of yacc.c  */
-#line 269 "regex.y"
-    { add_rule(fsm_empty_string(),(yyvsp[(4) - (4)].net),NULL,(yyvsp[(3) - (4)].type)|ARROW_DOTTED); if ((yyvsp[(4) - (4)].net) == NULL) { YYERROR;}}
+#line 281 "regex.y"
+    { add_eprule((yyvsp[(4) - (4)].net),NULL,(yyvsp[(3) - (4)].type)|ARROW_DOTTED); if ((yyvsp[(4) - (4)].net) == NULL) { YYERROR;}}
     break;
 
   case 26:
 
 /* Line 1806 of yacc.c  */
-#line 270 "regex.y"
+#line 282 "regex.y"
     { add_rule((yyvsp[(2) - (7)].net),(yyvsp[(5) - (7)].net),NULL,(yyvsp[(4) - (7)].type)|ARROW_DOTTED);}
     break;
 
   case 27:
 
 /* Line 1806 of yacc.c  */
-#line 271 "regex.y"
-    { add_rule(fsm_empty_string(),(yyvsp[(4) - (6)].net),NULL,(yyvsp[(3) - (6)].type)|ARROW_DOTTED);}
+#line 283 "regex.y"
+    { add_eprule((yyvsp[(4) - (6)].net),NULL,(yyvsp[(3) - (6)].type)|ARROW_DOTTED);}
     break;
 
   case 28:
 
 /* Line 1806 of yacc.c  */
-#line 272 "regex.y"
+#line 284 "regex.y"
     { add_rule((yyvsp[(2) - (7)].net),(yyvsp[(5) - (7)].net),NULL,(yyvsp[(4) - (7)].type)|ARROW_DOTTED); rule_direction = (yyvsp[(6) - (7)].type);}
     break;
 
   case 29:
 
 /* Line 1806 of yacc.c  */
-#line 273 "regex.y"
-    { add_rule(fsm_empty_string(),(yyvsp[(4) - (6)].net),NULL,(yyvsp[(3) - (6)].type)|ARROW_DOTTED); rule_direction = (yyvsp[(5) - (6)].type);}
+#line 285 "regex.y"
+    { add_eprule((yyvsp[(4) - (6)].net),NULL,(yyvsp[(3) - (6)].type)|ARROW_DOTTED); rule_direction = (yyvsp[(5) - (6)].type);}
     break;
 
   case 30:
 
 /* Line 1806 of yacc.c  */
-#line 274 "regex.y"
+#line 286 "regex.y"
     { add_rule((yyvsp[(1) - (5)].net),(yyvsp[(3) - (5)].net),NULL,(yyvsp[(2) - (5)].type));}
     break;
 
   case 31:
 
 /* Line 1806 of yacc.c  */
-#line 275 "regex.y"
+#line 287 "regex.y"
     { add_rule((yyvsp[(1) - (4)].net),NULL,NULL,(yyvsp[(2) - (4)].type));}
     break;
 
   case 32:
 
 /* Line 1806 of yacc.c  */
-#line 276 "regex.y"
+#line 288 "regex.y"
     { add_rule((yyvsp[(1) - (5)].net),(yyvsp[(3) - (5)].net),NULL,(yyvsp[(2) - (5)].type)); rule_direction = (yyvsp[(4) - (5)].type);}
     break;
 
   case 33:
 
 /* Line 1806 of yacc.c  */
-#line 277 "regex.y"
+#line 289 "regex.y"
     { add_rule((yyvsp[(1) - (4)].net),NULL,NULL,(yyvsp[(2) - (4)].type)); rule_direction = (yyvsp[(3) - (4)].type);}
     break;
 
   case 34:
 
 /* Line 1806 of yacc.c  */
-#line 279 "regex.y"
+#line 291 "regex.y"
     { add_rewrite_rule();}
     break;
 
   case 35:
 
 /* Line 1806 of yacc.c  */
-#line 281 "regex.y"
+#line 293 "regex.y"
     { add_rule((yyvsp[(1) - (3)].net),fsm_empty_string(),fsm_empty_string(),(yyvsp[(2) - (3)].type));}
     break;
 
   case 36:
 
 /* Line 1806 of yacc.c  */
-#line 282 "regex.y"
+#line 294 "regex.y"
     { add_rule((yyvsp[(1) - (4)].net),fsm_empty_string(),(yyvsp[(4) - (4)].net),(yyvsp[(2) - (4)].type));}
     break;
 
   case 37:
 
 /* Line 1806 of yacc.c  */
-#line 283 "regex.y"
+#line 295 "regex.y"
     { add_rule((yyvsp[(1) - (4)].net),(yyvsp[(3) - (4)].net),fsm_empty_string(),(yyvsp[(2) - (4)].type));}
     break;
 
   case 38:
 
 /* Line 1806 of yacc.c  */
-#line 284 "regex.y"
+#line 296 "regex.y"
     { add_rule((yyvsp[(1) - (5)].net),(yyvsp[(3) - (5)].net),(yyvsp[(5) - (5)].net),(yyvsp[(2) - (5)].type));}
     break;
 
   case 39:
 
 /* Line 1806 of yacc.c  */
-#line 285 "regex.y"
+#line 297 "regex.y"
     { add_rule((yyvsp[(1) - (7)].net),(yyvsp[(3) - (7)].net),(yyvsp[(5) - (7)].net),(yyvsp[(2) - (7)].type));}
     break;
 
   case 40:
 
 /* Line 1806 of yacc.c  */
-#line 286 "regex.y"
+#line 298 "regex.y"
     { add_rule((yyvsp[(1) - (6)].net),(yyvsp[(3) - (6)].net),fsm_empty_string(),(yyvsp[(2) - (6)].type));}
     break;
 
   case 41:
 
 /* Line 1806 of yacc.c  */
-#line 287 "regex.y"
+#line 299 "regex.y"
     { add_rule((yyvsp[(1) - (6)].net),fsm_empty_string(),(yyvsp[(4) - (6)].net),(yyvsp[(2) - (6)].type));}
     break;
 
   case 42:
 
 /* Line 1806 of yacc.c  */
-#line 288 "regex.y"
+#line 300 "regex.y"
     { add_rule((yyvsp[(1) - (5)].net),fsm_empty_string(),fsm_empty_string(),(yyvsp[(2) - (5)].type));}
     break;
 
   case 43:
 
 /* Line 1806 of yacc.c  */
-#line 289 "regex.y"
+#line 301 "regex.y"
     { add_rule((yyvsp[(1) - (7)].net),(yyvsp[(3) - (7)].net),(yyvsp[(5) - (7)].net),(yyvsp[(2) - (7)].type)); rule_direction = (yyvsp[(6) - (7)].type);}
     break;
 
   case 44:
 
 /* Line 1806 of yacc.c  */
-#line 290 "regex.y"
+#line 302 "regex.y"
     { add_rule((yyvsp[(1) - (6)].net),fsm_empty_string(),(yyvsp[(4) - (6)].net),(yyvsp[(2) - (6)].type)); rule_direction = (yyvsp[(5) - (6)].type);}
     break;
 
   case 45:
 
 /* Line 1806 of yacc.c  */
-#line 291 "regex.y"
+#line 303 "regex.y"
     { add_rule((yyvsp[(1) - (6)].net),(yyvsp[(3) - (6)].net),fsm_empty_string(),(yyvsp[(2) - (6)].type)); rule_direction = (yyvsp[(5) - (6)].type);}
     break;
 
   case 46:
 
 /* Line 1806 of yacc.c  */
-#line 292 "regex.y"
+#line 304 "regex.y"
     { add_rule((yyvsp[(1) - (5)].net),fsm_empty_string(),fsm_empty_string(),(yyvsp[(2) - (5)].type)); rule_direction = (yyvsp[(4) - (5)].type);}
     break;
 
   case 47:
 
 /* Line 1806 of yacc.c  */
-#line 295 "regex.y"
+#line 307 "regex.y"
     { }
     break;
 
   case 48:
 
 /* Line 1806 of yacc.c  */
-#line 296 "regex.y"
+#line 308 "regex.y"
     { (yyval.net) = fsm_shuffle((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net));  }
     break;
 
   case 49:
 
 /* Line 1806 of yacc.c  */
-#line 297 "regex.y"
+#line 309 "regex.y"
     { (yyval.net) = fsm_precedes((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net)); }
     break;
 
   case 50:
 
 /* Line 1806 of yacc.c  */
-#line 298 "regex.y"
+#line 310 "regex.y"
     { (yyval.net) = fsm_follows((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net));  }
     break;
 
   case 51:
 
 /* Line 1806 of yacc.c  */
-#line 300 "regex.y"
+#line 312 "regex.y"
     { }
     break;
 
   case 52:
 
 /* Line 1806 of yacc.c  */
-#line 302 "regex.y"
+#line 314 "regex.y"
     { }
     break;
 
   case 53:
 
 /* Line 1806 of yacc.c  */
-#line 304 "regex.y"
+#line 316 "regex.y"
     { }
     break;
 
   case 54:
 
 /* Line 1806 of yacc.c  */
-#line 305 "regex.y"
+#line 317 "regex.y"
     { (yyval.net) = fsm_union((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net));                     }
     break;
 
   case 55:
 
 /* Line 1806 of yacc.c  */
-#line 306 "regex.y"
+#line 318 "regex.y"
     { (yyval.net) = fsm_priority_union_upper((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net));      }
     break;
 
   case 56:
 
 /* Line 1806 of yacc.c  */
-#line 307 "regex.y"
+#line 319 "regex.y"
     { (yyval.net) = fsm_priority_union_lower((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net));      }
     break;
 
   case 57:
 
 /* Line 1806 of yacc.c  */
-#line 308 "regex.y"
+#line 320 "regex.y"
     { (yyval.net) = fsm_intersect((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net));                 }
     break;
 
   case 58:
 
 /* Line 1806 of yacc.c  */
-#line 309 "regex.y"
+#line 321 "regex.y"
     { (yyval.net) = fsm_minus((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net));                     }
     break;
 
   case 59:
 
 /* Line 1806 of yacc.c  */
-#line 310 "regex.y"
+#line 322 "regex.y"
     { (yyval.net) = fsm_union(fsm_complement((yyvsp[(1) - (3)].net)),(yyvsp[(3) - (3)].net));     }
     break;
 
   case 60:
 
 /* Line 1806 of yacc.c  */
-#line 311 "regex.y"
+#line 323 "regex.y"
     { (yyval.net) = fsm_intersect(fsm_union(fsm_complement(fsm_copy((yyvsp[(1) - (3)].net))),fsm_copy((yyvsp[(3) - (3)].net))), fsm_union(fsm_complement(fsm_copy((yyvsp[(3) - (3)].net))),fsm_copy((yyvsp[(1) - (3)].net)))); fsm_destroy((yyvsp[(1) - (3)].net)); fsm_destroy((yyvsp[(3) - (3)].net));}
     break;
 
   case 61:
 
 /* Line 1806 of yacc.c  */
-#line 313 "regex.y"
+#line 325 "regex.y"
     { }
     break;
 
   case 62:
 
 /* Line 1806 of yacc.c  */
-#line 314 "regex.y"
+#line 326 "regex.y"
     { (yyval.net) = fsm_concat((yyvsp[(1) - (2)].net),(yyvsp[(2) - (2)].net)); }
     break;
 
   case 63:
 
 /* Line 1806 of yacc.c  */
-#line 315 "regex.y"
+#line 327 "regex.y"
     { (yyval.net) = fsm_ignore(fsm_contains(fsm_concat(fsm_symbol((yyvsp[(1) - (3)].string)),fsm_concat((yyvsp[(3) - (3)].net),fsm_symbol((yyvsp[(1) - (3)].string))))),union_quantifiers(),OP_IGNORE_ALL); }
     break;
 
   case 64:
 
 /* Line 1806 of yacc.c  */
-#line 317 "regex.y"
+#line 329 "regex.y"
     { (yyval.net) = fsm_logical_eq((yyvsp[(1) - (3)].string),(yyvsp[(3) - (3)].string)); }
     break;
 
   case 65:
 
 /* Line 1806 of yacc.c  */
-#line 318 "regex.y"
+#line 330 "regex.y"
     { (yyval.net) = fsm_complement(fsm_logical_eq((yyvsp[(1) - (3)].string),(yyvsp[(3) - (3)].string))); }
     break;
 
   case 66:
 
 /* Line 1806 of yacc.c  */
-#line 319 "regex.y"
+#line 331 "regex.y"
     { (yyval.net) = fsm_logical_precedence((yyvsp[(1) - (3)].string),(yyvsp[(3) - (3)].string)); }
     break;
 
   case 67:
 
 /* Line 1806 of yacc.c  */
-#line 320 "regex.y"
+#line 332 "regex.y"
     { (yyval.net) = fsm_logical_precedence((yyvsp[(3) - (3)].string),(yyvsp[(1) - (3)].string)); }
     break;
 
   case 68:
 
 /* Line 1806 of yacc.c  */
-#line 322 "regex.y"
+#line 334 "regex.y"
     { }
     break;
 
   case 69:
 
 /* Line 1806 of yacc.c  */
-#line 323 "regex.y"
+#line 335 "regex.y"
     { (yyval.net) = fsm_ignore((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net), OP_IGNORE_ALL);          }
     break;
 
   case 70:
 
 /* Line 1806 of yacc.c  */
-#line 324 "regex.y"
+#line 336 "regex.y"
     { (yyval.net) = fsm_ignore((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net), OP_IGNORE_INTERNAL);     }
     break;
 
   case 71:
 
 /* Line 1806 of yacc.c  */
-#line 325 "regex.y"
+#line 337 "regex.y"
     { (yyval.net) = fsm_quotient_right((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net));                 }
     break;
 
   case 72:
 
 /* Line 1806 of yacc.c  */
-#line 326 "regex.y"
+#line 338 "regex.y"
     { (yyval.net) = fsm_quotient_left((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net));                  }
     break;
 
   case 73:
 
 /* Line 1806 of yacc.c  */
-#line 327 "regex.y"
+#line 339 "regex.y"
     { (yyval.net) = fsm_quotient_interleave((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net));            }
     break;
 
   case 74:
 
 /* Line 1806 of yacc.c  */
-#line 329 "regex.y"
+#line 341 "regex.y"
     { }
     break;
 
   case 75:
 
 /* Line 1806 of yacc.c  */
-#line 330 "regex.y"
+#line 342 "regex.y"
     { (yyval.net) = fsm_complement((yyvsp[(2) - (2)].net));       }
     break;
 
   case 76:
 
 /* Line 1806 of yacc.c  */
-#line 331 "regex.y"
+#line 343 "regex.y"
     { (yyval.net) = fsm_contains((yyvsp[(2) - (2)].net));         }
     break;
 
   case 77:
 
 /* Line 1806 of yacc.c  */
-#line 332 "regex.y"
+#line 344 "regex.y"
     { (yyval.net) = fsm_contains_one((yyvsp[(2) - (2)].net));     }
     break;
 
   case 78:
 
 /* Line 1806 of yacc.c  */
-#line 333 "regex.y"
+#line 345 "regex.y"
     { (yyval.net) = fsm_contains_opt_one((yyvsp[(2) - (2)].net)); }
     break;
 
   case 79:
 
 /* Line 1806 of yacc.c  */
-#line 335 "regex.y"
+#line 347 "regex.y"
     { }
     break;
 
   case 80:
 
 /* Line 1806 of yacc.c  */
-#line 337 "regex.y"
+#line 349 "regex.y"
     { }
     break;
 
   case 81:
 
 /* Line 1806 of yacc.c  */
-#line 338 "regex.y"
+#line 350 "regex.y"
     { (yyval.net) = fsm_kleene_star(fsm_minimize((yyvsp[(1) - (2)].net))); }
     break;
 
   case 82:
 
 /* Line 1806 of yacc.c  */
-#line 339 "regex.y"
+#line 351 "regex.y"
     { (yyval.net) = fsm_kleene_plus((yyvsp[(1) - (2)].net)); }
     break;
 
   case 83:
 
 /* Line 1806 of yacc.c  */
-#line 340 "regex.y"
+#line 352 "regex.y"
     { (yyval.net) = fsm_determinize(fsm_reverse((yyvsp[(1) - (2)].net))); }
     break;
 
   case 84:
 
 /* Line 1806 of yacc.c  */
-#line 341 "regex.y"
+#line 353 "regex.y"
     { (yyval.net) = fsm_invert((yyvsp[(1) - (2)].net)); }
     break;
 
   case 85:
 
 /* Line 1806 of yacc.c  */
-#line 342 "regex.y"
+#line 354 "regex.y"
     { (yyval.net) = fsm_upper((yyvsp[(1) - (2)].net)); }
     break;
 
   case 86:
 
 /* Line 1806 of yacc.c  */
-#line 343 "regex.y"
+#line 355 "regex.y"
     { (yyval.net) = fsm_lower((yyvsp[(1) - (2)].net)); }
     break;
 
   case 87:
 
 /* Line 1806 of yacc.c  */
-#line 344 "regex.y"
+#line 356 "regex.y"
     { (yyval.net) = flag_eliminate((yyvsp[(1) - (2)].net), NULL); }
     break;
 
   case 88:
 
 /* Line 1806 of yacc.c  */
-#line 345 "regex.y"
+#line 357 "regex.y"
     { (yyval.net) = fsm_cross_product((yyvsp[(1) - (3)].net),(yyvsp[(3) - (3)].net)); }
     break;
 
   case 89:
 
 /* Line 1806 of yacc.c  */
-#line 347 "regex.y"
+#line 359 "regex.y"
     { (yyval.net) = fsm_concat_n((yyvsp[(1) - (2)].net),atoi((yyvsp[(2) - (2)].string))); }
     break;
 
   case 90:
 
 /* Line 1806 of yacc.c  */
-#line 348 "regex.y"
+#line 360 "regex.y"
     { (yyval.net) = fsm_concat(fsm_concat_n(fsm_copy((yyvsp[(1) - (2)].net)), atoi((yyvsp[(2) - (2)].string))),fsm_kleene_plus(fsm_copy((yyvsp[(1) - (2)].net)))); fsm_destroy((yyvsp[(1) - (2)].net)); }
     break;
 
   case 91:
 
 /* Line 1806 of yacc.c  */
-#line 349 "regex.y"
+#line 361 "regex.y"
     { (yyval.net) = fsm_concat_m_n((yyvsp[(1) - (2)].net),0,atoi((yyvsp[(2) - (2)].string))-1); }
     break;
 
   case 92:
 
 /* Line 1806 of yacc.c  */
-#line 350 "regex.y"
+#line 362 "regex.y"
     { (yyval.net) = fsm_concat_m_n((yyvsp[(1) - (2)].net),atoi((yyvsp[(2) - (2)].string)),atoi(strstr((yyvsp[(2) - (2)].string),",")+1)); }
     break;
 
   case 93:
 
 /* Line 1806 of yacc.c  */
-#line 352 "regex.y"
+#line 364 "regex.y"
     { }
     break;
 
   case 94:
 
 /* Line 1806 of yacc.c  */
-#line 353 "regex.y"
+#line 365 "regex.y"
     { (yyval.net) = fsm_term_negation((yyvsp[(2) - (2)].net)); }
     break;
 
   case 95:
 
 /* Line 1806 of yacc.c  */
-#line 355 "regex.y"
+#line 367 "regex.y"
     { (yyval.net) = (yyvsp[(1) - (1)].net);}
     break;
 
   case 96:
 
 /* Line 1806 of yacc.c  */
-#line 356 "regex.y"
+#line 368 "regex.y"
     { (yyval.net) = (yyvsp[(1) - (1)].net); }
     break;
 
   case 97:
 
 /* Line 1806 of yacc.c  */
-#line 357 "regex.y"
+#line 369 "regex.y"
     { (yyval.net) = fsm_complement(fsm_substitute_symbol(fsm_intersect(fsm_quantifier((yyvsp[(1) - (4)].string)),fsm_complement((yyvsp[(3) - (4)].net))),(yyvsp[(1) - (4)].string),"@_EPSILON_SYMBOL_@")); purge_quantifier((yyvsp[(1) - (4)].string)); }
     break;
 
   case 98:
 
 /* Line 1806 of yacc.c  */
-#line 358 "regex.y"
+#line 370 "regex.y"
     {  (yyval.net) = fsm_substitute_symbol(fsm_intersect(fsm_quantifier((yyvsp[(1) - (2)].string)),(yyvsp[(2) - (2)].net)),(yyvsp[(1) - (2)].string),"@_EPSILON_SYMBOL_@"); purge_quantifier((yyvsp[(1) - (2)].string)); }
     break;
 
   case 99:
 
 /* Line 1806 of yacc.c  */
-#line 359 "regex.y"
+#line 371 "regex.y"
     { if (count_quantifiers()) (yyval.net) = (yyvsp[(2) - (3)].net); else {(yyval.net) = fsm_optionality((yyvsp[(2) - (3)].net));} }
     break;
 
   case 100:
 
 /* Line 1806 of yacc.c  */
-#line 360 "regex.y"
+#line 372 "regex.y"
     { (yyval.net) = (yyvsp[(2) - (3)].net); }
     break;
 
   case 101:
 
 /* Line 1806 of yacc.c  */
-#line 361 "regex.y"
+#line 373 "regex.y"
     {(yyval.net) = fsm_concat(fsm_universal(),fsm_concat(fsm_symbol((yyvsp[(2) - (5)].string)),fsm_concat(fsm_universal(),fsm_concat(fsm_symbol((yyvsp[(2) - (5)].string)),fsm_concat(union_quantifiers(),fsm_concat(fsm_symbol((yyvsp[(4) - (5)].string)),fsm_concat(fsm_universal(),fsm_concat(fsm_symbol((yyvsp[(4) - (5)].string)),fsm_universal())))))))); }
     break;
 
   case 102:
 
 /* Line 1806 of yacc.c  */
-#line 362 "regex.y"
+#line 374 "regex.y"
     {(yyval.net) = fsm_concat(fsm_universal(),fsm_concat(fsm_symbol((yyvsp[(2) - (5)].string)),fsm_concat(fsm_universal(),fsm_concat(fsm_symbol((yyvsp[(2) - (5)].string)),fsm_concat(fsm_ignore((yyvsp[(4) - (5)].net),union_quantifiers(),OP_IGNORE_ALL),fsm_universal()))))); }
     break;
 
   case 103:
 
 /* Line 1806 of yacc.c  */
-#line 363 "regex.y"
+#line 375 "regex.y"
     {(yyval.net) = fsm_concat(fsm_universal(),fsm_concat(fsm_ignore((yyvsp[(2) - (5)].net),union_quantifiers(),OP_IGNORE_ALL),fsm_concat(fsm_symbol((yyvsp[(4) - (5)].string)),fsm_concat(fsm_universal(),fsm_concat(fsm_symbol((yyvsp[(4) - (5)].string)),fsm_universal()))))); }
     break;
 
   case 104:
 
 /* Line 1806 of yacc.c  */
-#line 364 "regex.y"
+#line 376 "regex.y"
     {(yyval.net) = fsm_substitute_symbol((yyvsp[(1) - (2)].net),subval1,subval2); substituting = 0; xxfree(subval1); xxfree(subval2); subval1 = subval2 = NULL;}
     break;
 
   case 105:
 
 /* Line 1806 of yacc.c  */
-#line 366 "regex.y"
+#line 378 "regex.y"
     { (yyval.net) = (yyvsp[(3) - (4)].net); substituting = 1;                      }
     break;
 
   case 106:
 
 /* Line 1806 of yacc.c  */
-#line 367 "regex.y"
+#line 379 "regex.y"
     { subval1 = (yyvsp[(2) - (4)].string); subval2 = (yyvsp[(4) - (4)].string); }
     break;
 
   case 107:
 
 /* Line 1806 of yacc.c  */
-#line 369 "regex.y"
+#line 381 "regex.y"
     { (yyval.net) = (yyvsp[(1) - (1)].net); }
     break;
 
   case 108:
 
 /* Line 1806 of yacc.c  */
-#line 370 "regex.y"
+#line 382 "regex.y"
     { (yyval.net) = fsm_boolean(fsm_isidentity((yyvsp[(2) - (3)].net)));   }
     break;
 
   case 109:
 
 /* Line 1806 of yacc.c  */
-#line 371 "regex.y"
+#line 383 "regex.y"
     { (yyval.net) = fsm_boolean(fsm_isfunctional((yyvsp[(2) - (3)].net))); }
     break;
 
   case 110:
 
 /* Line 1806 of yacc.c  */
-#line 372 "regex.y"
+#line 384 "regex.y"
     { (yyval.net) = fsm_boolean(fsm_isunambiguous((yyvsp[(2) - (3)].net))); }
     break;
 
   case 111:
 
 /* Line 1806 of yacc.c  */
-#line 373 "regex.y"
+#line 385 "regex.y"
     { (yyval.net) = fsm_extract_nonidentity(fsm_copy((yyvsp[(2) - (3)].net))); }
     break;
 
   case 112:
 
 /* Line 1806 of yacc.c  */
-#line 374 "regex.y"
+#line 386 "regex.y"
     { (yyval.net) = fsm_lowerdet(fsm_copy((yyvsp[(2) - (3)].net))); }
     break;
 
   case 113:
 
 /* Line 1806 of yacc.c  */
-#line 375 "regex.y"
+#line 387 "regex.y"
     { (yyval.net) = fsm_lowerdeteps(fsm_copy((yyvsp[(2) - (3)].net))); }
     break;
 
   case 114:
 
 /* Line 1806 of yacc.c  */
-#line 376 "regex.y"
+#line 388 "regex.y"
     { (yyval.net) = fsm_markallfinal(fsm_copy((yyvsp[(2) - (3)].net))); }
     break;
 
   case 115:
 
 /* Line 1806 of yacc.c  */
-#line 377 "regex.y"
+#line 389 "regex.y"
     { (yyval.net) = fsm_extract_unambiguous(fsm_copy((yyvsp[(2) - (3)].net)));      }
     break;
 
   case 116:
 
 /* Line 1806 of yacc.c  */
-#line 378 "regex.y"
+#line 390 "regex.y"
     { (yyval.net) = fsm_extract_ambiguous(fsm_copy((yyvsp[(2) - (3)].net)));        }
     break;
 
   case 117:
 
 /* Line 1806 of yacc.c  */
-#line 379 "regex.y"
+#line 391 "regex.y"
     { (yyval.net) = fsm_extract_ambiguous_domain(fsm_copy((yyvsp[(2) - (3)].net))); }
     break;
 
   case 118:
 
 /* Line 1806 of yacc.c  */
-#line 380 "regex.y"
+#line 392 "regex.y"
     { (yyval.net) = fsm_letter_machine(fsm_copy((yyvsp[(2) - (3)].net))); }
     break;
 
   case 119:
 
 /* Line 1806 of yacc.c  */
-#line 381 "regex.y"
+#line 393 "regex.y"
     { (yyval.net) = fsm_mark_fsm_tail((yyvsp[(2) - (5)].net),(yyvsp[(4) - (5)].net)); }
     break;
 
   case 120:
 
 /* Line 1806 of yacc.c  */
-#line 382 "regex.y"
+#line 394 "regex.y"
     { (yyval.net) = fsm_add_loop((yyvsp[(2) - (5)].net),(yyvsp[(4) - (5)].net),1); }
     break;
 
   case 121:
 
 /* Line 1806 of yacc.c  */
-#line 383 "regex.y"
+#line 395 "regex.y"
     { (yyval.net) = fsm_add_loop((yyvsp[(2) - (5)].net),(yyvsp[(4) - (5)].net),0); }
     break;
 
   case 122:
 
 /* Line 1806 of yacc.c  */
-#line 384 "regex.y"
+#line 396 "regex.y"
     { (yyval.net) = fsm_add_loop((yyvsp[(2) - (5)].net),(yyvsp[(4) - (5)].net),2); }
     break;
 
   case 123:
 
 /* Line 1806 of yacc.c  */
-#line 385 "regex.y"
+#line 397 "regex.y"
     { (yyval.net) = fsm_add_sink((yyvsp[(2) - (3)].net),1); }
     break;
 
   case 124:
 
 /* Line 1806 of yacc.c  */
-#line 386 "regex.y"
+#line 398 "regex.y"
     { (yyval.net) = fsm_left_rewr((yyvsp[(2) - (5)].net),(yyvsp[(4) - (5)].net)); }
     break;
 
   case 125:
 
 /* Line 1806 of yacc.c  */
-#line 387 "regex.y"
+#line 399 "regex.y"
     { (yyval.net) = fsm_flatten((yyvsp[(2) - (5)].net),(yyvsp[(4) - (5)].net)); }
     break;
 
   case 126:
 
 /* Line 1806 of yacc.c  */
-#line 388 "regex.y"
+#line 400 "regex.y"
     { (yyval.net) = fsm_substitute_label((yyvsp[(2) - (7)].net), fsm_network_to_char((yyvsp[(4) - (7)].net)), (yyvsp[(6) - (7)].net)); }
     break;
 
   case 127:
 
 /* Line 1806 of yacc.c  */
-#line 389 "regex.y"
+#line 401 "regex.y"
     { (yyval.net) = fsm_close_sigma(fsm_copy((yyvsp[(2) - (3)].net)), 0); }
     break;
 
   case 128:
 
 /* Line 1806 of yacc.c  */
-#line 390 "regex.y"
+#line 402 "regex.y"
     { (yyval.net) = fsm_close_sigma(fsm_copy((yyvsp[(2) - (3)].net)), 1); }
     break;
 
   case 129:
 
 /* Line 1806 of yacc.c  */
-#line 391 "regex.y"
+#line 403 "regex.y"
     { (yyval.net) = fsm_equal_substrings((yyvsp[(2) - (7)].net),(yyvsp[(4) - (7)].net),(yyvsp[(6) - (7)].net)); }
     break;
 
   case 130:
 
 /* Line 1806 of yacc.c  */
-#line 394 "regex.y"
+#line 406 "regex.y"
     { frec++; fargptr[frec] = 0 ;declare_function_name((yyvsp[(1) - (3)].string)) ; add_function_argument((yyvsp[(2) - (3)].net)); }
     break;
 
   case 131:
 
 /* Line 1806 of yacc.c  */
-#line 396 "regex.y"
+#line 408 "regex.y"
     { frec++; fargptr[frec] = 0 ;declare_function_name((yyvsp[(1) - (2)].string)) ; add_function_argument((yyvsp[(2) - (2)].net)); }
     break;
 
   case 132:
 
 /* Line 1806 of yacc.c  */
-#line 398 "regex.y"
+#line 410 "regex.y"
     { add_function_argument((yyvsp[(2) - (3)].net)); }
     break;
 
   case 133:
 
 /* Line 1806 of yacc.c  */
-#line 399 "regex.y"
+#line 411 "regex.y"
     { add_function_argument((yyvsp[(2) - (3)].net)); }
     break;
 
   case 134:
 
 /* Line 1806 of yacc.c  */
-#line 402 "regex.y"
+#line 414 "regex.y"
     { add_function_argument((yyvsp[(2) - (3)].net)); if (((yyval.net) = function_apply(defined_nets, defined_funcs)) == NULL) YYERROR; }
     break;
 
   case 135:
 
 /* Line 1806 of yacc.c  */
-#line 404 "regex.y"
+#line 416 "regex.y"
     { add_function_argument((yyvsp[(2) - (3)].net)); if (((yyval.net) = function_apply(defined_nets, defined_funcs)) == NULL) YYERROR; }
     break;
 
   case 136:
 
 /* Line 1806 of yacc.c  */
-#line 406 "regex.y"
+#line 418 "regex.y"
     { if (((yyval.net) = function_apply(defined_nets, defined_funcs)) == NULL) YYERROR;}
     break;
 
 
 
 /* Line 1806 of yacc.c  */
-#line 3092 "regex.c"
+#line 3104 "regex.c"
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -3326,6 +3338,6 @@ yyreturn:
 
 
 /* Line 2067 of yacc.c  */
-#line 408 "regex.y"
+#line 420 "regex.y"
 
 

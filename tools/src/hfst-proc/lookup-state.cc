@@ -70,7 +70,7 @@ LookupState::clear_paths()
 bool
 LookupState::is_final() const
 {
-  for(LookupPathVector::const_iterator i=paths.begin(); 
+  for(LookupPathVector::const_iterator i=paths.begin();
       i!=paths.end(); ++i)
   {
     TransitionTableIndex index = (*i)->get_index();
@@ -267,8 +267,8 @@ LookupState::apply_input(const SymbolNumber input, const SymbolNumber altinput)
 }
 
 bool
-LookupState::try_index(LookupPathVector& new_paths, 
-                         const LookupPath& path, 
+LookupState::try_index(LookupPathVector& new_paths,
+                         const LookupPath& path,
                          const SymbolNumber input) const
 {
   //??? is the +1 here correct?
@@ -288,7 +288,7 @@ LookupState::try_index(LookupPathVector& new_paths,
 
 bool
 LookupState::try_transitions(LookupPathVector& new_paths,
-                               const LookupPath& path, 
+                               const LookupPath& path,
                                const SymbolNumber input) const
 {
   bool found = false;

@@ -17,13 +17,13 @@ void SentenceTransducer::add_word
   State tag_target = add_state(std::numeric_limits<float>::infinity());
 
   // Add the word transition.
-  Symbol2TransitionDataMap &word_symbol_to_transition = 
+  Symbol2TransitionDataMap &word_symbol_to_transition =
     transition_map[current_max_state];
   Symbol word_symbol = SequenceModelComponent::get_symbol(word);
   add_transition_to_map(word_symbol_to_transition,word_symbol,0,word_target);
 
   // Add analysis transitions.
-  Symbol2TransitionDataMap &tag_symbol_to_transition = 
+  Symbol2TransitionDataMap &tag_symbol_to_transition =
     transition_map[word_target];
   for (WeightedStringVector::const_iterator it = tags.begin();
        it != tags.end();
@@ -92,47 +92,47 @@ int main(void)
   assert(sentence_transducer.get_final_weight(4) == static_cast<float>(0));
 
   assert(sentence_transducer.get_transition
-	 (0,SequenceModelComponent::get_symbol("a")).weight == 
+	 (0,SequenceModelComponent::get_symbol("a")).weight ==
 	 static_cast<float>(0));
 
   assert(sentence_transducer.get_transition
-	 (0,SequenceModelComponent::get_symbol("a")).target == 1); 
+	 (0,SequenceModelComponent::get_symbol("a")).target == 1);
 
   assert(sentence_transducer.get_transition
-	 (1,SequenceModelComponent::get_symbol("b")).weight == 
+	 (1,SequenceModelComponent::get_symbol("b")).weight ==
 	 static_cast<float>(1.0));
 
   assert(sentence_transducer.get_transition
-	 (1,SequenceModelComponent::get_symbol("b")).target == 2); 
+	 (1,SequenceModelComponent::get_symbol("b")).target == 2);
 
   assert(sentence_transducer.get_transition
-	 (1,SequenceModelComponent::get_symbol("c")).weight == 
+	 (1,SequenceModelComponent::get_symbol("c")).weight ==
 	 static_cast<float>(2.0));
 
   assert(sentence_transducer.get_transition
-	 (1,SequenceModelComponent::get_symbol("c")).target == 2); 
+	 (1,SequenceModelComponent::get_symbol("c")).target == 2);
 
 
   assert(sentence_transducer.get_transition
-	 (2,SequenceModelComponent::get_symbol("e")).weight == 
+	 (2,SequenceModelComponent::get_symbol("e")).weight ==
 	 static_cast<float>(0));
 
   assert(sentence_transducer.get_transition
-	 (2,SequenceModelComponent::get_symbol("e")).target == 3); 
+	 (2,SequenceModelComponent::get_symbol("e")).target == 3);
 
   assert(sentence_transducer.get_transition
-	 (3,SequenceModelComponent::get_symbol("f")).weight == 
+	 (3,SequenceModelComponent::get_symbol("f")).weight ==
 	 static_cast<float>(3.0));
 
   assert(sentence_transducer.get_transition
-	 (3,SequenceModelComponent::get_symbol("f")).target == 4); 
+	 (3,SequenceModelComponent::get_symbol("f")).target == 4);
 
   assert(sentence_transducer.get_transition
-	 (3,SequenceModelComponent::get_symbol("g")).weight == 
+	 (3,SequenceModelComponent::get_symbol("g")).weight ==
 	 static_cast<float>(4.0));
 
   assert(sentence_transducer.get_transition
-	 (3,SequenceModelComponent::get_symbol("g")).target == 4); 
+	 (3,SequenceModelComponent::get_symbol("g")).target == 4);
 					    
 
   const Symbol2TransitionDataMap &s = sentence_transducer[3];

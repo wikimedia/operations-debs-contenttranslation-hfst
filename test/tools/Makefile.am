@@ -162,6 +162,9 @@ endif
 if WANT_PROC
 TESTS += proc-functionality.sh
 endif
+if WANT_TOKENIZE
+TESTS += tokenize-functionality.sh tokenize-backtrack-functionality.sh tokenize-flushing-functionality.sh
+endif
 
 TESTS += $(STRESSES)
 TESTS += mismatching-input-streams.sh
@@ -308,6 +311,7 @@ LEXC_TXTS=basic.cat-dog-bird.lexc basic.colons.lexc basic.comments.lexc \
 		  cat.lexc hfst.weights.lexc stress.random-lexicons-100.lexc \
 		  xfail.bogus.lexc xfail.ISO-8859-1.lexc xfail.lexicon-semicolon.lexc \
 		  xfail.sublexicon-defined-more-than-once.lexc \
+		  xre.more-than-twice.lexc xre.less-than-twice.lexc \
 		  xre.any-variations.lexc xre.at-file.lexc \
 		  xre.automatic-multichar-symbols.lexc xre.basic.lexc \
 		  xre.definitions.lexc xre.months.lexc xre.nested-definitions.lexc \
@@ -353,82 +357,101 @@ ALL_SRCS=$(FST_TXTS) $(FST_STRINGS) $(FST_PAIRS) $(FST_PAIRSTRINGS) \
 
 EXTRA_FILES=cat2dog.substitute cat.strings cat.txt cats_and_dogs.xre utf-8.strings latin-1.strings c_a_t.strings dos.strings not-contains-a.xre not-contains-a-comment-emptyline.xre parallel-left-arrow-multicom-emptyline.xre  parallel-left-arrow.xre cat.prolog negative_epsilon_cycles.txt no_negative_epsilon_cycles.txt substituting_transducer.txt substituted_transducer.txt
 
-RESULT_FILES=basic.cat-dog-bird.lexc.flag.result \
-basic.cat-dog-bird.lexc.result \
-basic.colons.lexc.flag.result \
-basic.colons.lexc.result \
-basic.comments.lexc.flag.result \
-basic.comments.lexc.result \
-basic.empty-sides.lexc.flag.result \
-basic.empty-sides.lexc.result \
-basic.escapes.lexc.flag.result \
-basic.escapes.lexc.result \
-basic.infostrings.lexc.flag.result \
-basic.infostrings.lexc.result \
-basic.initial-lexicon-empty.lexc.flag.result \
-basic.initial-lexicon-empty.lexc.result \
-basic.lowercase-lexicon-end.lexc.flag.result \
-basic.lowercase-lexicon-end.lexc.result \
-basic.multichar-symbols.lexc.flag.result \
-basic.multichar-symbols.lexc.result \
-basic.multi-entry-lines.lexc.flag.result \
-basic.multi-entry-lines.lexc.result \
-basic.multichar-escaped-zero.lexc.flag.result \
-basic.multichar-escaped-zero.lexc.result \
-basic.no-newline-at-end.lexc.flag.result \
-basic.no-newline-at-end.lexc.result \
-basic.no-Root.lexc.flag.result \
-basic.no-Root.lexc.result \
-basic.punctuation.lexc.flag.result \
-basic.punctuation.lexc.result \
-basic.almost-reserved-words.lexc.flag.result \
-basic.almost-reserved-words.lexc.result \
-basic.regexps.lexc.flag.result \
-basic.regexps.lexc.result \
-basic.root-loop.lexc.flag.result \
-basic.root-loop.lexc.result \
-basic.spurious-lexicon.lexc.flag.result \
-basic.spurious-lexicon.lexc.result \
-basic.string-pairs.lexc.flag.result \
-basic.string-pairs.lexc.result \
-basic.two-lexicons.lexc.flag.result \
-basic.two-lexicons.lexc.result \
-basic.UTF-8.lexc.flag.result \
-basic.UTF-8.lexc.result \
-basic.zeros-epsilons.lexc.flag.result \
-basic.zeros-epsilons.lexc.result \
-hfst.weights.lexc.flag.result \
-hfst.weights.lexc.result \
-xre.any-variations.lexc.flag.result \
-xre.any-variations.lexc.result \
-xre.automatic-multichar-symbols.lexc.flag.result \
-xre.automatic-multichar-symbols.lexc.result \
-xre.basic.lexc.flag.result \
-xre.basic.lexc.result \
-xre.definitions.lexc.flag.result \
-xre.definitions.lexc.result \
-xre.months.lexc.flag.result \
-xre.months.lexc.result \
-xre.nested-definitions.lexc.flag.result \
-xre.nested-definitions.lexc.result \
-xre.numeric-star.lexc.flag.result \
-xre.numeric-star.lexc.result \
-xre.quotations.lexc.flag.result \
-xre.quotations.lexc.result \
-xre.sharp.lexc.flag.result \
-xre.sharp.lexc.result \
-xre.star-plus-optional.lexc.flag.result \
-xre.star-plus-optional.lexc.result \
-no-newline-before-sublexicon.lexc.flag.result \
-no-newline-before-sublexicon.lexc.result \
-warn.sublexicon-mentioned-but-not-defined.lexc.flag.result \
-warn.sublexicon-mentioned-but-not-defined.lexc.result \
-warn.one-sided-flags.lexc.flag.result \
-warn.one-sided-flags.lexc.result
+TOKENIZE_FILES=tokenize-dog-in.lexc \
+tokenize-dog-out-cg.strings \
+tokenize-dog-out-giella-cg.strings \
+tokenize-dog-out.strings \
+tokenize-dog-out-xerox.strings \
+tokenize-dog.pmscript \
+tokenize-backtrack.lexc \
+tokenize-backtrack.pmscript \
+tokenize-backtrack-out-giella-cg-spaces.strings \
+tokenize-backtrack-out-giella-cg-contiguous.strings \
+tokenize-backtrack-out-giella-cg.strings \
+tokenize-dog-out-giella-cg-superblank.strings \
+tokenize-dog-out-giella-cg-flushing.strings
+
+
+RESULT_FILES=basic.cat-dog-bird.lexc.flag.result.prolog \
+basic.cat-dog-bird.lexc.result.prolog \
+basic.colons.lexc.flag.result.prolog \
+basic.colons.lexc.result.prolog \
+basic.comments.lexc.flag.result.prolog \
+basic.comments.lexc.result.prolog \
+basic.empty-sides.lexc.flag.result.prolog \
+basic.empty-sides.lexc.result.prolog \
+basic.escapes.lexc.flag.result.prolog \
+basic.escapes.lexc.result.prolog \
+basic.infostrings.lexc.flag.result.prolog \
+basic.infostrings.lexc.result.prolog \
+basic.initial-lexicon-empty.lexc.flag.result.prolog \
+basic.initial-lexicon-empty.lexc.result.prolog \
+basic.lowercase-lexicon-end.lexc.flag.result.prolog \
+basic.lowercase-lexicon-end.lexc.result.prolog \
+basic.multichar-symbols.lexc.flag.result.prolog \
+basic.multichar-symbols.lexc.result.prolog \
+basic.multi-entry-lines.lexc.flag.result.prolog \
+basic.multi-entry-lines.lexc.result.prolog \
+basic.multichar-escaped-zero.lexc.flag.result.prolog \
+basic.multichar-escaped-zero.lexc.result.prolog \
+basic.no-newline-at-end.lexc.flag.result.prolog \
+basic.no-newline-at-end.lexc.result.prolog \
+basic.no-Root.lexc.flag.result.prolog \
+basic.no-Root.lexc.result.prolog \
+basic.punctuation.lexc.flag.result.prolog \
+basic.punctuation.lexc.result.prolog \
+basic.almost-reserved-words.lexc.flag.result.prolog \
+basic.almost-reserved-words.lexc.result.prolog \
+basic.regexps.lexc.flag.result.prolog \
+basic.regexps.lexc.result.prolog \
+basic.root-loop.lexc.flag.result.prolog \
+basic.root-loop.lexc.result.prolog \
+basic.spurious-lexicon.lexc.flag.result.prolog \
+basic.spurious-lexicon.lexc.result.prolog \
+basic.string-pairs.lexc.flag.result.prolog \
+basic.string-pairs.lexc.result.prolog \
+basic.two-lexicons.lexc.flag.result.prolog \
+basic.two-lexicons.lexc.result.prolog \
+basic.UTF-8.lexc.flag.result.prolog \
+basic.UTF-8.lexc.result.prolog \
+basic.zeros-epsilons.lexc.flag.result.prolog \
+basic.zeros-epsilons.lexc.result.prolog \
+hfst.weights.lexc.flag.result.prolog \
+hfst.weights.lexc.result.prolog \
+xre.more-than-twice.lexc.flag.result.prolog \
+xre.more-than-twice.lexc.result.prolog \
+xre.less-than-twice.lexc.flag.result.prolog \
+xre.less-than-twice.lexc.result.prolog \
+xre.any-variations.lexc.flag.result.prolog \
+xre.any-variations.lexc.result.prolog \
+xre.automatic-multichar-symbols.lexc.flag.result.prolog \
+xre.automatic-multichar-symbols.lexc.result.prolog \
+xre.basic.lexc.flag.result.prolog \
+xre.basic.lexc.result.prolog \
+xre.definitions.lexc.flag.result.prolog \
+xre.definitions.lexc.result.prolog \
+xre.months.lexc.flag.result.prolog \
+xre.months.lexc.result.prolog \
+xre.nested-definitions.lexc.flag.result.prolog \
+xre.nested-definitions.lexc.result.prolog \
+xre.numeric-star.lexc.flag.result.prolog \
+xre.numeric-star.lexc.result.prolog \
+xre.quotations.lexc.flag.result.prolog \
+xre.quotations.lexc.result.prolog \
+xre.sharp.lexc.flag.result.prolog \
+xre.sharp.lexc.result.prolog \
+xre.star-plus-optional.lexc.flag.result.prolog \
+xre.star-plus-optional.lexc.result.prolog \
+no-newline-before-sublexicon.lexc.flag.result.prolog \
+no-newline-before-sublexicon.lexc.result.prolog \
+warn.sublexicon-mentioned-but-not-defined.lexc.flag.result.prolog \
+warn.sublexicon-mentioned-but-not-defined.lexc.result.prolog \
+warn.one-sided-flags.lexc.flag.result.prolog \
+warn.one-sided-flags.lexc.result.prolog
 
 # files needed for test programs
 EXTRA_DIST=empty-file $(FST_TXTS) $(FST_STRINGS) $(FST_PAIRS) $(FST_PAIRSTRINGS) $(FST_SPACESTRINGS) $(SUBSTITUTE_TXTS) $(XRE_TXTS) $(XFST_TXTS) $(TESTS) $(EXTRA_FILES) $(LEXC_TXTS) $(PMATCH_TXTS) $(PMATCHSCRIPTS) script.xfst lexc2fst-stress.sh lookup-stress.sh proc-stress.sh valgrind.sh \
-calculate-functionality.sh shuffle-functionality.sh $(RESULT_FILES)
+calculate-functionality.sh shuffle-functionality.sh $(RESULT_FILES) $(TOKENIZE_FILES)
 
 
 valgrind: $(CHECK_DATA)

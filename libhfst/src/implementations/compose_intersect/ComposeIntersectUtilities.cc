@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 #include "ComposeIntersectUtilities.h"
 
@@ -13,8 +13,8 @@
 struct CmpInt
 { bool operator() (int i, int j) const { return i < j; } };
 
-typedef 
-hfst::implementations::compose_intersect_utilities::SpaceSavingSet<int,CmpInt> 
+typedef
+hfst::implementations::compose_intersect_utilities::SpaceSavingSet<int,CmpInt>
 IntSpaceSavingSet;
 
 template<> CmpInt IntSpaceSavingSet::comparator = CmpInt();

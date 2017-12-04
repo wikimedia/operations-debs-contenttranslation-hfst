@@ -10,8 +10,8 @@ SentenceTagger::SentenceTagger(const std::string &lexical_model_filename,
                                const std::string &sequence_model_filename,
                                std::istream * paradigm_guess_stream):
   lexical_model(lexical_model_filename,paradigm_guess_stream)
-{ 
-  init_sequence_model(sequence_model_filename); 
+{
+  init_sequence_model(sequence_model_filename);
   buffer_analyses.push_back(WeightedString(0.0,BUFFER));
 }
 
@@ -63,8 +63,8 @@ WeightedStringPairVector SentenceTagger::operator[]
       const std::string &word = *it;
 
       const WeightedStringVector &unigram_analyses =
-        (first ? 
-         lexical_model.get_first_word_analysis(word) : 
+        (first ?
+         lexical_model.get_first_word_analysis(word) :
          lexical_model[word]);
 
       sentence_transducer.add_word(word,unigram_analyses);
@@ -101,7 +101,7 @@ SequenceModelComponent * SentenceTagger::read_model
 
   for (size_t i = 1; i < n; ++i)
     {
-      DelayedSequenceModelComponent * delayed_model = 
+      DelayedSequenceModelComponent * delayed_model =
         new DelayedSequenceModelComponent(*model,2*i);
       models.push_back(delayed_model);
 
@@ -126,7 +126,7 @@ size_t SentenceTagger::get_model_order(const HfstTransducer &model_fst)
   assert(name.find("SEQUENCE-MODEL:N=") == 0);
 #endif // OPTIMIZE_DANGEROUSLY
 
-  std::string order_string = 
+  std::string order_string =
     name.substr(std::string("SEQUENCE-MODEL:N=").size());
 
   std::istringstream in(order_string);
@@ -149,7 +149,7 @@ int main(int argc, char * argv[])
 
   if (argc != 3 and argc != 4)
     {
-      std::cerr << "Usage: cat input | " << argv[0] 
+      std::cerr << "Usage: cat input | " << argv[0]
                 << " lexical_model sequence_model [ paradigm_guessed_input ]"
                 << std::endl;
       exit(1);
@@ -180,10 +180,10 @@ int main(int argc, char * argv[])
       while (end_it != absolute_end_it)
         {
           if (*end_it == "||")
-            { 
+            {
               ++end_it;
               ++end_it;
-              break; 
+              break;
             }
           ++end_it;
         }
@@ -199,8 +199,8 @@ int main(int argc, char * argv[])
       for (StringPairVector::const_iterator it = analysis.second.begin();
            it != analysis.second.end() - 2;
            ++it)
-        { 
-          std::cout << /*(sentence_tagger.is_lexicon_oov(it->first) ? (sentence_tagger.is_oov(it->first) ? "*U*" : "*P*" ) + it->first :*/ it->first /*)*/  << "\t" << it->second << std::endl; 
+        {
+          std::cout << /*(sentence_tagger.is_lexicon_oov(it->first) ? (sentence_tagger.is_oov(it->first) ? "*U*" : "*P*" ) + it->first :*/ it->first /*)*/  << "\t" << it->second << std::endl;
         }
      
       start_it = end_it - 2;

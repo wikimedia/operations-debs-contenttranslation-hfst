@@ -1,4 +1,6 @@
-char * abbrcmd [] =
+#ifndef GUARD_abbrcmd_h
+#define GUARD_abbrcmd_h
+const char * abbrcmd [] =
 {
 "add",
 "aliases",
@@ -133,3 +135,4 @@ char * abbrcmd [] =
 "zero-plus",
 NULL
 };
+#endif // GUARD_abbrcmd_h

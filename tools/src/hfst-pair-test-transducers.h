@@ -32,7 +32,7 @@ void display_pair_vector(KeyPairVector * v) {
       ++it )
     {
       KeyPair * kp = *it;
-      Symbol 
+      Symbol
     input(get_key_symbol(kp->lower_char(),rule_keys)),
     output(get_key_symbol(kp->upper_char(),rule_keys));
       const char *
@@ -53,15 +53,15 @@ void display_pair_vector(KeyPairVector * v) {
 }
 
 /* Create the tokenizer, which will be used to convert input strings
-   into KeyVectors. 
+   into KeyVectors.
 
    The tokenizer transducer can't handle epsilon, so it has to be replaced by
-   an internal epsilon not likely to be encountered (PAIR::TEST::EPSILON). */ 
-void make_tokenizer(void) 
+   an internal epsilon not likely to be encountered (PAIR::TEST::EPSILON). */
+void make_tokenizer(void)
 {
   /*  epsilon_representation = rule_keys->get_unused_key();
 
-  non_epsilon_rule_keys = 
+  non_epsilon_rule_keys =
     recode_key_table(rule_keys,internal_epsilon);
   */
   tokenizer = longest_match_tokenizer2(rule_keys);
@@ -74,7 +74,7 @@ void make_tokenizer(void)
 /* Return the symbol number corresponding to the symbol name symbol_name.
    If symbol_name has no symbol number, return -1. */
 int get_symbol_number(char * symbol_name) {
-  if (not is_symbol(symbol_name)) 
+  if (not is_symbol(symbol_name))
     {
       if (debug)
     {
@@ -86,10 +86,10 @@ int get_symbol_number(char * symbol_name) {
   return get_symbol(symbol_name);
 }
 
-/* Return the symbol number key corresponding to the symbol number 
+/* Return the symbol number key corresponding to the symbol number
    symbol_number. If symbol_number has no key, return -1. */
 int get_symbol_number_key(Symbol symbol_number, char * symbol_name) {
-  if (not is_symbol(symbol_number,rule_keys)) 
+  if (not is_symbol(symbol_number,rule_keys))
     {
       if (debug)
     {
@@ -101,8 +101,8 @@ int get_symbol_number_key(Symbol symbol_number, char * symbol_name) {
 }
 
 /* Split symbol_pair_string at colon-character and attempt to code the pieces
-   into a KeyPair accoring to the coding given by KeyTable rule_keys. If 
-   rule_keys, doesn't know one of the symbols, return NULL. 
+   into a KeyPair accoring to the coding given by KeyTable rule_keys. If
+   rule_keys, doesn't know one of the symbols, return NULL.
 
    symbol_pair_string should be set to a non-empty string. */
 KeyPair * split_symbol_pair(char * symbol_pair_string) {
@@ -176,7 +176,7 @@ bool test_correspondence(KeyPairVector * input_vector,
     }
   bool passed_test;
   // Rather complicatd way to transform a KeyPairVector into a transducer...
-  TransducerHandle input_fst = 
+  TransducerHandle input_fst =
     disjunct_as_trie(HFST::create_empty_transducer(),
                input_vector);
 
@@ -236,7 +236,7 @@ void delete_key_pair_vector(KeyPairVector * v)
 {
   for(KeyPairVector::iterator it = v->begin();
       it != v->end();
-      ++it ) 
+      ++it )
     {
       delete *it;
     }
@@ -245,25 +245,25 @@ void delete_key_pair_vector(KeyPairVector * v)
 
 /* Divide the string input_string at spaces. Skip multiple spaces. The segments
    which are formed are symbol-pairs. These are divided at colon-characters.
-   The string of symbol-pairs, which is formed,  is coded into a KeyPairVector 
+   The string of symbol-pairs, which is formed,  is coded into a KeyPairVector
    according to the coding given by KeyTable * rule_keys. */
 KeyPairVector * split_at_spaces(char * input_string)
 {
   // Result vector contans the input symbol-pair string tokenized.
   KeyPairVector * tokenized_input = new KeyPairVector;
   
-  // If something goes wrong, the original string may be printed 
+  // If something goes wrong, the original string may be printed
   // as part of a debug-message.
   char * original_input_string = strdup(input_string);
 
   // A container for the string representations of the symbol-pairs, which
-  // are obtained by splittng input_string at spaces. This is needed, since 
+  // are obtained by splittng input_string at spaces. This is needed, since
   // strtok can't be used in two tokenization tasks intertwined. Hence we need
-  // to first split input_string into pairs and then split the pairs into 
+  // to first split input_string into pairs and then split the pairs into
   // symbols.
-  SymbolNamePairVector symbol_name_pairs; 
+  SymbolNamePairVector symbol_name_pairs;
 
-  char * symbol_pair_string = strtok(input_string," ");    
+  char * symbol_pair_string = strtok(input_string," ");
   do {
     // Divide the symbol-pair string into symbol-pairs at spaces.
     // and store the pairs in symbol_name_pairs.
@@ -278,7 +278,7 @@ KeyPairVector * split_at_spaces(char * input_string)
       ++it)
     {
       symbol_pair_string = *it;
-      KeyPair * symbol_pair = 
+      KeyPair * symbol_pair =
     split_symbol_pair(symbol_pair_string);
       if (symbol_pair == NULL)
     {
@@ -301,7 +301,7 @@ KeyPairVector * duplicate_keys(KeyVector * v) {
   KeyPairVector * pv = new KeyPairVector;
   for(KeyVector::iterator it = v->begin();
       it != v->end();
-      ++it ) 
+      ++it )
     {
       pv->push_back(new KeyPair(*it));
     }
@@ -309,7 +309,7 @@ KeyPairVector * duplicate_keys(KeyVector * v) {
   return pv;
 }
 
-KeyPairVector * construct_pair_vector(vector<KeyVector*> &input_fragments) 
+KeyPairVector * construct_pair_vector(vector<KeyVector*> &input_fragments)
 {
   if (input_fragments.size() == 0)
     { return new KeyPairVector; }
@@ -339,7 +339,7 @@ KeyPairVector * construct_pair_vector(vector<KeyVector*> &input_fragments)
     {
       for(KeyVector::iterator jt = (*it)->begin();
           jt != (*it)->end() - 1;
-          ++jt) 
+          ++jt)
         {
           pairs->push_back(new KeyPair(*jt));
         }
@@ -364,7 +364,7 @@ KeyPairVector * construct_pair_vector(vector<KeyVector*> &input_fragments)
       pairs = NULL;
       continue;
     }
-      else 
+      else
     {
       Key first_key = *((*it)->begin());
       pairs->push_back(new KeyPair(previous_key,first_key));
@@ -381,14 +381,14 @@ KeyPairVector * construct_pair_vector(vector<KeyVector*> &input_fragments)
   return pairs;
 }
 
-/* Split input_string into fragments at colon-characters. Do a longest prefix 
-   tokenization of the fragments obtained according to the coding given by 
-   KeyTable * rule_keys. If one of the fragments can't be tokenized return 
-   NULL. Build a KeyPairVector of the fragments by pairing up the last token 
-   and the first token of two adjacent fragments. The first token of the first 
+/* Split input_string into fragments at colon-characters. Do a longest prefix
+   tokenization of the fragments obtained according to the coding given by
+   KeyTable * rule_keys. If one of the fragments can't be tokenized return
+   NULL. Build a KeyPairVector of the fragments by pairing up the last token
+   and the first token of two adjacent fragments. The first token of the first
    fragment, the last token of the last fragment and all tokens n the middle of
    a fragment represent identity-pairs. */
-KeyPairVector * tokenize(char * input_string) 
+KeyPairVector * tokenize(char * input_string)
 {
 
   vector<KeyVector*> input_fragments;
@@ -463,7 +463,7 @@ KeyPairVector * tokenize(char * input_string)
 
 void display_rule_keys(void)
 {
-  if ( rule_keys == NULL ) 
+  if ( rule_keys == NULL )
     {
       fprintf(stderr,"No key table stored with the rules.\n");
     }
@@ -475,7 +475,7 @@ void display_rule_keys(void)
 /* Unless the key table rule_keys has been set, attempt to read a key table
    from the file named char * symbol_file_name. Do nothing, if rule_keys is
    already set. exit, if rule_keys is not set and alphabet cannot be read. */
-void get_alphabet(char * symbol_file_name) 
+void get_alphabet(char * symbol_file_name)
 {
   if ( rule_keys != NULL )
     {
@@ -508,7 +508,7 @@ FstVector * read_rule_transducers(void)
   // in order to give diagnostics.
   int format = UNWEIGHTED;
 
-  if ( fst_file_name == NULL ) 
+  if ( fst_file_name == NULL )
     {
       // Count the rules, in order to display information.
       size_t counter = 0;
@@ -519,7 +519,7 @@ FstVector * read_rule_transducers(void)
         "that you're actually giving something as input)\n\n");
       while ((format = read_format()) == UNWEIGHTED)
     {
-      if ( rule_keys == NULL and has_symbol_table(cin)) 
+      if ( rule_keys == NULL and has_symbol_table(cin))
         {
           rule_keys = create_key_table();
           rules->push_back(read_transducer(cin,rule_keys));
@@ -538,7 +538,7 @@ FstVector * read_rule_transducers(void)
       ifstream fst_in(fst_file_name);
       while ((format = read_format(fst_in)) == UNWEIGHTED)
     {
-      if ( rule_keys == NULL and has_symbol_table(fst_in)) 
+      if ( rule_keys == NULL and has_symbol_table(fst_in))
         {
           rule_keys = create_key_table();
           rules->push_back(read_transducer(fst_in,rule_keys));
@@ -565,7 +565,7 @@ FstVector * read_rule_transducers(void)
           fprintf(stderr,
               "Error: You gave weighted input transducers.\n");
         }
-      else 
+      else
         {
           fprintf(stderr,
               "Error: Unknown input transducer format.\n");

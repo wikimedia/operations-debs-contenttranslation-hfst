@@ -181,7 +181,7 @@ BRACED      [{]([^}]|[\300-\337].|[\340-\357]..|[\360-\367]...)+[}]
 	yylval_param->net = fsm_parse_regex_string(tempstr2);
 	if (yylval_param->net != NULL) {
 	    return NET;
-	}  
+	}
     }
 }
 
@@ -270,7 +270,7 @@ BRACED      [{]([^}]|[\300-\337].|[\340-\357]..|[\360-\367]...)+[}]
 
  /* Stuff that goes inside " ", including UTF8 \uHHHH sequences */
 <QTD>([\300-\337].|[\340-\357]..|[\360-\367]...|[\001-\041]|[\043-\177])+/[\042] {
-    decode_quoted(yytext);										  
+    decode_quoted(yytext);
     yylval_param->net = fsm_symbol(yytext);
     BEGIN(QTDEND);
     return NET;
@@ -292,14 +292,14 @@ BRACED      [{]([^}]|[\300-\337].|[\340-\357]..|[\360-\367]...)+[}]
 
  /* Sigma */
 [\316][\243] {
-  yylval_param->net = fsm_identity();  
+  yylval_param->net = fsm_identity();
   return NET;
 }
 
 (_S\() { return SUCCESSOR_OF; }
 
 (_isunambiguous\()   { return ISUNAMBIGUOUS;   }
-(_isidentity\()      { return ISIDENTITY;      } 
+(_isidentity\()      { return ISIDENTITY;      }
 (_isfunctional\()    { return ISFUNCTIONAL;    }
 (_notid\()           { return NOTID;           }
 (_lm\()              { return LETTERMACHINE;   }
@@ -448,7 +448,7 @@ BRACED      [{]([^}]|[\300-\337].|[\340-\357]..|[\360-\367]...)+[}]
 [\342][\211][\240] {         return NEQ;                 }
 (\() {                       return LPAREN;              }
 (\)) {                       return RPAREN;              }
-(;m) {                       return ENDM;                } 
+(;m) {                       return ENDM;                }
 (;d) {                       return ENDD;                }
 (;)  {                       return END;                 }
 (\||[\342][\210][\250]|[\342][\210][\252]) { return UNION;     }

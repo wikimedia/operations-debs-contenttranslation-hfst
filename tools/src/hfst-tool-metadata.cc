@@ -1,7 +1,7 @@
 /**
  * @file hfst-tool-metadata.cc
  *
- * @brief 
+ * @brief
  */
 //       This program is free software: you can redistribute it and/or modify
 //       it under the terms of the GNU General Public License as published by
@@ -68,17 +68,18 @@ hfst_set_name(hfst::HfstTransducer& dest, const hfst::HfstTransducer& lhs,
       {
         throw std::logic_error("!(a && b) || (!a && b) || (a && !b) || (!a && !b)");
       }
-  } 
+  }
 
 void
 hfst_set_formula(hfst::HfstTransducer& dest, const string& src,
                   const string& op)
   {
-    if ((0 < src.at(0))  && (src.at(0) < 128))
+    int c = (int)src.at(0);
+    if ((0 < c) && (c < 128))
       {
         dest.set_property("formulaic-definition", op + " " + src.substr(0, 1));
       }
-    else 
+    else
       {
         dest.set_property("formulaic-definition", op + " U8");
       }
@@ -91,7 +92,7 @@ hfst_set_formula(hfst::HfstTransducer& dest, const hfst::HfstTransducer& src,
 
     if (src.get_property("formulaic-definition") != "")
       {
-        dest.set_property("formulaic-definition", 
+        dest.set_property("formulaic-definition",
                           op + " " + src.get_property("formulaic-definition"));
       }
     else
@@ -109,7 +110,7 @@ hfst_set_formula(hfst::HfstTransducer& dest, const hfst::HfstTransducer& lhs,
         (rhs.get_property("formulaic-definition") != ""))
       {
         dest.set_property("formulaic-definition",
-                          lhs.get_property("formulaic-definition") + 
+                          lhs.get_property("formulaic-definition") +
                           " " + op + " " +
                           rhs.get_property("formulaic-definition"));
       }
@@ -117,14 +118,14 @@ hfst_set_formula(hfst::HfstTransducer& dest, const hfst::HfstTransducer& lhs,
              (rhs.get_property("formulaic-definition") != ""))
       {
         dest.set_property("formulaic-definition",
-                          ". " + op + " " + 
+                          ". " + op + " " +
                           rhs.get_property("formulaic-definition"));
       }
     else if ((lhs.get_property("formulaic-definition") != "") &&
              (rhs.get_property("formulaic-definition") == ""))
       {
         dest.set_property("formulaic-definition",
-                          lhs.get_property("formulaic-definition") + 
+                          lhs.get_property("formulaic-definition") +
                           " " + op + " .");
       }
     else
@@ -134,7 +135,7 @@ hfst_set_formula(hfst::HfstTransducer& dest, const hfst::HfstTransducer& lhs,
       }
   }
 
-void 
+void
 hfst_set_commandline_def(hfst::HfstTransducer& dest,
                               int argc, const char** argv)
   {
@@ -165,7 +166,7 @@ hfst_set_commandline_def(hfst::HfstTransducer& dest,
     dest.set_property("commandline-definition", cmdline);
   }
 
-void 
+void
 hfst_set_commandline_def(hfst::HfstTransducer& dest,
                               const hfst::HfstTransducer& src,
                               int argc, const char** argv)

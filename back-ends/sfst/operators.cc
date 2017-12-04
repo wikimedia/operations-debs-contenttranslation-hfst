@@ -47,7 +47,7 @@ namespace SFST {
   class CharNode2Trans {
     
     struct hashf {
-      size_t operator()(const NodeSym &ns) const { 
+      size_t operator()(const NodeSym &ns) const {
         return ns.nodeID ^ ns.symbol;
       }
     };
@@ -60,7 +60,7 @@ namespace SFST {
     
     typedef hash_map<NodeSym, FromTo, hashf, equalf > NodeSym2Range;
 
-    // data structure for storing an index from node + symbol to a list 
+    // data structure for storing an index from node + symbol to a list
     // of transitions with that symbol on the upper/lower layer
     Transducer &transducer;
     vector<Index> node_size;
@@ -76,7 +76,7 @@ namespace SFST {
       CharNode2Trans &c2t;
       Index current, end;
     public:
-      iterator( CharNode2Trans &table, Index nodeID, Character symbol ) 
+      iterator( CharNode2Trans &table, Index nodeID, Character symbol )
         : c2t(table)
       {
         FromTo range=c2t.trange[NodeSym(nodeID, symbol)];
@@ -157,9 +157,9 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  static bool check_cyclicity( Node *node, NodeHashSet &visited, 
+  static bool check_cyclicity( Node *node, NodeHashSet &visited,
                                const Alphabet &alphabet)
-  { 
+  {
  
     if (!visited.insert(node).second)
       return true; // node was visited before
@@ -233,7 +233,7 @@ namespace SFST {
       // iterate over all outgoing arcs
       for( ArcsIter p(node->arcs()); p; p++ ) {
         Arc *arc=p;
-        if (previous.find(arc->target_node()) != previous.end() || 
+        if (previous.find(arc->target_node()) != previous.end() ||
             is_cyclic_node( arc->target_node(), previous ))
           return true;
       }
@@ -397,7 +397,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  Label Transducer::recode_label( Label l, bool lswitch, bool recode, 
+  Label Transducer::recode_label( Label l, bool lswitch, bool recode,
                                   Alphabet &al )
   {
     if (lswitch)
@@ -420,7 +420,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  Node *Transducer::copy_nodes( Node *node, Transducer *a, 
+  Node *Transducer::copy_nodes( Node *node, Transducer *a,
                                 bool lswitch, bool recode )
   {
     if (!node->was_visited(vmark)) {
@@ -665,7 +665,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  static void conjoin_nodes( Node *n1, Node *n2, Node *node, 
+  static void conjoin_nodes( Node *n1, Node *n2, Node *node,
                              Transducer *a, PairMapping &map )
   
   {
@@ -697,7 +697,7 @@ namespace SFST {
           conjoin_nodes( t1, t2, target_node, a, map );
         }
         else {
-          // add an arc to the already existing target node 
+          // add an arc to the already existing target node
           node->add_arc( l, it->second, a );
         }
       }
@@ -758,9 +758,9 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  static void add_transition( Label l, Node *n1, Node *n2, Node *node, 
-                              Transducer *a, PairMapping &map, 
-                              CharNode2Trans &cn2trans1, 
+  static void add_transition( Label l, Node *n1, Node *n2, Node *node,
+                              Transducer *a, PairMapping &map,
+                              CharNode2Trans &cn2trans1,
                               CharNode2Trans &cn2trans2 )
   
   {
@@ -771,7 +771,7 @@ namespace SFST {
     PairMapping::iterator it=map.find(n1, n2);
   
     if (it != map.end()) {
-      // add an arc to the already existing target node 
+      // add an arc to the already existing target node
       node->add_arc( l, it->second, a );
       return;
     }
@@ -796,7 +796,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  static void compose_nodes( Node *n1, Node *n2, Node *node, Transducer *a, 
+  static void compose_nodes( Node *n1, Node *n2, Node *node, Transducer *a,
                              PairMapping &map, CharNode2Trans &cn2trans1,
                              CharNode2Trans &cn2trans2 )
   {
@@ -837,7 +837,7 @@ namespace SFST {
               assert(uc1 == l2.lower_char());
               Character uc2=l2.upper_char();
             
-              add_transition( Label(lc1,uc2), t1, t2, node, a, map, 
+              add_transition( Label(lc1,uc2), t1, t2, node, a, map,
                               cn2trans1, cn2trans2 );
           }
         }
@@ -855,7 +855,7 @@ namespace SFST {
         }
     }
 
-    else { /* !hash2 */ 
+    else { /* !hash2 */
       // iterate over all outgoing arcs of the second node
       for( ArcsIter i(n2->arcs()); i; i++ ) {
         Arc *arc2=i;
@@ -878,7 +878,7 @@ namespace SFST {
               assert(l1.upper_char() == lc2);
               Character lc1=l1.lower_char();
             
-              add_transition( Label(lc1,uc2), t1, t2, node, a, map, 
+              add_transition( Label(lc1,uc2), t1, t2, node, a, map,
                               cn2trans1, cn2trans2 );
           }
         }
@@ -918,7 +918,7 @@ namespace SFST {
     // recursively compose the two automata
     CharNode2Trans cn2trans1(*this);
     CharNode2Trans cn2trans2(a);
-    compose_nodes( root_node(), a.root_node(), na->root_node(), 
+    compose_nodes( root_node(), a.root_node(), na->root_node(),
                    na, map, cn2trans1, cn2trans2 );
 
     return *na;
@@ -1144,7 +1144,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  void Transducer::splice_nodes(Node *node, Node *node2, Label sl, 
+  void Transducer::splice_nodes(Node *node, Node *node2, Label sl,
                                 Transducer *sa, Transducer *a)
   {
     if (!node->was_visited(vmark)) {
@@ -1237,7 +1237,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  void Transducer::replace_char2(Node *node, Node *node2, Character c, 
+  void Transducer::replace_char2(Node *node, Node *node2, Character c,
                                  Character nc, Transducer *a)
   {
     if (!node->was_visited(vmark)) {

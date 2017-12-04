@@ -1,4 +1,4 @@
-Since version 0.9.8alpha, foma allows attaching a confusion matrix specification to a network.  The command "read cmatrix <filename>" read a confusion matrix and attaches is to the top network on the stack.  Subsequent "apply med" commands will use this matrix in determining the minimum cost approximate match to a word.  If no confusion matrix is specified, Levenshtein distance is used (insert = substitute = delete = 1). 
+Since version 0.9.8alpha, foma allows attaching a confusion matrix specification to a network.  The command "read cmatrix <filename>" read a confusion matrix and attaches is to the top network on the stack.  Subsequent "apply med" commands will use this matrix in determining the minimum cost approximate match to a word.  If no confusion matrix is specified, Levenshtein distance is used (insert = substitute = delete = 1).
 
 The command "print cmatrix" also prints out the confusion matrix attached to the top network in tabular format.
 

@@ -26,21 +26,21 @@ struct fsm_trans_list {
     struct fsm_trans_list *next;
 };
 
-#ifndef ORIGINAL
-  #ifndef __cplusplus
-    #ifndef bool
-      #define bool int
-      #define false ((bool)0)
-      #define true  ((bool)1)
-    #endif
+#ifndef __cplusplus
+  #ifndef bool
+    #define bool int
+    #define false ((bool)0)
+    #define true  ((bool)1)
   #endif
-#define _Bool bool
-#endif // #ifndef ORIGINAL
+#endif // __cplusplus
+
+// _Bool changed to Boolean in HFST
+#define Boolean bool
 
 struct fsm_state_list {
-    _Bool used;
-    _Bool is_final;
-    _Bool is_initial;
+    Boolean used;
+    Boolean is_final;
+    Boolean is_initial;
     short int num_trans;
     int state_number;
     struct fsm_trans_list *fsm_trans_list;
@@ -88,9 +88,9 @@ struct apply_med_handle {
     uint8_t *nletterbits;
     int astarcount;
     int heapcount;
-    int heap_size;  
+    int heap_size;
     int agenda_size;
-    int maxdepth; 
+    int maxdepth;
     int maxsigma;
     int wordlen;
     int utf8len;
@@ -119,19 +119,19 @@ struct apply_med_handle {
     struct state_array *state_array;
     struct fsm *net;
     struct fsm_state *curr_ptr;
-    _Bool hascm;
+    Boolean hascm;
 };
 
 struct apply_handle {
 
     int ptr;
-    int curr_ptr; 
+    int curr_ptr;
     int ipos;
     int opos;
     int mode;
     int printcount;
     int *numlines;
-    int *statemap; 
+    int *statemap;
     int *marks;
 
     struct sigma_trie {
@@ -164,7 +164,7 @@ struct apply_handle {
     char *epsilon_symbol;
     int print_pairs;
     int apply_stack_ptr;
-    int apply_stack_top; 
+    int apply_stack_top;
     int oldflagneg;
     int outstringtop;
     int iterate_old;
@@ -189,8 +189,8 @@ struct apply_handle {
     struct flag_list {
         char *name;
         char *value;
-        short neg;
-        struct flag_list *next; 
+        short int neg;
+        struct flag_list *next;
     } *flag_list;
 
     struct flag_lookup {
@@ -230,7 +230,7 @@ void fsm_state_set_current_state(int state_no, int final_state, int start_state)
 void fsm_state_add_arc(int state_no, int in, int out, int target, int final_state, int start_state);
 
 /* Call fsm_state_close() when done with arcs to a state */
-void fsm_state_close();
+void fsm_state_close(struct fsm *net);
 
 /* Call this when done with entire FSM */
 void fsm_state_end_state();
@@ -241,10 +241,6 @@ FEXPORT void fsm_count(struct fsm *net);
 
 void fsm_sort_lines(struct fsm *net);
 void fsm_update_flags(struct fsm *net, int det, int pru, int min, int eps, int loop, int completed);
-
-/* Rewrite-related functions */
-struct fsm *rewrite_cp_to_fst(struct fsm *net, char *lower_symbol, char *zero_symbol);
-struct fsm *rewrite_cp(struct fsm *U, struct fsm *L);
 
 int sort_cmp(const void *a, const void *b);
 

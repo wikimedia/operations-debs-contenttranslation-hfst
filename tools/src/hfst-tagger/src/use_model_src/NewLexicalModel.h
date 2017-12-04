@@ -7,16 +7,20 @@
 
 #include "HfstTransducer.h"
 
-#ifdef USE_TR1_UNORDERED_MAP
- #include <tr1/unordered_map> 
-#else
- #include <unordered_map>
-#endif
-
-#ifdef USE_TR1_UNORDERED_SET
+#ifdef INCLUDE_TR1_UNORDERED_MAP_AND_SET
+ #include <tr1/unordered_map>
  #include <tr1/unordered_set>
 #else
+ #include <unordered_map>
  #include <unordered_set>
+#endif
+
+#ifdef USE_TR1_UNORDERED_MAP_AND_SET
+using std::tr1::unordered_map;
+using std::tr1::unordered_set;
+#else
+using std::unordered_map;
+using std::unordered_set;
 #endif
 
 #include <iostream>
@@ -34,24 +38,20 @@ using hfst::StringVector;
 class NewLexicalModel
 {
  public:
-  NewLexicalModel(const std::string &filename, 
+  NewLexicalModel(const std::string &filename,
                   std::istream * paradigm_guess_stream = 0);
   const WeightedStringVector &operator[] (const std::string &word);
   const WeightedStringVector &get_first_word_analysis(const std::string &word);
   bool is_oov(const std::string &word);
   bool is_lexicon_oov(const std::string &word);
  private:
-#ifdef USE_TR1_UNORDERED_MAP
-  typedef std::tr1::unordered_map<std::string,WeightedStringVector> 
-    AnalysisCache;
-#else
-  typedef std::unordered_map<std::string,WeightedStringVector> 
-    AnalysisCache;
-#endif
 
-  AnalysisCache   analysis_cache;  
-  AnalysisCache   upper_case_suffix_cache;  
-  AnalysisCache   lower_case_suffix_cache;  
+  typedef unordered_map<std::string,WeightedStringVector>
+    AnalysisCache;
+
+  AnalysisCache   analysis_cache;
+  AnalysisCache   upper_case_suffix_cache;
+  AnalysisCache   lower_case_suffix_cache;
   HfstTokenizer   tokenizer;
   StringWeightMap tag_probability_hash;
   ProbabilityMap  upper_case_suffix_penalties;
@@ -71,13 +71,8 @@ class NewLexicalModel
   size_t id;
   bool lexical_model_is_broken;
   std::istream * paradigm_guess_stream;
-#ifdef USE_TR1_UNORDERED_SET
-  std::tr1::unordered_set<std::string> o_o_v_words;
-  std::tr1::unordered_set<std::string> lexicon_o_o_v_words;
-#else
-  std::unordered_set<std::string> o_o_v_words;
-  std::unordered_set<std::string> lexicon_o_o_v_words;
-#endif
+  unordered_set<std::string> o_o_v_words;
+  unordered_set<std::string> lexicon_o_o_v_words;
 
   void initialize_tag_probabilities(void);
 

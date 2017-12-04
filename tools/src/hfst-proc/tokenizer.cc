@@ -18,7 +18,7 @@
 
 std::set<char> TokenIOStream::escaped_chars;
 
-TokenIOStream::TokenIOStream(std::istream& i, std::ostream& o, 
+TokenIOStream::TokenIOStream(std::istream& i, std::ostream& o,
                              const ProcTransducerAlphabet& a, bool flush,
                              bool raw):
   is(i), os(o), alphabet(a), null_flush(flush), is_raw(raw),
@@ -49,10 +49,27 @@ TokenIOStream::initialize_escaped_chars()
 void
 TokenIOStream::do_null_flush()
 {
-  std::cout << '\0';
+  os << '\0';
   os.flush();
   if(os.bad())
     std::cerr << "Could not flush file" << std::endl;
+}
+
+CapitalizationState
+TokenIOStream::get_capitalization_state(const SymbolNumberVector& symbols) const
+{
+  if(symbols.size() == 0)
+    return Unknown;
+
+  const SymbolNumber& first=symbols[0], last=symbols.size()>1?symbols[1]:symbols[0];
+
+  if(alphabet.is_lower(first) && alphabet.is_lower(last))
+    return LowerCase;
+  if(alphabet.is_upper(first) && alphabet.is_lower(last))
+    return FirstUpperCase;
+  if(alphabet.is_upper(first) && alphabet.is_upper(last))
+    return UpperCase;
+  return Unknown;
 }
 
 CapitalizationState
@@ -60,9 +77,9 @@ TokenIOStream::get_capitalization_state(const TokenVector& tokens) const
 {
   if(tokens.size() == 0)
     return Unknown;
-  
-  const Token& first=tokens[0], last=tokens.size()>1?tokens[tokens.size()-1]:tokens[0];
-  
+
+  const Token& first=tokens[0], last=tokens.size()>1?tokens[1]:tokens[0];
+
   if(first.type != Symbol || last.type != Symbol)
     return Unknown;
   if(alphabet.is_lower(first.symbol) && alphabet.is_lower(last.symbol))
@@ -88,7 +105,7 @@ TokenIOStream::read_utf8_char(std::istream& is)
   int c = is.peek();
   if(is.eof())
     return retval;
-  
+
   if (c <= 127)
     u8len = 1;
   else if ( (c & (128 + 64 + 32 + 16)) == (128 + 64 + 32 + 16) )
@@ -103,7 +120,7 @@ TokenIOStream::read_utf8_char(std::istream& is)
   retval.resize(u8len+1);
   is.get(&retval[0], u8len+1, '\0');
   retval.resize(strlen(&retval[0]));
-  
+
   return retval;
 }
 
@@ -129,7 +146,7 @@ TokenIOStream::is_alphabetic(const Token& t) const
   SymbolNumber s = to_symbol(t);
   if(s != 0 && s != NO_SYMBOL_NUMBER)
     return alphabet.is_alphabetic(s);
-  
+
   switch(t.type)
   {
     case Character:
@@ -147,7 +164,7 @@ TokenIOStream::first_nonalphabetic(const TokenVector& s) const
     if(!is_alphabetic(s[i]))
       return i;
   }
-  
+
   return string::npos;
 }
 
@@ -155,10 +172,10 @@ int
 TokenIOStream::read_escaped()
 {
   int c = is.get();
-  
+
   if(c == EOF || escaped_chars.find(c) == escaped_chars.end())
     stream_error("Found non-reserved character after backslash");
-  
+
   return c;
 }
 
@@ -167,13 +184,13 @@ TokenIOStream::read_delimited(const char delim)
 {
   std::string result;
   int c = EOF;
-  
+
   while(is && c != delim)
   {
     c = is.get();
     if(c == EOF)
       break;
-    
+
     result += c;
     if(c == '\\')
       result += read_escaped();
@@ -292,7 +309,7 @@ TokenIOStream::get_token()
 {
   if(!token_buffer.isEmpty())
     return token_buffer.next();
-  
+
   Token token = read_token();
   if(token.type != None)
     token_buffer.add(token);
@@ -346,4 +363,3 @@ TokenIOStream::tokens_to_string(const TokenVector& t, bool raw) const
     res += token_to_string(*it,raw);
   return res;
 }
-

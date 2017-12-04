@@ -65,7 +65,7 @@ TaggerBuilder:string_handling.cc WeightedStringVectorCollection.cc \
 	WeightedStringVectorCollection.cc
 	g++ -g -O3 -c -o FstBuilder.o FstBuilder.cc
 	g++ -g -O3 -c -o ModelBuilder.o ModelBuilder.cc
-	g++ -g -O3 -c -o LexicalModelBuilder.o LexicalModelBuilder.cc 
+	g++ -g -O3 -c -o LexicalModelBuilder.o LexicalModelBuilder.cc
 	g++ -g -O3 -c -o SequenceModelBuilder.o SequenceModelBuilder.cc
 	g++ -Wall -Wextra -g -O3 -c -o TaggerBuilder.o TaggerBuilder.cc
 	g++ -g -O3 -DMAIN_TEST -o TaggerBuilder ModelBuilder.o \

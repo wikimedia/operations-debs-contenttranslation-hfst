@@ -1,13 +1,13 @@
 %option 8Bit batch yylineno noyywrap nounput prefix="pmatch"
 
 %{
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include <string.h>
@@ -16,18 +16,15 @@
 #include "HfstInputStream.h"
 #include "HfstXeroxRules.h"
 #include "pmatch_utils.h"
-
-#ifdef YACC_USE_PARSER_H_EXTENSION
-  #include "pmatch_parse.h"
-#else
-  #include "pmatch_parse.hh"
-#endif
+#include "pmatch_parse.hh"
 
 #undef YY_INPUT
 #define YY_INPUT(buf, retval, maxlen)   (retval = hfst::pmatch::getinput(buf, maxlen))
 
-extern
-int pmatcherror(char *text);
+extern int pmatcherror(const char *text);
+
+#undef YY_FATAL_ERROR
+#define YY_FATAL_ERROR(msg) pmatcherror(msg);
 
 %}
 
@@ -72,10 +69,12 @@ UNICODE_ESCAPE ("\\u"{HEXCHAR}{HEXCHAR}{HEXCHAR}{HEXCHAR})|("\\U00"{HEXCHAR}{HEX
 [Dd]"efine" { return DEFINE; }
 "DefFun" { return DEFINE; }
 "regex" { return REGEX; }
+"set" { return SET_VARIABLE; }
 "list" { return DEFINED_LIST; }
 "Lit(" { return LIT_LEFT; }
 "Ins(" { return INS_LEFT; }
 "EndTag(" { return ENDTAG_LEFT; }
+"Capture(" { return CAPTURE_LEFT; }
 "Cap(" { return CAP_LEFT; }
 "OptCap(" { return OPTCAP_LEFT; }
 "DownCase(" { return TOLOWER_LEFT; }
@@ -92,13 +91,16 @@ UNICODE_ESCAPE ("\\u"{HEXCHAR}{HEXCHAR}{HEXCHAR}{HEXCHAR})|("\\U00"{HEXCHAR}{HEX
 "OR(" { return OR_LEFT; }
 "AND(" { return AND_LEFT; }
 ".t(" { return TAG_LEFT; }
+".tag(" { return TAG_LEFT; }
+".with(" { return WITH_LEFT; }
 "Lst(" { return LST_LEFT; }
 "Exc(" { return EXC_LEFT; }
+"Like(" { return LIKE_LEFT; }
+"Unlike(" { return UNLIKE_LEFT; }
 "Interpolate(" { return INTERPOLATE_LEFT; }
 "Sigma(" { return SIGMA_LEFT; }
 "Counter(" { return COUNTER_LEFT; }
-"DownCase(" { return TOUPPER_LEFT; }
-"Define(" { return DEFINE_LEFT; }
+[Dd]"efine(" { return DEFINE_LEFT; }
 "DefIns" { return DEFINS; }
 
 "Alpha" { return ALPHA; }
@@ -107,6 +109,48 @@ UNICODE_ESCAPE ("\\u"{HEXCHAR}{HEXCHAR}{HEXCHAR}{HEXCHAR})|("\\U00"{HEXCHAR}{HEX
 "Num" { return NUM; }
 "Punct" { return PUNCT; }
 "Whitespace" { return WHITESPACE; }
+
+"count-patterns" {
+    pmatchlval.label = strcpy((char *) malloc(strlen("count-patterns") + 1), "count-patterns");
+    return VARIABLE_NAME;
+}
+"delete-patterns" {
+    pmatchlval.label = strcpy((char *) malloc(strlen("delete-patterns") + 1), "delete-patterns");
+    return VARIABLE_NAME;
+}
+"extract-patterns" {
+    pmatchlval.label = strcpy((char *) malloc(strlen("extract-patterns") + 1), "extract-patterns");
+    return VARIABLE_NAME;
+}
+"locate-patterns" {
+    pmatchlval.label = strcpy((char *) malloc(strlen("locate-patterns") + 1), "locate-patterns");
+    return VARIABLE_NAME;
+}
+"mark-patterns" {
+    pmatchlval.label = strcpy((char *) malloc(strlen("mark-patterns") + 1), "mark-patterns");
+    return VARIABLE_NAME;
+}
+"need-separators" {
+    pmatchlval.label = strcpy((char *) malloc(strlen("need-separators") + 1), "need-separators");
+    return VARIABLE_NAME;
+}
+"max-context-length" {
+    pmatchlval.label = strcpy((char *) malloc(strlen("max-context_length") + 1), "max-context-length");
+    return VARIABLE_NAME;
+}
+"max-recursion" {
+    pmatchlval.label = strcpy((char *) malloc(strlen("max-recursion") + 1), "max-recursion");
+    return VARIABLE_NAME;
+}
+"xerox-composition" {
+    pmatchlval.label = strcpy((char *) malloc(strlen("xerox-composition") + 1), "xerox-composition");
+    return VARIABLE_NAME;
+}
+
+"vector-similarity-projection-factor" {
+    pmatchlval.label = strcpy((char *) malloc(strlen("vector-similarity-projection-factor") + 1), "vector-similarity-projection-factor");
+    return VARIABLE_NAME;
+}
 
 "~"   { return COMPLEMENT; }
 "\\"  { return TERM_COMPLEMENT; }
@@ -231,6 +275,11 @@ UNICODE_ESCAPE ("\\u"{HEXCHAR}{HEXCHAR}{HEXCHAR}{HEXCHAR})|("\\U00"{HEXCHAR}{HEX
     return READ_RE;
 }
 
+"@vec\""[^""]+"\"" {
+    pmatchlval.label = hfst::pmatch::get_escaped_delimited(pmatchtext, '"');
+    return READ_VEC;
+}
+
 "\""(({UNICODE_ESCAPE}|{U8C})"-"({UNICODE_ESCAPE}|{U8C}))+"\"" {
     pmatchlval.pmatchObject = hfst::pmatch::parse_range(pmatchtext);
     return CHARACTER_RANGE;
@@ -244,6 +293,8 @@ UNICODE_ESCAPE ("\\u"{HEXCHAR}{HEXCHAR}{HEXCHAR}{HEXCHAR})|("\\U00"{HEXCHAR}{HEX
     free(label);
     return SYMBOL_WITH_LEFT_PAREN;
 }
+
+"=" { return EQUALS; }
 
 "[." { return LEFT_BRACKET_DOTTED; }
 ".]" { return RIGHT_BRACKET_DOTTED; }
@@ -295,7 +346,7 @@ UNICODE_ESCAPE ("\\u"{HEXCHAR}{HEXCHAR}{HEXCHAR}{HEXCHAR})|("\\U00"{HEXCHAR}{HEX
 
 ("!")[^\n]*$ { /* ignore comments */ }
 
-. { 
+. {
     return LEXER_ERROR;
 }
 

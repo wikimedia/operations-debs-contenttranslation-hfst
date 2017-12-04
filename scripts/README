@@ -10,7 +10,7 @@ make-hfst-FOO.bat              Individual scripts for creating hfst command line
 make-htwolcpre[1|2|3].bat      Individual scripts for creating htwolcpre*.exe tools that the script hfst-twolc.bat can call
 make-foma.bat                  A script for making foma dll (not used at the moment)
 make-implementations.bat       A script for compiling hfst implementations object files (not used at the moment)
-make-libhfst.bat               A script for making hfst dll (not used at the moment) 
+make-libhfst.bat               A script for making hfst dll (not used at the moment)
 make-openfstwin.bat            A script for making openfstwin dll (not used at the moment)
 make-parsers.bat               A script for compiling hfst parsers object files (not used at the moment)
 test-hfst-tools.bat            A script that performs simple tests for hfst tools
@@ -19,11 +19,11 @@ generate-python-bindings.bat   A script for making python hfst bindings for Wind
 windows_tests/                 A directory that contains files for testing hfst tools on Windows
 inttypes.h                     A header file needed for Windows compilation
 stdint.h                       A header file needed for Windows compilation
-README_eight_tools_win.txt     README file for Windows package that contains eight command line tools 
-README_xfst_win.txt            README file for Windows package that contains hfst-xfst.exe command line tool 
+README_eight_tools_win.txt     README file for Windows package that contains eight command line tools
+README_xfst_win.txt            README file for Windows package that contains hfst-xfst.exe command line tool
 copy-for-windows.sh TARGET SOURCE   Copy winopenfst and foma back-ends as well as libhfst/src (SOURCE is the top directory) under TARGET directory
 libhfst_win.i                  Tentative interface file for new HFST Python bindings for Windows
-test_libhfst_win.py            Tentative test script for HFST Python bindings for Windows 
+test_libhfst_win.py            Tentative test script for HFST Python bindings for Windows
 
 
 Mac-related files
@@ -31,14 +31,14 @@ Mac-related files
 
 generate-static-binaries.sh    For packaging hfst for Mac
 package-static-binaries.sh     For packaging hfst for Mac
-README_eight_tools_mac.txt     README file for Mac package that contains eight command line tools 
-README_xfst_mac.txt            README file for MAc package that contains hfst-xfst command line tool 
+README_eight_tools_mac.txt     README file for Mac package that contains eight command line tools
+README_xfst_mac.txt            README file for MAc package that contains hfst-xfst command line tool
 
 
 Foma wrapper files
 ------------------
 
-Makefile.am                   Make foma wrapper (not so much needed now because hfst-xfst replaces it) 
+Makefile.am                   Make foma wrapper (not so much needed now because hfst-xfst replaces it)
 hfst-foma-wrapper.sh.in       Needed for foma wrapper?
 hfst-foma.in                  Needed for foma wrapper?
 

@@ -1,21 +1,21 @@
 ## Process this file with automake to produce Makefile.in
 
-# Copyright (c) 2016 University of Helsinki                          
-#                                                                    
-# This library is free software; you can redistribute it and/or      
-# modify it under the terms of the GNU Lesser General Public         
-# License as published by the Free Software Foundation; either       
-# version 3 of the License, or (at your option) any later version.    
-# See the file COPYING included with this distribution for more      
-# information. 
+# Copyright (c) 2016 University of Helsinki
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
+# See the file COPYING included with this distribution for more
+# information.
 
 AUTOMAKE_OPTIONS=subdir-objects
 noinst_LTLIBRARIES=libhfstimplementations.la
 
 # HFST bridge specific stuff
-IMPLEMENTATION_SRCS=HfstTransitionGraph.cc \
-		    ConvertTransducerFormat.cc \
+IMPLEMENTATION_SRCS=ConvertTransducerFormat.cc \
 		    HfstTropicalTransducerTransitionData.cc \
+		    HfstBasicTransition.cc HfstBasicTransducer.cc \
 		    ConvertSfstTransducer.cc ConvertTropicalWeightTransducer.cc \
 		    ConvertLogWeightTransducer.cc ConvertFomaTransducer.cc \
 	  	    ConvertOlTransducer.cc ConvertXfsmTransducer.cc \
@@ -25,7 +25,7 @@ IMPLEMENTATION_SRCS=HfstTransitionGraph.cc \
                     compose_intersect/ComposeIntersectFst.cc \
                     compose_intersect/ComposeIntersectUtilities.cc
 
-AM_CXXFLAGS=-Wno-deprecated -g -std=c++0x
+AM_CXXFLAGS=-Wno-deprecated -g
 
 AM_CPPFLAGS = -I${top_srcdir}/libhfst/src -I${top_srcdir}/back-ends/foma \
 		-I${top_srcdir}/back-ends
@@ -44,11 +44,19 @@ endif
 # the bridges
 if WANT_SFST
 MAYBE_SFST=SfstTransducer.cc
+else
+if WANT_LEAN_SFST
+MAYBE_SFST=SfstTransducer.cc
+endif
 endif
 if WANT_OPENFST
 MAYBE_OPENFST=TropicalWeightTransducer.cc
 if WANT_OPENFST_LOG
 MAYBE_OPENFST += LogWeightTransducer.cc
+else
+if WANT_LEAN_OPENFST_LOG
+MAYBE_OPENFST += LogWeightTransducer.cc
+endif
 endif
 endif
 if WANT_FOMA
@@ -71,6 +79,7 @@ if WANT_HFSTOL
 HFST_OL_SRCS=\
 optimized-lookup/transducer.cc optimized-lookup/convert.cc \
 	optimized-lookup/ospell.cc optimized-lookup/pmatch.cc \
+	optimized-lookup/pmatch_tokenize.cc \
 	optimized-lookup/find_epsilon_loops.cc
 endif
 
@@ -90,6 +99,7 @@ implinclude_HEADERS = \
 		SfstTransducer.h TropicalWeightTransducer.h \
 		XfsmTransducer.h \
 		HfstOlTransducer.h HfstTransitionGraph.h HfstTransition.h \
+		HfstBasicTransition.h HfstBasicTransducer.h\
 		HfstTropicalTransducerTransitionData.h \
 		compose_intersect/ComposeIntersectRulePair.h \
 		compose_intersect/ComposeIntersectLexicon.h \
@@ -114,7 +124,8 @@ hfstolincludedir = $(implincludedir)/optimized-lookup
 hfstolinclude_HEADERS = \
 		optimized-lookup/transducer.h \
 		optimized-lookup/convert.h \
-		optimized-lookup/pmatch.h
+		optimized-lookup/pmatch.h \
+		optimized-lookup/pmatch_tokenize.h
 endif
 
 if WANT_FOMA
@@ -136,7 +147,7 @@ if WANT_XFSM
 XFSM_TSTS=XfsmTransducer
 endif
 
-LIBHFST_TSTS=HfstTransitionGraph ConvertTransducerFormat \
+LIBHFST_TSTS=HfstBasicTransducer ConvertTransducerFormat \
 		ConvertSfstTransducer ConvertTropicalWeightTransducer \
 		ConvertLogWeightTransducer ConvertFomaTransducer \
 		ConvertXfsmTransducer ConvertOlTransducer \
@@ -150,68 +161,68 @@ LIBHFST_TSTS=HfstTransitionGraph ConvertTransducerFormat \
 check_PROGRAMS=$(FOMA_TSTS) $(HFSTOL_TSTS) $(OFST_TSTS) $(SFST_TSTS) $(LIBHFST_TSTS) $(XFSM_TSTS)
 
 FomaTransducer_SOURCES=FomaTransducer.cc
-FomaTransducer_CXXFLAGS=-DMAIN_TEST
+FomaTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 FomaTransducer_LDADD=../libhfst.la
 XfsmTransducer_SOURCES=XfsmTransducer.cc
-XfsmTransducer_CXXFLAGS=-DMAIN_TEST
+XfsmTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 XfsmTransducer_LDADD=../libhfst.la
 HfstOlTransducer_SOURCES=HfstOlTransducer.cc
-HfstOlTransducer_CXXFLAGS=-DMAIN_TEST
+HfstOlTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 HfstOlTransducer_LDADD=../libhfst.la
 LogWeightTransducer_SOURCES=LogWeightTransducer.cc
-LogWeightTransducer_CXXFLAGS=-DMAIN_TEST
+LogWeightTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 LogWeightTransducer_LDADD=../libhfst.la
 TropicalWeightTransducer_SOURCES=TropicalWeightTransducer.cc
-TropicalWeightTransducer_CXXFLAGS=-DMAIN_TEST
+TropicalWeightTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 TropicalWeightTransducer_LDADD=../libhfst.la
 SfstTransducer_SOURCES=SfstTransducer.cc
-SfstTransducer_CXXFLAGS=-DMAIN_TEST
+SfstTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 SfstTransducer_LDADD=../libhfst.la
-HfstTransitionGraph_SOURCES=HfstTransitionGraph.cc
-HfstTransitionGraph_CXXFLAGS=-DMAIN_TEST
-HfstTransitionGraph_LDADD=../libhfst.la
+HfstBasicTransducer_SOURCES=HfstBasicTransducer.cc
+HfstBasicTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
+HfstBasicTransducer_LDADD=../libhfst.la
 ConvertTransducerFormat_SOURCES=ConvertTransducerFormat.cc
-ConvertTransducerFormat_CXXFLAGS=-DMAIN_TEST
+ConvertTransducerFormat_CXXFLAGS=-DMAIN_TEST -Wno-deprecated -Wno-deprecated
 ConvertTransducerFormat_LDADD=../libhfst.la
 ConvertSfstTransducer_SOURCES=ConvertSfstTransducer.cc
-ConvertSfstTransducer_CXXFLAGS=-DMAIN_TEST
+ConvertSfstTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 ConvertSfstTransducer_LDADD=../libhfst.la
 ConvertTropicalWeightTransducer_SOURCES=ConvertTropicalWeightTransducer.cc
-ConvertTropicalWeightTransducer_CXXFLAGS=-DMAIN_TEST
+ConvertTropicalWeightTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 ConvertTropicalWeightTransducer_LDADD=../libhfst.la
 ConvertLogWeightTransducer_SOURCES=ConvertLogWeightTransducer.cc
-ConvertLogWeightTransducer_CXXFLAGS=-DMAIN_TEST
+ConvertLogWeightTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 ConvertLogWeightTransducer_LDADD=../libhfst.la
 ConvertFomaTransducer_SOURCES=ConvertFomaTransducer.cc
-ConvertFomaTransducer_CXXFLAGS=-DMAIN_TEST
+ConvertFomaTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 ConvertFomaTransducer_LDADD=../libhfst.la
 ConvertXfsmTransducer_SOURCES=ConvertXfsmTransducer.cc
-ConvertXfsmTransducer_CXXFLAGS=-DMAIN_TEST
+ConvertXfsmTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 ConvertXfsmTransducer_LDADD=../libhfst.la
 ConvertOlTransducer_SOURCES=ConvertOlTransducer.cc
-ConvertOlTransducer_CXXFLAGS=-DMAIN_TEST
+ConvertOlTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 ConvertOlTransducer_LDADD=../libhfst.la
 optimized_lookup_transducer_SOURCES=optimized-lookup/transducer.cc \
 	optimized-lookup/ospell.cc optimized-lookup/pmatch.cc optimized-lookup/find_epsilon_loops.cc
-optimized_lookup_transducer_CXXFLAGS=-DMAIN_TEST
+optimized_lookup_transducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 optimized_lookup_transducer_LDADD=../libhfst.la
 optimized_lookup_convert_SOURCES=optimized-lookup/convert.cc
-optimized_lookup_convert_CXXFLAGS=-DMAIN_TEST
+optimized_lookup_convert_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 optimized_lookup_convert_LDADD=../libhfst.la
 compose_intersect_ComposeIntersectRulePair_SOURCES=compose_intersect/ComposeIntersectRulePair.cc
-compose_intersect_ComposeIntersectRulePair_CXXFLAGS=-DMAIN_TEST
+compose_intersect_ComposeIntersectRulePair_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 compose_intersect_ComposeIntersectRulePair_LDADD=../libhfst.la
 compose_intersect_ComposeIntersectLexicon_SOURCES=compose_intersect/ComposeIntersectLexicon.cc
-compose_intersect_ComposeIntersectLexicon_CXXFLAGS=-DMAIN_TEST
+compose_intersect_ComposeIntersectLexicon_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 compose_intersect_ComposeIntersectLexicon_LDADD=../libhfst.la
 compose_intersect_ComposeIntersectRule_SOURCES=compose_intersect/ComposeIntersectRule.cc
-compose_intersect_ComposeIntersectRule_CXXFLAGS=-DMAIN_TEST
+compose_intersect_ComposeIntersectRule_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 compose_intersect_ComposeIntersectRule_LDADD=../libhfst.la
 compose_intersect_ComposeIntersectFst_SOURCES=compose_intersect/ComposeIntersectFst.cc
-compose_intersect_ComposeIntersectFst_CXXFLAGS=-DMAIN_TEST
+compose_intersect_ComposeIntersectFst_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 compose_intersect_ComposeIntersectFst_LDADD=../libhfst.la
 compose_intersect_ComposeIntersectUtilities_SOURCES=compose_intersect/ComposeIntersectUtilities.cc
-compose_intersect_ComposeIntersectUtilities_CXXFLAGS=-DMAIN_TEST
+compose_intersect_ComposeIntersectUtilities_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 compose_intersect_ComposeIntersectUtilities_LDADD=../libhfst.la
 #HfstConstantTransducer_SOURCES=HfstConstantTransducer.cc
 #HfstConstantTransducer_CXXFLAGS=-DMAIN_TEST

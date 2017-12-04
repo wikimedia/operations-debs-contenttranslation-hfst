@@ -11,7 +11,7 @@ if not exist "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Include" echo 
 exit /B
 
 if exist "..\..\back-ends\foma\flags.c" echo Renaming foma's flags.c into _flags.c as there is a file with the same name in openfst && ^
-move ..\..\back-ends\foma\flags.c ..\..\back-ends\foma\_flags.c 
+move ..\..\back-ends\foma\flags.c ..\..\back-ends\foma\_flags.c
 
 if exist "..\..\tools\src\hfst-proc\transducer.cpp" echo Renaming hfst-proc's transducer.cpp into _transducer.cpp as there is a file with the same name in optimized-lookup && ^
 move ..\..\tools\src\hfst-proc\transducer.cpp ..\..\tools\src\hfst-proc\_transducer.cpp
@@ -54,6 +54,7 @@ HfstStrings2FstTokenizer.cpp ^
 HfstPrintDot.cpp ^
 HfstPrintPCKimmo.cpp ^
 hfst-string-conversions.cpp ^
+string-utils.cpp ^
 implementations\HfstTransitionGraph.cpp ^
 implementations\ConvertTransducerFormat.cpp ^
 implementations\HfstTropicalTransducerTransitionData.cpp ^

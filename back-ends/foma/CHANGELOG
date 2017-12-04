@@ -30,7 +30,7 @@
 - flookup now applies in chain (a virtual compose) if there are several transducers in a file, except if the [-a] flag is given, in which case flookup looks for an output in each transducer until it finds one (simulating priority union .P.)
 - changes and bug fixes in application code/flag diacritic handling
 - lexc now accepts forced alignments with zeroes and info strings
-- \r (carriage return) awarness added 
+- \r (carriage return) awarness added
 - adds support for the construct regex @re"regexfile.txt" (assumes file has one regular expression on one line)
 - fixes argument order of interface commands compose net and concatenate net
 - adds functions in API to read in multiple nets from one file through an iterator fsm_read_binary_file_multiple_init(infilename)/fsm_read_binary_file_multiple(rh))
@@ -49,7 +49,7 @@
 0.9.13alpha (20101025)
 
 - Various memory-management improvements throughout
-- Adds the commands "read text" and "read spaced-text" for building automata/transducers from word lists.  The functionality can be embedded in regexes with @txt"filename" and @stxt"filename".  From the API, the functions fsm_read_text_file() and fsm_read_spaced_text_file(), reads files and builds trie FSMs from the lists 
+- Adds the commands "read text" and "read spaced-text" for building automata/transducers from word lists.  The functionality can be embedded in regexes with @txt"filename" and @stxt"filename".  From the API, the functions fsm_read_text_file() and fsm_read_spaced_text_file(), reads files and builds trie FSMs from the lists
 - Adds the external utility flookup, which reads words from stdin and applies them to a transducer given in a file, and prints output to stdout
 - Adds the command "substitute defined", and the corresponding fsm_substitute_label() in the API.
 - Improved prolog file reading and writing
@@ -95,7 +95,7 @@
 - Minor bugfix in "test unambiguous"/_isunambiguous()
 
 0.9.8alpha (20090604)
-- Added option to load confusion matrices (load cmatrix filename) that specify costs for minimum edit distance matching and attaches to a network.  The command "print cmatrix" prints the matrix associated with the network on top of the stack.  These are used whenever "apply med" is called.  If no matrix is specified, the default distance is Levenshtein. 
+- Added option to load confusion matrices (load cmatrix filename) that specify costs for minimum edit distance matching and attaches to a network.  The command "print cmatrix" prints the matrix associated with the network on top of the stack.  These are used whenever "apply med" is called.  If no matrix is specified, the default distance is Levenshtein.
 - Added the global variables med-cutoff and med-limit to control the med search
 - Minor bugfixes in fsm_compose()
 - Changes in dot file output (print dot, print dot > filename) and "view net"
@@ -131,13 +131,13 @@
 --
 
 0.9.2alpha (20090111)
-- Determinization now uses much less temporary memory without sacrificing efficiency.  
+- Determinization now uses much less temporary memory without sacrificing efficiency.
   The memory use caused severe problems for compiling very large lexicons or determinizing
   large automata with limited memory.
 
 - Added a "-r" command line option for starting foma without readline (mainly for Win32 version)
 
-- Fixed a serious bug in the ternary `[A,B,C] substitution operator and added the interface command 
+- Fixed a serious bug in the ternary `[A,B,C] substitution operator and added the interface command
   "substitute symbol B for A"
 
 - Added a slight optimization in directed replacements

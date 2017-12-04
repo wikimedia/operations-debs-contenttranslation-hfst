@@ -77,5 +77,5 @@ do
     done
 done
 
-rm test
+rm -f test test1 test2
 

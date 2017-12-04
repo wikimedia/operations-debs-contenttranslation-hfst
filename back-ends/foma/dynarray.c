@@ -36,7 +36,7 @@ struct foma_reserved_symbols {
 
 static size_t current_fsm_size;
 static unsigned int current_fsm_linecount, current_state_no, current_final, current_start, current_trans, num_finals, num_initials, arity, statecount;
-static _Bool is_deterministic, is_epsilon_free;
+static Boolean is_deterministic, is_epsilon_free;
 static struct fsm_state *current_fsm_head;
 
 static unsigned int mainloop, ssize, arccount;
@@ -141,7 +141,7 @@ void fsm_state_add_arc(int state_no, int in, int out, int target, int final_stat
     cptr->out = out;
     cptr->target = target;
     cptr->final_state = final_state;
-    cptr->start_state = start_state;    
+    cptr->start_state = start_state;
     current_fsm_linecount++;
 }
 
@@ -196,7 +196,7 @@ void fsm_construct_check_size(struct fsm_construct_handle *handle, int state_no)
     struct fsm_state_list *sl;
     oldsize = handle->fsm_state_list_size;
     if (oldsize <= state_no) {
-        newsize = next_power_of_two(state_no);      
+        newsize = next_power_of_two(state_no);
         handle->fsm_state_list = xxrealloc(handle->fsm_state_list, newsize*sizeof(struct fsm_state_list));
         handle->fsm_state_list_size = newsize;
         sl = handle->fsm_state_list;
@@ -321,10 +321,10 @@ void fsm_construct_copy_sigma(struct fsm_construct_handle *handle, struct sigma 
 	
 	/* Insert into hashtable */
 	hash = fsm_construct_hash_sym(symbol);
-	fh = (handle->fsm_sigma_hash)+hash;   
+	fh = (handle->fsm_sigma_hash)+hash;
 	if (fh->symbol == NULL) {
 	    fh->symbol = symdup;
-	    fh->sym = symnum;        
+	    fh->sym = symnum;
 	} else {
 	    newfh = xxcalloc(1,sizeof(struct fsm_sigma_hash));
 	    newfh->next = fh->next;
@@ -370,10 +370,10 @@ int fsm_construct_add_symbol(struct fsm_construct_handle *handle, char *symbol) 
 
     /* Insert into hashtable */
     hash = fsm_construct_hash_sym(symbol);
-    fh = (handle->fsm_sigma_hash)+hash;   
+    fh = (handle->fsm_sigma_hash)+hash;
     if (fh->symbol == NULL) {
         fh->symbol = symdup;
-        fh->sym = symnum;        
+        fh->sym = symnum;
     } else {
         newfh = xxcalloc(1,sizeof(struct fsm_sigma_hash));
         newfh->next = fh->next;
@@ -452,7 +452,7 @@ struct fsm *fsm_construct_done(struct fsm_construct_handle *handle) {
     fsm_state_close(net);
     
     net->sigma = fsm_construct_convert_sigma(handle);
-    if (handle->name != NULL) {        
+    if (handle->name != NULL) {
         strncpy(net->name, handle->name, 40);
         xxfree(handle->name);
     } else {
@@ -616,7 +616,7 @@ int fsm_get_arc_source(struct fsm_read_handle *handle) {
 }
 
 int fsm_get_arc_target(struct fsm_read_handle *handle) {
-    if (handle->arcs_cursor == NULL) { return -1;}    
+    if (handle->arcs_cursor == NULL) { return -1;}
     return(handle->arcs_cursor->target);
 }
 
@@ -642,7 +642,7 @@ char *fsm_get_arc_in(struct fsm_read_handle *handle) {
 }
 
 int fsm_get_arc_num_in(struct fsm_read_handle *handle) {
-    if (handle->arcs_cursor == NULL) { return -1;}    
+    if (handle->arcs_cursor == NULL) { return -1;}
     return(handle->arcs_cursor->in);
 }
 

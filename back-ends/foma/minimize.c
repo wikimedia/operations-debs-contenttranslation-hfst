@@ -27,7 +27,7 @@ static struct fsm *rebuild_machine(struct fsm *net);
 
 static int *single_sigma_array, *double_sigma_array, *memo_table, *temp_move, *temp_group, maxsigma, epsilon_symbol, num_states, num_symbols, num_finals, mainloop, total_states;
 
-static _Bool *finals;
+static Boolean *finals;
 
 struct statesym {
     int target;
@@ -63,7 +63,7 @@ struct e {
 struct agenda {
   struct p *p;
   struct agenda *next;
-  _Bool index;
+  Boolean index;
 };
 
 // HFST MODIFICATIONS: struct trans_list -> struct trans_list_struct
@@ -108,8 +108,8 @@ struct fsm *fsm_minimize(struct fsm *net) {
         if (g_minimize_hopcroft != 0) {
             net = fsm_minimize_hop(net);
         }
-        else 
-            net = fsm_minimize_brz(net);        
+        else
+            net = fsm_minimize_brz(net);
         fsm_update_flags(net,YES,YES,YES,YES,UNK,UNK);
     }
     return(net);
@@ -124,7 +124,7 @@ static struct fsm *fsm_minimize_hop(struct fsm *net) {
     struct e *temp_E;
     struct trans_array_struct *tptr;
     struct trans_list_struct *transitions;
-    int i,j,minsym,next_minsym,current_i, stateno, thissize, source;  
+    int i,j,minsym,next_minsym,current_i, stateno, thissize, source;
     unsigned int tail;
 
     fsm_count(net);
@@ -137,7 +137,7 @@ static struct fsm *fsm_minimize_hop(struct fsm *net) {
     
     P = NULL;
 
-    /* 
+    /*
        1. generate the inverse lookup table
        2. generate P and E (partitions, states linked list)
        3. Init Agenda = {Q, Q-F}
@@ -313,7 +313,7 @@ static INLINE int refine_states(int invstates) {
     struct e *thise;
     struct p *tP, *newP = NULL;
 
-  /* 
+  /*
      1. add inverse(P,a) to table of inverses, disallowing duplicates
      2. first pass on S, touch each state once, increasing P->t_count
      3. for each P where counter != count, split and add to agenda
@@ -346,7 +346,7 @@ static INLINE int refine_states(int invstates) {
       continue;
     }
     
-    if ((tP->t_count != tP->count) && (tP->count > 1) && (tP->t_count > 0)) {      
+    if ((tP->t_count != tP->count) && (tP->count > 1) && (tP->t_count > 0)) {
         
         /* Check if we already split this */
         newP = tP->current_split;
@@ -395,7 +395,7 @@ static INLINE int refine_states(int invstates) {
                 selfsplit = 1;
             } else {
                 /* If the block is not on the agenda, we add */
-                /* the smaller of tP, newP and start the symloop from 0 */                
+                /* the smaller of tP, newP and start the symloop from 0 */
                 agenda_add((tP->inv_count < tP->inv_t_count ? tP : newP),0);
             }
             /* Add to middle of P-chain */
@@ -462,7 +462,7 @@ static void agenda_add(struct p *pptr, int start) {
 static void init_PE() {
   /* Create two members of P
      (nonfinals,finals)
-     and put both of them on the agenda 
+     and put both of them on the agenda
   */
 
   int i;
@@ -590,7 +590,7 @@ static void generate_inverse(struct fsm *net) {
         if ((fsm+i)->target == -1) {
             continue;
         }
-        symbol = symbol_pair_to_single_symbol((fsm+i)->in,(fsm+i)->out);        
+        symbol = symbol_pair_to_single_symbol((fsm+i)->in,(fsm+i)->out);
         source = (fsm+i)->state_no;
         target = (fsm+i)->target;
         tptr = trans_array + target;
@@ -614,7 +614,7 @@ static void sigma_to_pairs(struct fsm *net) {
 
   fsm = net->states;
   
-  epsilon_symbol = -1; 
+  epsilon_symbol = -1;
   maxsigma = sigma_max(net->sigma);
 
   maxsigma++;
@@ -642,7 +642,7 @@ static void sigma_to_pairs(struct fsm *net) {
 
   /* Table for checking whether a state is final */
 
-  finals = xxcalloc(num_states, sizeof(_Bool));
+  finals = xxcalloc(num_states, sizeof(Boolean));
   x = 0; num_finals = 0;
   net->arity = 1;
   for (i=0; (fsm+i)->state_no != -1; i++) {

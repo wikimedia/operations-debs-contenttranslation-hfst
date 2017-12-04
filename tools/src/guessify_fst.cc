@@ -30,7 +30,7 @@ using hfst::implementations::HfstBasicTransducer;
 using hfst::implementations::HfstState;
 using hfst::implementations::HfstBasicTransition;
 
-typedef HfstBasicTransducer::HfstTransitions HfstBasicTransitions;
+typedef hfst::implementations::HfstBasicTransitions HfstBasicTransitions;
 
 using hfst::internal_default;
 using hfst::internal_epsilon;
@@ -50,7 +50,7 @@ using hfst::HfstOutputStream;
 
 std::string my_default = "$_DEFAULT_SYMBOL_$";
 
-void remove_flag_diacritics(HfstTransducer &morphological_analyzer, 
+void remove_flag_diacritics(HfstTransducer &morphological_analyzer,
                             const StringSet &alphabet)
 {
   HfstSymbolSubstitutions flag_diacritic_epsilon_pairs;
@@ -124,7 +124,7 @@ HfstTransducer get_prefix_remover(const StringSet &alphabet)
   remove_suffix.concatenate(remove_symbol);
   remove_suffix.optionalize().minimize();
 
-  identity_except_cathegory.concatenate(remove_suffix).minimize();    
+  identity_except_cathegory.concatenate(remove_suffix).minimize();
 
   return identity_except_cathegory;
 }
@@ -206,7 +206,7 @@ HfstTransducer guessify_analyzer(HfstTransducer morphological_analyzer,
   morphological_analyzer.minimize();
 
   // Remove the parts of analyses that precede the last cathegory
-  // tag. After the last cathegory tag all input should be echoed as is to 
+  // tag. After the last cathegory tag all input should be echoed as is to
   // the output.
   /*
   HfstTransducer analysis_prefix_remover = get_prefix_remover(alphabet);
@@ -225,13 +225,13 @@ HfstTransducer guessify_analyzer(HfstTransducer morphological_analyzer,
   HfstState sink_state = basic_guesser.add_state();
 
   for (HfstState s = 0; s <= basic_guesser.get_max_state(); ++s)
-    { 
-      basic_guesser.set_final_weight(s,0.0); 
+    {
+      basic_guesser.set_final_weight(s,0.0);
     }
 
 
   for (HfstState s = 0; s <= basic_guesser.get_max_state(); ++s)
-    { 
+    {
       basic_guesser.add_transition
         (s,HfstBasicTransition(sink_state,
                                my_default,
@@ -259,7 +259,7 @@ HfstTransducer guessify_analyzer(HfstTransducer morphological_analyzer,
 
   guesser.compose(invalid_form_filterer).minimize();
   
-  guesser.set_name(std::string("guessified(") + 
+  guesser.set_name(std::string("guessified(") +
                    morphological_analyzer_name +
                    ")");
 

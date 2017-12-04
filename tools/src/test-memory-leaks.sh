@@ -18,7 +18,7 @@ LONGER_TEST_STRING="(a:bc:de:fg:hi:jk:lm:no:pq:rs:tu:vw:xy:z)| \
 (3:BC:DE:FG:HI:JK:LM:NO:PQ:RS:TU:VW:XY:4)"
 
 for impl in sfst openfst-tropical foma;
-do 
+do
     # The smaller test transducer
     echo $SHORTER_TEST_STRING | ./hfst-calculate -f $impl > tr.$impl;
     # The bigger test transducer
@@ -62,7 +62,7 @@ hfst-txt2fst"
 # Store each line here before aligning and printing it
 rm -f TMP
 
-# For all unary tools, 
+# For all unary tools,
 for tool in $UNARY_TOOLS;
 do
     # for all implementation formats,

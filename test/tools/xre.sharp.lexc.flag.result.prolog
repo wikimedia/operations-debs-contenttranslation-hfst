@@ -1,0 +1,35 @@
+network(NO_NAME_1).
+arc(NO_NAME_1, 0, 1, "@P.LEXNAME.Root@", 0.000000).
+arc(NO_NAME_1, 1, 2, "@R.LEXNAME.Root@", 0.000000).
+arc(NO_NAME_1, 2, 2, "b", 0.000000).
+arc(NO_NAME_1, 2, 2, "c", 0.000000).
+arc(NO_NAME_1, 2, 2, "d", 0.000000).
+arc(NO_NAME_1, 2, 2, "e", 0.000000).
+arc(NO_NAME_1, 2, 2, "f", 0.000000).
+arc(NO_NAME_1, 2, 2, "g", 0.000000).
+arc(NO_NAME_1, 2, 2, "h", 0.000000).
+arc(NO_NAME_1, 2, 2, "i", 0.000000).
+arc(NO_NAME_1, 2, 2, "j", 0.000000).
+arc(NO_NAME_1, 2, 2, "k", 0.000000).
+arc(NO_NAME_1, 2, 2, "l", 0.000000).
+arc(NO_NAME_1, 2, 2, "m", 0.000000).
+arc(NO_NAME_1, 2, 2, "n", 0.000000).
+arc(NO_NAME_1, 2, 2, "o", 0.000000).
+arc(NO_NAME_1, 2, 2, "p", 0.000000).
+arc(NO_NAME_1, 2, 2, "q", 0.000000).
+arc(NO_NAME_1, 2, 2, "r", 0.000000).
+arc(NO_NAME_1, 2, 2, "s", 0.000000).
+arc(NO_NAME_1, 2, 2, "t", 0.000000).
+arc(NO_NAME_1, 2, 2, "u", 0.000000).
+arc(NO_NAME_1, 2, 2, "v", 0.000000).
+arc(NO_NAME_1, 2, 2, "x", 0.000000).
+arc(NO_NAME_1, 2, 2, "y", 0.000000).
+arc(NO_NAME_1, 2, 2, "z", 0.000000).
+arc(NO_NAME_1, 2, 2, "å", 0.000000).
+arc(NO_NAME_1, 2, 2, "ä", 0.000000).
+arc(NO_NAME_1, 2, 2, "ö", 0.000000).
+arc(NO_NAME_1, 2, 2, "a", 0.000000).
+arc(NO_NAME_1, 2, 3, "#", 0.000000).
+arc(NO_NAME_1, 3, 4, "@P.LEXNAME.#@", 0.000000).
+arc(NO_NAME_1, 4, 5, "@R.LEXNAME.#@", 0.000000).
+final(NO_NAME_1, 5, 0.000000).

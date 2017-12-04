@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #ifndef _HFST_INPUTSTREAM_H_
@@ -18,7 +18,7 @@
 
 #include "hfstdll.h"
 
-/** @file HfstInputStream.h 
+/** @file HfstInputStream.h
     \brief Declaration of class HfstInputStream.
  */
 
@@ -28,16 +28,16 @@ namespace hfst
   namespace implementations {
 #if HAVE_OPENFST
     class LogWeightInputStream;
-#if HAVE_OPENFST_LOG
+#if HAVE_OPENFST_LOG || HAVE_LEAN_OPENFST_LOG
     class TropicalWeightInputStream;
 #endif
 #endif
-#if HAVE_SFST
+#if HAVE_SFST || HAVE_LEAN_SFST
     class SfstInputStream;
 #endif
 #if HAVE_FOMA
     class FomaInputStream;
-#endif    
+#endif
 #if HAVE_XFSM
     class XfsmInputStream;
 #endif
@@ -48,7 +48,7 @@ namespace hfst
   }
 
 
-  /** \brief A stream for reading HFST binary transducers. 
+  /** \brief A stream for reading HFST binary transducers.
 
       An example:
 \verbatim
@@ -58,11 +58,11 @@ namespace hfst
 
 HfstInputStream *in = NULL;
 
-try 
+try
 {
   in = new HfstInputStream("testfile");
-} 
-catch (StreamNotReadableException e) 
+}
+catch (StreamNotReadableException e)
 {
     std::cerr << "ERROR: File does not exist." << std::endl;
     exit(1);
@@ -70,20 +70,20 @@ catch (StreamNotReadableException e)
 
 int transducers_read = 0;
 
-while (not in->is_eof()) 
+while (not in->is_eof())
 {
-  if (in->is_bad()) 
+  if (in->is_bad())
   {
   std::cerr << "ERROR: Stream cannot be read." << std::endl;
-  exit(1); 
+  exit(1);
   }
   HfstTransducer t(*in);
   std::cerr << "One transducer successfully read." << std::endl;
   transducers_read++;
 }
 
-std::cerr << "Read " 
-          << transducers_read 
+std::cerr << "Read "
+          << transducers_read
           << " transducers in total."
       << std::endl;
 in->close();
@@ -100,12 +100,12 @@ For documentation on the HFST binary transducer format, see
 
     union StreamImplementation
     {
-#if HAVE_SFST
+#if HAVE_SFST || HAVE_LEAN_SFST
       hfst::implementations::SfstInputStream * sfst;
 #endif
 #if HAVE_OPENFST
       hfst::implementations::TropicalWeightInputStream * tropical_ofst;
-#if HAVE_OPENFST_LOG
+#if HAVE_OPENFST_LOG || HAVE_LEAN_OPENFST_LOG
       hfst::implementations::LogWeightInputStream * log_ofst;
 #endif
 #endif
@@ -117,7 +117,7 @@ For documentation on the HFST binary transducer format, see
 #endif
 
 #if HAVE_MY_TRANSDUCER_LIBRARY
-      hfst::implementations::MyTransducerLibraryInputStream * 
+      hfst::implementations::MyTransducerLibraryInputStream *
         my_transducer_library;
 #endif
 
@@ -125,19 +125,19 @@ For documentation on the HFST binary transducer format, see
     };
 
     /* The backend implementation */
-    StreamImplementation implementation; 
+    StreamImplementation implementation;
     /* Implementation type */
-    ImplementationType type;             
+    ImplementationType type;
     /* Name of next transducer, given in the hfst header */
-    std::string name;                    
+    std::string name;
     std::map<std::string,std::string> props;
-    /* How many bytes have been already read by the function 
+    /* How many bytes have been already read by the function
        when processing the hfst header */
-    unsigned int bytes_to_skip;          
+    unsigned int bytes_to_skip;
     /* The name of the file, if stdin, name is "" */
-    std::string filename;                
+    std::string filename;
     /* Whether the current transducer has an hfst header */
-    bool has_hfst_header;                
+    bool has_hfst_header;
 
     /* A special case where an OpenFst transducer has no symbol tables but an
        SFST alphabet is appended at the end. Should not occur very often, but
@@ -145,16 +145,16 @@ For documentation on the HFST binary transducer format, see
     bool hfst_version_2_weighted_transducer;
  
     /* The stream that the reading operations use when reading the first
-       transducer. Then the type of the transducer is not known so there 
+       transducer. Then the type of the transducer is not known so there
        is no backend implementation whose reading functions could be used.
        If input_stream==NULL, the backend implementation is used */
     std::istream * input_stream;
 
-    /* Basic stream operators, work on input_stream (if not NULL) or on 
+    /* Basic stream operators, work on input_stream (if not NULL) or on
        the stream implementation. */
 
     /* Extract one character from the stream */
-    char stream_get(); 
+    char stream_get();
 
     /* Extract one character from the stream and store it in @a c. */
     char &stream_get(char &c);
@@ -166,40 +166,40 @@ For documentation on the HFST binary transducer format, see
     unsigned short &stream_get(unsigned short &i);
 
     /* Return character c to the stream */
-    void stream_unget(char c); 
+    void stream_unget(char c);
     /* Whether the stream is at end */
-    bool stream_eof(); 
+    bool stream_eof();
     /* Get a string from the stream */
-    std::string stream_getstring(); 
+    std::string stream_getstring();
     /* Return the next character in the stream without extracting it */
-    char stream_peek();  
+    char stream_peek();
     /* The stream implementation ignores n bytes. */
     void ignore(unsigned int n);
 
-    /* The type of a transducer not supported directly by HFST version 3.0 
+    /* The type of a transducer not supported directly by HFST version 3.0
        but which can occur in conversion functions. */
-    enum TransducerType { 
+    enum TransducerType {
       /* See the above variable. */
-      HFST_VERSION_2_WEIGHTED, 
+      HFST_VERSION_2_WEIGHTED,
       /* An SFST transducer with no alphabet, not supported. */
       HFST_VERSION_2_UNWEIGHTED_WITHOUT_ALPHABET,
-      /* Old header + ordinary SFST transducer. */                
+      /* Old header + ordinary SFST transducer. */
       HFST_VERSION_2_UNWEIGHTED,
-      /* An OpenFst transducer, can cause problems if it does not have 
-         symbol tables. */ 
+      /* An OpenFst transducer, can cause problems if it does not have
+         symbol tables. */
       OPENFST_TROPICAL_,
       OPENFST_LOG_,
-      /* An SFST transducer. */ 
-      SFST_, 
-      /* A foma transducer in unzipped format. 
-         A zipped file is handled by throwing a FileIsInGZFormatException. */ 
+      /* An SFST transducer. */
+      SFST_,
+      /* A foma transducer in unzipped format.
+         A zipped file is handled by throwing a FileIsInGZFormatException. */
       FOMA_,
       /* An xfsm transducer. */
       XFSM_,
       /* Your transducer type */
       //MY_TRANSDUCER_LIBRARY_,
-      /* Transducer type not recognized. */ 
-      ERROR_TYPE_ 
+      /* Transducer type not recognized. */
+      ERROR_TYPE_
     };
 
     /* Read a transducer from the stream. */
@@ -211,41 +211,51 @@ For documentation on the HFST binary transducer format, see
     TransducerType guess_fst_type(int &bytes_read);
     bool read_hfst_header(int &bytes_read);
     bool read_library_header(int &bytes_read);
-    int get_header_size(int &bytes_read);                        
-    StringPairVector get_header_data(int header_size);                
+    int get_header_size(int &bytes_read);
+    StringPairVector get_header_data(int header_size);
     void process_header_data
-      (StringPairVector &header_data, bool warnings=false); 
+      (StringPairVector &header_data, bool warnings=false);
     bool set_implementation_specific_header_data
       (StringPairVector &data, unsigned int index);
 
 
     bool read_library_header_old(int &bytes_read);
-    ImplementationType get_fst_type_old(int &bytes_read); 
+    ImplementationType get_fst_type_old(int &bytes_read);
 
   public:
 
-    /** \brief Create a stream to standard input for reading binary 
-        transducers. 
+    /** \brief Create a stream to standard input for reading binary
+        transducers.
 
-        @throws StreamNotReadableException 
+        @throws StreamNotReadableException
         @throws NotTransducerStreamException
         @throws EndOfStreamException
         @throws TransducerHeaderException
     */
     HFSTDLL HfstInputStream(void);
 
-    /** \brief Open a stream to file \a filename for reading binary 
-        transducers. 
+    /** \brief Open a stream to file \a filename for reading binary
+        transducers.
 
         @pre The file exists. Otherwise, a StreamNotReadableException
     is thrown.
 
-        @throws StreamNotReadableException 
+        @throws StreamNotReadableException
         @throws NotTransducerStreamException
         @throws EndOfStreamException
         @throws TransducerHeaderException
     */
     HFSTDLL HfstInputStream(const std::string &filename);
+
+    /** \brief Open a stream to istream \a is for reading binary
+        transducers.
+
+        @throws StreamNotReadableException
+        @throws NotTransducerStreamException
+        @throws EndOfStreamException
+        @throws TransducerHeaderException
+    */
+    HFSTDLL HfstInputStream(std::istream &is);
 
     /** \brief Destructor. */
     HFSTDLL ~HfstInputStream(void);
@@ -262,7 +272,7 @@ For documentation on the HFST binary transducer format, see
     /** \brief Whether the state of the stream is good for input operations. */
     HFSTDLL bool is_good(void);
     
-    /** \brief The type of the first transducer in the stream. 
+    /** \brief The type of the first transducer in the stream.
 
         By default, all transducers in a stream have the same type, else
         a TransducerTypeMismatchException is thrown when reading the first

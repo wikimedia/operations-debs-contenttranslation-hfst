@@ -31,10 +31,10 @@ namespace SFST
       Label label;
 
       Transition( Index s, Label l, Index n ) {
-        source = s; 
-        label = l; 
-        next_for_target = n; 
-        next_for_label = undef; 
+        source = s;
+        label = l;
+        next_for_target = n;
+        next_for_label = undef;
       }
     };
     
@@ -50,9 +50,9 @@ namespace SFST
       Index first_transition;  // index of first transition with this
                                // state as target
 
-      State() { 
+      State() {
         group = next_in_group = previous_in_group = undef;
-        first_transition = undef; 
+        first_transition = undef;
       }
     };
 
@@ -62,23 +62,23 @@ namespace SFST
     class StateGroup {
       
     public:
-      Index next;          // index of next source group 
+      Index next;          // index of next source group
       Index next_in_agenda;
       Index previous_in_agenda;
 
       Index size;          // number of states in this group
       Index first_state;   // pointer to first state
 
-      Index new_size;    
+      Index new_size;
       Index first_new_state;  // pointer to the set of intersection states
 
-      void init( Index i ) { 
+      void init( Index i ) {
         next_in_agenda = i;
         size = new_size = 0;
         next = first_state = first_new_state = undef;
       }
       bool is_empty() {
-        return first_state == undef; 
+        return first_state == undef;
       }
     };
     
@@ -96,7 +96,7 @@ namespace SFST
     public:
 
       Agenda( vector<StateGroup> &g ) : group(g) {
-        // allocate some dummy groups for the agenda 
+        // allocate some dummy groups for the agenda
         g.resize(bucket_count);
         for( Index i=0; i<bucket_count; i++ )
           group[i].next_in_agenda = group[i].previous_in_agenda = i;
@@ -152,7 +152,7 @@ namespace SFST
     Transducer &transducer;    // pointer to original transducer
     size_t number_of_nodes;    // node count in original t.
     size_t number_of_transitions; // transition count in original t.
-    vector<Node*> nodearray;   // maps indices to original transducer nodes 
+    vector<Node*> nodearray;   // maps indices to original transducer nodes
 
     // CAVEAT: Do not use references to elements of the group vector
     // because they become invalid when the group vector is resized.
@@ -493,7 +493,7 @@ namespace SFST
     do {
       State &S = state[s];
       // for all transitions T into S
-      for( Index t=S.first_transition; t!=undef; 
+      for( Index t=S.first_transition; t!=undef;
            t=transition[t].next_for_target )
         {
           Transition &T = transition[t];
@@ -528,7 +528,7 @@ namespace SFST
     first_source_group = undef;
 
     // for all incoming transitions with label l
-    for( Index t = first_transition_for_label[l]; t != undef; 
+    for( Index t = first_transition_for_label[l]; t != undef;
          t = transition[t].next_for_label )
       {
         // get the transition, source state, and source state group

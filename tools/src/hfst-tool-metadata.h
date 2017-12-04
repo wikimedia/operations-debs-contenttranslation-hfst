@@ -39,10 +39,10 @@ void hfst_set_name(hfst::HfstTransducer& dest, const hfst::HfstTransducer& lhs,
 
 void hfst_set_formula(hfst::HfstTransducer& dest, const std::string& src,
                       const std::string& op);
-void hfst_set_formula(hfst::HfstTransducer& dest, 
+void hfst_set_formula(hfst::HfstTransducer& dest,
                       const hfst::HfstTransducer& src,
                       const std::string& op);
-void hfst_set_formula(hfst::HfstTransducer& dest, 
+void hfst_set_formula(hfst::HfstTransducer& dest,
                       const hfst::HfstTransducer& lhs,
                       const hfst::HfstTransducer& rhs,
                       const std::string& op);

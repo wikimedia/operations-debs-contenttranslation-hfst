@@ -95,7 +95,7 @@ parse_options(int argc, char** argv)
           {0,0,0,0}
         };
         int option_index = 0;
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_BINARY_SHORT "FH",
                              long_options, &option_index);
         if (-1 == c)
@@ -178,7 +178,7 @@ conjunct_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
         char* secondname = hfst_get_name(*second, secondfilename);
         if (transducer_n_first == 1)
         {
-            verbose_printf("Intersecting %s and %s...\n", firstname, 
+            verbose_printf("Intersecting %s and %s...\n", firstname,
                         secondname);
         }
         else
@@ -187,14 +187,14 @@ conjunct_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
                            firstname, secondname, transducer_n_first);
         }
 
-        if (first->has_flag_diacritics() or second->has_flag_diacritics()) 
+        if (first->has_flag_diacritics() or second->has_flag_diacritics())
           {
             if (not harmonize_flags)
               {
-                if (not silent) 
+                if (not silent)
                   {
                     warning(0, 0, "At least one of the argumentes contains "
-                            "flag diacritics. Use -F to harmonize them.", 
+                            "flag diacritics. Use -F to harmonize them.",
                             secondname, firstname);
                   }
               }
@@ -227,13 +227,13 @@ conjunct_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
         hfst_set_formula(*first, *first, *second, "∩");
         outstream << *first;
 
-        continueReading = firststream.is_good() && 
+        continueReading = firststream.is_good() &&
           (secondstream.is_good() || transducer_n_second == 1);
 
         delete first;
         first=0;
         // delete the transducer of second stream, unless we continue reading
-        // the first stream and there is only one transducer in the second 
+        // the first stream and there is only one transducer in the second
         // stream
         if ((continueReading && secondstream.is_good()) || not continueReading)
           {
@@ -247,10 +247,10 @@ conjunct_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
     
     if (firststream.is_good())
       {
-        error(EXIT_FAILURE, 0, 
+        error(EXIT_FAILURE, 0,
               "second input '%s' contains fewer transducers than first input"
               " '%s'; this is only possible if the second input contains"
-              " exactly one transducer", 
+              " exactly one transducer",
               secondfilename, firstfilename);
       }
 
@@ -292,7 +292,7 @@ int main( int argc, char **argv ) {
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s and %s, writing to %s\n", 
+    verbose_printf("Reading from %s and %s, writing to %s\n",
         firstfilename, secondfilename, outfilename);
     // here starts the buffer handling part
     HfstInputStream* firststream = NULL;

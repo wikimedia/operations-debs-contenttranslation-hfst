@@ -18,7 +18,7 @@ class AcyclicState
  public:
   AcyclicState(size_t id);
   void add_transition(size_t source_id,Symbol symbol,Weight weight);
-  Symbol get_symbol(void) const;  
+  Symbol get_symbol(void) const;
   Weight get_weight(void) const;
   void set_weight(Weight w);
   size_t get_source(void) const;

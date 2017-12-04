@@ -119,7 +119,7 @@ parse_options(int argc, char** argv)
             {0,0,0,0}
         };
         int option_index = 0;
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "f:t:a:T:l:",
                              long_options, &option_index);
         if (-1 == c)
@@ -160,9 +160,9 @@ parse_options(int argc, char** argv)
                 {
                   level = FSA_LEVEL_BOTH;
                 }
-              else 
+              else
                 {
-                  error(EXIT_FAILURE, 0, 
+                  error(EXIT_FAILURE, 0,
                              "The option for level parameter must"
                         " be one of:\n"
                         "upper, first, input; second, lower, output; both, "
@@ -365,7 +365,7 @@ process_stream(HfstInputStream* instream, HfstOutputStream* outstream)
                           {
                             xmlChar* to = xmlGetProp(equivNode,
                                                      reinterpret_cast<const xmlChar*>("value"));
-                            add_extension(extensions, 
+                            add_extension(extensions,
                                           reinterpret_cast<const char*>(from),
                                           reinterpret_cast<const char*>(to));
                           }
@@ -415,7 +415,7 @@ process_stream(HfstInputStream* instream, HfstOutputStream* outstream)
   }
 
 
-int main( int argc, char **argv ) 
+int main( int argc, char **argv )
   {
 #ifdef WINDOWS
     _setmode(0, _O_BINARY);
@@ -438,7 +438,7 @@ int main( int argc, char **argv )
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
         inputfilename, outfilename);
     // here starts the buffer handling part
     HfstInputStream* instream = NULL;
@@ -457,7 +457,7 @@ int main( int argc, char **argv )
     if ( is_input_stream_in_ol_format(instream, "hfst-expand-equivalences"))
       {
         return EXIT_FAILURE;
-      }    
+      }
     
     process_stream(instream, outstream);
     delete instream;

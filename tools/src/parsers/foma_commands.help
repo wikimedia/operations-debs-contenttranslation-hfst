@@ -71,7 +71,7 @@ source <file>                     read and compile script file
 sort net                          sorts arcs topologically on top FSM
 sort in                           sorts input arcs by sigma numbers on top FSM
 sort out                          sorts output arcs by sigma number on top FSM
-substitute defined X for Y        substitutes defined network X at all arcs containing Y 
+substitute defined X for Y        substitutes defined network X at all arcs containing Y
 substitute symbol X for Y         substitutes all occurrences of Y in an arc with X
 system <cmd>                      execute a system command
 test unambiguous                  test if top FST is unambiguous

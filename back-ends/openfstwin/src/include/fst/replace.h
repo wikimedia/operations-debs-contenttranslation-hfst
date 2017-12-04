@@ -1073,7 +1073,7 @@ class ArcIterator< ReplaceFst<A, T> > {
                         #else
       (fst_.GetImpl())->template CacheImpl<A>::InitArcIterator(state_,
                                                                &cache_data_);
-                        #endif      
+                        #endif
       num_arcs_ = cache_data_.narcs;
       arcs_ = cache_data_.arcs;      // 'arcs_' is a ptr to the cached arcs.
       data_flags_ = kArcValueFlags;  // All the arc member values are valid.

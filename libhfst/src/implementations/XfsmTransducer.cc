@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include "XfsmTransducer.h"
@@ -42,9 +42,9 @@ namespace hfst { namespace implementations {
              "XfsmInputStream::XfsmInputStream(\"\") not supported");
         }
       else {
-        FILE * input_file = fopen(filename.c_str(),"r");
+        FILE * input_file = hfst::hfst_fopen(filename.c_str(),"r");
         if (input_file == NULL)
-          { 
+          {
             HFST_THROW(StreamNotReadableException); }
         fclose(input_file);
 
@@ -56,7 +56,7 @@ namespace hfst { namespace implementations {
           { HFST_THROW(StreamNotReadableException); }
         list_size = NV_len(net_list);
         if (list_size <= 0)
-          { HFST_THROW(HfstFatalException); }
+          { HFST_THROW_MESSAGE(HfstFatalException, "XfstInputStream::XfsmInputStream(const std::string &)"); }
         list_pos = 0;
       }
     }
@@ -108,7 +108,7 @@ namespace hfst { namespace implementations {
       filename(std::string(str)), net_list(NULL)
     {
       if (filename != std::string()) {
-        FILE * ofile = fopen(filename.c_str(), "wb");
+        FILE * ofile = hfst::hfst_fopen(filename.c_str(), "wb");
         if (ofile == NULL) {
           HFST_THROW(StreamNotReadableException);
         }
@@ -141,9 +141,9 @@ namespace hfst { namespace implementations {
     }
 
     /* Writing is delayed and done when flush() is called. */
-    void XfsmOutputStream::write_transducer(NETptr transducer) 
+    void XfsmOutputStream::write_transducer(NETptr transducer)
     {
-      if (net_list == NULL) 
+      if (net_list == NULL)
         {
           net_list = make_nv(0);
         }
@@ -247,12 +247,12 @@ namespace hfst { namespace implementations {
       return result;
     }
 
-    NETptr XfsmTransducer::create_empty_transducer(void) 
+    NETptr XfsmTransducer::create_empty_transducer(void)
     {
       return null_net();
     }
 
-    NETptr XfsmTransducer::create_epsilon_transducer(void) 
+    NETptr XfsmTransducer::create_epsilon_transducer(void)
     {
       NETptr result = null_net();
       return optional_net(result, DONT_KEEP);
@@ -313,7 +313,7 @@ namespace hfst { namespace implementations {
       return read_regex(regex.c_str());
     }
 
-    NETptr XfsmTransducer::copy(NETptr t) 
+    NETptr XfsmTransducer::copy(NETptr t)
     {
       return copy_net(t);
     }
@@ -333,13 +333,13 @@ namespace hfst { namespace implementations {
 
     NETptr XfsmTransducer::minimize(NETptr t)
     {
-      if (minimize_even_if_already_minimal_) 
+      if (minimize_even_if_already_minimal_)
         {
-          NET_minimized(t) = 0; 
+          NET_minimized(t) = 0;
         }
       if (minimize_net(t) == 1)
         {
-          HFST_THROW(HfstFatalException);
+          HFST_THROW_MESSAGE(HfstFatalException, "XfsmTransducer::minimize");
         }
       return t;
     }
@@ -452,57 +452,57 @@ namespace hfst { namespace implementations {
       return retval;
     }
 
-    NETptr XfsmTransducer::repeat_star(NETptr t) 
+    NETptr XfsmTransducer::repeat_star(NETptr t)
     {
       return repeat_net(t, 0, -1, DONT_KEEP);
     }
     
-    NETptr XfsmTransducer::repeat_plus(NETptr t) 
+    NETptr XfsmTransducer::repeat_plus(NETptr t)
     {
       return repeat_net(t, 1, -1, DONT_KEEP);
     }
 
-    NETptr XfsmTransducer::repeat_n(NETptr t, unsigned int n) 
+    NETptr XfsmTransducer::repeat_n(NETptr t, unsigned int n)
     {
       return repeat_net(t, n, n, DONT_KEEP);
     }
     
-    NETptr XfsmTransducer::repeat_le_n(NETptr t, unsigned int n) 
+    NETptr XfsmTransducer::repeat_le_n(NETptr t, unsigned int n)
     {
       return repeat_net(t, 0, n, DONT_KEEP);
     }
 
-    NETptr XfsmTransducer::repeat_n_plus(NETptr t, unsigned int n) 
+    NETptr XfsmTransducer::repeat_n_plus(NETptr t, unsigned int n)
     {
       return repeat_net(t, n, -1, DONT_KEEP);
     }
 
-    NETptr XfsmTransducer::repeat_n_to_k(NETptr t, unsigned int n, unsigned int k) 
+    NETptr XfsmTransducer::repeat_n_to_k(NETptr t, unsigned int n, unsigned int k)
     {
       return repeat_net(t, n, k, DONT_KEEP);
     }
 
-    NETptr XfsmTransducer::optionalize(NETptr t) 
+    NETptr XfsmTransducer::optionalize(NETptr t)
     {
       return optional_net(t, DONT_KEEP);
     }
 
-    NETptr XfsmTransducer::invert(NETptr t) 
+    NETptr XfsmTransducer::invert(NETptr t)
     {
       return invert_net(t, DONT_KEEP);
     }
 
-    NETptr XfsmTransducer::reverse(NETptr t) 
+    NETptr XfsmTransducer::reverse(NETptr t)
     {
       return reverse_net(t, DONT_KEEP);
     }
 
-    NETptr XfsmTransducer::extract_input_language(NETptr t) 
+    NETptr XfsmTransducer::extract_input_language(NETptr t)
     {
       return upper_side_net(t, DONT_KEEP);
     }
 
-    NETptr XfsmTransducer::extract_output_language(NETptr t) 
+    NETptr XfsmTransducer::extract_output_language(NETptr t)
     {
       return lower_side_net(t, DONT_KEEP);
     }
@@ -514,14 +514,14 @@ namespace hfst { namespace implementations {
 
     void XfsmTransducer::write_in_att_format(NETptr t, const char * filename)
     {
-      HFST_THROW(HfstFatalException);
+      HFST_THROW_MESSAGE(HfstFatalException, "XfsmTransducer::write_in_att_format");
     }
 
     void XfsmTransducer::write_in_prolog_format(NETptr t, const char * filename)
     {
       char * f = strdup(filename);
       if (write_prolog(t, f) != 0)
-        HFST_THROW(HfstFatalException);
+        HFST_THROW_MESSAGE(HfstFatalException, "XfsmTransducer::write_in_prolog_format");
       free(f);
     }
 
@@ -530,7 +530,7 @@ namespace hfst { namespace implementations {
       char * f = strdup(filename);
       NETptr retval = read_prolog(f);
       if (retval == NULL)
-        HFST_THROW(HfstFatalException);
+        HFST_THROW_MESSAGE(HfstFatalException, "XfsmTransducer::prolog_file_to_xfsm_transducer");
       free(f);
       return retval;
     }
@@ -543,7 +543,7 @@ namespace hfst { namespace implementations {
 #include <iostream>
 using namespace hfst::implementations;
 
-int main(int argc, char * argv[]) 
+int main(int argc, char * argv[])
 {
     std::cout << "Unit tests for " __FILE__ ":";
     std::cout << std::endl << "ok" << std::endl;

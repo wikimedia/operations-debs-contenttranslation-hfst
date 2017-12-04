@@ -25,6 +25,9 @@
 #include <io.h>
 #endif
 
+#ifndef WINDOWS
+#include <unistd.h>
+#endif
 
 #include <iostream>
 #include <fstream>
@@ -55,6 +58,7 @@ using std::pair;
 #include "HfstTransducer.h"
 #include "HfstInputStream.h"
 #include "HfstOutputStream.h"
+#include "HfstExceptionDefs.h"
 #include "implementations/ConvertTransducerFormat.h"
 #include "parsers/PmatchCompiler.h"
 #include "hfst-commandline.h"
@@ -73,6 +77,7 @@ static char *epsilonname=NULL;
 static bool disjunct_expressions=false;
 static bool line_separated = false;
 static bool flatten = false;
+static bool include_cosine_distances = false;
 static clock_t timer;
 
 #if HAVE_OPENFST
@@ -91,15 +96,16 @@ print_usage()
     // c.f. http://www.gnu.org/prep/standards/standards.html#g_t_002d_002dhelp
     fprintf(message_out, "Usage: %s [OPTIONS...] [INFILE]\n"
             "Compile regular expressions into transducer(s)\n (Experimental version)"
-            "\n", program_name); 
+            "\n", program_name);
     print_common_program_options(message_out);
-    print_common_unary_program_options(message_out); 
+    print_common_unary_program_options(message_out);
     fprintf(message_out, "String and format options:\n"
             "  -e, --epsilon=EPS         Map EPS as zero\n"
-            "      --flatten             Compile in all RTNs\n");
+            "      --flatten             Compile in all RTNs\n"
+            "      --cosine-distances    When compiling Like() operations, include cosine distance info\n");
     fprintf(message_out, "\n");
 
-    fprintf(message_out, 
+    fprintf(message_out,
             "If OUTFILE or INFILE is missing or -, standard streams will be used.\n"
             "If EPS is not defined, the default representation of 0 is used\n"
             "Weights are currently not implemented.\n"
@@ -109,7 +115,7 @@ print_usage()
     fprintf(message_out, "Examples:\n"
             "  echo \"Define TOP  UppercaseAlpha Alpha* LC({professor}) EndTag(ProfName);\" | %s \n"
             "  create matcher that tags \"professor Chomsky\" as \"professor <ProfName>Chomsky</ProfName>\"\n"
-            "\n", program_name, program_name);
+            "\n", program_name);
     print_report_bugs();
     fprintf(message_out, "\n");
     print_more_info();
@@ -129,11 +135,12 @@ parse_options(int argc, char** argv)
                 HFST_GETOPT_UNARY_LONG,
                 {"epsilon", required_argument, 0, 'e'},
                 {"flatten", no_argument, 0, '1'},
+                {"cosine-distances", no_argument, 0, '2'},
                 {0,0,0,0}
             };
         int option_index = 0;
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
-                             HFST_GETOPT_UNARY_SHORT "e:1:",
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+                             HFST_GETOPT_UNARY_SHORT "e:",
                              long_options, &option_index);
         if (-1 == c)
         {
@@ -150,6 +157,9 @@ parse_options(int argc, char** argv)
         case '1':
             flatten = true;
             break;
+        case '2':
+            include_cosine_distances = true;
+            break;
 #include "inc/getopt-cases-error.h"
         }
     }
@@ -159,12 +169,38 @@ parse_options(int argc, char** argv)
     return EXIT_CONTINUE;
 }
 
+#ifndef _GNU_SOURCE
+char * get_current_dir_name()
+{
+    size_t PATH_BUFSIZE = 1024;
+    size_t PATH_BUFSIZE_MAX = PATH_BUFSIZE * 8; // sanity
+    char * retval = (char *) NULL;
+    while(retval == NULL) {
+        retval = (char *) realloc(retval, PATH_BUFSIZE);
+        if(getcwd(retval, PATH_BUFSIZE) != 0) {
+            return retval;
+        }
+        if(errno == ERANGE && PATH_BUFSIZE < PATH_BUFSIZE_MAX) {
+            PATH_BUFSIZE *= 2;
+            continue;
+        }
+        if (errno == EACCES) {
+            throw std::runtime_error("Unable to access working directory");
+        }
+        // something else went wrong, just forget about it and try to go on
+        retval[0] = '\0';
+        return retval;
+    }
+}
+#endif
+
 int
 process_stream(HfstOutputStream& outstream)
 {
     PmatchCompiler comp(compilation_format);
     comp.set_verbose(verbose);
     comp.set_flatten(flatten);
+    comp.set_include_cosine_distances(include_cosine_distances);
     std::string file_contents;
     std::map<std::string, HfstTransducer*> definitions;
     int c;
@@ -177,11 +213,43 @@ process_stream(HfstOutputStream& outstream)
       }
 #endif
 
+    std::string includedir = "";
+#ifndef _MSC_VER
+    std::string inputfilename_str(inputfilename);
+    if (inputfile != stdin && inputfilename_str.size() > 0) {
+        if (inputfilename_str[0] == '/') {
+            // absolute path
+            includedir = inputfilename_str;
+        } else {
+            char * pwd = get_current_dir_name();
+            std::string tmp(pwd);
+            includedir = tmp + "/" + inputfilename_str;
+            free(pwd);
+        }
+        size_t slashpos = includedir.rfind('/');
+        if (slashpos == std::string::npos) {
+            // mysterious, we'll just use the working dir
+            includedir = "";
+        } else {
+            includedir = includedir.substr(0, slashpos + 1);
+        }
+    }
+#endif
+    comp.set_include_path(includedir);
+
     while ((c = fgetc(inputfile)) != EOF) {
         file_contents.push_back(c);
     }
     if (file_contents.size() > 1) {
-            definitions = comp.compile(file_contents);
+      try
+        {
+          definitions = comp.compile(file_contents);
+        }
+      catch(HfstException & e)
+        {
+          std::cerr << e.name << std::endl;
+          return EXIT_FAILURE;
+        }
     }
 
     if (verbose) {
@@ -230,6 +298,7 @@ process_stream(HfstOutputStream& outstream)
         
     // When done compiling everything, look for TOP and output it first.
     if (definitions.count("TOP") == 1) {
+        std::map<std::string, std::string> properties = definitions["TOP"]->get_properties();
         intermediate_tmp = hfst::implementations::ConversionFunctions::
             hfst_transducer_to_hfst_basic_transducer(*definitions["TOP"]);
         harmonized_tmp = hfst::implementations::ConversionFunctions::
@@ -240,6 +309,10 @@ process_stream(HfstOutputStream& outstream)
         output_tmp = hfst::implementations::ConversionFunctions::
             hfst_ol_to_hfst_transducer(harmonized_tmp);
         output_tmp->set_name("TOP");
+        for(std::map<std::string, std::string>::iterator it = properties.begin();
+            it != properties.end(); ++it) {
+            output_tmp->set_property(it->first, it->second);
+        }
         outstream << *output_tmp;
         delete definitions["TOP"];
         definitions.erase("TOP");
@@ -283,12 +356,13 @@ process_stream(HfstOutputStream& outstream)
         std::cerr << program_name << ": Empty ruleset, nothing to write\n";
         return EXIT_FAILURE;
     }
+    outstream.close();
     return EXIT_SUCCESS;
 }
 
 extern int pmatchdebug;
 
-int main( int argc, char **argv ) 
+int main( int argc, char **argv )
 {
 #ifdef WINDOWS
   _setmode(1, _O_BINARY);
@@ -307,7 +381,7 @@ int main( int argc, char **argv )
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
                    inputfilename, outfilename);
     // here starts the buffer handling part
     HfstOutputStream* outstream = (outfile != stdout) ?

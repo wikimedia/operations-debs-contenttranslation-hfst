@@ -77,9 +77,9 @@ print_usage()
             "\n"
             "Examples:\n"
             "  $ %s cat.hfst dog.hfst\n"
-            "  cat.hfst[1] != dog.hfst[1]\n"        
+            "  cat.hfst[1] != dog.hfst[1]\n"
             "  $ %s cat.hfst cat.hfst\n"
-            "  cat.hfst[1] == cat.hfst[1]\n"        
+            "  cat.hfst[1] == cat.hfst[1]\n"
             "\n",
                 program_name, program_name );
         print_report_bugs();
@@ -103,7 +103,7 @@ parse_options(int argc, char** argv)
           {0,0,0,0}
         };
         int option_index = 0;
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_BINARY_SHORT "He",
                              long_options, &option_index);
         if (-1 == c)
@@ -161,10 +161,10 @@ compare_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
           {
             free(secondname);
             secondname = strdup(secondfilename);
-          } 
+          }
         if (transducer_n_first == 1)
           {
-            verbose_printf("Comparing %s and %s...\n", firstname, 
+            verbose_printf("Comparing %s and %s...\n", firstname,
                            secondname);
           }
         else
@@ -206,7 +206,7 @@ compare_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
                   {
                     if (! silent)
                       fprintf(outfile, "%s[" SIZE_T_SPECIFIER "] != %s[" SIZE_T_SPECIFIER "]\n",
-                              firstname, transducer_n_first, 
+                              firstname, transducer_n_first,
                               secondname, transducer_n_second);
                   }
                 mismatches++;
@@ -222,7 +222,7 @@ compare_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
                   hfst_strformat(secondstream.get_type()));
           }
 
-        continueReading = firststream.is_good() && 
+        continueReading = firststream.is_good() &&
           (secondstream.is_good() || transducer_n_second == 1);
 
         delete first;
@@ -242,7 +242,7 @@ compare_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
     if (firststream.is_good())
     {
         error(EXIT_FAILURE, 0, "second input '%s' contains fewer transducers than first input '%s'; "
-              "this is only possible if the second input contains exactly one transducer", 
+              "this is only possible if the second input contains exactly one transducer",
               secondfilename, firstfilename);
     }
     else if (secondstream.is_good())
@@ -285,7 +285,7 @@ int main( int argc, char **argv ) {
     {
         fclose(secondfile);
     }
-    verbose_printf("Reading from %s and %s, writing log to %s\n", 
+    verbose_printf("Reading from %s and %s, writing log to %s\n",
         firstfilename, secondfilename, outfilename);
     // here starts the buffer handling part
     HfstInputStream* firststream = NULL;

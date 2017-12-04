@@ -7,7 +7,7 @@
 
 using namespace hfst;
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 
   /* From one string. */
@@ -106,8 +106,8 @@ int main(int argc, char **argv)
   line[1] = get_bin(1,0,0,0,0,0,0,0);
   line[2] = 0;
   try
-    { 
-      utf8_tokenizer.check_utf8_correctness(line); 
+    {
+      utf8_tokenizer.check_utf8_correctness(line);
       assert(false);
     }
   catch (const IncorrectUtf8CodingException & e) {};
@@ -117,8 +117,8 @@ int main(int argc, char **argv)
   line[1] = get_bin(1,0,0,0,0,0,0,0);
   line[2] = 0;
   try
-    { 
-      utf8_tokenizer.check_utf8_correctness(line); 
+    {
+      utf8_tokenizer.check_utf8_correctness(line);
       assert(false);
     }
   catch (const IncorrectUtf8CodingException & e) {};
@@ -130,8 +130,8 @@ int main(int argc, char **argv)
   line[3] = get_bin(1,0,0,0,0,0,0,0);
   line[4] = 0;
   try
-    { 
-      utf8_tokenizer.check_utf8_correctness(line); 
+    {
+      utf8_tokenizer.check_utf8_correctness(line);
       assert(false);
     }
   catch (const IncorrectUtf8CodingException & e) {};
@@ -143,8 +143,8 @@ int main(int argc, char **argv)
   line[3] = get_bin(1,0,0,0,0,0,0,0);
   line[4] = 0;
   try
-    { 
-      utf8_tokenizer.check_utf8_correctness(line); 
+    {
+      utf8_tokenizer.check_utf8_correctness(line);
       assert(false);
     }
   catch (const IncorrectUtf8CodingException & e) {};
@@ -156,8 +156,8 @@ int main(int argc, char **argv)
   line[3] = get_bin(1,0,0,0,0,0,0,0);
   line[4] = 0;
   try
-    { 
-      utf8_tokenizer.check_utf8_correctness(line); 
+    {
+      utf8_tokenizer.check_utf8_correctness(line);
       assert(false);
     }
   catch (const IncorrectUtf8CodingException & e) {};
@@ -167,8 +167,8 @@ int main(int argc, char **argv)
   line[1] = get_bin(1,0,0,0,0,0,0,0);
   line[2] = 0;
   try
-    { 
-      utf8_tokenizer.check_utf8_correctness(line); 
+    {
+      utf8_tokenizer.check_utf8_correctness(line);
       assert(false);
     }
   catch (const IncorrectUtf8CodingException & e) {};
@@ -178,8 +178,8 @@ int main(int argc, char **argv)
   line[1] = get_bin(0,1,0,0,0,0,0,0);
   line[2] = 0;
   try
-    { 
-      utf8_tokenizer.check_utf8_correctness(line); 
+    {
+      utf8_tokenizer.check_utf8_correctness(line);
       assert(false);
     }
   catch (const IncorrectUtf8CodingException & e) {};
@@ -190,8 +190,8 @@ int main(int argc, char **argv)
   line[2] = get_bin(0,1,0,0,0,0,0,0);
   line[3] = 0;
   try
-    { 
-      utf8_tokenizer.check_utf8_correctness(line); 
+    {
+      utf8_tokenizer.check_utf8_correctness(line);
       assert(false);
     }
   catch (const IncorrectUtf8CodingException & e) {};
@@ -203,8 +203,8 @@ int main(int argc, char **argv)
   line[3] = get_bin(0,1,0,0,0,0,0,0);
   line[4] = 0;
   try
-    { 
-      utf8_tokenizer.check_utf8_correctness(line); 
+    {
+      utf8_tokenizer.check_utf8_correctness(line);
       assert(false);
     }
   catch (const IncorrectUtf8CodingException & e) {};
@@ -217,8 +217,8 @@ int main(int argc, char **argv)
   line[4] = get_bin(1,0,0,0,0,0,0,0);
   line[5] = 0;
   try
-    { 
-      utf8_tokenizer.check_utf8_correctness(line); 
+    {
+      utf8_tokenizer.check_utf8_correctness(line);
       assert(false);
     }
   catch (const IncorrectUtf8CodingException & e) {};

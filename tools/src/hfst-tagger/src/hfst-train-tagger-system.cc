@@ -1,5 +1,5 @@
 //
-// An alternative for the tool hfst-train-tagger.sh. 
+// An alternative for the tool hfst-train-tagger.sh.
 // Uses system calls instead of shell commands.
 //
 
@@ -16,12 +16,12 @@ int main(int argc, char* argv[]) {
     arguments.append(std::string(" "));
   }
 
-  (void)sprintf(command, 
+  (void)sprintf(command,
                 "hfst-open-input-file-for-tagger.exe %s | "
                 "hfst_tagger_compute_data_statistics.py %s | "
-                "hfst-build-tagger %s", 
-                arguments.c_str(), 
-                arguments.c_str(), 
+                "hfst-build-tagger %s",
+                arguments.c_str(),
+                arguments.c_str(),
                 arguments.c_str());
 
   int retval = system(command);

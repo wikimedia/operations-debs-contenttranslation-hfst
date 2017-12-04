@@ -1,0 +1,10 @@
+regex d:e;
+regex c:d;
+regex b:c;
+regex "@U.FOO.ON@";
+negate net
+write att
+echo --
+negate net
+write att
+quit

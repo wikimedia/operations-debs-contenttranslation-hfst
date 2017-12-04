@@ -23,7 +23,9 @@
 #ifdef _MSC_VER //AddedPD
 #include <BaseTsd.h>
 typedef SSIZE_T ssize_t;
+#if _MSC_VER < 1900
 #define snprintf _snprintf
+#endif
 #define strtoll _strtoi64
 
 #ifndef OPENFSTEXPORT
@@ -39,7 +41,7 @@ typedef SSIZE_T ssize_t;
       #pragma comment (lib, "openfst64.lib")
     #else
       #pragma comment (lib, "openfst.lib")
-    #endif              
+    #endif
   #endif
 #endif
 #endif

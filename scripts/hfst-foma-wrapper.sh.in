@@ -1,4 +1,7 @@
 #!/bin/bash
+
+## Legacy wrapper for foma
+
 #foma_exec=@FOMACLI@
 foma_exec=@prefix@/bin/hfst_foma
 if [ ! -x $foma_exec ] ; then
@@ -58,7 +61,7 @@ if [ -z $@ ] ; then
     if [ "x$verbose" == "x-v" ] ; then
         echo "running $foma_exec $fomaopts"
     fi
-    if ! $foma_exec $fomaopts; then 
+    if ! $foma_exec $fomaopts; then
         echo "$foma_exec failed"
         exit 1
     fi

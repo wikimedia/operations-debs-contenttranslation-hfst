@@ -81,7 +81,7 @@ class IntervalSet {
 
   const vector<Interval> *Intervals() const { return &intervals_; }
 
-  const bool Empty() const { return intervals_.empty(); }
+  /*const*/ bool Empty() const { return intervals_.empty(); }
 
   const T Size() const { return intervals_.size(); }
 

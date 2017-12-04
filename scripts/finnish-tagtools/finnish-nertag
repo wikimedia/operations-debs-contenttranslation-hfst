@@ -1,0 +1,60 @@
+#!/bin/bash
+BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+TAGGER=$BASE/omotag/run_tagger
+PMATCH=hfst-pmatch
+MOVETAGS=$BASE/move_tags
+DISAMB_LEMMA=$BASE/omotag/lemmafilter
+
+if command -v hfst-tokenize 2 > /dev/null; then
+    TOKENIZE="hfst-tokenize $BASE/tokenize.pmatch"
+else
+    TOKENIZE="python3 $BASE/tokenize.py"
+fi
+
+function print_help()
+{
+    echo "Adds named entity tags to running Finnish text on standard input."
+    echo
+    echo "The output is returned one token per line. Where named entities are"
+    echo "identified, the token in question is followed by a tab character and"
+    echo "the entity identifier. Entities that span multiple tokens are given"
+    echo "opening and closing XML-style tags, and single-token entities only a"
+    echo "closing tag."
+    echo
+    echo "This package is based on the statistical (CRF-based) tagger FinnPos,"
+    echo "the Finnish morphology package OmorFi, the FinnTreeBank corpus of"
+    echo "labeled text and the FinnPos rule-based named entity tagger."
+    echo
+    echo "Process entire files with redirection, eg."
+    echo "  $ finnish-nertag < mytext.txt > mytext_tagged.txt"
+    echo "or type into the terminal and terminate with EOF (usually ctrl-D on"
+    echo "your keyboard), or directly input a line of text with <<<. Example:"
+    echo
+        
+    echo "$ finnish-nertag <<< \"Pernoossa asuva Heikki Anttonen on ostanut Outokummun osakkeita.\""
+    echo "Pernoossa	<EnamexLocXxx/>"
+    echo "asuva	"
+    echo "Heikki	<EnamexPrsHum>"
+    echo "Anttonen	</EnamexPrsHum>"
+    echo "on	"
+    echo "ostanut	"
+    echo "Outokummun	<EnamexOrgCrp/>"
+    echo "osakkeita	"
+    echo ".	"
+    exit 0
+}
+
+case $1 in
+    "")
+	;;
+    *)
+	print_help ;;
+esac
+
+$TOKENIZE |
+$BASE/hfst-optimized-lookup $BASE/combined_morphology.hfst 2>/dev/null |
+python3 $BASE/omorfi2finnpos.py ftb                               |
+python3 $BASE/finnpos-ratna-feats.py $BASE/freq_words              |
+$BASE/finnpos-label $BASE/ftb.omorfi.model 2>/dev/null             |
+python3 $BASE/finnpos-restore-lemma.py --finer                     |
+$BASE/prefilt_tags | $PMATCH $BASE/proper_tagger_ph1.pmatch | $MOVETAGS | $PMATCH $BASE/proper_tagger_ph2.pmatch | $MOVETAGS | $BASE/remove_exc | cut -f1,5

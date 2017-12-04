@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include "HfstFlagDiacritics.h"
@@ -12,6 +12,33 @@
 #ifndef MAIN_TEST
 
 namespace hfst {
+
+  FdOperation::FdOperation
+  (FdOperator op, FdFeature feat, FdValue val, const std::string& str):
+    op(op), feature(feat), value(val), name(str) {}
+
+  // Required for operator[]()
+  FdOperation::FdOperation(void): op(Pop), feature(0), value(0), name("") {}
+
+  FdOperator FdOperation::Operator(void) const { return op; }
+  FdFeature FdOperation::Feature(void) const { return feature; }
+  FdValue FdOperation::Value(void) const { return value; }
+  std::string FdOperation::Name(void) const { return name; }
+
+  FdOperator FdOperation::char_to_operator(char c)
+  {
+    switch (c) {
+    case 'P': return Pop;
+    case 'N': return Nop;
+    case 'R': return Rop;
+    case 'D': return Dop;
+    case 'C': return Cop;
+    case 'U': return Uop;
+    default:
+      throw;
+    }
+  }
+
 
 bool FdOperation::is_diacritic(const std::string& diacritic_string)
 {
@@ -53,9 +80,9 @@ bool FdOperation::is_diacritic(const std::string& diacritic_string)
 }
   
   std::string FdOperation::get_operator(const std::string& diacritic)
-  { 
+  {
     // The operator is the second char.
-    return diacritic.substr(1,1); 
+    return diacritic.substr(1,1);
   }
 
   std::string FdOperation::get_feature(const std::string& diacritic)
@@ -93,13 +120,13 @@ bool FdOperation::is_diacritic(const std::string& diacritic_string)
   }
 
   bool FdOperation::has_value(const std::string& flag_diacritic)
-  { 
-    return flag_diacritic.find('.',flag_diacritic.find('.') + 1) != 
+  {
+    return flag_diacritic.find('.',flag_diacritic.find('.') + 1) !=
       std::string::npos;
   }
 
 std::string::size_type FdOperation::find_diacritic
-(const std::string& diacritic_str, 
+(const std::string& diacritic_str,
  std::string::size_type& length)
 {
   std::string::size_type start = diacritic_str.find('@');

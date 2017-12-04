@@ -83,11 +83,11 @@ print_usage()
            );
         //print_common_binary_program_parameter_instructions(message_out);
         fprintf(message_out,
-"\nIf OUTFILE, or either INFILE1 or INFILE2 is missing or -, standard\n" 
+"\nIf OUTFILE, or either INFILE1 or INFILE2 is missing or -, standard\n"
 "streams will be used. INFILE1, INFILE2, or both, must be specified\n"
-"The format of INFILE1 and INFILE2 must be the same; the result will\n" 
+"The format of INFILE1 and INFILE2 must be the same; the result will\n"
 "have the same format as these.\n"
-"INFILE1 (the lexicon) must contain exactly one transducer.\n" 
+"INFILE1 (the lexicon) must contain exactly one transducer.\n"
                 "INFILE2 (rule file) may contain several transducers.\n");
         fprintf(message_out,
 "\n"
@@ -119,7 +119,7 @@ parse_options(int argc, char** argv)
           {0,0,0,0}
         };
         int option_index = 0;
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_BINARY_SHORT "FIeHfa",
                              long_options, &option_index);
         if (-1 == c)
@@ -169,13 +169,13 @@ std::string check_all_symbols(const HfstTransducer &lexicon,
 
   for (HfstState s = 0; s <= rule_b.get_max_state(); ++s)
     {
-      for (HfstBasicTransducer::HfstTransitions::const_iterator it = 
+      for (hfst::implementations::HfstBasicTransitions::const_iterator it =
              rule_b[s].begin();
            it != rule_b[s].end();
            ++it)
-        { 
+        {
           const std::string &input_symbol = it->get_input_symbol();
-          rule_input_symbols.insert(input_symbol); 
+          rule_input_symbols.insert(input_symbol);
         }
     }
 
@@ -186,11 +186,11 @@ std::string check_all_symbols(const HfstTransducer &lexicon,
 
   for (HfstState s = 0; s <= lexicon_b.get_max_state(); ++s)
     {
-      for (HfstBasicTransducer::HfstTransitions::const_iterator it = 
+      for (hfst::implementations::HfstBasicTransitions::const_iterator it =
              lexicon_b[s].begin();
            it != lexicon_b[s].end();
            ++it)
-        { 
+        {
           const std::string &output_symbol = it->get_output_symbol();
 
           if (rule_input_symbols.count(output_symbol) == 0)
@@ -213,23 +213,23 @@ std::string check_multi_char_symbols
 
   for (HfstState s = 0; s <= rule_b.get_max_state(); ++s)
     {
-      for (HfstBasicTransducer::HfstTransitions::const_iterator it = 
+      for (hfst::implementations::HfstBasicTransitions::const_iterator it =
              rule_b[s].begin();
            it != rule_b[s].end();
            ++it)
-        { 
+        {
           const std::string &input_symbol = it->get_input_symbol();
-          rule_input_symbols.insert(input_symbol); 
+          rule_input_symbols.insert(input_symbol);
         }
     }
 
   for (HfstState s = 0; s <= lexicon_b.get_max_state(); ++s)
     {
-      for (HfstBasicTransducer::HfstTransitions::const_iterator it = 
+      for (hfst::implementations::HfstBasicTransitions::const_iterator it =
              lexicon_b[s].begin();
            it != lexicon_b[s].end();
            ++it)
-        { 
+        {
           const std::string &output_symbol = it->get_output_symbol();
 
           if (rule_input_symbols.count(output_symbol) == 0)
@@ -305,7 +305,7 @@ compose_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
       }
 
     HfstTransducerVector rules;
-    size_t rule_n = 1;  
+    size_t rule_n = 1;
 
     while (secondstream.is_good()) {
       HfstTransducer rule(secondstream);
@@ -332,11 +332,11 @@ compose_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
           hfst::set_encode_weights(enc);
         }
 
-      rules.push_back(rule);      
+      rules.push_back(rule);
       rule_n++;
     }
 
-    while (firststream.is_good()) 
+    while (firststream.is_good())
       {
         verbose_printf("Reading lexicon...");
         HfstTransducer lexicon(firststream);
@@ -351,7 +351,7 @@ compose_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
             std::string symbol;
             if ((symbol = check_all_symbols(lexicon,rules[0])) != "")
               {
-                warning(0, 0, 
+                warning(0, 0,
                         "\nFound output symbols (e.g. \"%s\") in transducer in\n"
                         "file %s which will be filtered out because they are\n"
                         "not found on the input tapes of transducers in file\n"
@@ -359,8 +359,8 @@ compose_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
                         symbol.c_str(), firstfilename, secondfilename);
               }
             else if ((symbol = check_multi_char_symbols(lexicon,rules[0])) != "")
-              { 
-                warning(0, 0, 
+              {
+                warning(0, 0,
                         "\nFound output multi-char symbols (\"%s\") in \n"
                         "transducer in file %s which are not found on the\n"
                         "input tapes of transducers in file %s.",
@@ -401,12 +401,12 @@ compose_streams(HfstInputStream& firststream, HfstInputStream& secondstream)
             lexicon.compose_intersect(rules,invert);
           }
 
-        char* composed_name = static_cast<char*>(malloc(sizeof(char) * 
+        char* composed_name = static_cast<char*>(malloc(sizeof(char) *
                                                         (strlen(lexiconname) +
                                                          strlen(secondfilename) +
-                                                         strlen("compose(%s, interserct(%s))")) 
+                                                         strlen("compose(%s, interserct(%s))"))
                                                         + 1));
-        if (sprintf(composed_name, "compose(%s, intersect(%s))", 
+        if (sprintf(composed_name, "compose(%s, intersect(%s))",
                     lexiconname, secondfilename) > 0)
           {
             lexicon.set_name(composed_name);
@@ -448,7 +448,7 @@ int main( int argc, char **argv ) {
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s and %s, writing to %s\n", 
+    verbose_printf("Reading from %s and %s, writing to %s\n",
         firstfilename, secondfilename, outfilename);
     // here starts the buffer handling part
     HfstInputStream* firststream = NULL;

@@ -54,7 +54,7 @@ tagger_aux.verbose_print("Parsing config file hfst_tagger_config.", verbose)
 
 statistics_patterns = tagger_aux.read_config_file("hfst_tagger_config")
 
-counters = [ [tagger_aux.get_pair_counter(), tagger_aux.get_object_counter()] 
+counters = [ [tagger_aux.get_pair_counter(), tagger_aux.get_object_counter()]
              for pattern in statistics_patterns ]
 
 # Read from stdin.
@@ -191,7 +191,7 @@ print "STOP P(WORD_FORM | TAG)"
 tagger_aux.verbose_print("P(LOWER_SUFFIX_AND_TAG | LOWER_SUFFIX)",verbose)
 
 print "START P(LOWER_SUFFIX_AND_TAG | LOWER_SUFFIX)"
-tagger_aux.print_conditional_penalties(lower_suffix_and_tag_count_map, 
+tagger_aux.print_conditional_penalties(lower_suffix_and_tag_count_map,
                                        lower_suffix_count_map,
                                        "<lower_suffix_and_tag>",
                                        True,
@@ -202,7 +202,7 @@ print "STOP P(LOWER_SUFFIX_AND_TAG | LOWER_SUFFIX)"
 tagger_aux.verbose_print("P(LOWER_SUFFIX)",verbose)
 
 print "START P(LOWER_SUFFIX)"
-tagger_aux.print_penalties(lower_suffix_count_map, 
+tagger_aux.print_penalties(lower_suffix_count_map,
                            number_of_lower_suffixes,
                            "<lower_suffix>")
 print "STOP P(LOWER_SUFFIX)"
@@ -211,7 +211,7 @@ print "STOP P(LOWER_SUFFIX)"
 tagger_aux.verbose_print("P(LOWER_TAG)",verbose)
 print "START P(LOWER_TAG)"
 number_of_lower_tags = number_of_lower_suffixes
-tagger_aux.print_penalties(lower_tag_count_map, 
+tagger_aux.print_penalties(lower_tag_count_map,
                            number_of_lower_suffixes,
                            "<lower_tag>")
 print "STOP P(LOWER_TAG)"
@@ -219,7 +219,7 @@ print "STOP P(LOWER_TAG)"
 
 # Compute and display the penalties for suffix and tag combinations.
 print "START P(UPPER_SUFFIX_AND_TAG | UPPER_SUFFIX)"
-tagger_aux.print_conditional_penalties(upper_suffix_and_tag_count_map, 
+tagger_aux.print_conditional_penalties(upper_suffix_and_tag_count_map,
                                        upper_suffix_count_map,
                                        "<upper_suffix_and_tag>",
                                        True,
@@ -230,7 +230,7 @@ print "STOP P(UPPER_SUFFIX_AND_TAG | UPPER_SUFFIX)"
 tagger_aux.verbose_print("P(UPPER_SUFFIX)",verbose)
 
 print "START P(UPPER_SUFFIX)"
-tagger_aux.print_penalties(upper_suffix_count_map, 
+tagger_aux.print_penalties(upper_suffix_count_map,
                            number_of_upper_suffixes,
                            "<upper_suffix>")
 print "STOP P(UPPER_SUFFIX)"
@@ -239,7 +239,7 @@ print "STOP P(UPPER_SUFFIX)"
 tagger_aux.verbose_print("P(UPPER_TAG)",verbose)
 print "START P(UPPER_TAG)"
 number_of_tags = number_of_upper_suffixes
-tagger_aux.print_penalties(upper_tag_count_map, 
+tagger_aux.print_penalties(upper_tag_count_map,
                            number_of_upper_suffixes,
                            "<upper_tag>")
 print "STOP P(UPPER_TAG)"
@@ -279,7 +279,7 @@ for i in range(len(statistics_patterns)):
 
     print start_tag
 
-    tagger_aux.print_conditional_penalties(counters[i][0], 
+    tagger_aux.print_conditional_penalties(counters[i][0],
                                            counters[i][1],
                                            "",
                                            False,

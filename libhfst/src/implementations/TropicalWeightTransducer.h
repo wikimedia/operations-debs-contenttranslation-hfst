@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #ifndef _TROPICAL_WEIGHT_TRANSDUCER_H_
@@ -18,32 +18,59 @@
   #include "../../../config.h"
 #endif
 
-#ifdef _MSC_VER
-#include "back-ends/openfstwin/src/include/fst/fstlib.h"
-#else
-#include "back-ends/openfst/src/include/fst/fstlib.h"
-#endif // _MSC_VER
-
 #include "HfstExtractStrings.h"
 #include <cstdio>
 #include <string>
 #include <sstream>
-#include <iostream>
-//#include "HfstAlphabet.h"
+#include <iosfwd>
+#include <fstream>
+
+#ifdef OPENFST_VERSION_1_5_4
+  #include "back-ends/openfst/src/include/fst/fst-decl.h"
+#else
+namespace fst
+{
+  template <class W> class TropicalWeightTpl;
+  typedef TropicalWeightTpl<float> TropicalWeight;
+
+  template <class W> class LogWeightTpl;
+  typedef LogWeightTpl<float> LogWeight;
+
+  template <class W> class ArcTpl;
+  typedef ArcTpl<TropicalWeight> StdArc;
+  typedef ArcTpl<LogWeight> LogArc;
+
+  template <class A> class VectorFst;
+  typedef VectorFst<StdArc> StdVectorFst;
+  typedef VectorFst<LogArc> LogFst;
+
+  template <class F> class StateIterator;
+  template <class F> class ArcIterator;
+
+  class SymbolTable;
+}
+#endif
+
+#include <stdint.h>
+#ifdef _MSC_VER
+typedef __int64 int64;
+#else
+typedef int64_t int64;
+#endif // _MSC_VER
 
 /** @file TropicalWeightTransducer.h
     \brief Declarations of functions and datatypes that form a bridge between
     HFST API and OpenFst's transducers with tropical weights. */
 
-namespace hfst { 
+namespace hfst {
 namespace implementations
 {
   using namespace fst;
   ;
-  typedef StdArc::StateId StateId;
+  typedef unsigned int StateId;
 
   typedef std::vector<StdArc> StdArcVector;
-  struct StdArcLessThan { 
+  struct StdArcLessThan {
     bool operator() (const StdArc &arc1,const StdArc &arc2) const; };
 
   using std::ostream;
@@ -52,17 +79,18 @@ namespace implementations
 
   void openfst_tropical_set_hopcroft(bool value);
 
-  class TropicalWeightInputStream 
+  class TropicalWeightInputStream
   {
   private:
     std::string filename;
-    ifstream i_stream;
-    istream &input_stream;
+    std::ifstream i_stream;
+    std::istream &input_stream;
     void skip_identifier_version_3_0(void);
     void skip_hfst_header(void);
   public:
     TropicalWeightInputStream(void);
     TropicalWeightInputStream(const std::string &filename);
+    TropicalWeightInputStream(std::istream &is);
     void close(void);
     bool is_eof(void) const;
     bool is_bad(void) const;
@@ -77,19 +105,18 @@ namespace implementations
     void stream_unget(char c);
     
     static bool is_fst(FILE * f);
-    static bool is_fst(istream &s);
+    static bool is_fst(std::istream &s);
   };
 
-  class TropicalWeightOutputStream 
+  class TropicalWeightOutputStream
   {
   private:
     std::string filename;
-    ofstream o_stream;
-    ostream &output_stream;
+    std::ofstream o_stream;
+    std::ostream &output_stream;
     bool hfst_format;
-    //void write_3_0_library_header(std::ostream &out);
   public:
-    TropicalWeightOutputStream(bool hfst_format=true); 
+    TropicalWeightOutputStream(bool hfst_format=true);
     TropicalWeightOutputStream
       (const std::string &filename, bool hfst_format=false);
     void close(void);
@@ -97,57 +124,12 @@ namespace implementations
     void write_transducer(StdVectorFst * transducer);
   };
 
-  class TropicalWeightTransitionIterator;
-
-  typedef StateId TropicalWeightState;
-
-  class TropicalWeightStateIterator 
-    {
-    protected:
-      StateIterator<StdVectorFst> * iterator;
-    public:
-      TropicalWeightStateIterator(StdVectorFst * t);
-      ~TropicalWeightStateIterator(void);
-      void next(void);
-      bool done(void);
-      TropicalWeightState value(void);
-    };
- 
-
-  class TropicalWeightTransition
-    {
-    protected:
-      StdArc arc;
-      StdVectorFst * t;
-    public:
-      TropicalWeightTransition(const StdArc &arc, StdVectorFst *t);
-      ~TropicalWeightTransition(void);
-      std::string get_input_symbol(void) const;
-      std::string get_output_symbol(void) const;
-      TropicalWeightState get_target_state(void) const;
-      TropicalWeight get_weight(void) const;
-    };
-
-
-  class TropicalWeightTransitionIterator
-    {
-    protected:
-      ArcIterator<StdVectorFst> * arc_iterator;
-      StdVectorFst * t;
-    public:
-      TropicalWeightTransitionIterator(StdVectorFst * t, StateId state);
-      ~TropicalWeightTransitionIterator(void);
-      void next(void);
-      bool done(void);
-      TropicalWeightTransition value(void);
-    };
-  
-
   class TropicalWeightTransducer
     {
     public:
       static StdVectorFst * create_empty_transducer(void);
       static StdVectorFst * create_epsilon_transducer(void);
+      static void delete_transducer(StdVectorFst * t);
 
       // string versions
       static StdVectorFst * define_transducer(const std::string &symbol);
@@ -188,7 +170,7 @@ namespace implementations
       static StdVectorFst * extract_output_language(StdVectorFst * t);
       static void extract_paths
         (StdVectorFst * t, hfst::ExtractStringsCb& callback,
-         int cycles=-1, FdTable<int64>* fd=NULL, bool filter_fd=false 
+         int cycles=-1, FdTable<int64>* fd=NULL, bool filter_fd=false
          /*bool include_spv=false*/);
 
       static void extract_random_paths
@@ -222,6 +204,7 @@ namespace implementations
         (StdVectorFst * t,float (*func)(float f));
       static StdVectorFst * push_weights
         (StdVectorFst * t, bool to_initial_state);
+      static bool has_weights(const StdVectorFst * t);
 
       static std::pair<StdVectorFst*, StdVectorFst*> harmonize
         (StdVectorFst *t1, StdVectorFst *t2, bool unknown_symbols_in_use=true);
@@ -283,7 +266,7 @@ namespace implementations
       static void get_first_input_symbols
         (StdVectorFst *t, StateId s, std::set<StateId> & visited_states, StringSet & symbols);
       static StringSet get_first_input_symbols(StdVectorFst *t);
-      static unsigned int get_symbol_number(StdVectorFst *t, 
+      static unsigned int get_symbol_number(StdVectorFst *t,
                         const std::string &symbol);
       static unsigned int get_biggest_symbol_number(StdVectorFst *t);
       static StringVector get_symbol_vector(StdVectorFst *t);
@@ -291,9 +274,9 @@ namespace implementations
       static NumberNumberMap create_mapping
         (StdVectorFst * t1, StdVectorFst * t2);
       static void recode_symbol_numbers
-        (StdVectorFst * t, hfst::NumberNumberMap &km);      
+        (StdVectorFst * t, hfst::NumberNumberMap &km);
       static StdVectorFst * expand_arcs
-        (StdVectorFst * t, hfst::StringSet &unknown, 
+        (StdVectorFst * t, hfst::StringSet &unknown,
          bool unknown_symbols_in_use);
 
 #ifdef FOO
@@ -301,14 +284,14 @@ namespace implementations
                                               Grammar * grammar);
 #endif
 
-      float get_profile_seconds();
+      static float get_profile_seconds();
 
       static unsigned int number_of_states(const StdVectorFst * t);
       static unsigned int number_of_arcs(const StdVectorFst * t);
 
       // for HFST version 2 transducer handling
       static void set_symbol_table
-        (StdVectorFst * t, 
+        (StdVectorFst * t,
          std::vector<std::pair<unsigned short, std::string> > symbol_mappings);
 
       static void set_warning_stream(std::ostream * os);
@@ -317,20 +300,20 @@ namespace implementations
     private:
       static fst::SymbolTable create_symbol_table(std::string name);
       static void initialize_symbol_tables(StdVectorFst *t);
-      static void remove_symbol_table(StdVectorFst *t);      
+      static void remove_symbol_table(StdVectorFst *t);
 
       static std::ostream * warning_stream;
 
-      /* Maps state numbers in AT&T text format to state ids used by 
+      /* Maps state numbers in AT&T text format to state ids used by
          OpenFst transducers. */
       typedef std::map<int, StateId> StateMap;
-      static StateId add_and_map_state(StdVectorFst *t, int state_number, 
+      static StateId add_and_map_state(StdVectorFst *t, int state_number,
                                        StateMap &state_map);
 
       static int has_arc(StdVectorFst &t,
-                  StdArc::StateId sourcestate,                          
-                  StdArc::Label ilabel, 
-                  StdArc::Label olabel);
+                         /*StdArc::StateId*/ int sourcestate,
+                         /*StdArc::Label*/ int ilabel,
+                         /*StdArc::Label*/ int olabel);
       static void disjunct_as_tries(fst::StdVectorFst &t1,
                              StateId t1_state,
                                     const fst::StdVectorFst * t2,
@@ -350,7 +333,7 @@ namespace implementations
       static float is_final(StdVectorFst *t, StateId s);
       static StateId get_initial_state(StdVectorFst *t);
       static void represent_empty_transducer_as_having_one_state
-        (StdVectorFst *t);      
+        (StdVectorFst *t);
 
     };
 

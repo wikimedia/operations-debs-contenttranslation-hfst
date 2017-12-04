@@ -106,8 +106,8 @@ void read_rule_names(size_t number_of_rules)
   ifstream rule_name_in(rule_names_file_name,std::ios::in);
   size_t counter = 0;
   char rule_name[1000];
-  while (rule_name_in.getline(rule_name,1000) and (counter < number_of_rules)) 
-    { 
+  while (rule_name_in.getline(rule_name,1000) and (counter < number_of_rules))
+    {
       ++counter;
       rule_transducer_names->push_back(strdup(rule_name));
     }
@@ -139,7 +139,7 @@ char * get_skip(void)
 }
 
 /* Display program name and possible parameters with their argument types. */
-void usage(void) 
+void usage(void)
 {
   fprintf(message_out,"USAGE: %s [ OPTIONS ] [ FSTFILE ]\n",
       program_name);
@@ -196,7 +196,7 @@ void help(void)
 "<https://kitwiki.csc.fi/twiki/bin/view/KitWiki/HfstPairTest>\n\n"
       "Report bugs to <hfst-bugs@helsinki.fi>\n"
 );
-}  
+}
 /* Parse the command line argument list. */
 void parse_options(int argc, char * argv[])
 {
@@ -228,12 +228,12 @@ void parse_options(int argc, char * argv[])
 
       switch (c)
     {
-    case 'd': /* debug */ 
+    case 'd': /* debug */
       debug = true;
       fprintf(stderr,
           "Debug mode.\n");
       break;
-    case 'v': /* debug */ 
+    case 'v': /* debug */
       verbose = true;
       fprintf(stderr,
           "Verbose mode.\n");
@@ -273,16 +273,16 @@ void parse_options(int argc, char * argv[])
             "Reading symbol-pair strings from the file %s.\n",
             fst_file_name);
       break;
-    case 'S': /* spaces */ 
+    case 'S': /* spaces */
       spaces = true;
       if (verbose or debug)
         fprintf(stderr,
             "Input string pairs separated by spaces.\n");
       break;
-    case 's': /* silent */ 
+    case 's': /* silent */
       silent = true;
       break;
-    case 'q': /* quiet */ 
+    case 'q': /* quiet */
       silent = true;
       break;
     case 'R': /* read-symbols FILE */
@@ -311,7 +311,7 @@ void parse_options(int argc, char * argv[])
           "missing a file name\n",argv[optind-1]);
       usage();
       exit(1);
-    }      
+    }
 
     }
   if (output_file_name == NULL)
@@ -324,4 +324,4 @@ void parse_options(int argc, char * argv[])
       fst_file_name = strdup(argv[optind]);
       }
 
-} 
+}

@@ -72,8 +72,8 @@ parse_options(int argc, char** argv)
             {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "wDnf:",
                              long_options, &option_index);
         if (-1 == c)
@@ -104,7 +104,7 @@ void echo_stream_to_stdout(std::istream &in)
     { std::cout << line << std::endl; }
 }
 
-int main( int argc, char **argv ) 
+int main( int argc, char **argv )
 {
   // This tool is used in a pipeline of commands, so help and version messages
   // cannot be written to stdout.
@@ -123,15 +123,15 @@ int main( int argc, char **argv )
     { output_file_str += ".{lex,seq}"; }
 
   verbose_printf("Reading training data from %s.\n"
-                 "Writing tagger to %s\n", 
+                 "Writing tagger to %s\n",
                  input_file_str.c_str(), output_file_str.c_str());
 
   if (std::string(inputfilename) == "<stdin>")
     { echo_stream_to_stdout(std::cin); }
   else
-    { 
+    {
       std::ifstream in(inputfilename);
-      echo_stream_to_stdout(in); 
+      echo_stream_to_stdout(in);
     }
   
   free(inputfilename);

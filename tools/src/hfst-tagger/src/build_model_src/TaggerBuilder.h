@@ -40,7 +40,7 @@ class TaggerBuilder
   TaggerBuilder(const std::string &filename);
 
   // Store the lexical model of this tagger in file_name_prefix + ".lex" and
-  // store the sequence model in file_name_prefix + ".seq". 
+  // store the sequence model in file_name_prefix + ".seq".
   void store(const std::string &file_name_prefix);
 
   // Store the lexical model and sequence model of this tagger in STDOUT.

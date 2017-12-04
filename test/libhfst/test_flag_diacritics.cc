@@ -10,7 +10,7 @@ using hfst::implementations::HfstState;
 using hfst::implementations::HfstBasicTransducer;
 using hfst::implementations::HfstBasicTransition;
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 
   HfstBasicTransducer t;
@@ -36,16 +36,16 @@ int main(int argc, char **argv)
 
 
   const unsigned int TYPES_SIZE=5;
-  const ImplementationType types [] = {SFST_TYPE, 
-                       TROPICAL_OPENFST_TYPE, 
-                       /*LOG_OPENFST_TYPE,*/ 
+  const ImplementationType types [] = {SFST_TYPE,
+                       TROPICAL_OPENFST_TYPE,
+                       /*LOG_OPENFST_TYPE,*/
                        FOMA_TYPE,
                        HFST_OL_TYPE,
                        HFST_OLW_TYPE};
 
 
   /* For all transducer implementation types, perform the following tests: */
-  for (unsigned int i=0; i<TYPES_SIZE-2; i++) 
+  for (unsigned int i=0; i<TYPES_SIZE-2; i++)
     // FIXME: infinite loop in HFST_OL_TYPE
     {
       if (not HfstTransducer::is_implementation_type_available(types[i]))
@@ -99,9 +99,9 @@ int main(int argc, char **argv)
       result_strings.insert(StringPair(istring, ostring));
     }
       
-      assert(result_strings.find(StringPair("ac","ac")) 
+      assert(result_strings.find(StringPair("ac","ac"))
          != result_strings.end());
-      assert(result_strings.find(StringPair("bd","bd")) 
+      assert(result_strings.find(StringPair("bd","bd"))
          != result_strings.end());
       
 

@@ -1,18 +1,18 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include <string>
 #include <vector>
 
-namespace hfst 
+namespace hfst
 {
-namespace xfst 
+namespace xfst
 {
 
 typedef std::vector<std::string> StringVector;
@@ -65,7 +65,7 @@ bool word_found_in_text(const std::string & str_, const std::string & text_)
   // Find str_ in text_:
   std::size_t pos = text.find(str);
   // (1) If not found, return false
-  if (pos == std::string::npos) 
+  if (pos == std::string::npos)
     {
       return false;
     }
@@ -113,9 +113,9 @@ StringVector namelist_to_name_vector(const std::string & namelist)
 }
     
 // Append help message for command known by names in \a namelist, taking arguments
-// listed in \a arguments, and described by \a description to \a message. 
+// listed in \a arguments, and described by \a description to \a message.
 // \a all_names defines whether all names in \a namelist are included or just the first one.
-void append_help_message(const std::string & namelist, const std::string & arguments, 
+void append_help_message(const std::string & namelist, const std::string & arguments,
                          const std::string & description, std::string & message, bool all_names = true)
 {
   size_t NAME_AND_ARGUMENTS_FIELD_WIDTH = 30;
@@ -126,7 +126,7 @@ void append_help_message(const std::string & namelist, const std::string & argum
   message.append(" ");
   message.append(arguments);
 
-  size_t name_and_arguments_length 
+  size_t name_and_arguments_length
     = names.front().length() + 1 + arguments.length();
 
   if (name_and_arguments_length > NAME_AND_ARGUMENTS_FIELD_WIDTH)
@@ -176,7 +176,7 @@ bool text_matches_some_name(const std::string & text, const std::string & nameli
 
     bool get_help_message(const std::string & text, std::string & message, int help_mode, bool skip_ambiguous_cases=false);
 
-bool handle_ambiguous_case(const std::string & name, const std::string & namelist, 
+bool handle_ambiguous_case(const std::string & name, const std::string & namelist,
                            const std::string & text, std::string & message, int help_mode)
 {
   if (help_mode == HELP_MODE_ALL_COMMANDS ||
@@ -196,16 +196,16 @@ bool handle_ambiguous_case(const std::string & name, const std::string & namelis
       if (it != names.begin())
         message.append("##\n");
       (void)get_help_message(*it, message, help_mode, true);
-    }  
+    }
   return true;
 }
 
 // If \a text matches (depending on \a help_mode) a command known by names
 // listed in \a names, taking arguments \a arguments, described by \a description,
 // add help message for the command to \a message. \a all_names defines whether
-// all names in \a names are included or just the first one. 
-// Return whether the search should continue (depends on \a help_mode). 
-bool handle_case(const std::string & names, const std::string & arguments, 
+// all names in \a names are included or just the first one.
+// Return whether the search should continue (depends on \a help_mode).
+bool handle_case(const std::string & names, const std::string & arguments,
                  const std::string & description, const std::string & text,
                  std::string & message, int help_mode, bool all_names=true)
 {
@@ -223,7 +223,7 @@ bool handle_case(const std::string & names, const std::string & arguments,
         }
       return false; // continue search
     }
-  else // HELP_MODE_ONE_COMMAND 
+  else // HELP_MODE_ONE_COMMAND
     {
       if (text_matches_some_name(text, names))
         {
@@ -236,7 +236,7 @@ bool handle_case(const std::string & names, const std::string & arguments,
 
 // Generate help message(s) for command(s) named \a text and append the help message(s)
 // to \a message. \a help_mode defines whether we are generating help messages for \a text,
-// all commands (in that case, \a message is ignored) or for commands that contain or 
+// all commands (in that case, \a message is ignored) or for commands that contain or
 // whose help messages contain the word \a text. \a skip_ambiguous_cases defines whether
 // ambiguous cases where \a text matches more than one command are ignored.
 // @return Whether the help message could be generated.
@@ -252,15 +252,15 @@ bool handle_case(const std::string & names, const std::string & arguments,
   // To see whether any help message was appended.
   std::string message_at_start(message);
 
-  COMMAND("ambiguous upper, ambiguous", "", 
+  COMMAND("ambiguous upper, ambiguous", "",
           "returns the input words which have multiple paths in a transducer");
     
   AMBIGUOUS_COMMAND("apply", "apply down, apply up");
 
-  CONT_COMMAND("apply down, down", "<string>", 
+  CONT_COMMAND("apply down, down", "<string>",
               "apply <string> down to the top network on stack");
   
-  COMMAND("apply down, down", "", 
+  COMMAND("apply down, down", "",
           "enter apply down mode (Ctrl-D exits)");
   
   CONT_COMMAND("apply up, up", "<string>",
@@ -274,7 +274,7 @@ bool handle_case(const std::string & names, const std::string & arguments,
   //COMMAND("add properties, add", "", "<not implemented>");
   //COMMAND("alias", "", "<not implemented>");
   //COMMAND("cleanup net, cleanup", "", "<not implemented>");
-  COMMAND("clear stack, clear", "", 
+  COMMAND("clear stack, clear", "",
           "clears the stack");
   //COMMAND("collect epsilon-loops, epsilon-loops", "", "<not implemented>");
   //"compile-replace lower, com-rep lower"
@@ -286,7 +286,7 @@ bool handle_case(const std::string & names, const std::string & arguments,
   COMMAND("crossproduct net, crossproduct", "", "cross-product of top two FSMs on stack");
   CONT_COMMAND("define", "<name> <r.e.>", "define a network");
   COMMAND("define", "<fname>(<v1,..,vn>) <r.e.>", "define function");
-  COMMAND("determinize net, determinize, determinise net, determinise", "", "determinizes top FSM on stack"); 
+  COMMAND("determinize net, determinize, determinise net, determinise", "", "determinizes top FSM on stack");
   COMMAND("echo", "<string>", "echo a string");
   //COMMAND("edit properties, edit", "", "<not implemented>");
   //"epsilon-remove net, epsilon-remove"
@@ -430,7 +430,7 @@ bool handle_case(const std::string & names, const std::string & arguments,
   COMMAND("variable compose-tristate", "", "use the tristate composition algorithm");
   COMMAND("variable show-flags", "", "show flag diacritics in `apply'");
   COMMAND("variable obey-flags", "", "obey flag diacritics in `apply'");
-  COMMAND("variable minimal", "", "minimize resulting FSMs");
+  COMMAND("variable minimal", "", "ON = minimize resulting FSMs, OFF = remove epsilons and determinize");
   COMMAND("variable print-pairs", "", "always print both sides when applying");
   COMMAND("variable print-space", "", "print spaces between symbols");
   COMMAND("variable print-sigma", "", "print the alphabet when printing network");

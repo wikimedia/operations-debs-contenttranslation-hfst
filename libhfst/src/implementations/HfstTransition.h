@@ -1,16 +1,16 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #ifndef _HFST_TRANSITION_H_
 #define _HFST_TRANSITION_H_
 
-/** @file HfstTransition.h 
+/** @file HfstTransition.h
     @brief Class HfstTransition */
 
 #include "../HfstDataTypes.h"
@@ -21,16 +21,16 @@ namespace hfst {
 
   namespace implementations {
 
-   /** @brief A transition that consists of a target state and 
-        transition data represented by class C. 
+   /** @brief A transition that consists of a target state and
+        transition data represented by class C.
 
-        The easiest way to use this template is to choose the 
+        The easiest way to use this template is to choose the
         the implementation #HfstBasicTransition which is compatible with
         #HfstBasicTransducer.
         
         @see HfstBasicTransition
    */
-    template <class C> class HfstTransition 
+    template <class C> class HfstTransition
       {
       protected:
         HfstState target_state; // the state where the transition leads
@@ -52,25 +52,25 @@ namespace hfst {
         
         /** @brief Create a transition leading to state \a s with input symbol
             \a isymbol, output_symbol \a osymbol and weight \a weight. */
-      HFSTDLL HfstTransition(HfstState s, 
-                     typename C::SymbolType isymbol, 
-                     typename C::SymbolType osymbol, 
+      HFSTDLL HfstTransition(HfstState s,
+                     typename C::SymbolType isymbol,
+                     typename C::SymbolType osymbol,
                      typename C::WeightType weight):
         target_state(s), transition_data(isymbol, osymbol, weight)
           {}
         
-      HFSTDLL HfstTransition(HfstState s, 
-                     unsigned int inumber, 
-                     unsigned int onumber, 
+      HFSTDLL HfstTransition(HfstState s,
+                     unsigned int inumber,
+                     unsigned int onumber,
                      typename C::WeightType weight,
                      bool foo):
         target_state(s), transition_data(inumber, onumber, weight)
           { (void)foo; }
         
         /** @brief Create a deep copy of transition \a another. */
-      HFSTDLL HfstTransition(const HfstTransition<C> &another): 
-        target_state(another.target_state), 
-          transition_data(another.transition_data) 
+      HFSTDLL HfstTransition(const HfstTransition<C> &another):
+        target_state(another.target_state),
+          transition_data(another.transition_data)
             {}
 
         HFSTDLL ~HfstTransition() {}
@@ -83,7 +83,7 @@ namespace hfst {
           return (target_state < another.target_state);
         }
         
-        /** @brief Assign this transition the same value as transition 
+        /** @brief Assign this transition the same value as transition
             \a another. */
         HFSTDLL void operator=(const HfstTransition<C> &another) {
           target_state = another.target_state;
@@ -137,12 +137,12 @@ namespace hfst {
       };
 
     /** @brief An HfstTransition with transition data of type
-        HfstTropicalTransducerTransitionData. 
+        HfstTropicalTransducerTransitionData.
 
         This implementation is compatible with #HfstBasicTransducer.
 
         @see HfstTropicalTransducerTransitionData HfstBasicTransducer */
-    typedef HfstTransition<HfstTropicalTransducerTransitionData> 
+    typedef HfstTransition<HfstTropicalTransducerTransitionData>
       HfstBasicTransition;
 
     // TODO: remove?

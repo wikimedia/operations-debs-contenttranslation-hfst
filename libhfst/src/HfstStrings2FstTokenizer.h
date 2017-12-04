@@ -1,13 +1,13 @@
 #ifndef HEADER_STRINGS_2_FST_TOKENIZER_H
 #define HEADER_STRINGS_2_FST_TOKENIZER_H
 
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include <vector>
@@ -53,13 +53,13 @@ class HfstStrings2FstTokenizer
   HfstStrings2FstTokenizer
     (StringVector &multichar_symbols,const std::string &eps);
 
-  //! Return a StringPairVector representation of the pair string str. 
-  //! The parameter spaces tells whether spaces have been used to separate 
+  //! Return a StringPairVector representation of the pair string str.
+  //! The parameter spaces tells whether spaces have been used to separate
   //! symbol pairs.
   StringPairVector tokenize_pair_string(const std::string &str,bool spaces);
 
-  //! Return a StringPairVector representation of the string pair str. 
-  //! The parameter spaces tells whether spaces have been used to separate 
+  //! Return a StringPairVector representation of the string pair str.
+  //! The parameter spaces tells whether spaces have been used to separate
   //! symbols.
   StringPairVector tokenize_string_pair(const std::string &str,bool spaces);
 
@@ -98,7 +98,7 @@ class HfstStrings2FstTokenizer
   StringVector split_at_spaces(const std::string &str);
 
   //! Throw UnescapedColsFound, if symbols contains unescaped ':'-symbols.
-  void check_cols(const std::string &symbol); 
+  void check_cols(const std::string &symbol);
 };
 
 } // namespace hfst

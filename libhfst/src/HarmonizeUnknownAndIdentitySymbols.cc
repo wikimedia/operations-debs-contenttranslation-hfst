@@ -1,16 +1,15 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include "HarmonizeUnknownAndIdentitySymbols.h"
 #include "HfstTransducer.h"
-// --- HfstTransitionGraph.h is enough
-#include "implementations/HfstTransitionGraph.h" 
+#include "implementations/HfstBasicTransducer.h"
 #include "HfstFlagDiacritics.h"
 #include "implementations/optimized-lookup/pmatch.h"
 
@@ -19,9 +18,9 @@
 namespace hfst
 {
 
-const char * HarmonizeUnknownAndIdentitySymbols::identity = 
+const char * HarmonizeUnknownAndIdentitySymbols::identity =
   "@_IDENTITY_SYMBOL_@"; // --- internal_identity.c_str();
-const char * HarmonizeUnknownAndIdentitySymbols::unknown = 
+const char * HarmonizeUnknownAndIdentitySymbols::unknown =
   "@_UNKNOWN_SYMBOL_@";  // --- internal_unknown.c_str();
 
   // --- these functions could be useful elsewhere, too
@@ -141,17 +140,17 @@ HarmonizeUnknownAndIdentitySymbols::HarmonizeUnknownAndIdentitySymbols
       if (t2_symbols_minus_t1_symbols.empty())
     { debug_harmonize_print("t1 includes no symbols not found in t2."); }
       else
-    { 
+    {
       HfstTransducer fst1(t1,TROPICAL_OPENFST_TYPE);
-      std::cerr << fst1 << std::endl; 
+      std::cerr << fst1 << std::endl;
     }
 
       if (t1_symbols_minus_t2_symbols.empty())
     { debug_harmonize_print("t2 includes no symbols not found in t1."); }
       else
-    { 
+    {
       HfstTransducer fst2(t2,TROPICAL_OPENFST_TYPE);
-      std::cerr << fst2 << std::endl; 
+      std::cerr << fst2 << std::endl;
     }
     }
 }
@@ -161,7 +160,7 @@ void HarmonizeUnknownAndIdentitySymbols::populate_symbol_set
 {
   for (HfstBasicTransducer::const_iterator it = t.begin(); it != t.end(); ++it)
     {
-      for (HfstBasicTransducer::HfstTransitions::const_iterator jt = 
+      for (hfst::implementations::HfstBasicTransitions::const_iterator jt =
          it->begin();
        jt != it->end();
        ++jt)
@@ -196,9 +195,9 @@ void HarmonizeUnknownAndIdentitySymbols::harmonize_identity_symbols
   for (HfstBasicTransducer::iterator it = t.begin(); it != t.end(); ++it)
     {
 
-      HfstBasicTransducer::HfstTransitions added_transitions;
+      hfst::implementations::HfstBasicTransitions added_transitions;
 
-      for (HfstBasicTransducer::HfstTransitions::const_iterator jt = 
+      for (hfst::implementations::HfstBasicTransitions::const_iterator jt =
          it->begin();
        jt != it->end();
        ++jt)
@@ -219,7 +218,7 @@ void HarmonizeUnknownAndIdentitySymbols::harmonize_identity_symbols
     }
       it->insert(it->end(),
          added_transitions.begin(),added_transitions.end());
-    }  
+    }
 }
 
 // --- documentation would make this function easier to follow
@@ -231,9 +230,9 @@ void HarmonizeUnknownAndIdentitySymbols::harmonize_unknown_symbols
 
   for (HfstBasicTransducer::iterator it = t.begin(); it != t.end(); ++it)
     {
-      HfstBasicTransducer::HfstTransitions added_transitions;
+      hfst::implementations::HfstBasicTransitions added_transitions;
 
-      for (HfstBasicTransducer::HfstTransitions::const_iterator jt = 
+      for (hfst::implementations::HfstBasicTransitions::const_iterator jt =
          it->begin();
        jt != it->end();
        ++jt)
@@ -247,11 +246,11 @@ void HarmonizeUnknownAndIdentitySymbols::harmonize_unknown_symbols
           for (StringSet::const_iterator kt = missing_symbols.begin();
            kt != missing_symbols.end();
            ++kt)
-        { 
+        {
           added_transitions.push_back
             (HfstBasicTransition(jt->get_target_state(),
                      *kt,jt->get_output_symbol(),
-                     jt->get_weight())); 
+                     jt->get_weight()));
         }
         }
       if (jt->get_output_symbol() == unknown)
@@ -275,18 +274,18 @@ void HarmonizeUnknownAndIdentitySymbols::harmonize_unknown_symbols
           for (StringSet::const_iterator kt = missing_symbols.begin();
            kt != missing_symbols.end();
            ++kt)
-        { 
+        {
           for (StringSet::const_iterator lt = missing_symbols.begin();
                lt != missing_symbols.end();
                ++lt)
-            { 
+            {
               if (kt == lt)
             { continue; }
 
               added_transitions.push_back
             (HfstBasicTransition(jt->get_target_state(),
                          *lt,*kt,
-                         jt->get_weight())); 
+                         jt->get_weight()));
             }
         }
         }

@@ -1,7 +1,7 @@
 /*
    Test file for HfstBasicTransducer.
    Some of the functions are already tested in other test files,
-   because some HfstTransducer functions are implemented only 
+   because some HfstTransducer functions are implemented only
    for HfstBasicTransducer.
 */
 
@@ -16,7 +16,7 @@ using implementations::HfstBasicTransition;
 using implementations::HfstBasicTransducer;
 
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 
   verbose_print("HfstBasicTransducer construction");
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
   FILE * ifile = fopen("test.att", "rb");
   try {
     unsigned int linecount = 0;
-    HfstBasicTransducer foo 
+    HfstBasicTransducer foo
       = HfstBasicTransducer::read_in_att_format(ifile, "@0@", linecount);
     (void)linecount;
     fclose(ifile);
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 
   {
     // In the xerox formalism used here, "?" means the unknown symbol
-    // and "?:?" the identity pair 
+    // and "?:?" the identity pair
     
     HfstBasicTransducer tr1;
     tr1.add_state(1);
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
     tr2.add_state(2);
     tr2.set_final_weight(2, 0);
     tr2.add_transition
-      (0, HfstBasicTransition(1, "@_IDENTITY_SYMBOL_@", 
+      (0, HfstBasicTransition(1, "@_IDENTITY_SYMBOL_@",
                   "@_IDENTITY_SYMBOL_@", 0) );
     tr2.add_transition
       (1, HfstBasicTransition(2, "bar", "bar", 0) );
@@ -154,13 +154,13 @@ int main(int argc, char **argv)
 
   verbose_print("HfstBasicTransducer: iterating through");
 
-  { 
+  {
     unsigned int source_state=0;
 
     for (HfstBasicTransducer::const_iterator it = t.begin();
      it != t.end(); it++ )
       {
-    for (HfstBasicTransducer::HfstTransitions::const_iterator tr_it 
+    for (hfst::implementations::HfstBasicTransitions::const_iterator tr_it
            = it->begin(); tr_it != it->end(); tr_it++)
       {
         std::cerr << source_state << "\t"
@@ -170,7 +170,7 @@ int main(int argc, char **argv)
               << tr_it->get_weight() << std::endl;
       }
 
-    if (t.is_final_state(source_state)) 
+    if (t.is_final_state(source_state))
       {
         std::cerr << source_state << "\t"
               << t.get_final_weight(source_state) << std::endl;

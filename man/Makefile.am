@@ -15,7 +15,6 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 hfst_tools=hfst-compare.1 hfst-compose.1 \
 	hfst-concatenate.1 hfst-determinize.1 \
 	hfst-disjunct.1 \
@@ -30,48 +29,72 @@ hfst_tools=hfst-compare.1 hfst-compose.1 \
 	hfst-calculate.1 hfst-compose-intersect.1 \
 	hfst-lookup.1 \
 	hfst-substitute.1 hfst-format.1 hfst-name.1 hfst-lexc.1 \
-	hfst-lexc-wrapper.1 \
 	hfst-affix-guessify.1 hfst-edit-metadata.1 hfst-expand-equivalences.1 \
 	hfst-grep.1 hfst-guess.1 hfst-guessify.1 hfst-info.1 hfst-multiply.1 \
 	hfst-pair-test.1 hfst-prune-alphabet.1 hfst-reweight.1 hfst-shuffle.1 \
 	hfst-traverse.1 hfst-tokenize.1 hfst-pmatch.1 hfst-pmatch2fst.1 \
 	hfst-optimized-lookup.1
-hfst_xfst=hfst-xfst.1 
-hfst_apertium_proc=hfst-apertium-proc.1 
-hfst_foma=hfst-foma.1 # hand-written
-hfst_foma_wrapper=hfst-foma-wrapper.1 # hand-written
+hfst_xfst=hfst-xfst.1
+hfst_apertium_proc=hfst-apertium-proc.1
+
+if GENERATE_LEXC_WRAPPER
+  hfst_lexc_wrapper=hfst-lexc-wrapper.1
+else
+  hfst_lexc_wrapper=
+endif
+
+if GENERATE_FOMA_WRAPPER
+  hfst_foma=hfst-foma.1 # hand-written
+  hfst_foma_wrapper=hfst-foma-wrapper.1 # hand-written
+else
+  hfst_foma=
+  hfst_foma_wrapper=
+endif
+
 hfst_tag_and_reweight=hfst-tag.1 hfst-reweight-tagger.1
-hfst_train_tagger=hfst-train-tagger.1
-hfst_train_tagger_subprograms=hfst-open-input-file-for-tagger.1 \
+
+if WANT_TRAIN_TAGGER
+  hfst_train_tagger=hfst-train-tagger.1
+  hfst_train_tagger_subprograms=hfst-open-input-file-for-tagger.1 \
 	hfst_tagger_compute_data_statistics.py.1 hfst-build-tagger.1 # hand-written
+else
+  hfst_train_tagger=
+  hfst_train_tagger_subprograms=
+endif
+
 hfst_twolc=hfst-twolc.1
-hfst_twolc_subprograms= htwolcpre1.1 htwolcpre2.1 htwolcpre3.1 # hand-written
+
+if WANT_TWOLC_SCRIPT
+  hfst_twolc_subprograms= htwolcpre1.1 htwolcpre2.1 htwolcpre3.1 hfst-twolc-script.1 # hand-written
+else
+  hfst_twolc_subprograms=
+endif
 
 aliases= hfst-determinise.1 hfst-expand.1 hfst-intersect.1 hfst-minimise.1 \
 	 hfst-minus.1 hfst-sfstpl2fst.1 hfst-summarise.1 hfst-union.1 hfst-proc.1 \
-	 hfst-optimised-lookup.1 hfst-train-tagger-loc.1 hfst-train-tagger-system.1 \
-	 hfst-twolc-loc.1 hfst-twolc-system.1 hfst-proc2.1 hfst-tokenise.1
+	 hfst-optimised-lookup.1 \
+	 hfst-proc2.1 hfst-tokenise.1
 
 dist_man1_MANS=$(hfst_tools) $(hfst_xfst) $(hfst_apertium_proc) $(hfst_foma) $(hfst_foma_wrapper) \
 	$(hfst_tag_and_reweight) $(hfst_train_tagger) $(hfst_train_tagger_subprograms) $(hfst_twolc) \
-	$(hfst_twolc_subprograms) $(aliases)
+	$(hfst_twolc_subprograms) $(hfst_lexc_wrapper) $(aliases)
 
 LN_S=ln -s -f
 
 hfst-determinise.1:
-	$(LN_S) hfst-determinize.1 hfst-determinise.1 
+	$(LN_S) hfst-determinize.1 hfst-determinise.1
 
 hfst-expand.1:
-	$(LN_S) hfst-fst2strings.1 hfst-expand.1 
+	$(LN_S) hfst-fst2strings.1 hfst-expand.1
 
 hfst-intersect.1:
-	$(LN_S) hfst-conjunct.1 hfst-intersect.1 
+	$(LN_S) hfst-conjunct.1 hfst-intersect.1
 
 hfst-minimise.1:
-	$(LN_S) hfst-minimize.1 hfst-minimise.1 
+	$(LN_S) hfst-minimize.1 hfst-minimise.1
 
 hfst-minus.1:
-	$(LN_S) hfst-subtract.1 hfst-minus.1 
+	$(LN_S) hfst-subtract.1 hfst-minus.1
 
 hfst-optimised-lookup.1:
 	$(LN_S) hfst-optimized-lookup.1 hfst-optimised-lookup.1
@@ -80,22 +103,10 @@ hfst-proc.1:
 	$(LN_S) hfst-apertium-proc.1 hfst-proc.1
 
 hfst-sfstpl2fst.1:
-	$(LN_S) hfst-calculate.1 hfst-sfstpl2fst.1 
+	$(LN_S) hfst-calculate.1 hfst-sfstpl2fst.1
 
-hfst-summarise.1: 
-	$(LN_S) hfst-summarize.1 hfst-summarise.1 
-
-hfst-train-tagger-loc.1:
-	$(LN_S) hfst-train-tagger.1 hfst-train-tagger-loc.1
-
-hfst-train-tagger-system.1:
-	$(LN_S) hfst-train-tagger.1 hfst-train-tagger-system.1
-
-hfst-twolc-loc.1:
-	$(LN_S) hfst-twolc.1 hfst-twolc-loc.1
-
-hfst-twolc-system.1:
-	$(LN_S) hfst-twolc.1 hfst-twolc-system.1
+hfst-summarise.1:
+	$(LN_S) hfst-summarize.1 hfst-summarise.1
 
 hfst-union.1:
 	$(LN_S) hfst-disjunct.1 hfst-union.1
@@ -112,7 +123,7 @@ man:
 	make bootstrap && make aliases
 
 # Generate man pages from help messages
-bootstrap: 
+bootstrap:
 	for f in $(hfst_tools); do \
 		N=`echo $$f | sed 's/.1/ \-\-help/' | sed 's/hfst/..\/tools\/src\/hfst/' | sh | sed -n 2p`; \
 		help2man \
@@ -155,5 +166,5 @@ bootstrap:
 aliases:
 	for f in $(aliases) ; do \
 		make $$f; \
-	done; 
+	done;
 

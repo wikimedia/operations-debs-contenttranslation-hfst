@@ -52,8 +52,8 @@ struct fsm *fsm_lexc_parse_string(char *string, int verbose) {
    if (lexclex() != 1) {
      if (lexentries != -1) {
          printf("%i\n",lexentries);
-     }       
-   } 
+     }
+   }
    lexc_delete_buffer(my_string_buffer);
    g_defines = olddefines;
    return(lexc_to_fsm());
@@ -69,13 +69,13 @@ void lexc_trim(char *s) {
   /* Remove trailing ; and = and space and initial space */
   int i,j;
   for (i = strlen(s)-1; *(s+i) == ';' || *(s+i) == '=' || *(s+i) == ' ' || *(s+i) == '\t'; i--)
-    *(s+i) = '\0';  
+    *(s+i) = '\0';
   for (i=0; *(s+i) == ' ' || *(s+i) == '\t' || *(s+i) == '\n'; i++) {
   }
   for (j=0; *(s+i) != '\0'; i++, j++) {
     *(s+j) = *(s+i);
   }
-  *(s+j) = *(s+i);  
+  *(s+j) = *(s+i);
 }
 
 %}
@@ -126,7 +126,7 @@ ANY    [\001-\177]|[\300-\337][\200-\277]|[\340-\357][\200-\277][\200-\277]|[\36
   if (lexentries != -1) {
     printf("%i, ",lexentries);
   }
-  printf("%s...",lexctext+8); 
+  printf("%s...",lexctext+8);
   fflush(stdout);
   lexentries = 0;
   lexc_set_current_lexicon(lexctext+8, SOURCE_LEXICON);
@@ -180,7 +180,7 @@ ANY    [\001-\177]|[\300-\337][\200-\277]|[\340-\357][\200-\277][\200-\277]|[\36
     *(lexctext+lexcleng-1) = ';';
     if (my_yyparse(lexctext, lexclineno, g_defines, NULL) == 0) {
        lexc_set_network(current_parse);
-    }    
+    }
     BEGIN(LEXENTRIES);
 }
 

@@ -1,14 +1,14 @@
 #include "HfstTransducer.h"
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
   using namespace hfst;
   using namespace hfst::lexc;
 
   const unsigned int TYPES_SIZE=3;//4;
-  const ImplementationType types [] = {SFST_TYPE, 
-                       TROPICAL_OPENFST_TYPE, 
-                       /*LOG_OPENFST_TYPE,*/ 
+  const ImplementationType types [] = {SFST_TYPE,
+                       TROPICAL_OPENFST_TYPE,
+                       /*LOG_OPENFST_TYPE,*/
                        FOMA_TYPE};
 
    const char* srcdirc = getenv("srcdir");
@@ -49,16 +49,16 @@ int main(int argc, char **argv)
   
       
 
-      try 
+      try
         {
           fprintf(stderr, "valid file, read_lexc... ", i);
-          HfstTransducer * rlexc 
+          HfstTransducer * rlexc
              = HfstTransducer::read_lexc(srcdir + "/test_lexc.lexc", types[i]);
           assert(rlexc != 0);
           assert(animals.compare(*rlexc));
           delete rlexc;
         }
-      catch (FunctionNotImplementedException e) 
+      catch (FunctionNotImplementedException e)
         {
           assert(false);
         }
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
       /*try {
     HfstTransducer * rlexc
       = HfstTransducer::read_lexc
-      (std::string(getenv("srcdir")) + 
+      (std::string(getenv("srcdir")) +
        "/a_test_file_that_does_not_exist.o2f393480f31fsfgqe", types[i]);
     assert(false);
       }

@@ -14,7 +14,7 @@ class DelayedSequenceModelComponent : public SequenceModelComponent
 				size_t delay);
   
   Weight get_final_weight(State state) const;
-  TransitionData get_transition(State state, Symbol symbol); 
+  TransitionData get_transition(State state, Symbol symbol);
 
  protected:
   SequenceModelComponent &model;

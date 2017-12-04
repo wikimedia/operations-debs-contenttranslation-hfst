@@ -182,7 +182,7 @@ namespace hfst {
     xfst_mapping(PRINT_SHORTEST_STRING_SIZE_CMD, "print shortest-string-size, print shortest-string-length, "
                  "shortest-string-size, shortest-string-length, psz");
     xfst_mapping(PRINT_SHORTEST_STRING_CMD, "print shortest-string, shortest-string, pss");
-    xfst_mapping(PRINT_SIGMA_CMD, "print sigma, sigma");    
+    xfst_mapping(PRINT_SIGMA_CMD, "print sigma, sigma");
     xfst_mapping(PRINT_SIGMA_COUNT_CMD, "print sigma-tally, sigma-tally, sitally, print sigma-word-tally");
     xfst_mapping(PRINT_SIZE_CMD, "print size, size");
     xfst_mapping(PRINT_STACK_CMD, "print stack, stack");

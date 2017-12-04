@@ -1,11 +1,11 @@
 %{
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #define YYDEBUG 0
@@ -50,13 +50,13 @@
          hfst::pmatch::PmatchObjectPair * restrictionContext;
          hfst::pmatch::MappingPairVector * restrictionContexts;
          hfst::xeroxRules::ReplaceType replType;
-         hfst::xeroxRules::ReplaceArrow replaceArrow; 
+         hfst::xeroxRules::ReplaceArrow replaceArrow;
      }
 
 %start PMATCH
 %type <pmatchDefinition> DEFINITION
 %type <pmatchObject> EXPRESSION1 EXPRESSION2 EXPRESSION3 EXPRESSION4 EXPRESSION5 EXPRESSION6 EXPRESSION7 EXPRESSION8 EXPRESSION9 EXPRESSION10 EXPRESSION11 EXPRESSION12 EXPRESSION13
-%type <label> SYMBOL QUOTED_LITERAL CURLY_LITERAL SYMBOL_WITH_LEFT_PAREN CONCATENATED_STRING_LIST
+%type <label> SYMBOL QUOTED_LITERAL CURLY_LITERAL SYMBOL_WITH_LEFT_PAREN CONCATENATED_STRING_LIST VARIABLE_NAME
 %type <string_vector> ARGLIST
 %type <pmatchObject_vector> FUNCALL_ARGLIST
 
@@ -69,20 +69,20 @@
 %type <restrictionContext> RESTR_CONTEXT
 %type <restrictionContexts> RESTR_CONTEXTS
 %type <replType> CONTEXT_MARK
-%type <pmatchObject> INSERTION FUNCALL EXPLODE IMPLODE ENDTAG READ_FROM CONTEXT_CONDITION PMATCH_CONTEXT PMATCH_OR_CONTEXT PMATCH_AND_CONTEXT
+%type <pmatchObject> INSERTION FUNCALL EXPLODE IMPLODE ENDTAG CAPTURE LIKE READ_FROM CONTEXT_CONDITION PMATCH_CONTEXT PMATCH_OR_CONTEXT PMATCH_AND_CONTEXT
 PMATCH_RIGHT_CONTEXT PMATCH_LEFT_CONTEXT PMATCH_NEGATIVE_RIGHT_CONTEXT PMATCH_NEGATIVE_LEFT_CONTEXT
 %type <pmatchObject_vector> PMATCH_CONTEXTS
 
 %left <weight> END_OF_WEIGHTED_EXPRESSION WEIGHT
 %nonassoc <pmatchObject> CHARACTER_RANGE
 
-%left CROSS_PRODUCT COMPOSITION LENIENT_COMPOSITION INTERSECTION MERGE_RIGHT_ARROW MERGE_LEFT_ARROW
+%left CROSS_PRODUCT COMPOSITION LENIENT_COMPOSITION INTERSECTION MERGE_RIGHT_ARROW MERGE_LEFT_ARROW EQUALS
 %left CENTER_MARKER MARKUP_MARKER
 %left SHUFFLE BEFORE AFTER
 %right LEFT_ARROW RIGHT_ARROW LEFT_RIGHT_ARROW LEFT_RESTRICTION // LEFT_RESTRICTION not implemented
 %left  REPLACE_RIGHT REPLACE_LEFT OPTIONAL_REPLACE_RIGHT OPTIONAL_REPLACE_LEFT
 REPLACE_LEFT_RIGHT OPTIONAL_REPLACE_LEFT_RIGHT RTL_LONGEST_MATCH RTL_SHORTEST_MATCH
-LTR_LONGEST_MATCH LTR_SHORTEST_MATCH 
+LTR_LONGEST_MATCH LTR_SHORTEST_MATCH
 %right REPLACE_CONTEXT_UU REPLACE_CONTEXT_LU REPLACE_CONTEXT_UL REPLACE_CONTEXT_LL
 %left  UNION MINUS UPPER_MINUS LOWER_MINUS UPPER_PRIORITY_UNION LOWER_PRIORITY_UNION
 %left  IGNORING IGNORE_INTERNALLY LEFT_QUOTIENT
@@ -90,7 +90,7 @@ LTR_LONGEST_MATCH LTR_SHORTEST_MATCH
        
 %nonassoc SUBSTITUTE_LEFT TERM_COMPLEMENT COMPLEMENT CONTAINMENT CONTAINMENT_ONCE CONTAINMENT_OPT
 %nonassoc STAR PLUS REVERSE INVERT UPPER_PROJECT LOWER_PROJECT
-%nonassoc <label> READ_BIN READ_TEXT READ_SPACED READ_PROLOG READ_RE READ_LEXC
+%nonassoc <label> READ_BIN READ_TEXT READ_SPACED READ_PROLOG READ_RE READ_VEC READ_LEXC
 %nonassoc <values> CATENATE_N_TO_K
 %nonassoc <value> CATENATE_N CATENATE_N_PLUS CATENATE_N_MINUS
 
@@ -98,10 +98,11 @@ LTR_LONGEST_MATCH LTR_SHORTEST_MATCH
 %token PAIR_SEPARATOR PAIR_SEPARATOR_SOLE PAIR_SEPARATOR_WO_RIGHT PAIR_SEPARATOR_WO_LEFT
 %token EPSILON_TOKEN ANY_TOKEN BOUNDARY_MARKER
 %token LEXER_ERROR SYMBOL SYMBOL_WITH_LEFT_PAREN QUOTED_LITERAL CURLY_LITERAL
-%token ALPHA LOWERALPHA UPPERALPHA NUM PUNCT WHITESPACE
+%token ALPHA LOWERALPHA UPPERALPHA NUM PUNCT WHITESPACE VARIABLE_NAME
 //  MAP_LEFT
-%right DEFINE LIT_LEFT INS_LEFT REGEX DEFINS DEFINED_LIST CAP_LEFT OPTCAP_LEFT OPT_TOLOWER_LEFT TOLOWER_LEFT
-OPT_TOUPPER_LEFT TOUPPER_LEFT ANY_CASE_LEFT IMPLODE_LEFT EXPLODE_LEFT DEFINE_LEFT ENDTAG_LEFT LC_LEFT RC_LEFT NLC_LEFT NRC_LEFT OR_LEFT AND_LEFT
+%right DEFINE SET_VARIABLE
+LIT_LEFT INS_LEFT REGEX DEFINS DEFINED_LIST CAP_LEFT OPTCAP_LEFT OPT_TOLOWER_LEFT TOLOWER_LEFT
+OPT_TOUPPER_LEFT TOUPPER_LEFT ANY_CASE_LEFT IMPLODE_LEFT EXPLODE_LEFT DEFINE_LEFT ENDTAG_LEFT CAPTURE_LEFT LIKE_LEFT UNLIKE_LEFT LC_LEFT RC_LEFT NLC_LEFT NRC_LEFT OR_LEFT AND_LEFT WITH_LEFT
 TAG_LEFT LST_LEFT EXC_LEFT INTERPOLATE_LEFT SIGMA_LEFT COUNTER_LEFT
 %%
 
@@ -122,7 +123,21 @@ PMATCH: //empty
         delete definitions[$2->first];
     }
     definitions.insert(*$2);
- };
+ }
+| PMATCH SET_VARIABLE VARIABLE_NAME SYMBOL {
+    hfst::pmatch::variables[$3] = $4;
+    free($3); free($4);
+ } |
+ PMATCH SET_VARIABLE VARIABLE_NAME EPSILON_TOKEN {
+     // the symbol can be 0, and that pretty much has to be reserved for
+     // epsilon, so we detect that possibility here
+     hfst::pmatch::variables[$3] = "0";
+     free($3);
+ } | PMATCH READ_VEC {
+     std::string filepath = hfst::pmatch::path_from_filename($2);
+     free($2);
+     hfst::pmatch::read_vec(filepath);
+   };
 
 DEFINITION: DEFINE SYMBOL EXPRESSION1 {
     $$ = new std::pair<std::string, PmatchObject*>($2, $3);
@@ -154,9 +169,11 @@ DEFINITION: DEFINE SYMBOL EXPRESSION1 {
  };
 
 ARGLIST:
-SYMBOL COMMA ARGLIST { $$ = $3; $$->push_back(std::string($1));
- } | SYMBOL { $$ = new std::vector<std::string>(1, std::string($1)); }
-| { $$ = new std::vector<std::string>(); };
+SYMBOL COMMA ARGLIST { $$ = $3; $$->push_back(std::string($1)); free($1); } |
+QUOTED_LITERAL COMMA ARGLIST { $$ = $3; $$->push_back(std::string($1)); free($1); } |
+SYMBOL { $$ = new std::vector<std::string>(1, std::string($1)); free($1); } |
+QUOTED_LITERAL { $$ = new std::vector<std::string>(1, std::string($1)); free($1); } |
+{ $$ = new std::vector<std::string>(); };
 
 EXPRESSION1: EXPRESSION2 END_OF_WEIGHTED_EXPRESSION {
      $1->weight += $2;
@@ -355,19 +372,27 @@ TERM_COMPLEMENT EXPRESSION12 { $$ = new PmatchUnaryOperation(TermComplement, $2)
 
 EXPRESSION12: EXPRESSION13 { } |
 LEFT_BRACKET EXPRESSION2 RIGHT_BRACKET { $$ = $2; } |
-EXPRESSION12 PAIR_SEPARATOR EXPRESSION13 { $$ = new PmatchBinaryOperation(CrossProduct, $1, $3); } |
+EXPRESSION12 PAIR_SEPARATOR EXPRESSION12 { $$ = new PmatchBinaryOperation(CrossProduct, $1, $3); } |
 LEFT_PARENTHESIS EXPRESSION2 RIGHT_PARENTHESIS { $$ = new PmatchUnaryOperation(Optionalize, $2); } |
 EXPRESSION12 WEIGHT { $$ = $1; $$->weight += $2; } |
 LEFT_BRACKET EXPRESSION2 RIGHT_BRACKET TAG_LEFT SYMBOL RIGHT_PARENTHESIS {
     $$ = new PmatchUnaryOperation(AddDelimiters,
                                   new PmatchBinaryOperation(Concatenate, $2,
-                                                            new PmatchString($5)));
+                                                            hfst::pmatch::make_end_tag($5)));
     free($5); } |
 LEFT_BRACKET EXPRESSION2 RIGHT_BRACKET TAG_LEFT QUOTED_LITERAL RIGHT_PARENTHESIS {
     $$ = new PmatchUnaryOperation(AddDelimiters,
                                   new PmatchBinaryOperation(Concatenate, $2,
-                                                            new PmatchString($5)));
-    free($5); };
+                                                            hfst::pmatch::make_end_tag($5)));
+    free($5); } |
+    LEFT_BRACKET EXPRESSION2 RIGHT_BRACKET WITH_LEFT SYMBOL EQUALS SYMBOL RIGHT_PARENTHESIS {
+        $$ = new PmatchBinaryOperation(
+            Concatenate,
+            new PmatchBinaryOperation(Concatenate,
+                                      hfst::pmatch::make_with_tag_entry($5, $7),
+                                      $2),
+            hfst::pmatch::make_with_tag_exit($5));
+    free($5); free($7); };
 
 EXPRESSION13:
 QUOTED_LITERAL { $$ = new PmatchString(std::string($1)); free($1); } |
@@ -385,6 +410,7 @@ IMPLODE { } |
 FUNCALL { } |
 //MAP { } |
 INSERTION { } |
+LIKE { } |
 ALPHA { $$ = new PmatchAcceptor(Alpha); } |
 LOWERALPHA { $$ = new PmatchAcceptor(LowercaseAlpha); } |
 UPPERALPHA { $$ = new PmatchAcceptor(UppercaseAlpha); } |
@@ -398,6 +424,84 @@ TOUPPER_LEFT EXPRESSION2 RIGHT_PARENTHESIS { $$ = new PmatchUnaryOperation(ToUpp
 OPT_TOLOWER_LEFT EXPRESSION2 RIGHT_PARENTHESIS { $$ = new PmatchUnaryOperation(OptToLower, $2); } |
 OPT_TOUPPER_LEFT EXPRESSION2 RIGHT_PARENTHESIS { $$ = new PmatchUnaryOperation(OptToUpper, $2); } |
 ANY_CASE_LEFT EXPRESSION2 RIGHT_PARENTHESIS { $$ = new PmatchUnaryOperation(AnyCase, $2); } |
+
+CAP_LEFT EXPRESSION2 COMMA SYMBOL RIGHT_PARENTHESIS {
+    if (strcmp($4, "U") == 0) {
+        $$ = new PmatchUnaryOperation(CapUpper, $2);
+    } else if (strcmp($4, "L") == 0) {
+        $$ = new PmatchUnaryOperation(CapLower, $2);
+    } else {
+        pmatcherror("Side argument to casing function not understood\n");
+        $$ = new PmatchUnaryOperation(Cap, $2);
+    }
+    free($4);
+} |
+OPTCAP_LEFT EXPRESSION2 COMMA SYMBOL RIGHT_PARENTHESIS {
+    if (strcmp($4, "U") == 0) {
+        $$ = new PmatchUnaryOperation(OptCapUpper, $2);
+    } else if (strcmp($4, "L") == 0) {
+        $$ = new PmatchUnaryOperation(OptCapLower, $2);
+    } else {
+        pmatcherror("Side argument to casing function not understood\n");
+        $$ = new PmatchUnaryOperation(OptCap, $2);
+    }
+    free($4);
+} |
+TOLOWER_LEFT EXPRESSION2 COMMA SYMBOL RIGHT_PARENTHESIS {
+    if (strcmp($4, "U") == 0) {
+        $$ = new PmatchUnaryOperation(ToLowerUpper, $2);
+    } else if (strcmp($4, "L") == 0) {
+        $$ = new PmatchUnaryOperation(ToLowerLower, $2);
+    } else {
+        pmatcherror("Side argument to casing function not understood\n");
+        $$ = new PmatchUnaryOperation(ToLower, $2);
+    }
+    free($4);
+} |
+TOUPPER_LEFT EXPRESSION2 COMMA SYMBOL RIGHT_PARENTHESIS {
+    if (strcmp($4, "U") == 0) {
+        $$ = new PmatchUnaryOperation(ToUpperUpper, $2);
+    } else if (strcmp($4, "L") == 0) {
+        $$ = new PmatchUnaryOperation(ToUpperLower, $2);
+    } else {
+        pmatcherror("Side argument to casing function not understood\n");
+        $$ = new PmatchUnaryOperation(ToUpper, $2);
+    }
+    free($4);
+} |
+OPT_TOLOWER_LEFT EXPRESSION2 COMMA SYMBOL RIGHT_PARENTHESIS {
+    if (strcmp($4, "U") == 0) {
+        $$ = new PmatchUnaryOperation(OptToLowerUpper, $2);
+    } else if (strcmp($4, "L") == 0) {
+        $$ = new PmatchUnaryOperation(OptToLowerLower, $2);
+    } else {
+        pmatcherror("Side argument to casing function not understood\n");
+        $$ = new PmatchUnaryOperation(OptToLower, $2);
+    }
+    free($4);
+} |
+OPT_TOUPPER_LEFT EXPRESSION2 COMMA SYMBOL RIGHT_PARENTHESIS {
+    if (strcmp($4, "U") == 0) {
+        $$ = new PmatchUnaryOperation(OptToUpperUpper, $2);
+    } else if (strcmp($4, "L") == 0) {
+        $$ = new PmatchUnaryOperation(OptToUpperLower, $2);
+    } else {
+        pmatcherror("Side argument to casing function not understood\n");
+        $$ = new PmatchUnaryOperation(OptToUpper, $2);
+    }
+    free($4);
+} |
+ANY_CASE_LEFT EXPRESSION2 COMMA SYMBOL RIGHT_PARENTHESIS {
+    if (strcmp($4, "U") == 0) {
+        $$ = new PmatchUnaryOperation(AnyCaseUpper, $2);
+    } else if (strcmp($4, "L") == 0) {
+        $$ = new PmatchUnaryOperation(AnyCaseLower, $2);
+    } else {
+        pmatcherror("Side argument to casing function not understood\n");
+        $$ = new PmatchUnaryOperation(AnyCase, $2);
+    }
+    free($4);
+} |
 DEFINE_LEFT EXPRESSION2 RIGHT_PARENTHESIS { $$ = new PmatchUnaryOperation(AddDelimiters, $2); } |
 READ_FROM { } |
 CHARACTER_RANGE { $$ = $1; } |
@@ -407,7 +511,16 @@ INTERPOLATE_LEFT FUNCALL_ARGLIST RIGHT_PARENTHESIS { $$ = new PmatchBuiltinFunct
 SIGMA_LEFT EXPRESSION2 RIGHT_PARENTHESIS { $$ = new PmatchUnaryOperation(MakeSigma, $2); } |
 COUNTER_LEFT SYMBOL RIGHT_PARENTHESIS { $$ = hfst::pmatch::make_counter($2); free($2); } |
 ENDTAG { $$ = $1; hfst::pmatch::need_delimiters = true; } |
-CONTEXT_CONDITION { $$ = $1; hfst::pmatch::need_delimiters = true; } |
+CAPTURE {
+    $$ = $1;
+    hfst::pmatch::need_delimiters = true; } |
+CONTEXT_CONDITION {
+    $$ = $1;
+    // We will wrap the current definition with entry and exit guards
+    hfst::pmatch::need_delimiters = true;
+    // Should we switch off the automatic separator-seeking context condition now?
+//    hfst::pmatch::variables["need-separators"] = "off";
+} |
 SYMBOL {
     std::string sym($1);
     free($1);
@@ -415,6 +528,7 @@ SYMBOL {
         $$ = new PmatchEmpty;
     } else {
         $$ = new PmatchSymbol(sym);
+        used_definitions.insert(sym);
     }
 };
 
@@ -481,6 +595,52 @@ INSERTION: INS_LEFT SYMBOL RIGHT_PARENTHESIS {
     free($2);
 };
 
+LIKE: LIKE_LEFT ARGLIST RIGHT_PARENTHESIS {
+    if ($2->size() == 0) {
+        $$ = hfst::pmatch::compile_like_arc("");
+    } else if ($2->size() == 1) {
+        $$ = hfst::pmatch::compile_like_arc($2->operator[](0));
+    } else {
+        $$ = hfst::pmatch::compile_like_arc($2->operator[](0),
+                                            $2->operator[](1));
+    }
+    delete($2);
+} |
+LIKE_LEFT ARGLIST RIGHT_PARENTHESIS CATENATE_N {
+    if ($2->size() == 0) {
+        $$ = hfst::pmatch::compile_like_arc("");
+    } else if ($2->size() == 1) {
+        $$ = hfst::pmatch::compile_like_arc($2->operator[](0), $4);
+    } else {
+        $$ = hfst::pmatch::compile_like_arc($2->operator[](0),
+                                            $2->operator[](1), $4);
+    }
+    delete($2);
+} |
+UNLIKE_LEFT ARGLIST RIGHT_PARENTHESIS {
+    if ($2->size() < 2) {
+        std::stringstream err;
+        err << "Unlike() operation takes exactly 2 arguments, got " << $2->size();
+        pmatcherror(err.str().c_str());
+    } else {
+        $$ = hfst::pmatch::compile_like_arc($2->operator[](1),
+                                            $2->operator[](0), 10, true);
+    }
+    delete($2);
+} |
+UNLIKE_LEFT ARGLIST RIGHT_PARENTHESIS CATENATE_N {
+    if ($2->size() < 2) {
+        std::stringstream err;
+        err << "Unlike() operation takes exactly 2 arguments, got " << $2->size();
+        pmatcherror(err.str().c_str());
+    } else {
+        $$ = hfst::pmatch::compile_like_arc($2->operator[](1),
+                                            $2->operator[](0), $4, true);
+    }
+    delete($2);
+};
+
+
 ENDTAG: ENDTAG_LEFT SYMBOL RIGHT_PARENTHESIS {
     $$ = hfst::pmatch::make_end_tag($2);
     free($2);
@@ -489,50 +649,55 @@ ENDTAG: ENDTAG_LEFT SYMBOL RIGHT_PARENTHESIS {
     free($2);
 };
 
+CAPTURE: CAPTURE_LEFT SYMBOL RIGHT_PARENTHESIS {
+    $$ = hfst::pmatch::make_capture_tag($2);
+    PmatchObject * captured = hfst::pmatch::make_captured_tag($2);
+    std::pair<std::string, PmatchObject*> captured_def($2, captured);
+    if (definitions.count(captured_def.first) != 0) {
+        std::stringstream warning;
+        warning << "definition of " << captured_def.first << " on line " << pmatchlineno
+                << " shadows earlier definition\n";
+        warn(warning.str());
+        delete definitions[captured_def.first];
+    }
+    definitions.insert(captured_def);
+    free($2);
+} | CAPTURE_LEFT QUOTED_LITERAL RIGHT_PARENTHESIS {
+    $$ = hfst::pmatch::make_capture_tag($2);
+    free($2);
+};
+
 READ_FROM: READ_BIN {
-    HfstTransducer * read;
+    std::string filepath = hfst::pmatch::path_from_filename($1);
+    free($1);
+    HfstTransducer * read = NULL;
     try {
-        hfst::HfstInputStream instream($1);
+        hfst::HfstInputStream instream(filepath);
         read = new HfstTransducer(instream);
         instream.close();
     } catch(HfstException) {
         std::string ermsg =
             std::string("Couldn't read transducer from ") +
-            std::string($1);
-        free($1);
+            filepath;
         pmatcherror(ermsg.c_str());
     }
     if (read->get_type() != hfst::pmatch::format) {
         read->convert(hfst::pmatch::format);
     }
     $$ = new PmatchTransducerContainer(read);
-    free($1);
 } | READ_TEXT {
-    $$ = new PmatchTransducerContainer(hfst::pmatch::read_text($1));
+    std::string filepath = hfst::pmatch::path_from_filename($1);
     free($1);
+    $$ = new PmatchTransducerContainer(hfst::pmatch::read_text(filepath));
 } | READ_SPACED {
-    FILE * f = NULL;
-    f = fopen($1, "r");
-    if (f == NULL) {
-        pmatcherror("File cannot be opened.\n");
-    } else {
-        HfstTokenizer tok;
-        HfstBasicTransducer tmp;
-        char line [1000];
-        while( fgets(line, 1000, f) != NULL )
-        {
-            hfst::pmatch::strip_newline(line);
-            StringPairVector spv = HfstTokenizer::tokenize_space_separated(line);
-            tmp.disjunct(spv, 0);
-        }
-        fclose(f);
-        HfstTransducer * t = new HfstTransducer(tmp, hfst::pmatch::format); 
-        t->minimize();
-        $$ = new PmatchTransducerContainer(t);
-    }
+    std::string filepath = hfst::pmatch::path_from_filename($1);
+    free($1);
+    $$ = new PmatchTransducerContainer(hfst::pmatch::read_spaced_text(filepath));
 } | READ_PROLOG {
+    std::string filepath = hfst::pmatch::path_from_filename($1);
+    free($1);
     FILE * f = NULL;
-    f = fopen($1, "r");
+    f = hfst::hfst_fopen(filepath.c_str(), "r");
     if (f == NULL) {
         pmatcherror("File cannot be opened.\n");
     } else {
@@ -551,12 +716,15 @@ READ_FROM: READ_BIN {
         }
     }
 } | READ_LEXC {
-    $$ = new PmatchTransducerContainer(hfst::HfstTransducer::read_lexc_ptr($1, format, hfst::pmatch::verbose));
+    std::string filepath = hfst::pmatch::path_from_filename($1);
     free($1);
+    $$ = new PmatchTransducerContainer(hfst::HfstTransducer::read_lexc_ptr(filepath, format, hfst::pmatch::verbose));
 } | READ_RE {
+    std::string filepath = hfst::pmatch::path_from_filename($1);
+    free($1);
     std::string regex;
     std::string tmp;
-    std::ifstream regexfile($1);
+    std::ifstream regexfile(filepath.c_str());
     if (regexfile.is_open()) {
         while (getline(regexfile, tmp)) {
             regex.append(tmp);
@@ -564,7 +732,7 @@ READ_FROM: READ_BIN {
     }
     if (regex.size() == 0) {
         std::stringstream err;
-        err << "Failed to read regex from " << $1 << ".\n";
+        err << "Failed to read regex from " << filepath << ".\n";
         pmatcherror(err.str().c_str());
     }
     hfst::xre::XreCompiler xre_compiler;
@@ -605,7 +773,7 @@ PMATCH_AND_CONTEXT: AND_LEFT PMATCH_CONTEXTS RIGHT_PARENTHESIS
     $$ = NULL;
     for (std::vector<PmatchObject *>::reverse_iterator it = $2->rbegin();
          it != $2->rend(); ++it) {
-        if ($$ = NULL) {
+        if ($$ == NULL) {
             $$ = *it;
         } else {
             PmatchObject * tmp = $$;
@@ -625,38 +793,23 @@ PMATCH_CONTEXT COMMA PMATCH_CONTEXTS {
 };
 
 PMATCH_RIGHT_CONTEXT: RC_LEFT EXPRESSION2 RIGHT_PARENTHESIS {
-    $$ = new PmatchBinaryOperation(Concatenate, make_rc_entry(),
-                                   new PmatchBinaryOperation(
-                                       Concatenate, $2, make_rc_exit()));
+    $2->mark_context_children();
+    $$ = new PmatchUnaryOperation(RC, $2);
 };
 
 PMATCH_NEGATIVE_RIGHT_CONTEXT: NRC_LEFT EXPRESSION2 RIGHT_PARENTHESIS {
-    $$ = new PmatchBinaryOperation(
-        Concatenate, make_minimization_guard(),
-        new PmatchBinaryOperation(
-            Disjunct, make_passthrough(),
-            new PmatchBinaryOperation(
-                Concatenate, make_nrc_entry(),
-                new PmatchBinaryOperation(Concatenate, $2, make_nrc_exit()))));
+    $2->mark_context_children();
+    $$ = new PmatchUnaryOperation(NRC, $2);
 };
 
 PMATCH_LEFT_CONTEXT: LC_LEFT EXPRESSION2 RIGHT_PARENTHESIS {
-    $$ = new PmatchBinaryOperation(
-        Concatenate, make_lc_entry(),
-        new PmatchBinaryOperation(
-            Concatenate, new PmatchUnaryOperation(
-                Reverse, $2), make_lc_exit()));
+    $2->mark_context_children();
+    $$ = new PmatchUnaryOperation(LC, $2);
 };
 
 PMATCH_NEGATIVE_LEFT_CONTEXT: NLC_LEFT EXPRESSION2 RIGHT_PARENTHESIS {
-    $$ = new PmatchBinaryOperation(
-        Concatenate, make_minimization_guard(),
-        new PmatchBinaryOperation(
-            Disjunct, make_passthrough(),
-            new PmatchBinaryOperation(
-                Concatenate, make_nlc_entry(),
-                new PmatchBinaryOperation(Concatenate, new PmatchUnaryOperation(
-                                              Reverse, $2), make_nlc_exit()))));
+    $2->mark_context_children();
+    $$ = new PmatchUnaryOperation(NLC, $2);
 };
 
 
@@ -677,7 +830,7 @@ PMATCH_NEGATIVE_LEFT_CONTEXT: NLC_LEFT EXPRESSION2 RIGHT_PARENTHESIS {
 //             caller_args[callee_args[i]] = new HfstTransducer(it->at(i), tok, hfst::pmatch::format);
 //         }
 //         $$->disjunct(*hfst::pmatch::functions[$2].evaluate(caller_args));
-//         // Clean up the string transducers we allocated each time 
+//         // Clean up the string transducers we allocated each time
 //         for (std::map<std::string, HfstTransducer *>::iterator it = caller_args.begin();
 //              it != caller_args.end(); ++it) {
 //             delete it->second;

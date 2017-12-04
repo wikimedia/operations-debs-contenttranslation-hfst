@@ -74,8 +74,8 @@ parse_options(int argc, char** argv)
             {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "wDnf:",
                              long_options, &option_index);
         if (-1 == c)
@@ -160,7 +160,7 @@ void print_analysis(const WeightedStringPairVector &res,std::ostream * out)
       if (std::string(it->first) == "||")
         { continue; }
 
-      (out == NULL ? std::cout : *out) << it->first << "\t" << it->second 
+      (out == NULL ? std::cout : *out) << it->first << "\t" << it->second
                                        << std::endl;
     }
 

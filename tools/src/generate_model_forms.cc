@@ -21,7 +21,7 @@ std::ostream &operator<<(std::ostream &out,const StringVector &v)
   for (StringVector::const_iterator it = v.begin();
        it != v.end();
        ++it)
-    { 
+    {
       out << *it;
     }
 
@@ -60,9 +60,9 @@ StringVector get_analysis_prefix(const StringVector &reversed_analysis)
       prefix.push_back(*it);
       
       if (is_cathegory_symbol(*it))
-    { 
+    {
       // When we return, we have to reverse the result.
-      return StringVector(prefix.rbegin(), prefix.rend()); 
+      return StringVector(prefix.rbegin(), prefix.rend());
     }
     }
   
@@ -84,8 +84,8 @@ bool contains_analysis_symbols(const StringVector &word_form)
        ++it)
     {
       const std::string &symbol = *it;
-      if (symbol.size() > 1 and 
-      symbol[0] == '[' and 
+      if (symbol.size() > 1 and
+      symbol[0] == '[' and
       symbol[symbol.size() - 1] == ']')
     { return true; }
     }
@@ -126,7 +126,7 @@ StringVector generate_word_forms(const StringVector &analysis,
       
       // The word form is reversed, so we start from the end and
       // iterate to the beginning.
-      result_set.insert(StringVector(word_form.rbegin(), 
+      result_set.insert(StringVector(word_form.rbegin(),
                                      word_form.rend()));
       
       ++num;
@@ -162,7 +162,7 @@ StringVectorVector get_model_forms(const StringVector &reversed_analysis,
                                    size_t max_generated_forms,
                                    float generate_threshold)
 {
-  StringVector reversed_analysis_prefix = 
+  StringVector reversed_analysis_prefix =
     get_analysis_prefix(reversed_analysis);
 
   StringVectorVector results;
@@ -242,10 +242,10 @@ StringVectorVector get_guesses(const std::string &word_form,
   for (HfstOneLevelPaths::const_iterator it = paths->begin();
        it != paths->end();
        ++it)
-    { 
+    {
       if (num > number_of_guesses)
     { break; }
-      results.push_back(it->second); 
+      results.push_back(it->second);
       ++num;
     }
 
@@ -266,7 +266,7 @@ StringVectorVector get_paradigms(const std::string &word_form,
   for (StringVectorVector::const_iterator it = guesses.begin();
        it != guesses.end();
        ++it)
-    { 
+    {
       StringVector analysis_guess = *it;
 
       StringVectorVector results = get_model_forms(analysis_guess,
@@ -281,8 +281,8 @@ StringVectorVector get_paradigms(const std::string &word_form,
 
       StringVector rev_analysis_guess(analysis_guess);
       std::reverse(rev_analysis_guess.begin(), rev_analysis_guess.end());
-      paradigm.insert(paradigm.end(), 
-              rev_analysis_guess.begin(), 
+      paradigm.insert(paradigm.end(),
+              rev_analysis_guess.begin(),
               rev_analysis_guess.end());
 
       for (StringVectorVector::const_iterator jt = results.begin();
@@ -292,8 +292,8 @@ StringVectorVector get_paradigms(const std::string &word_form,
           const StringVector &model_form = *jt;
 
           paradigm.push_back("\t");
-          paradigm.insert(paradigm.end(), 
-                  model_form.begin(), 
+          paradigm.insert(paradigm.end(),
+                  model_form.begin(),
                   model_form.end());
         }
       

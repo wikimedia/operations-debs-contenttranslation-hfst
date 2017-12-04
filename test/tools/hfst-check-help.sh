@@ -5,7 +5,7 @@ HFST_TOOLS="hfst-affix-guessify hfst-calculate hfst-compare hfst-compose \
 hfst-compose-intersect hfst-concatenate hfst-conjunct hfst-determinize \
 hfst-disjunct hfst-edit-metadata hfst-format hfst-fst2fst \
 hfst-fst2strings hfst-fst2txt hfst-grep hfst-guess hfst-guessify \
-hfst-head hfst-info hfst-invert hfst-lexc-wrapper hfst-lexc \
+hfst-head hfst-info hfst-invert hfst-lexc \
 hfst-lookup hfst-minimize hfst-multiply hfst-name \
 hfst-optimized-lookup hfst-pair-test hfst-pmatch hfst-pmatch2fst \
 hfst-project hfst-prune-alphabet hfst-push-weights hfst-regexp2fst \
@@ -14,20 +14,19 @@ hfst-shuffle hfst-split hfst-strings2fst hfst-substitute \
 hfst-subtract hfst-summarize hfst-tail hfst-traverse \
 hfst-txt2fst"
 
-TWOLC_TOOLS="hfst-twolc/src/hfst-twolc-loc"
-TAGGER_TOOLS="hfst-tagger/src/hfst-tag /hfst-tagger/src/hfst-train-tagger-loc"
+TWOLC_TOOLS="$TOOLDIR/hfst-twolc/src/hfst-twolc"
+TAGGER_TOOLS="hfst-tagger/src/hfst-tag"
 PROC_TOOLS="hfst-proc/hfst-apertium-proc"
 XFST_TOOLS="parsers/hfst-xfst"
 
 # Extension for executables
 EXT=
 # Check if we are in MinGW environment
-if (uname | egrep "MINGW|mingw" 2>1 > /dev/null); then
+if (uname | egrep "MINGW|mingw" 2> /dev/null > /dev/null); then
     # Executables have an exe extension
     EXT=".exe";
-    # We use system call version of the shell script
-    TWOLC_TOOLS=hfst-twolc/src/hfst-twolc-system
-    # Tagger tool shell script not implemented for windows (MinGW)
+    # TODO: implement these tools for windows
+    TWOLC_TOOLS=
     TAGGER_TOOLS=
 fi
 
@@ -96,4 +95,4 @@ for f in $TWOLC_TOOLS $TAGGER_TOOLS; do
     fi    
 done
 
-rm -f help.out1 help.out2
+rm -f help1.out help2.out
