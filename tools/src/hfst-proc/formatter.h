@@ -57,7 +57,7 @@ class OutputFormatter
    */
   virtual ProcResult process_finals(const LookupPathSet& finals,
                                                   CapitalizationState state) const = 0;
-  virtual void print_word(const TokenVector& surface_form, 
+  virtual void print_word(const TokenVector& surface_form,
                           ProcResult const &analyzed_forms) const = 0;
   virtual void print_unknown_word(const TokenVector& surface_form) const = 0;
   
@@ -68,6 +68,20 @@ class OutputFormatter
   virtual bool preserve_nonalphabetic() const = 0;
 };
 
+class TransliterateOutputFormatter: public OutputFormatter
+{
+ public:
+  TransliterateOutputFormatter(TokenIOStream& s, bool f): OutputFormatter(s,f) {}
+  
+  ProcResult process_finals(const LookupPathSet& finals,
+                                          CapitalizationState state) const;
+  void print_word(const TokenVector& surface_form,
+                  ProcResult const &analyzed_forms) const;
+  void print_unknown_word(const TokenVector& surface_form) const;
+  
+  bool preserve_nonalphabetic() const {return true;}
+};
+
 class ApertiumOutputFormatter: public OutputFormatter
 {
  public:
@@ -75,7 +89,7 @@ class ApertiumOutputFormatter: public OutputFormatter
   
   ProcResult process_finals(const LookupPathSet& finals,
                                           CapitalizationState state) const;
-  void print_word(const TokenVector& surface_form, 
+  void print_word(const TokenVector& surface_form,
                   ProcResult const &analyzed_forms) const;
   void print_unknown_word(const TokenVector& surface_form) const;
   
@@ -90,7 +104,7 @@ class CGOutputFormatter: public OutputFormatter
   
   ProcResult process_finals(const LookupPathSet& finals,
                                           CapitalizationState caps) const;
-  void print_word(const TokenVector& surface_form, 
+  void print_word(const TokenVector& surface_form,
                   ProcResult const &analyzed_forms) const;
   void print_unknown_word(const TokenVector& surface_form) const;
   
@@ -105,7 +119,7 @@ class XeroxOutputFormatter: public OutputFormatter
   
   ProcResult process_finals(const LookupPathSet& finals,
                                           CapitalizationState state) const;
-  void print_word(const TokenVector& surface_form, 
+  void print_word(const TokenVector& surface_form,
                   ProcResult const &analyzed_forms) const;
   void print_unknown_word(const TokenVector& surface_form) const;
   

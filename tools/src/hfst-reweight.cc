@@ -42,7 +42,7 @@
 #include "HfstTransducer.h"
 #include "HfstInputStream.h"
 #include "HfstOutputStream.h"
-#include "implementations/HfstTransitionGraph.h"
+#include "implementations/HfstBasicTransducer.h"
 
 #include "inc/globals-common.h"
 #include "inc/globals-unary.h"
@@ -143,7 +143,7 @@ parse_options(int argc, char** argv)
         {
           HFST_GETOPT_COMMON_LONG,
           HFST_GETOPT_UNARY_LONG,
-          // add tool-specific options here 
+          // add tool-specific options here
             {"addition", required_argument, 0, 'a'},
             {"multiplier", required_argument, 0, 'b'},
             {"function", required_argument, 0, 'F'},
@@ -158,8 +158,8 @@ parse_options(int argc, char** argv)
             {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "a:b:F:l:u:I:O:S:eT:A",
                              long_options, &option_index);
         if (-1 == c)
@@ -320,7 +320,7 @@ reweight(float w, const char* i, const char* o)
         {
           return w;
         }
-      if ((symbol != 0) && ((strcmp(i, symbol) != 0) && 
+      if ((symbol != 0) && ((strcmp(i, symbol) != 0) &&
                             (strcmp(o, symbol) != 0) ) )
         {
           // symbol doesn't match, don't apply
@@ -372,7 +372,7 @@ do_reweight(HfstTransducer& trans)
                 rebuilt[source_state] = state_count;
                 state_count++;
               }
-            for (HfstBasicTransducer::HfstTransitions::const_iterator arc =
+            for (hfst::implementations::HfstBasicTransitions::const_iterator arc =
                  state->begin();
                  arc != state->end();
                  ++arc)
@@ -391,7 +391,7 @@ do_reweight(HfstTransducer& trans)
                 HfstBasicTransition nu(rebuilt[arc->get_target_state()],
                                        arc->get_input_symbol(),
                                        arc->get_output_symbol(),
-                                       reweight(arc->get_weight(), 
+                                       reweight(arc->get_weight(),
                                                 arc->get_input_symbol().c_str(),
                                                 arc->get_output_symbol().c_str()));
                 replication.add_transition(rebuilt[source_state], nu);
@@ -414,11 +414,11 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
         char* inputname = hfst_get_name(trans, inputfilename);
         if (transducer_n==1)
         {
-          verbose_printf("Reweighting %s...\n", inputname); 
+          verbose_printf("Reweighting %s...\n", inputname);
         }
         else
         {
-          verbose_printf("Reweighting %s..." SIZE_T_SPECIFIER "\n", inputname, transducer_n); 
+          verbose_printf("Reweighting %s..." SIZE_T_SPECIFIER "\n", inputname, transducer_n);
         }
         if (NULL == tsv_file)
           {
@@ -500,7 +500,7 @@ int main( int argc, char **argv ) {
   _setmode(1, _O_BINARY);
 #endif
 
-    hfst_set_program_name(argv[0], "0.1", 
+    hfst_set_program_name(argv[0], "0.1",
                           "HfstReweight");
     int retval = parse_options(argc, argv);
     if (retval != EXIT_CONTINUE)
@@ -516,7 +516,7 @@ int main( int argc, char **argv ) {
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
         inputfilename, outfilename);
     verbose_printf("Modifying weights %f < w < %f as %f * %s(w) + %f\n",
                    lower_bound, upper_bound, multiplier, funcname, addition);

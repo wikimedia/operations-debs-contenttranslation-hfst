@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 /** \brief declarations for HFST functions that take two or more parameters */
@@ -30,10 +30,10 @@ HfstTransducer &apply(
  //#if HAVE_MY_TRANSDUCER_LIBRARY
  //my_namespace::MyFst * (*my_transducer_library_funct)(my_namespace::MyFst *),
  //#endif
- bool dummy /* makes sure there is always a parameter after the 
-               function pointer parameters, so commas between parameters 
+ bool dummy /* makes sure there is always a parameter after the
+               function pointer parameters, so commas between parameters
                are easier to handle */
-);  
+);
 
 HfstTransducer &apply(
 #if HAVE_SFST
@@ -64,7 +64,7 @@ HfstTransducer &apply(
  SFST::Transducer * (*sfst_funct)(SFST::Transducer *, String, String),
 #endif
 #if HAVE_OPENFST
- fst::StdVectorFst * (*tropical_ofst_funct)(fst::StdVectorFst *,String, 
+ fst::StdVectorFst * (*tropical_ofst_funct)(fst::StdVectorFst *,String,
                                             String),
 #if HAVE_OPENFST_LOG
  hfst::implementations::LogFst * (*log_ofst_funct)

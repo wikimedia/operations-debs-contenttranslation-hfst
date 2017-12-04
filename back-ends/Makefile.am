@@ -23,6 +23,10 @@ endif
 
 if WANT_SFST
   SUBDIRS += sfst
+else
+if WANT_LEAN_SFST
+  SUBDIRS += sfst
+endif
 endif
 
 if WANT_FOMA

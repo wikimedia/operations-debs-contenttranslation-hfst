@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include "./transducer.h"
@@ -42,7 +42,7 @@ bool TraversalState::operator<(const TraversalState & rhs) const
             return false;
         }
     }
-    return false;    
+    return false;
 }
 
 void Transducer::find_loop_epsilon_transitions(
@@ -127,7 +127,7 @@ void Transducer::find_loop_index(SymbolNumber input,
     {
         find_loop_transitions(input,
                               input_pos,
-                              tables->get_index_target(i+input) - 
+                              tables->get_index_target(i+input) -
                               TRANSITION_TARGET_TABLE_START);
         found_transition = true;
     }

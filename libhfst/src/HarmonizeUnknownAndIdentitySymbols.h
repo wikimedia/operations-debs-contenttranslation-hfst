@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 // --- licensing stuff here?
@@ -13,17 +13,16 @@
 #define HARMONIZE_UNKNOWN_AND_IDENTITY_SYMBOLS
 
 // ---
-/* A more generalized class that takes an template <class C, class W> 
-   HfstTransitionGraph as its constructor arguments. The functions could 
-   take a HfstTransitionGraph::HfstTransitionGraphAlphabet as their 
+/* A more generalized class that takes an template <class C, class W>
+   HfstTransitionGraph as its constructor arguments. The functions could
+   take a HfstTransitionGraph::HfstTransitionGraphAlphabet as their
    arguments and use functions C::get_unknown() etc.
  */
 
 #include <set>
 #include <string>
-#include <iostream>  // --- in the cc-file instead?
-#include <algorithm> // --- "" ---
-#include <cassert>   // --- "" ---
+#include <iosfwd>
+#include <algorithm>
 
 #include "HfstDataTypes.h"
 #include "HfstSymbolDefs.h"
@@ -54,7 +53,7 @@ class HarmonizeUnknownAndIdentitySymbols
   // Constructor whose side effect it is to harmonize the identity and unknown
   // symbols of its arguments.
   HFSTDLL HarmonizeUnknownAndIdentitySymbols
-    (HfstBasicTransducer &,HfstBasicTransducer &);  
+    (HfstBasicTransducer &,HfstBasicTransducer &);
  protected:
 
   HfstBasicTransducer &t1;
@@ -65,29 +64,29 @@ class HarmonizeUnknownAndIdentitySymbols
   // Collect the symbols from the transitions of the argument transducer
   // and store them in the argument set. This is needed since the alphabet
   // of HfstBasicTransducers can sometimes unexplainedly be empty...
-  // --- the alphabet can contain also symbols that are not found in 
+  // --- the alphabet can contain also symbols that are not found in
   //     transitions...
   HFSTDLL void populate_symbol_set(const HfstBasicTransducer &,StringSet &);
 
   // Add all symbols in the StringSet to the alphabet of the transducer.
   HFSTDLL void add_symbols_to_alphabet(HfstBasicTransducer &, const StringSet &);
 
-  // For every x in the set, add x:x transitions for every identity:identity 
-  // transition in the argument transducer (the source and target states as 
+  // For every x in the set, add x:x transitions for every identity:identity
+  // transition in the argument transducer (the source and target states as
   // well as the weights are the same as in the original identity transition.
   HFSTDLL void harmonize_identity_symbols
     (HfstBasicTransducer &,const StringSet &);
 
-  // For every x in the set 
-  // 1. add, x:c transitions for every unknown:c transition in the argument 
-  //    transducer. 
+  // For every x in the set
+  // 1. add, x:c transitions for every unknown:c transition in the argument
+  //    transducer.
   // 2. add, c:x transitions for every c:unknown transition in the argument
   //    transducer.
   //
   // For every x and y in the set with x != y, add x:y transitions for every
   // unknown:unknown transition in the argument transducer.
   //
-  // (the source and target states as well as the weights are the same as in 
+  // (the source and target states as well as the weights are the same as in
   // the original identity transition)
   HFSTDLL void harmonize_unknown_symbols
     (HfstBasicTransducer &,const StringSet &);

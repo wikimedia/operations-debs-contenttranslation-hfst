@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 //! @file XreCompiler.h
@@ -31,8 +31,8 @@
 #include <cstdio>
 #include "../HfstDataTypes.h"
 
-namespace hfst { 
-//! @brief hfst::xre namespace is used for all functions related to Xerox 
+namespace hfst {
+//! @brief hfst::xre namespace is used for all functions related to Xerox
 //! Regular Expresisions (XRE) parsing.
 namespace xre {
 
@@ -70,6 +70,8 @@ class XreCompiler
   XreCompiler(hfst::ImplementationType impl);
   // ...
   XreCompiler(const struct XreConstructorArguments & args);
+  // ...
+  ~XreCompiler();
 
   //! @brief Add a definition macro.
   //!        Compilers will replace arcs labeled @a name, with the transducer
@@ -87,13 +89,13 @@ class XreCompiler
   //! @param xre        The regex defining the function. Function arguments must be named
   //!                   as '"@name(N@"' where name is \a name (without the left parenthesis)
   //!                   and N the order of the argument.
-  //! For example a definition 
+  //! For example a definition
   //!   define_function("Concat(", 2, " [\"@Concat(1@\" \"@Concat(2@\"] ");
   //! defines a function that calculates the concatenation of its first and second arguments.
   //! A call
   //!   compile.("[ Concat(foo, bar) ];");
   //! then returns a transducer [ foo bar ].
-  bool define_function(const std::string& name, 
+  bool define_function(const std::string& name,
                        unsigned int arguments,
                        const std::string& xre);
 
@@ -108,6 +110,9 @@ class XreCompiler
   //! @brief Remove a definition macro.
   void undefine(const std::string& name);
 
+  void add_defined_multichar_symbol(const std::string & symbol);
+  void remove_defined_multichar_symbols();
+
   //! @brief Compile a transducer defined by @a xre.
   //!        May return a pointer to @e empty transducer on non-fatal error.
   //!        A null pointer is returned on fatal error, if abort is not called.
@@ -121,7 +126,7 @@ class XreCompiler
   HfstTransducer* compile_first(const std::string& xre, unsigned int & chars_read);
 
   //! @brief Whether the last regex compiled contained only comments.
-  //!        
+  //!
   //! In that case, the last call to compile ot compile_first has returned NULL,
   //! which also signals an error during regex compilation.
 

@@ -54,7 +54,7 @@ namespace SFST {
 
   Alphabet::Alphabet()
 
-  { 
+  {
     utf8 = false;
     add(EpsilonString, Label::epsilon);
   }
@@ -251,7 +251,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  void Alphabet::write_char( Character c, char *buffer, int *pos, 
+  void Alphabet::write_char( Character c, char *buffer, int *pos,
                              bool with_brackets) const
   {
     const char *s = code2symbol(c);
@@ -299,7 +299,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  void Alphabet::write_label( Label l, char *buffer, int *pos, 
+  void Alphabet::write_label( Label l, char *buffer, int *pos,
                               bool with_brackets ) const
   {
     Character lc=l.lower_char();
@@ -650,7 +650,7 @@ namespace SFST {
       char buffer[BUFFER_SIZE];
       Character c;
       read_num(&c, sizeof(c), file);
-      if (!read_string(buffer, BUFFER_SIZE, file) || 
+      if (!read_string(buffer, BUFFER_SIZE, file) ||
           feof(file) || ferror(file))
         throw "Error1 occurred while reading alphabet!\n";
 
@@ -745,8 +745,8 @@ namespace SFST {
         // Is it a participle
         if (c != Label::epsilon) {
           sym = write_char(c);
-          if (strcmp(sym,"<OLDORTH>") == 0 || 
-              strcmp(sym,"<NEWORTH>") == 0 || 
+          if (strcmp(sym,"<OLDORTH>") == 0 ||
+              strcmp(sym,"<NEWORTH>") == 0 ||
               strcmp(sym,"<SUFF>") == 0) {
             for( k++; k<ana.size(); k++ )
               if ((c = ana[k].lower_char()) != Label::epsilon)

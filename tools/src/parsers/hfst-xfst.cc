@@ -50,6 +50,7 @@ static char* startupfilename = NULL;
 static std::vector<char*> execute_commands;
 static bool pipe_input = false;
 static bool pipe_output = false; // this has no effect on non-windows platforms
+static bool restricted_mode = false;
 
 #ifdef HAVE_READLINE
   static bool use_readline = true;
@@ -61,8 +62,8 @@ static bool print_weight = false;
 void
 print_usage()
 {
-  // c.f. http://www.gnu.org/prep/standards/standards.html#g_t_002d_002dhelp                                                                                                                                                               
-  // Usage line                                                                                                                                                                                                                            
+  // c.f. http://www.gnu.org/prep/standards/standards.html#g_t_002d_002dhelp
+  // Usage line
   fprintf(message_out, "Usage: %s [OPTIONS...]\n"
           "Compile XFST scripts or execute XFST commands interactively\n"
           "\n", "hfst-xfst" /*program_name*/);
@@ -70,14 +71,16 @@ print_usage()
   print_common_program_options(message_out);
   fprintf(message_out, "\n");
   fprintf(message_out, "Xfst-specific options:\n");
-  fprintf(message_out, 
-          "  -e, --execute=CMD        Execute command CMD on startup\n" 
+  fprintf(message_out,
+          "  -e, --execute=CMD        Execute command CMD on startup\n"
           "  -f, --format=FMT         Write result using FMT as backend format\n"
           "  -F, --scriptfile=FILE    Read commands from FILE, and quit\n"
           "  -l, --startupfile=FILE   Read commands from FILE on startup\n"
           "  -p, --pipe-mode[=STREAM] Control input and output streams\n"
           "  -r, --no-readline        Do not use readline library for input\n"
           "  -w, --print-weight       Print weights for each operation\n"
+	  "  -R, --restricted-mode    Allow read and write operations only in current\n"
+	  "                           directory, do not allow system calls\n"
           //          "  -k, --no-console         Do not output directly to console (Windows-specific)\n"
           "\n"
           "Option --execute can be invoked many times.\n"
@@ -107,7 +110,7 @@ int
 parse_options(int argc, char** argv)
 {
   extend_options_getenv(&argc, &argv);
-  // use of this function requires options are settable on global scope                                                                                                                                                                    
+  // use of this function requires options are settable on global scope
   while (true)
     {
         static const struct option long_options[] =
@@ -121,12 +124,13 @@ parse_options(int argc, char** argv)
             {"pipe-mode", optional_argument, 0, 'p'},
             {"no-readline", no_argument, 0, 'r'},
             {"print-weight", no_argument, 0, 'w'},
+	    {"restricted-mode", no_argument, 0, 'R'},
             //            {"no-console", no_argument, 0, 'k'},
             {0,0,0,0}
           };
         int option_index = 0;
         // add tool-specific options here
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT "f:F:e:l:p::rwk",
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT "f:F:e:l:p::rwkR",
                              long_options, &option_index);
         if (-1 == c)
           {
@@ -196,7 +200,10 @@ parse_options(int argc, char** argv)
           case 'w':
             print_weight = true;
             break;
-          case 'k':
+	  case 'R':
+            restricted_mode = true;
+            break;
+	  case 'k':
             pipe_output = true;
             break;
 #include "inc/getopt-cases-error.h"
@@ -218,7 +225,7 @@ parse_options(int argc, char** argv)
 int parse_file(const char* filename, hfst::xfst::XfstCompiler &comp)
 {
   char* line = hfst_file_to_mem(filename);
-  if (NULL == line) 
+  if (NULL == line)
     {
       error(EXIT_FAILURE, 0, "error when reading file %s\n", filename);
       return EXIT_FAILURE;
@@ -237,7 +244,7 @@ void insert_zeroes(char * array, unsigned int number)
 {
   for (unsigned int i=0; i<number; i++)
     {
-      array[i] = '\0'; 
+      array[i] = '\0';
     }
 }
 
@@ -275,7 +282,7 @@ static int smatch;
 // By Mans Hulden
 char *my_generator(const char *text, int state) {
   static int list_index, list_index2, len, nummatches;
-  char *name;
+  const char *name;
   text = rl_line_buffer;
   if (!state) {
     list_index = 0;
@@ -288,7 +295,7 @@ char *my_generator(const char *text, int state) {
     list_index++;
 
     if (strncmp (name, text, len) == 0) {
-      nummatches++;      
+      nummatches++;
       return(strdup(name+smatch));
     }
   }
@@ -383,6 +390,11 @@ int main(int argc, char** argv)
       comp.setPromptVerbosity(true);
     }
 
+  if (restricted_mode)
+    {
+      comp.setRestrictedMode(true);
+    }
+  
   if (!pipe_output)
     comp.setOutputToConsole(true);
 
@@ -407,7 +419,7 @@ int main(int argc, char** argv)
         }
     }
 
-  if (pipe_input) 
+  if (pipe_input)
     {
       verbose_printf("Reading from standard input...\n");
       comp.setReadInteractiveTextFromStdin(false);
@@ -458,7 +470,7 @@ int main(int argc, char** argv)
 #else
       char line [MAX_LINE_LENGTH];
       insert_zeroes(line, MAX_LINE_LENGTH);
-      while (cin.getline(line, MAX_LINE_LENGTH))
+      while (std::cin.getline(line, MAX_LINE_LENGTH))
         {
           std::string linestr(line);
           expression += linestr;
@@ -525,6 +537,8 @@ int main(int argc, char** argv)
           if (buf[0] != 0) {
             add_history(expression.c_str()); }
 
+          free(buf);
+
           if (0 != comp.parse_line((expression + "\n").c_str()))
             {
 #ifdef WINDOWS
@@ -547,14 +561,13 @@ int main(int argc, char** argv)
           free(promptline);
           promptline = (!silent) ? comp.get_prompt() : strdup("");
         }
-      free(buf);
+
       free(promptline);
 #else
       fprintf(stderr, "ERROR: missing readline library\n");
       return EXIT_FAILURE;
 #endif
     }
-
   return EXIT_SUCCESS;
 }
 

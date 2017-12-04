@@ -62,21 +62,21 @@ void compare_and_delete(HfstTransducer * rule_transducers1[],
 int main(int argc, char **argv) {
   
   ImplementationType types [] = {SFST_TYPE, TROPICAL_OPENFST_TYPE, FOMA_TYPE};
-  HfstTransducer * rule_transducers1 [3] = {NULL, NULL, NULL}; 
-  HfstTransducer * rule_transducers2 [3] = {NULL, NULL, NULL}; 
-  HfstTransducer * rule_transducers3 [3] = {NULL, NULL, NULL}; 
+  HfstTransducer * rule_transducers1 [3] = {NULL, NULL, NULL};
+  HfstTransducer * rule_transducers2 [3] = {NULL, NULL, NULL};
+  HfstTransducer * rule_transducers3 [3] = {NULL, NULL, NULL};
   
   
   /* HfstTransducer two_level_if(
-     HfstTransducerPair &context, 
-     StringPairSet &mappings, 
-     StringPairSet &alphabet, 
+     HfstTransducerPair &context,
+     StringPairSet &mappings,
+     StringPairSet &alphabet,
      ImplementationType type); */
   
   verbose_print("HfstTransducer two_level_if("
-		"HfstTransducerPair &context," 
-		"StringPairSet &mappings," 
-		"StringPairSet &alphabet," 
+		"HfstTransducerPair &context,"
+		"StringPairSet &mappings,"
+		"StringPairSet &alphabet,"
 		"ImplementationType type");
 
   {
@@ -98,11 +98,11 @@ int main(int argc, char **argv) {
       alphabet.insert(StringPair("c", "c"));
       
 
-      HfstTransducer rule_transducer1 
+      HfstTransducer rule_transducer1
 	= rules::two_level_if(context, mappings, alphabet);
-      HfstTransducer rule_transducer2 
+      HfstTransducer rule_transducer2
 	= rules::two_level_only_if(context, mappings, alphabet);
-      HfstTransducer rule_transducer3 
+      HfstTransducer rule_transducer3
 	= rules::two_level_if_and_only_if(context, mappings, alphabet);
       rule_transducers1[i] = new HfstTransducer(rule_transducer1);
       rule_transducers2[i] = new HfstTransducer(rule_transducer2);
@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
       
       HfstTransducer test_abababa("abababa", TOK, types[i]);
       test_abababa.compose(replace_down_transducer);
-      HfstTransducer abxaba("abababa", 
+      HfstTransducer abxaba("abababa",
 			    "abx@_EPSILON_SYMBOL_@aba", TOK, types[i]);
       HfstTransducer ababxa("abababa",
 			    "ababx@_EPSILON_SYMBOL_@a", TOK, types[i]);
@@ -151,17 +151,17 @@ int main(int argc, char **argv) {
   
 #ifdef FOO
   /* HfstTransducer &replace_in_context(
-     HfstTransducerPair &context, 
-     ReplaceType repl_type, 
-     HfstTransducer &t, 
-     bool optional, 
+     HfstTransducerPair &context,
+     ReplaceType repl_type,
+     HfstTransducer &t,
+     bool optional,
      StringPairSet &alphabet) */
   
   verbose_print("HfstTransducer &replace_in_context("
-		"HfstTransducerPair &context," 
-		"ReplaceType repl_type," 
-		"HfstTransducer &t," 
-		"bool optional," 
+		"HfstTransducerPair &context,"
+		"ReplaceType repl_type,"
+		"HfstTransducer &t,"
+		"bool optional,"
 		"StringPairSet &alphabet");
   
   for (int i=0; i<3; i++) {
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
       
       mapping.add_transition
 	(0, HfstBasicTransition(1, "@_EPSILON_SYMBOL_@", "X", 0));
-      mapping.set_final_weight(1, 0);    
+      mapping.set_final_weight(1, 0);
       
       mapping.add_transition
 	(0, HfstBasicTransition(2, "@_UNKNOWN_SYMBOL_@", "X", 0));
@@ -220,7 +220,7 @@ int main(int argc, char **argv) {
       HfstTransducerPair context(HfstTransducer("K", "K", type),
 				 HfstTransducer("K", "K", type));
       
-      HfstTransducer rule 
+      HfstTransducer rule
 	= rules::replace_up(context, mapping_, optional, alphabet);
       
       HfstTokenizer TOK;

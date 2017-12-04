@@ -81,12 +81,12 @@ parse_options(int argc, char** argv)
         {
           HFST_GETOPT_COMMON_LONG,
           HFST_GETOPT_UNARY_LONG,
-          // add tool-specific options here 
+          // add tool-specific options here
             {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT,
                              long_options, &option_index);
         if (-1 == c)
@@ -121,11 +121,11 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
         char* inputname = hfst_get_name(trans, inputfilename);
         if (transducer_n==1)
         {
-          verbose_printf("Reversing %s...\n", inputname); 
+          verbose_printf("Reversing %s...\n", inputname);
         }
         else
         {
-          verbose_printf("Reversing %s..." SIZE_T_SPECIFIER "\n", inputname, transducer_n); 
+          verbose_printf("Reversing %s..." SIZE_T_SPECIFIER "\n", inputname, transducer_n);
         }
         
         trans.reverse();
@@ -161,7 +161,7 @@ int main( int argc, char **argv ) {
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
         inputfilename, outfilename);
     // here starts the buffer handling part
     HfstInputStream* instream = NULL;

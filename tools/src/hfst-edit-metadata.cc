@@ -105,8 +105,8 @@ parse_options(int argc, char** argv)
           {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "a:p::t:",
                              long_options, &option_index);
         if (-1 == c)
@@ -166,19 +166,19 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
     {
         transducer_n++;
 
-        if ((transducer_n > 1) && (print_all_properties || 
+        if ((transducer_n > 1) && (print_all_properties ||
                                    (print_property != NULL))) {
           std::cerr << "--- \n";
         }
 
         if (transducer_n==1)
         {
-          verbose_printf("Metadata %s...\n", inputfilename); 
+          verbose_printf("Metadata %s...\n", inputfilename);
         }
         else
           {
-            verbose_printf("Metadata %s..." SIZE_T_SPECIFIER "\n", 
-                   inputfilename, transducer_n); 
+            verbose_printf("Metadata %s..." SIZE_T_SPECIFIER "\n",
+                   inputfilename, transducer_n);
           }
         
         HfstTransducer trans(instream);
@@ -200,7 +200,7 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
                             "semantics for header;\n"
                             "use with caution");
                   }
-                else if (prop->first == "character-encoding" && 
+                else if (prop->first == "character-encoding" &&
                     !((prop->second == "utf-8") || (prop->second == "UTF-8")))
                   {
                     error(EXIT_FAILURE, 0, "Cannot set `character-encoding' "
@@ -274,7 +274,7 @@ int main( int argc, char **argv ) {
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
         inputfilename, outfilename);
     // here starts the buffer handling part
     HfstInputStream* instream = NULL;

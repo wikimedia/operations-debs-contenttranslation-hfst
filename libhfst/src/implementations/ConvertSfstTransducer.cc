@@ -1,34 +1,39 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
+
+#ifndef MAIN_TEST
 
 #if HAVE_CONFIG_H
 #  include <config.h>
 #endif
 
+#if HAVE_SFST || HAVE_LEAN_SFST
+
+#include "back-ends/sfst/interface.h"
+#include "back-ends/sfst/fst.h"
+
 #include "ConvertTransducerFormat.h"
-#include "HfstTransitionGraph.h"
-#include "HfstTransducer.h"
+#include "HfstBasicTransducer.h"
+#include "SfstTransducer.h"
 
 #include <stdexcept>
 
-#ifndef MAIN_TEST
+
 namespace hfst { namespace implementations
 {
 
 
   /* -----------------------------------------------------------
 
-      Conversion functions between HfstBasicTransducer and SFST transducer. 
+      Conversion functions between HfstBasicTransducer and SFST transducer.
 
      ----------------------------------------------------------- */
-
-#if HAVE_SFST
 
   SFST::VType VMARK = 10000;
 
@@ -41,7 +46,7 @@ namespace hfst { namespace implementations
   */
 
   void ConversionFunctions::sfst_to_hfst_basic_transducer
-  ( SFST::Node *node, 
+  ( SFST::Node *node,
     HfstBasicTransducer *net,
     std::vector<unsigned int> &harmonization_vector) {
     
@@ -49,12 +54,12 @@ namespace hfst { namespace implementations
     if (not node->was_visited(VMARK)) {
       SFST::Arcs *arcs=node->arcs();
       
-      // Count the number of transitions in the current state 
+      // Count the number of transitions in the current state
       // and initialize the transition vector of net for maximum efficiency
       unsigned int number_of_arcs=0;
       for( SFST::ArcsIter p(arcs); p; p++ ) {
         number_of_arcs++;
-      }      
+      }
       net->initialize_transition_vector(node->index, number_of_arcs);
       
       // Go through all transitions and copy them to \a net
@@ -62,7 +67,7 @@ namespace hfst { namespace implementations
         SFST::Arc *arc=p;
         
         net->add_transition
-          (node->index, 
+          (node->index,
            HfstBasicTransition
            (arc->target_node()->index,
             harmonization_vector.at(arc->label().lower_char()),
@@ -94,14 +99,14 @@ namespace hfst { namespace implementations
 #ifdef DEBUG_CONVERSION
     StringSet alphabet_before;
     SFST::Alphabet::CharMap CM = t->alphabet.get_char_map();
-    for (SFST::Alphabet::CharMap::const_iterator it 
-           = CM.begin(); it != CM.end(); it++) 
+    for (SFST::Alphabet::CharMap::const_iterator it
+           = CM.begin(); it != CM.end(); it++)
       {
         if (it->first != 0)
           alphabet_before.insert(std::string(it->second));
         else
           alphabet_before.insert(internal_epsilon);
-      }  
+      }
 #endif
 
     // The resulting HfstBasicTransducer
@@ -130,8 +135,8 @@ namespace hfst { namespace implementations
     
     // Copy the alphabet
     SFST::Alphabet::CharMap cm = t->alphabet.get_char_map();
-    for (SFST::Alphabet::CharMap::const_iterator it 
-           = cm.begin(); it != cm.end(); it++) 
+    for (SFST::Alphabet::CharMap::const_iterator it
+           = cm.begin(); it != cm.end(); it++)
       {
         assert(strcmp(it->second, "") != 0);
         if (it->first != 0) { // The epsilon symbol "<>" is not inserted
@@ -159,7 +164,7 @@ namespace hfst { namespace implementations
     t->alphabet.add_symbol(internal_identity.c_str(), 2);
     
     // Copy the alphabet
-    for (HfstBasicTransducer::HfstTransitionGraphAlphabet::iterator it 
+    for (HfstBasicTransducer::HfstAlphabet::const_iterator it
            = net->alphabet.begin();
          it != net->alphabet.end(); it++) {
       if (not is_epsilon(*it) && not is_unknown(*it) && not is_identity(*it))
@@ -189,7 +194,7 @@ namespace hfst { namespace implementations
          it != net->end(); it++)
       {
         // Go through the set of transitions in each state
-        for (HfstBasicTransducer::HfstTransitions::const_iterator tr_it 
+        for (HfstBasicTransitions::const_iterator tr_it
                = it->begin();
              tr_it != it->end(); tr_it++)
           {
@@ -200,15 +205,15 @@ namespace hfst { namespace implementations
             
             // Copy transition to node
             state_vector[source_state]->add_arc
-              (l, state_vector[tr_it->get_target_state()], t);      
+              (l, state_vector[tr_it->get_target_state()], t);
           }
         source_state++;
       }
     
     // Go through the final states
-    for (HfstBasicTransducer::FinalWeightMap::const_iterator it 
+    for (HfstBasicTransducer::FinalWeightMap::const_iterator it
            = net->final_weight_map.begin();
-         it != net->final_weight_map.end(); it++) 
+         it != net->final_weight_map.end(); it++)
       {
         if (it->first >= state_vector.size()) { // should not happen..
           state_vector.push_back(t->new_node());
@@ -218,10 +223,10 @@ namespace hfst { namespace implementations
     
     return t;
   }
-  
-#endif // HAVE_SFST
 
   }}
+#endif // #if HAVE_SFST || HAVE_LEAN_SFST
+  
 #else // MAIN_TEST was defined
 
 #include <iostream>

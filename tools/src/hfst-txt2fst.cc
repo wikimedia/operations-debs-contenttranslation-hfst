@@ -81,7 +81,7 @@ print_usage()
             "  -C, --check-negative-epsilon-cycles  Issue a warning if there are epsilon cycles\n"
             "                                       with a negative weight in the transducer\n");
     fprintf(message_out, "\n");
-    fprintf(message_out, 
+    fprintf(message_out,
         "If OUTFILE or INFILE is missing or -, standard streams will be used.\n"
         "If FMT is not given, OpenFst's tropical format will be used.\n"
         "The possible values for FMT are { foma, openfst-tropical, openfst-log,\n"
@@ -111,14 +111,14 @@ parse_options(int argc, char** argv)
           // add tool-specific options here
             {"epsilon", required_argument, 0, 'e'},
             {"number", no_argument, 0, 'n'},
-            {"format", required_argument, 0, 'f'}, 
-            {"prolog", no_argument, 0, 'p'}, 
-            {"check-negative-epsilon-cycles", no_argument, 0, 'C'}, 
+            {"format", required_argument, 0, 'f'},
+            {"prolog", no_argument, 0, 'p'},
+            {"check-negative-epsilon-cycles", no_argument, 0, 'C'},
             {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "e:nf:pC",
                              long_options, &option_index);
         if (-1 == c)
@@ -155,7 +155,7 @@ break;
     if (epsilonname == NULL)
       {
         epsilonname = hfst_strdup("@0@");
-        verbose_printf("Using default epsilon representation %s\n", 
+        verbose_printf("Using default epsilon representation %s\n",
                        epsilonname);
       }
     if (output_format == hfst::UNSPECIFIED_TYPE)
@@ -213,7 +213,7 @@ process_stream(HfstOutputStream& outstream)
             }
 
           try {
-            HfstBasicTransducer fsm = 
+            HfstBasicTransducer fsm =
               HfstBasicTransducer::read_in_prolog_format(inputfile, linecount);
 
             if (check_negative_epsilon_cycles)
@@ -242,7 +242,7 @@ process_stream(HfstOutputStream& outstream)
             return EXIT_FAILURE;
           }
         }
-      else 
+      else
         {
           try {
             HfstTransducer t(inputfile,
@@ -280,7 +280,7 @@ process_stream(HfstOutputStream& outstream)
 }
 
 
-int main( int argc, char **argv ) 
+int main( int argc, char **argv )
 {
 #ifdef WINDOWS
   _setmode(1, _O_BINARY);
@@ -298,7 +298,7 @@ int main( int argc, char **argv )
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
         inputfilename, outfilename);
     switch (output_format)
       {

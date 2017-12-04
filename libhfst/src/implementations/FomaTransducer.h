@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #ifndef _FOMA_TRANSDUCER_H_
@@ -16,15 +16,12 @@
 #include "HfstFlagDiacritics.h"
 #include <stdlib.h>
 
-#ifndef _FOMALIB_H_
-#define _FOMALIB_H_
-#include "back-ends/foma/fomalib.h"
-#endif
+struct fsm;
 
 #include <cstdio>
 #include <string>
 #include <sstream>
-#include <iostream>
+#include <iosfwd>
 
 #include "../FormatSpecifiers.h"
 
@@ -39,7 +36,7 @@ namespace hfst {
   using std::ostream;
   using std::ostringstream;
 
-  class FomaInputStream 
+  class FomaInputStream
   {
   private:
     std::string filename;
@@ -65,14 +62,13 @@ namespace hfst {
     static bool is_fst(std::istream &s);
   };
 
-  class FomaOutputStream 
+  class FomaOutputStream
   {
   private:
     std::string filename;
     FILE *ofile;
-    //void write_3_0_library_header(FILE *file);
   public:
-    FomaOutputStream(void); 
+    FomaOutputStream(void);
     FomaOutputStream(const std::string &filename);
     void close(void);
     void write(const char &c);
@@ -89,9 +85,9 @@ namespace hfst {
         (const hfst::StringPairSet &sps, bool cyclic=false);
       static fsm * define_transducer(const std::vector<StringPairSet> &spsv);
       static fsm * define_transducer
-        (const std::string &symbol);                     
+        (const std::string &symbol);
       static fsm * define_transducer
-        (const std::string &isymbol, const std::string &osymbol);       
+        (const std::string &isymbol, const std::string &osymbol);
       static fsm * copy(fsm * t);
       static fsm * determinize(fsm * t);
       static fsm * minimize(fsm * t);
@@ -126,7 +122,7 @@ namespace hfst {
                             fsm * t2);
                         
       static void extract_paths(fsm * t, hfst::ExtractStringsCb& callback,
-                                  int cycles=-1, FdTable<int>* fd=NULL, 
+                                  int cycles=-1, FdTable<int>* fd=NULL,
                                   bool filter_fd=false);
       static void extract_random_paths
     (const fsm *t, HfstTwoLevelPaths &results, int max_num);
@@ -140,8 +136,8 @@ namespace hfst {
       static void insert_to_alphabet(fsm *t, const std::string &symbol);
       static void remove_from_alphabet(fsm *t, const std::string &symbol);
       static StringSet get_alphabet(fsm *t);
-      static unsigned int get_symbol_number(fsm *t, 
-                        const std::string &symbol);      
+      static unsigned int get_symbol_number(fsm *t,
+                        const std::string &symbol);
 
       static void harmonize(fsm *net1, fsm *net2);
 
@@ -154,6 +150,8 @@ namespace hfst {
 #if GENERATE_LEXC_WRAPPER
       static fsm * read_lexc(const std::string &filename, bool verbose);
 #endif
+
+      static float get_profile_seconds();
 
       static unsigned int number_of_states(fsm * net);
       static unsigned int number_of_arcs(fsm * net);

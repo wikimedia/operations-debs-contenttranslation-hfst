@@ -68,7 +68,7 @@
 #endif
 
 #ifndef HAVE_ERROR_AT_LINE
-void error_at_line(int status, int errnum, const char* filename, 
+void error_at_line(int status, int errnum, const char* filename,
                    unsigned int linenum, const char* fmt, ...)
 {
   fprintf(stderr, "%s.%u: ", filename, linenum);
@@ -141,8 +141,9 @@ debug_save_transducer(hfst::HfstTransducer& t, const char* name)
 {
     if (debug)
       {
-        char* debug_name = static_cast<char*>(malloc(sizeof(char)*(strlen("DEBUG: " + strlen(name) + 1 ))));
-        if ((sprintf(debug_name, "DEBUG %s", name)) > 0 ) 
+        char* debug_name = static_cast<char*>
+          ( malloc( sizeof(char)*(strlen("DEBUG: ") + strlen(name) + 1) ) );
+        if ((sprintf(debug_name, "DEBUG %s", name)) > 0 )
           {
             t.set_name(debug_name);
           }
@@ -209,13 +210,13 @@ convert_transducers(hfst::HfstTransducer & first, hfst::HfstTransducer & second)
     return;
   else if (ct == 1)
     {
-      verbose_printf("warning: transducers have different types, converting to format %s\n", 
+      verbose_printf("warning: transducers have different types, converting to format %s\n",
                      hfst_strformat(type1));
       second.convert(type1);
     }
   else if (ct == 2)
     {
-      verbose_printf("warning: transducers have different types, converting to format %s\n", 
+      verbose_printf("warning: transducers have different types, converting to format %s\n",
                      hfst_strformat(type2));
       first.convert(type2);
     }
@@ -234,7 +235,7 @@ convert_transducers(hfst::HfstTransducer & first, hfst::HfstTransducer & second)
 bool
 is_input_stream_in_ol_format(const hfst::HfstInputStream * is, const char * program)
 {
-  if ( is->get_type() == hfst::HFST_OL_TYPE || 
+  if ( is->get_type() == hfst::HFST_OL_TYPE ||
        is->get_type() == hfst::HFST_OLW_TYPE )
     {
       fprintf(stderr, "Error: %s cannot process transducers that are in optimized lookup format.\n", program);
@@ -267,7 +268,7 @@ hfst_strtonumber(const char *s, bool *infinite)
     *infinite = false;
     errno = 0;
     char *endptr;
-    double rv = strtod(s, &endptr); 
+    double rv = strtod(s, &endptr);
     if (*endptr == '\0')
       {
 #ifndef _MSC_VER
@@ -467,7 +468,7 @@ hfst_fseek(FILE* stream, long offset, int whence)
     }
 }
 
-unsigned long 
+unsigned long
 hfst_ftell(FILE* stream)
 {
     errno = 0;
@@ -575,10 +576,10 @@ int
 hfst_mkstemp(char* templ)
 {
 #ifdef _WIN32
-  error(EXIT_FAILURE, errno, 
+  error(EXIT_FAILURE, errno,
         "'int hfst_mkstemp(char * temp1)' not implemented for windows");
   return 1; // keep compiler happy
-#else 
+#else
   errno = 0;
   int rv = mkstemp(templ);
   if (rv == -1)
@@ -866,7 +867,7 @@ print_version()
 {
   // c.f. http://www.gnu.org/prep/standards/standards.html#g_t_002d_002dversion
     fprintf(message_out, "%s %s (" PACKAGE_STRING ")\n"
-             "Copyright (C) 2016 University of Helsinki,\n"
+             "Copyright (C) 2017 University of Helsinki,\n"
              "License GPLv3: GNU GPL version 3 "
              "<http://gnu.org/licenses/gpl.html>\n"
              "This is free software: you are free to change and "
@@ -903,7 +904,7 @@ extend_options_getenv(int* argc, char*** argv)
       p++;
     }
   // we cannot realloc argv since it's magic
-  char** new_argv = static_cast<char**>(hfst_malloc(sizeof(char*) * 
+  char** new_argv = static_cast<char**>(hfst_malloc(sizeof(char*) *
                                                     (*argc + spaces + 1)));
   new_argv = static_cast<char**>(memcpy(new_argv, *argv, sizeof(char*)**argc));
   // there's this magic stuff with *argv that we shouldn't free it still

@@ -20,8 +20,8 @@ WeightedStringVectorCollection::WeightedStringVectorCollection
   this->name = read_model_start_tag(getline(in));
   
   if (not is_lexical_model)
-    { 
-      this->penalty_weight = read_model_penalty_weight(getline(in)); 
+    {
+      this->penalty_weight = read_model_penalty_weight(getline(in));
     }
 
 
@@ -37,8 +37,8 @@ WeightedStringVectorCollection::WeightedStringVectorCollection
 
       try
 	{
-	  WeightedStringVector entry = 
-	    (this->is_lexical_model ? 
+	  WeightedStringVector entry =
+	    (this->is_lexical_model ?
 	     tokenize_lexicon_line(line,tokenizer) :
 	     tokenize_grammar_line(line,tokenizer));
 
@@ -61,8 +61,8 @@ std::string WeightedStringVectorCollection::getline(std::istream &in)
   std::string line;
 
   if (in.peek() == EOF)
-    { 
-      throw EmptyFile(); 
+    {
+      throw EmptyFile();
     }
 
   std::getline(in,line);
@@ -71,19 +71,19 @@ std::string WeightedStringVectorCollection::getline(std::istream &in)
   return line;
 }
 
-WeightedStringVectorCollection::const_iterator 
+WeightedStringVectorCollection::const_iterator
 WeightedStringVectorCollection::begin(void) const
 { return this->data.begin(); }
 
-WeightedStringVectorCollection::const_iterator 
+WeightedStringVectorCollection::const_iterator
 WeightedStringVectorCollection::end(void) const
 { return this->data.end(); }
 
-WeightedStringVectorCollection::iterator 
+WeightedStringVectorCollection::iterator
 WeightedStringVectorCollection::begin(void)
 { return this->data.begin(); }
 
-WeightedStringVectorCollection::iterator 
+WeightedStringVectorCollection::iterator
 WeightedStringVectorCollection::end(void)
 { return this->data.end(); }
 
@@ -111,7 +111,7 @@ int main(void)
   std::string line7 = "DT\tNN\t1.5\n";
   std::string line8 = "STOP SEQ MODEL";
 
-  std::string file = line1 + line2 + line3 + line4 + line5 + line6 + line7 + 
+  std::string file = line1 + line2 + line3 + line4 + line5 + line6 + line7 +
     line8;
 
   std::istringstream in(file);
@@ -151,8 +151,8 @@ int main(void)
   assert(it == c2.end());
 
   try
-    { 
-      static_cast<void>(WeightedStringVectorCollection(in,SEQUENCE)); 
+    {
+      static_cast<void>(WeightedStringVectorCollection(in,SEQUENCE));
       assert(false);
     }
   catch (...)

@@ -1,28 +1,27 @@
 AM_CXXFLAGS= -O3 -g -Wall -Wextra -Wcast-qual -Wno-deprecated -Wfatal-errors -Wno-sign-compare\
-             -I$(top_builddir)/tools/src/inc -I$(top_builddir)/tools/src 
+             -I$(top_builddir)/tools/src/inc -I$(top_builddir)/tools/src
 
+if WANT_TRAIN_TAGGER
 bin_PROGRAMS=hfst-build-tagger$(EXEEXT) hfst-open-input-file-for-tagger$(EXEEXT) hfst-tag \
 hfst-reweight-tagger$(EXEEXT) hfst-train-tagger-system$(EXEEXT)
 bin_SCRIPTS=hfst_tagger_compute_data_statistics.py hfst-train-tagger$(EXEEXT) \
 hfst-train-tagger-loc$(EXEEXT)
 EXTRA_DIST=hfst-train-tagger.sh hfst-train-tagger.bat
+else
+bin_PROGRAMS=hfst-tag hfst-reweight-tagger$(EXEEXT)
+bin_SCRIPTS=
+EXTRA_DIST=
+endif
+
 BUILD_MODEL_SRC=$(srcdir)/build_model_src
 USE_MODEL_SRC=$(srcdir)/use_model_src
 AM_CPPFLAGS=-I${top_srcdir}/libhfst/src -Wno-sign-compare -Wno-unused-parameter
 LDADD = $(top_builddir)/libhfst/src/libhfst.la
 
-AM_CPPFLAGS += -I${top_srcdir}/back-ends/foma \
-		-I${top_srcdir}/back-ends
-
-if WANT_MINGW
-  AM_CPPFLAGS += -I${top_srcdir}/back-ends/openfstwin/src/include \
-		-I${top_srcdir}/back-ends/dlfcn -DWINDOWS
-else
-  AM_CPPFLAGS += -I${top_srcdir}/back-ends/openfst/src/include
-endif
-
+if WANT_TRAIN_TAGGER
 python_PYTHON=$(BUILD_MODEL_SRC)/tagger_aux.py \
               hfst_tagger_compute_data_statistics.py
+endif
 
 HFST_COMMON_SRC=$(top_srcdir)/tools/src/hfst-program-options.cc \
                 $(top_srcdir)/tools/src/hfst-commandline.cc \
@@ -34,6 +33,7 @@ AM_INSTALLCHECK_STD_OPTIONS_EXEMPT=hfst_tagger_compute_data_statistics.py \
                                    hfst-train-tagger hfst-train-tagger-loc \
 				   hfst-train-tagger-system
 
+if WANT_TRAIN_TAGGER
 hfst_build_tagger_SOURCES=hfst-build-tagger.cc \
 			  $(BUILD_MODEL_SRC)/FstBuilder.cc \
 			  $(BUILD_MODEL_SRC)/LexicalModelBuilder.cc \
@@ -43,6 +43,7 @@ hfst_build_tagger_SOURCES=hfst-build-tagger.cc \
 			  $(BUILD_MODEL_SRC)/WeightedStringVectorCollection.cc\
 			  $(BUILD_MODEL_SRC)/string_handling.cc \
 			  $(HFST_COMMON_SRC)
+endif
 
 hfst_tag_SOURCES=hfst-tag.cc \
 	         $(USE_MODEL_SRC)/DelayedSequenceModelComponent.cc \
@@ -58,6 +59,7 @@ hfst_tag_SOURCES=hfst-tag.cc \
 hfst_reweight_tagger_SOURCES=hfst-reweight-tagger.cc \
 		             $(HFST_COMMON_SRC)
 
+if WANT_TRAIN_TAGGER
 hfst_train_tagger_system_SOURCES=hfst-train-tagger-system.cc
 
 hfst-train-tagger$(EXEEXT): hfst-train-tagger.sh
@@ -70,11 +72,14 @@ hfst-train-tagger-loc$(EXEEXT): hfst-train-tagger.sh
 
 clean-local:
 	-rm -f hfst-train-tagger$(EXEEXT) hfst-train-tagger-loc$(EXEEXT) hfst-train-tagger-system$(EXEEXT)
+endif
 
 unit_test_aux.o:$(srcdir)/unit_test_aux.cc
 
+if WANT_TRAIN_TAGGER
 hfst_open_input_file_for_tagger_SOURCES=hfst-open-input-file-for-tagger.cc \
 			  $(HFST_COMMON_SRC)
+endif
 
 check_PROGRAMS=FstBuilder LexicalModelBuilder ModelBuilder \
                SequenceModelBuilder TaggerBuilder \
@@ -87,53 +92,53 @@ check_PROGRAMS=FstBuilder LexicalModelBuilder ModelBuilder \
 FstBuilder_SOURCES=$(BUILD_MODEL_SRC)/FstBuilder.cc
 FstBuilder_LDADD=string_handling.o FstBuilder.o \
                  $(top_srcdir)/libhfst/src/libhfst.la
-FstBuilder_CXXFLAGS=-DMAIN_TEST
+FstBuilder_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 LexicalModelBuilder_SOURCES=$(BUILD_MODEL_SRC)/LexicalModelBuilder.cc
 LexicalModelBuilder_LDADD=string_handling.o FstBuilder.o ModelBuilder.o \
 			  WeightedStringVectorCollection.o \
 	                  LexicalModelBuilder.o \
                           $(top_srcdir)/libhfst/src/libhfst.la
-LexicalModelBuilder_CXXFLAGS=-DMAIN_TEST
+LexicalModelBuilder_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 SequenceModelBuilder_SOURCES=$(BUILD_MODEL_SRC)/SequenceModelBuilder.cc
 SequenceModelBuilder_LDADD=string_handling.o FstBuilder.o ModelBuilder.o \
 			  WeightedStringVectorCollection.o \
 	                  SequenceModelBuilder.o \
                           $(top_srcdir)/libhfst/src/libhfst.la
-SequenceModelBuilder_CXXFLAGS=-DMAIN_TEST
+SequenceModelBuilder_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 ModelBuilder_SOURCES=$(BUILD_MODEL_SRC)/ModelBuilder.cc
 ModelBuilder_LDADD=string_handling.o FstBuilder.o ModelBuilder.o \
 		   WeightedStringVectorCollection.o \
                    $(top_srcdir)/libhfst/src/libhfst.la
-ModelBuilder_CXXFLAGS=-DMAIN_TEST
+ModelBuilder_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 WeightedStringVectorCollection_SOURCES=\
 	$(BUILD_MODEL_SRC)/WeightedStringVectorCollection.cc
 WeightedStringVectorCollection_LDADD=string_handling.o \
 	WeightedStringVectorCollection.o \
 	$(top_srcdir)/libhfst/src/libhfst.la
-WeightedStringVectorCollection_CXXFLAGS=-DMAIN_TEST
+WeightedStringVectorCollection_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 TaggerBuilder_SOURCES=$(BUILD_MODEL_SRC)/TaggerBuilder.cc
 TaggerBuilder_LDADD=string_handling.o TaggerBuilder.o \
 	LexicalModelBuilder.o SequenceModelBuilder.o \
 	WeightedStringVectorCollection.o ModelBuilder.o FstBuilder.o \
 	$(top_srcdir)/libhfst/src/libhfst.la
-TaggerBuilder_CXXFLAGS=-DMAIN_TEST
+TaggerBuilder_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 string_handling_SOURCES=$(BUILD_MODEL_SRC)/string_handling.cc
 
 string_handling_LDADD=string_handling.o $(top_srcdir)/libhfst/src/libhfst.la \
 		      unit_test_aux.o
-string_handling_CXXFLAGS=-DMAIN_TEST
+string_handling_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 AcyclicAutomaton_SOURCES=$(USE_MODEL_SRC)/AcyclicAutomaton.cc
 
 AcyclicAutomaton_LDADD=AcyclicAutomaton.o $(top_srcdir)/libhfst/src/libhfst.la\
 		       SequenceModelComponent.o unit_test_aux.o
-AcyclicAutomaton_CXXFLAGS=-DMAIN_TEST
+AcyclicAutomaton_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 DelayedSequenceModelComponent_SOURCES= \
                        $(USE_MODEL_SRC)/DelayedSequenceModelComponent.cc
@@ -141,13 +146,13 @@ DelayedSequenceModelComponent_SOURCES= \
 DelayedSequenceModelComponent_LDADD=DelayedSequenceModelComponent.o \
                        $(top_srcdir)/libhfst/src/libhfst.la \
 		       SequenceModelComponent.o unit_test_aux.o
-DelayedSequenceModelComponent_CXXFLAGS=-DMAIN_TEST
+DelayedSequenceModelComponent_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 NewLexicalModel_SOURCES=$(USE_MODEL_SRC)/NewLexicalModel.cc
 
 NewLexicalModel_LDADD=NewLexicalModel.o $(top_srcdir)/libhfst/src/libhfst.la \
 		      unit_test_aux.o
-NewLexicalModel_CXXFLAGS=-DMAIN_TEST
+NewLexicalModel_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 SentenceTagger_SOURCES=$(USE_MODEL_SRC)/SentenceTagger.cc
 
@@ -157,20 +162,20 @@ SentenceTagger_LDADD=SentenceTagger.o $(top_srcdir)/libhfst/src/libhfst.la \
                      SequenceModelComponentPair.o unit_test_aux.o \
                      SequenceTagger.o AcyclicAutomaton.o
 
-SentenceTagger_CXXFLAGS=-DMAIN_TEST
+SentenceTagger_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 SentenceTransducer_SOURCES=$(USE_MODEL_SRC)/SentenceTransducer.cc
 
 SentenceTransducer_LDADD=SentenceTransducer.o \
                        $(top_srcdir)/libhfst/src/libhfst.la \
 		       SequenceModelComponent.o unit_test_aux.o
-SentenceTransducer_CXXFLAGS=-DMAIN_TEST
+SentenceTransducer_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 SequenceModelComponent_SOURCES=$(USE_MODEL_SRC)/SequenceModelComponent.cc\
 			       unit_test_aux.cc
 SequenceModelComponent_LDADD=SequenceModelComponent.o \
                              $(top_srcdir)/libhfst/src/libhfst.la
-SequenceModelComponent_CXXFLAGS=-DMAIN_TEST
+SequenceModelComponent_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 SequenceModelComponentPair_SOURCES= \
                                 $(USE_MODEL_SRC)/SequenceModelComponentPair.cc
@@ -179,7 +184,7 @@ SequenceModelComponentPair_LDADD=SequenceModelComponentPair.o \
                                  $(top_srcdir)/libhfst/src/libhfst.la \
                                  DelayedSequenceModelComponent.o \
 				 SequenceModelComponent.o unit_test_aux.o
-SequenceModelComponentPair_CXXFLAGS=-DMAIN_TEST
+SequenceModelComponentPair_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 SequenceTagger_SOURCES=$(USE_MODEL_SRC)/SequenceTagger.cc
 
@@ -188,7 +193,7 @@ SequenceTagger_LDADD=SequenceTagger.o $(top_srcdir)/libhfst/src/libhfst.la\
                      unit_test_aux.o AcyclicAutomaton.o \
                      SequenceModelComponentPair.o \
 		     DelayedSequenceModelComponent.o
-SequenceTagger_CXXFLAGS=-DMAIN_TEST
+SequenceTagger_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 TESTS=$(check_PROGRAMS)
 

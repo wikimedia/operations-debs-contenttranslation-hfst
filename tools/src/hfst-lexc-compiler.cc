@@ -114,7 +114,7 @@ print_usage()
             "  <[dog::1]+> # ;        Use weights in regular expressions\n"
             "\n"
             "Using weights has an effect only if FORMAT is weighted, i.e.\n"
-            "{ openfst-tropical, openfst-log, optimized-lookup-weighted }.\n"    
+            "{ openfst-tropical, openfst-log, optimized-lookup-weighted }.\n"
             "\n",
             program_name, program_name );
         print_report_bugs();
@@ -145,7 +145,7 @@ parse_options(int argc, char** argv)
           {0,0,0,0}
         };
         int option_index = 0;
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              "Ef:o:AFMRx:X:W",
                              long_options, &option_index);
         if (-1 == c)

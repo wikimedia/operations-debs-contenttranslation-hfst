@@ -33,7 +33,7 @@ metadata header in all files *should* be the version header, so incompatible
 parsers can quit parsing as soon as possible without breaking.
 
 name
-  The user-readable name for the automata used in user interfaces 
+  The user-readable name for the automata used in user interfaces
   instead of the file name, if available. Example: *The Finnish
   hyphenator of Omorfi dictionary*. A missing name header means
   *filename[index]* is used to represent the automaton.
@@ -67,7 +67,7 @@ commandline-definition
   The possible reconstruction of commands used to create current transducer.
   This can be only as accurate as command-line reconstructions can be, i.e.
   things that are parsed by shell but won't be passed to the program, such as
-  pipes and redirections, can only be guessed. Example: 
+  pipes and redirections, can only be guessed. Example:
   *hfst-lexc lexicon.lexc -o lexicon.hfst && hfst-twolc rules.twolc -o
   rules.hfst; hfst-compose-intersect lexicon.hfst rules.hfst*.
 compression
@@ -75,7 +75,7 @@ compression
   automata in the file can be compressed using any of
   available algorithms. It should be noted that compressed
   automata cannot be used as freely as uncompressed ones and
-  their use requires extra libraries. Some compression 
+  their use requires extra libraries. Some compression
   schemes may not be usable in standard streams at all. This
   is used by library to uncompress the data before passing
   it to respective libraries for reading.
@@ -103,7 +103,7 @@ dcmi-text
     DescriptionSet (
        Description (
           Statement (
-              PropertyURI ( dcterms:title ) 
+              PropertyURI ( dcterms:title )
               LiteralValueString ( "English morphological analyser" )
           )
        )
@@ -142,7 +142,7 @@ licence
   copyrights as rendered by Berne convention, it is only
   for informative purposes. Example: *GNU GPLv3*.
 purpose
-  The automaton's primary use. The corpora and writers' 
+  The automaton's primary use. The corpora and writers'
   tools use this to enumerate available functionalities.
   Currently supported values are: *analysis*, *generation*,
   *error model*, *hyphenation*, *phonological rules*,
@@ -154,7 +154,7 @@ revision
   system. Example: *73624* (from SVN).
 shasum
   SHA check sum of the transducer data. This can be used
-  to verify transducer integrity. Example: 
+  to verify transducer integrity. Example:
   *4a7f4849457500fe27585515f6d99924dbf99121*.
 xfst-definition
   Xerox regular expression defining the automata. Does not

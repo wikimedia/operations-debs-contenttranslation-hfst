@@ -22,12 +22,12 @@ test -e lexc-parser.h && mv lexc-parser.h lexc-parser.hh
 test -e xfst-parser.h && mv xfst-parser.h xfst-parser.hh
 cd ../../..
 cd tools/src
-rm -f hfst-compiler.h
-rm -f hfst-compiler.cc
-rm -f hfst-scanner.cc
-make hfst-scanner.cc
-make hfst-compiler.cc
-test -e hfst-compiler.h && mv hfst-compiler.h hfst-compiler.hh
+rm -f sfst-compiler.h
+rm -f sfst-compiler.cc
+rm -f sfst-scanner.cc
+make sfst-scanner.cc
+make sfst-compiler.cc
+test -e sfst-compiler.h && mv sfst-compiler.h sfst-compiler.hh
 cd hfst-twolc/src/
 rm -f htwolcpre1.h htwolcpre2.h htwolcpre3.h
 rm -f htwolcpre1.cc htwolcpre2.cc htwolcpre3.cc

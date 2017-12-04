@@ -13,7 +13,7 @@ DYLIB_EXTENSION=  # so/dylib
 if (uname -a | grep 'Linux' > /dev/null); then
     ENVIRONMENT='Linux';
     SHOW_LINKS='ldd';
-#   CONFIGURE_ARGS are ok as such 
+#   CONFIGURE_ARGS are ok as such
     DYLIB_EXTENSION='so';
     echo "generating for Linux environment"
 elif (uname -a | grep 'Darwin' > /dev/null); then
@@ -43,7 +43,7 @@ compile_statically ()
 }
 
 
-autoreconf -i && 
+autoreconf -i &&
 ./configure $CONFIGURE_ARGS && scripts/generate-cc-files.sh
 
 # these are needed for compiling individual tools

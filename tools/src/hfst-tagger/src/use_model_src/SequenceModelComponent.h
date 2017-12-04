@@ -23,7 +23,7 @@ class SequenceModelComponent
   static const State START_STATE;
 
   virtual Weight get_final_weight(State state) const;
-  virtual TransitionData get_transition(State state, Symbol symbol); 
+  virtual TransitionData get_transition(State state, Symbol symbol);
 
   static Symbol get_symbol(const std::string &string_symbol);
   static std::string get_string_symbol(Symbol symbol);

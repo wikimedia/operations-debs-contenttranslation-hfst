@@ -1,4 +1,7 @@
 #!/bin/sh
+
+## Legacy wrapper for foma
+
 print_usage() {
     echo 'usage: $0 [-utf8|-latin1] [-e "command"] [-f scriptfile] [-h] [-l startscript] [-s binaryfile] [-q] [-v] [-F hfst_format] [-V]'
 }

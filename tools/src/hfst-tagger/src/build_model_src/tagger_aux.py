@@ -44,7 +44,7 @@ class SequenceSimplifier:
 
         for line in pattern:
             if len(line) != 2 or (not line[0] in [0,1]) or \
-                    (not line[1] in [0,1]):    
+                    (not line[1] in [0,1]):
                 raise InvalidPattern()
 
         self.pattern = pattern
@@ -76,7 +76,7 @@ class Pattern:
         self.numerator   = numerator
         self.denominator = denominator
         self.name        = name
-        self.order       = len(numerator.pattern) - 1 
+        self.order       = len(numerator.pattern) - 1
 
 # Read statistics patterns from file config_file_name.
 def read_config_file(config_file_name):
@@ -158,7 +158,7 @@ def verbose_print(message, is_verbose):
 
 # Return the utf-8 string str reversed. utf-8 symbols are not
 # internally reversed.
-def reverse(str):    
+def reverse(str):
     return str.decode("utf-8")[::-1]
 
 # Return a map for counting pairs e.g. word form and tag pairs.
@@ -199,12 +199,12 @@ def get_penalty_map(object_counter, total_count):
 
     return penalty_map
 
-def print_conditional_penalties(pair_counter, object_counter, 
+def print_conditional_penalties(pair_counter, object_counter,
                                 appended_suffix,
                                 invert_fields,
                                 print_maximum_penalty):
 
-    penalty_map = get_conditional_penalty_map(pair_counter, object_counter) 
+    penalty_map = get_conditional_penalty_map(pair_counter, object_counter)
 
     if print_maximum_penalty:
         max_object_count = 0
@@ -231,14 +231,14 @@ def print_conditional_penalties(pair_counter, object_counter,
             
 
             if not invert_fields:
-                s = string.join([p[0] + appended_suffix, 
-                                 p[1], 
+                s = string.join([p[0] + appended_suffix,
+                                 p[1],
                                  str(penalty)],"\t")
                 print s.encode("utf-8")
             else:
                 
-                s = string.join([p[1] + appended_suffix, 
-                                 p[0], 
+                s = string.join([p[1] + appended_suffix,
+                                 p[0],
                                  str(penalty)],"\t")
                 print s.encode("utf-8")
         else:
@@ -262,7 +262,7 @@ def print_conditional_penalties(pair_counter, object_counter,
 
 def print_penalties(object_counter, total_count, appended_suffix):
 
-    penalty_map = get_penalty_map(object_counter, total_count) 
+    penalty_map = get_penalty_map(object_counter, total_count)
 
     for object, penalty in penalty_map.iteritems():
         

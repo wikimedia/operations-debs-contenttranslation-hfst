@@ -1,15 +1,15 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
-namespace hfst 
+namespace hfst
 {
-namespace xfst 
+namespace xfst
 {
 
 typedef std::vector<std::string> StringVector;
@@ -36,30 +36,30 @@ typedef std::vector<std::string> StringVector;
  StringVector namelist_to_name_vector(const std::string & namelist);
     
 // Append help message for command known by names in \a namelist, taking arguments
-// listed in \a arguments, and described by \a description to \a message. 
+// listed in \a arguments, and described by \a description to \a message.
 // \a all_names defines whether all names in \a namelist are included or just the first one.
-void append_help_message(const std::string & namelist, const std::string & arguments, 
+void append_help_message(const std::string & namelist, const std::string & arguments,
                          const std::string & description, std::string & message, bool all_names = true);
 
  bool text_matches_some_name(const std::string & text, const std::string & namelist);
 
     bool get_help_message(const std::string & text, std::string & message, int help_mode, bool skip_ambiguous_cases=false);
 
-bool handle_ambiguous_case(const std::string & name, const std::string & namelist, 
+bool handle_ambiguous_case(const std::string & name, const std::string & namelist,
                            const std::string & text, std::string & message, int help_mode);
 
 // If \a text matches (depending on \a help_mode) a command known by names
 // listed in \a names, taking arguments \a arguments, described by \a description,
 // add help message for the command to \a message. \a all_names defines whether
-// all names in \a names are included or just the first one. 
-// Return whether the search should continue (depends on \a help_mode). 
-bool handle_case(const std::string & names, const std::string & arguments, 
+// all names in \a names are included or just the first one.
+// Return whether the search should continue (depends on \a help_mode).
+bool handle_case(const std::string & names, const std::string & arguments,
                  const std::string & description, const std::string & text,
                  std::string & message, int help_mode, bool all_names=true);
 
 // Generate help message(s) for command(s) named \a text and append the help message(s)
 // to \a message. \a help_mode defines whether we are generating help messages for \a text,
-// all commands (in that case, \a message is ignored) or for commands that contain or 
+// all commands (in that case, \a message is ignored) or for commands that contain or
 // whose help messages contain the word \a text. \a skip_ambiguous_cases defines whether
 // ambiguous cases where \a text matches more than one command are ignored.
 // @return Whether the help message could be generated.

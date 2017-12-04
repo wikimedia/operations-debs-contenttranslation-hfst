@@ -80,7 +80,7 @@ class FstBuilder
 		  const std::string &symbol);
 
   HfstState get_target(HfstState s,
-		       const std::string &symbol, 
+		       const std::string &symbol,
 		       bool &new_transition_required);
   StringVector split_at_tabs(const std::string &str);
   virtual void add_sequence(const WeightedStringVector &c,

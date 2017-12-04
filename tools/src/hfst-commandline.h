@@ -47,7 +47,7 @@ namespace hfst { class HfstInputStream; } ;
 /* These variables should be used in all command line programs.
  * In some cases they may be nonsensical; just define something then.
  */
-/** 
+/**
  * @brief set @c verbose when program should print before and after every
  *        non-trivial step it takes.
  */
@@ -60,17 +60,17 @@ extern bool silent;
 extern bool debug;
 /** @brief set @c message_out to stream that is usable for non-error message
  *         print-outs.
- *         This @e should be stdout in all cases, except when transducer 
- *         binaries are being transmitted through @c stdout. Some programs 
+ *         This @e should be stdout in all cases, except when transducer
+ *         binaries are being transmitted through @c stdout. Some programs
  *         @e may have option to log these messages to a file instead.
  */
 extern FILE* message_out;
-/** 
+/**
  *  @brief set @c hfst_tool_version to version specific to the tool.
  *  @sa hfst_set_program_name
  */
 extern const char* hfst_tool_version;
-/** 
+/**
  * @brief set @c hfst_tool_wikiname to name of the kitwiki page for this tool.
  */
 extern const char* hfst_tool_wikiname;
@@ -86,7 +86,7 @@ void debug_printf(const char* format, ...);
 /** print message @c s with parameters @c __VA_ARGS__ if debug is @a true. */
 void verbose_printf(const char* format, ...);
 
-/** 
+/**
  * @brief set program's name and other infos for reusable messages defined
  * below. This function must be called in beginning of main as the values are
  * used in all error messages as well.
@@ -109,7 +109,7 @@ int conversion_type(hfst::ImplementationType type1, hfst::ImplementationType typ
 /* Convert transducers into common format, if needed. */
 void convert_transducers(hfst::HfstTransducer & first, hfst::HfstTransducer & second);
 
-/** 
+/**
  * @brief set @c program_name to program's executable name for error messages.
  */
 extern const char* program_name;
@@ -124,9 +124,9 @@ void warning(int status, int error, const char* format , ...);
 #endif
 
 #ifndef HAVE_ERROR_AT_LINE
-/** 
+/**
  * @brief print standard formatted error message when parsing a file and exit
- *        if needed. 
+ *        if needed.
  *        The use of this function is especially important since error
  *        highlighting of vim and emacs depends on this error format.
  */
@@ -152,7 +152,7 @@ void print_version();
 
 /**
  * @brief print standard short help message.
- * 
+ *
  * @sa http://www.gnu.org/software/womb/gnits/Help-Output.html#Help-Output
  */
 void print_short_help();
@@ -263,7 +263,7 @@ size_t hfst_fread(void* ptr, size_t size, size_t nmemb, FILE* stream);
  *        error message end exit.
  */
 size_t hfst_fwrite(void* ptr, size_t size, size_t nmemb, FILE* stream);
-/** 
+/**
  * @brief create temporary file or print informative error message and exit
  *        on failure.
  */
@@ -334,7 +334,7 @@ char* hfst_setlocale();
 
 /**
  * @brief determine if next transducers of given streams are compatible.
- * 
+ *
  * @deprecated all formats are compatible in HFST3
  */
 int get_compatible_fst_format(std::istream& is1, std::istream& is2);

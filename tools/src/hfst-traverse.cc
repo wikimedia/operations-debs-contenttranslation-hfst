@@ -131,13 +131,13 @@ parse_options(int argc, char** argv)
         {
           HFST_GETOPT_COMMON_LONG,
           HFST_GETOPT_UNARY_LONG,
-          // add tool-specific options here 
+          // add tool-specific options here
             {"cave", no_argument, 0, 'X'},
             {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT,
                              long_options, &option_index);
         if (-1 == c)
@@ -164,7 +164,7 @@ parse_options(int argc, char** argv)
 int
 main_loop(HfstBasicTransducer trans)
 {
-    fprintf(message_out, 
+    fprintf(message_out,
             "Enter labels to seek all paths\n");
     // record current paths with their end states
     multimap<string, HfstState> paths;
@@ -192,18 +192,18 @@ main_loop(HfstBasicTransducer trans)
              ++p)
           {
             _rl_arcs.clear();
-            fprintf(message_out, "On path `%s' are continuations:\n", 
+            fprintf(message_out, "On path `%s' are continuations:\n",
                     p->first.c_str());
             if (trans[p->second].begin() == trans[p->second].end())
               {
                 fprintf(message_out,
                         "<Nothing, you've hit a dead end here>\n");
               }
-            for (HfstBasicTransducer::HfstTransitions::const_iterator arc = trans[p->second].begin();
+            for (hfst::implementations::HfstBasicTransitions::const_iterator arc = trans[p->second].begin();
                  arc != trans[p->second].end();
                  ++arc)
               {
-                fprintf(message_out, "%s\t%s\n", 
+                fprintf(message_out, "%s\t%s\n",
                         arc->get_input_symbol().c_str(),
                         arc->get_output_symbol().c_str());
                 _rl_arcs.push_back(arc->get_input_symbol());
@@ -219,7 +219,7 @@ main_loop(HfstBasicTransducer trans)
              p != paths.end();
              ++p)
           {
-            for (HfstBasicTransducer::HfstTransitions::const_iterator arc = trans[p->second].begin();
+            for (hfst::implementations::HfstBasicTransitions::const_iterator arc = trans[p->second].begin();
                  arc != trans[p->second].end();
                  ++arc)
               {
@@ -274,7 +274,7 @@ process_stream(HfstInputStream& instream)
         HfstBasicTransducer walkable(trans);
         if (cave_mode)
           {
-            fprintf(message_out, 
+            fprintf(message_out,
                     "WELCOME TO ADVENTURE!! WOULD YOU LIKE INSTRUCTIONS?\n\n");
             char* yesno = hfst_readline("");
             if ((strcmp(yesno, "YES") == 0) || (strcmp(yesno, "yes") == 0))
@@ -301,7 +301,7 @@ process_stream(HfstInputStream& instream)
           }
         else
           {
-            fprintf(message_out, "Traversing automaton %s\n\n", 
+            fprintf(message_out, "Traversing automaton %s\n\n",
                     trans_name.c_str());
           }
         if (walkable.begin() == walkable.end())
@@ -332,7 +332,7 @@ int main( int argc, char **argv ) {
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
         inputfilename, outfilename);
     // here starts the buffer handling part
     HfstInputStream* instream = NULL;

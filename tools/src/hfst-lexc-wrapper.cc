@@ -115,7 +115,7 @@ parse_options(int argc, char** argv)
           {0,0,0,0}
         };
         int option_index = 0;
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              "f:o:l::u::X",
                              long_options, &option_index);
         if (-1 == c)
@@ -149,7 +149,7 @@ parse_options(int argc, char** argv)
 #if HAVE_FOMA
     if (format == hfst::UNSPECIFIED_TYPE)
       {
-        if (!silent) 
+        if (!silent)
           {
             warning(0, 0, "Defaulting to foma type "
                     "(since it has native lexc support)\n");
@@ -251,7 +251,7 @@ parse_options(int argc, char** argv)
             hfst_fseek(lexcfiles[i], -1, SEEK_END);
             long file_length = hfst_ftell(lexcfiles[i]);
             rewind(lexcfiles[i]);
-            char* fdata = static_cast<char*>(malloc(sizeof(char) * 
+            char* fdata = static_cast<char*>(malloc(sizeof(char) *
                                                     (file_length +1)));
             hfst_fread(fdata, sizeof(char), file_length,
                                    lexcfiles[i]);
@@ -327,7 +327,7 @@ int main( int argc, char **argv ) {
     {
         fclose(outfile);
     }
-    if (start_readline) 
+    if (start_readline)
       {
         lexc_readline_loop(format);
         return EXIT_FAILURE;
@@ -349,7 +349,7 @@ int main( int argc, char **argv ) {
       }
     catch (ImplementationTypeNotAvailableException itnae)
       {
-        verbose_printf("Caught exception like this:\n%s\n", 
+        verbose_printf("Caught exception like this:\n%s\n",
                        itnae().c_str());
         error(EXIT_FAILURE, 0, "You were trying to compile with format "
               "that has been turned off from libhfst\n"

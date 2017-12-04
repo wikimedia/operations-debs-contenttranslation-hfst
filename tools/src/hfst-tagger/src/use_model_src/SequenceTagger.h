@@ -34,7 +34,7 @@ class SequenceTagger
 
   Agenda agenda;
 
-  size_t states;
+  //size_t states;
   size_t sentences;
 
   void process_configuration(const SentenceTransducer &sentence_transducer,
@@ -42,7 +42,7 @@ class SequenceTagger
 			     State result_state,
 			     AcyclicAutomaton &result);
 
-  WeightedStringPairVector 
+  WeightedStringPairVector
     get_weighted_analysis(AcyclicAutomaton &result) const;
 
   State get_state(const StatePair &configuration,

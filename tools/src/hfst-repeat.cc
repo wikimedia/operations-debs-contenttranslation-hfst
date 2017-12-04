@@ -70,7 +70,7 @@ print_usage()
             "  -t, --to=TNUM     repeat at most TNUM times\n");
     fprintf(message_out, "\n");
     print_common_unary_program_parameter_instructions(message_out);
-    fprintf(message_out, 
+    fprintf(message_out,
             "FNUM and TNUM must be positive integers or infinities "
             "as parsed by strtod(3)\n"
             "if FNUM is omitted it defaults to 0, if TNUM is omitted it defaults to Inf\n"
@@ -95,12 +95,12 @@ parse_options(int argc, char** argv)
           HFST_GETOPT_UNARY_LONG,
           {"from", required_argument, 0, 'f'},
           {"to", required_argument, 0, 't'},
-          // add tool-specific options here 
+          // add tool-specific options here
             {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "f:t:",
                              long_options, &option_index);
         if (-1 == c)
@@ -174,7 +174,7 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
         {
           if (!from_infinity && !to_infinity)
             {
-              verbose_printf("Repeating [%lu..%lu] %s... " SIZE_T_SPECIFIER "\n", 
+              verbose_printf("Repeating [%lu..%lu] %s... " SIZE_T_SPECIFIER "\n",
                              at_least, at_most, inputname, transducer_n);
             }
           else if (from_infinity && to_infinity)
@@ -196,7 +196,7 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
         if (!from_infinity && !to_infinity)
           {
             trans.repeat_n_to_k(at_least, at_most);
-            char* composed_name = static_cast<char*>(malloc(sizeof(char) * 
+            char* composed_name = static_cast<char*>(malloc(sizeof(char) *
                                              (strlen("repeat-%lu-to-%lu"))
                                              + 1 + 32 + 32));
             if (sprintf(composed_name, "repeat-%lu-to-%lu",
@@ -204,7 +204,7 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
               {
                 hfst_set_name(trans, trans, composed_name);
               }
-            composed_name = static_cast<char*>(malloc(sizeof(char) * 
+            composed_name = static_cast<char*>(malloc(sizeof(char) *
                                              (strlen("_%lu^%lu"))
                                              + 1 + 32 + 32));
             if (sprintf(composed_name, "_%lu^%lu",
@@ -223,16 +223,16 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
         else if (!from_infinity && to_infinity)
           {
             trans.repeat_n_plus(at_least);
-            char* composed_name = static_cast<char*>(malloc(sizeof(char) * 
-                                             (strlen("repeat-%lu-plus")) 
+            char* composed_name = static_cast<char*>(malloc(sizeof(char) *
+                                             (strlen("repeat-%lu-plus"))
                                              + 1 + 32 + 32));
             if (sprintf(composed_name, "repeat-%lu-plus",
                         at_least) > 0)
               {
                 hfst_set_name(trans, trans, composed_name);
               }
-            composed_name = static_cast<char*>(malloc(sizeof(char) * 
-                                             (strlen("_%lu^∞")) 
+            composed_name = static_cast<char*>(malloc(sizeof(char) *
+                                             (strlen("_%lu^∞"))
                                              + 1 + 32 + 32));
             if (sprintf(composed_name, "_%lu^∞",
                         at_least) > 0)
@@ -275,7 +275,7 @@ int main( int argc, char **argv ) {
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
         inputfilename, outfilename);
           if (!from_infinity && !to_infinity)
             {

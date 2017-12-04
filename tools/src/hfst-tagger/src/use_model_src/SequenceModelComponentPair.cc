@@ -2,7 +2,7 @@
 
 #ifndef MAIN_TEST
 
-size_t 
+size_t
 SequenceModelComponentPair::StatePair2StateMap::count(const StatePair &p)
 {
   if (static_cast<int>(state_pair_to_state_map_.size()) <= p.first)
@@ -10,17 +10,17 @@ SequenceModelComponentPair::StatePair2StateMap::count(const StatePair &p)
   if (static_cast<int>(state_pair_to_state_map_[p.first].size()) <= p.second)
     { return 0; }
 
-  return state_pair_to_state_map_[p.first][p.second] == -1 ? 0 : 1; 
+  return state_pair_to_state_map_[p.first][p.second] == -1 ? 0 : 1;
 }
 
 State &
 SequenceModelComponentPair::StatePair2StateMap::operator[](const StatePair &p)
 {
   while (static_cast<int>(state_pair_to_state_map_.size()) <= p.first)
-    { 
+    {
       state_pair_to_state_map_.insert(state_pair_to_state_map_.end(),
                                       state_pair_to_state_map_.size() + 1,
-                                      StateVector()); 
+                                      StateVector());
     }
 
   StateVector &state_vector = state_pair_to_state_map_[p.first];
@@ -47,7 +47,7 @@ void SequenceModelComponentPair::clear(void)
   state_pair_to_state_map.clear();
   state_to_state_pair_map.clear();
 
-  (void)get_state(StatePair(0,0)); 
+  (void)get_state(StatePair(0,0));
 }
 
 SequenceModelComponentPair::SequenceModelComponentPair
@@ -67,9 +67,9 @@ Weight SequenceModelComponentPair::get_final_weight(State state) const
   StatePair state_pair = state_to_state_pair_map[state];
   
   
-  return 
-    component1.get_final_weight(state_pair.first) + 
-    component2.get_final_weight(state_pair.second); 
+  return
+    component1.get_final_weight(state_pair.first) +
+    component2.get_final_weight(state_pair.second);
 }
 
 TransitionData SequenceModelComponentPair::get_transition
@@ -82,10 +82,10 @@ TransitionData SequenceModelComponentPair::get_transition
 
   StatePair state_pair = state_to_state_pair_map[state];
   
-  TransitionData transition_data1 = 
+  TransitionData transition_data1 =
     component1.get_transition(state_pair.first,symbol);
 
-  TransitionData transition_data2 = 
+  TransitionData transition_data2 =
     component2.get_transition(state_pair.second,symbol);
 
   StatePair target_pair(transition_data1.target, transition_data2.target);
@@ -102,7 +102,7 @@ TransitionData SequenceModelComponentPair::get_transition
 State SequenceModelComponentPair::get_state(const StatePair &state_pair)
 {
   if (state_pair_to_state_map.count(state_pair) == 0)
-    { 
+    {
       state_pair_to_state_map[state_pair] = state_to_state_pair_map.size();
       state_to_state_pair_map.push_back(state_pair);
 

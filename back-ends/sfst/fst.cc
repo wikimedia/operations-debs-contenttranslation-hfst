@@ -279,7 +279,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  Transducer::Transducer( istream &is, const Alphabet *a, bool verbose, 
+  Transducer::Transducer( istream &is, const Alphabet *a, bool verbose,
                           bool lexcomments  )
     : root(), mem()
   {
@@ -375,7 +375,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  void Transducer::store_symbols(Node *node, SymbolMap &symbol, 
+  void Transducer::store_symbols(Node *node, SymbolMap &symbol,
                                  LabelSet &labels)
   {
     if (!node->was_visited( vmark )) {
@@ -501,7 +501,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  void Transducer::enumerate_paths_node( Node *node, vector<Label> &path, 
+  void Transducer::enumerate_paths_node( Node *node, vector<Label> &path,
                                          NodeHashSet &previous,
                                          vector<Transducer*> &result )
   {
@@ -574,7 +574,7 @@ namespace SFST {
       Arc *arc=i;
       Label l=arc->label();
       alphabet.write_label(l, buffer, &p, with_brackets);
-      result |= print_strings_node(arc->target_node(), buffer, p, 
+      result |= print_strings_node(arc->target_node(), buffer, p,
                                    file, with_brackets );
     }
     node->set_forward(NULL);
@@ -666,7 +666,7 @@ namespace SFST {
       if (!arc->label().is_epsilon())
         alphabet.insert(arc->label());
       complete(arc->target_node(), alphabet, vmark);
-    }  
+    }
   }
 
 
@@ -797,7 +797,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  static void store_lowmem_node( FILE *file, Node *node, 
+  static void store_lowmem_node( FILE *file, Node *node,
                                  vector<unsigned int> &startpos)
   {
     store_node_info( file, node );
@@ -885,18 +885,23 @@ namespace SFST {
   static void read_node( FILE *file, Node *node, Node **p, Transducer *a )
   {
     char c;
-    fread(&c,sizeof(c),1,file);
+    if (fread(&c,sizeof(c),1,file) != 1) // HFST addition: checking return value of fread
+      throw "read_node: fread failed";
     node->set_final(c);
 
     unsigned short n;
-    fread( &n, sizeof(n), 1, file);
+    if (fread( &n, sizeof(n), 1, file) != 1)  // HFST addition: checking return value of fread
+      throw "read_node: fread failed";
 
     for( int i=0; i<n; i++ ) {
       Character lc,uc;
       unsigned int t;
-      fread(&lc,sizeof(lc),1,file);
-      fread(&uc,sizeof(uc),1,file);
-      fread(&t,sizeof(t),1,file);
+      if (fread(&lc,sizeof(lc),1,file) != 1) // HFST addition: checking return value of fread
+        throw "read_node: fread failed";
+      if (fread(&uc,sizeof(uc),1,file) != 1) // HFST addition: checking return value of fread
+        throw "read_node: fread failed";
+      if (fread(&t,sizeof(t),1,file) != 1) // HFST addition: checking return value of fread
+        throw "read_node: fread failed";
       if (ferror(file))
         throw "Error encountered while reading transducer from file";
       if (p[t])
@@ -924,7 +929,8 @@ namespace SFST {
 
     vmark = deterministic = 0;
     unsigned int n;
-    fread(&n,sizeof(n),1,file); // number of nodes
+    if (fread(&n,sizeof(n),1,file) != 1) // number of nodes // HFST addition: checking return value of fread
+      throw "read_transducer_binary: fread failed";
     if (ferror(file))
       throw "Error encountered while reading transducer from file";
 
@@ -952,7 +958,7 @@ namespace SFST {
 
   {
     static char message[1000];
-    sprintf(message, "Error: in line %u of text transducer file", 
+    sprintf(message, "Error: in line %u of text transducer file",
             (unsigned int)line);
     throw message;
   }
@@ -1101,7 +1107,7 @@ namespace SFST {
     }
     else
       return it->second;
-  } 
+  }
 
 
   /*******************************************************************/
@@ -1127,7 +1133,7 @@ namespace SFST {
       if (arc.label().is_epsilon()) {
         // 'forward', which is originally NULL, is used as a flag
         // for detecting epsilon transition loops
-        if (search_node->forward() != copy_tr_start_node) { 
+        if (search_node->forward() != copy_tr_start_node) {
           search_node->set_forward(copy_tr_start_node);  // set epsilon flag
           if (arc.target_node()->is_final())
             copy_tr_start_node->set_final(true);
@@ -1138,7 +1144,7 @@ namespace SFST {
 
       else {
         // target node in copy_tr
-        Node *copy_tr_end_node = 
+        Node *copy_tr_end_node =
           node_in_copy_tr(arc.target_node(), copy_tr, mapper);
         // add arc to copy_tr
         copy_tr_start_node->add_arc( Label(arc.label().lower_char(),
@@ -1176,12 +1182,12 @@ namespace SFST {
     // set copy_tr root node final, if needed
     if (root_node()->is_final())
       copy_tr->root_node()->set_final(true);
-    // associate the root_nodes in this and copy_tr 
+    // associate the root_nodes in this and copy_tr
     // (node indexing for root_node is zero)
     mapper[0] = copy_tr->root_node();
 
     copy_nodes(root_node(), copy_tr, copy_tr->root_node(), mapper);
-    incr_vmark();       
+    incr_vmark();
 
     return *copy_tr;
   }

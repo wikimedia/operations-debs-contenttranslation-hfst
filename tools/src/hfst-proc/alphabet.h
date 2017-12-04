@@ -22,7 +22,7 @@ class LetterTrie;
 typedef std::vector<LetterTrie*> LetterTrieVector;
 class Symbolizer;
 
-extern bool processCompounds ; 
+extern bool processCompounds ;
 
 class LetterTrie
 {
@@ -31,7 +31,7 @@ class LetterTrie
   SymbolNumberVector symbols;
   
   /**
-   * Whether our symbols vector or that of any of our children contains 
+   * Whether our symbols vector or that of any of our children contains
    * symbol number 0
    */
   bool has_symbol_0() const;
@@ -77,7 +77,7 @@ class Symbolizer
   SymbolNumber symbol_count;
 
  public:
-  Symbolizer(): letters(), 
+  Symbolizer(): letters(),
     ascii_symbols(std::numeric_limits<unsigned char>::max(),NO_SYMBOL_NUMBER),
     symbol_count(0) {}
   Symbolizer(const SymbolTable& st):
@@ -138,7 +138,7 @@ class ProcTransducerAlphabet : public TransducerAlphabet
   
   /**
    * The symbol number for a "blank" which is here considered to be a space.
-   * This symbol requires special handling because it doubles as the 
+   * This symbol requires special handling because it doubles as the
    * symbolic representation for a superblank block of text
    */
   SymbolNumber blank_symbol;
@@ -176,9 +176,9 @@ class ProcTransducerAlphabet : public TransducerAlphabet
   
   void print_table() const;
   
-  void add_symbol(const std::string& str, const SymbolProperties& symbol);  
+  void add_symbol(const std::string& str, const SymbolProperties& symbol);
  public:
-  ProcTransducerAlphabet(std::istream& is, SymbolNumber symbol_count);  
+  ProcTransducerAlphabet(std::istream& is, SymbolNumber symbol_count);
   
   const Symbolizer& get_symbolizer(void) const;
   SymbolNumber get_blank_symbol() const {return blank_symbol;}
@@ -187,9 +187,9 @@ class ProcTransducerAlphabet : public TransducerAlphabet
   bool is_space(const char* c) const;
   
   bool is_alphabetic(const char* c) const
-  { return (c[0]!='\0' && !is_space(c) && 
+  { return (c[0]!='\0' && !is_space(c) &&
             !is_punctuation(c)); }
-  bool is_alphabetic(SymbolNumber symbol) const 
+  bool is_alphabetic(SymbolNumber symbol) const
   {return symbol_properties_table[symbol].alphabetic;}
   
   bool is_lower(SymbolNumber symbol) const
@@ -204,7 +204,7 @@ class ProcTransducerAlphabet : public TransducerAlphabet
    * lowercase equivalent
    */
   SymbolNumber to_lower(SymbolNumber symbol) const
-  {return symbol_properties_table[symbol].lower==NO_SYMBOL_NUMBER ? 
+  {return symbol_properties_table[symbol].lower==NO_SYMBOL_NUMBER ?
             symbol : symbol_properties_table[symbol].lower;}
   
   /**
@@ -212,12 +212,12 @@ class ProcTransducerAlphabet : public TransducerAlphabet
    * uppercase equivalent
    */
   SymbolNumber to_upper(SymbolNumber symbol) const
-  {return symbol_properties_table[symbol].upper==NO_SYMBOL_NUMBER ? 
+  {return symbol_properties_table[symbol].upper==NO_SYMBOL_NUMBER ?
             symbol : symbol_properties_table[symbol].upper;}
   
   /**
-   * Whether the symbol is an apertium-style tag (i.e. symbols starting 
-   * with < and ending with > ) 
+   * Whether the symbol is an apertium-style tag (i.e. symbols starting
+   * with < and ending with > )
    */
   bool is_tag(SymbolNumber symbol) const;
   

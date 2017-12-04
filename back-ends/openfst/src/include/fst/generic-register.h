@@ -72,6 +72,7 @@ class GenericRegister {
   // Override this if you want to be able to load missing definitions from
   // shared object files.
   virtual EntryType LoadEntryFromSharedObject(const KeyType &key) const {
+#if ENABLE_LOAD_SO_ENTRIES
     string so_filename = ConvertKeyToSoFilename(key);
 
     void *handle = dlopen(so_filename.c_str(), RTLD_LAZY);
@@ -90,6 +91,9 @@ class GenericRegister {
       return EntryType();
     }
     return *entry;
+#else
+    return EntryType();
+#endif // ENABLE_LOAD_SO_ENTRIES
   }
 
   // Override this to define how to turn a key into an SO filename.

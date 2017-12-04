@@ -31,7 +31,7 @@
 
 static int fsm_linecount, num_states, num_symbols, epsilon_symbol, *single_sigma_array, *double_sigma_array, limit, num_start_states, op;
 
-static _Bool *finals, deterministic, numss;
+static Boolean *finals, deterministic, numss;
 
 struct e_closure_memo {
     int state;
@@ -151,7 +151,7 @@ int fsm_isstarfree(struct fsm *net) {
         if (v == (curr_ptr+1)->state_no) {
             ptr_stack_push(curr_ptr+1);
         }
-        if (*(dfs_map+vp) == DFS_WHITE) { 
+        if (*(dfs_map+vp) == DFS_WHITE) {
             curr_ptr = (state_array+vp)->transitions;
             goto nopop;
         }
@@ -303,7 +303,7 @@ static struct fsm *fsm_subset(struct fsm *net, int operation) {
             if (operation == SUBSET_TEST_STAR_FREE) {
                 mainloop++;
                 if ((U = e_closure(j)) != -1) {
-                    single_symbol_to_symbol_pair(minsym, &symbol_in, &symbol_out);                   
+                    single_symbol_to_symbol_pair(minsym, &symbol_in, &symbol_out);
                     fsm_state_add_arc(T, symbol_in, symbol_out, U, (T_ptr+T)->finalstart, T == 0 ? 1 : 0);
                     if (star_free_mark == 1) {
                         //fsm_state_add_arc(T, maxsigma, maxsigma, U, (T_ptr+T)->finalstart, T == 0 ? 1 : 0);
@@ -528,7 +528,7 @@ static int initial_e_closure(struct fsm *net) {
     struct fsm_state *fsm;
     int i,j;
 
-    finals = xxcalloc(num_states, sizeof(_Bool));
+    finals = xxcalloc(num_states, sizeof(Boolean));
 
     num_start_states = 0;
     fsm = net->states;
@@ -581,7 +581,7 @@ static void memoize_e_closure(struct fsm_state *fsm) {
         state = (fsm+i)->state_no;
         
         if (state != laststate) {
-            if (!int_stack_isempty()) {                
+            if (!int_stack_isempty()) {
                 deterministic = 0;
                 ptr = e_closure_memo+laststate;
                 ptr->target = e_closure_memo+int_stack_pop();
@@ -645,7 +645,7 @@ static void sigma_to_pairs(struct fsm *net) {
 
   fsm = net->states;
 
-  epsilon_symbol = -1; 
+  epsilon_symbol = -1;
   maxsigma = sigma_max(net->sigma);
   maxsigma++;
 
@@ -750,7 +750,7 @@ INLINE static int hashf(int *set, int setsize) {
   unsigned int hashval, sum = 0;
   hashval = 6703271;
   for (i = 0; i < setsize; i++) {
-      hashval = (unsigned int) (*(set+i) + 1103 * setsize) * hashval; 
+      hashval = (unsigned int) (*(set+i) + 1103 * setsize) * hashval;
       sum += *(set+i) + i;
   }
   hashval = hashval + sum * 31;
@@ -772,8 +772,8 @@ static unsigned int move_set(int *set, int setsize) {
     return(old_offset);
 }
 
-static int nhash_insert(int hashval, int *set, int setsize) { 
-  struct nhash_list *tableptr;  
+static int nhash_insert(int hashval, int *set, int setsize) {
+  struct nhash_list *tableptr;
   int i, fs = 0;
 
   current_setnum++;

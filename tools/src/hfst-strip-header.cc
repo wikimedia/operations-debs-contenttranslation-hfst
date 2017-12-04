@@ -62,8 +62,8 @@ parse_options(int argc, char** argv)
         {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT,
                              long_options, &option_index);
         if (-1 == c)
@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
   {
     return retval;
   }
-  verbose_printf("Reading from %s, writing to %s\n", 
+  verbose_printf("Reading from %s, writing to %s\n",
     inputfilename, outfilename);
   
   retval = process_stream(inputfile, outfile);

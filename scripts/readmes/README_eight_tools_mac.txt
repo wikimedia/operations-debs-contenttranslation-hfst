@@ -11,7 +11,7 @@ This package contains the following command line tools for [32|64]-bit Mac OS X:
   - hfst-pmatch2fst
 
 
-For more info about the tools, see their KitWiki pages: 
+For more info about the tools, see their KitWiki pages:
 
   <https://kitwiki.csc.fi/twiki/bin/view/KitWiki/HfstXfst>
   <https://kitwiki.csc.fi/twiki/bin/view/KitWiki/HfstLexc>
@@ -25,6 +25,6 @@ For more info about the tools, see their KitWiki pages:
 or run hfst-TOOLNAME --help.
 
 
-For more info about the HFST project, see: 
+For more info about the HFST project, see:
   <http://hfst.sourceforge.net/>
 

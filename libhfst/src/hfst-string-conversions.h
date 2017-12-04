@@ -3,12 +3,12 @@
 #include <string>
 #include <cstdio>
 
-namespace hfst 
+namespace hfst
 {
   /* Convert utf-8 string \a wstr into an ordinary string. */
   //std::string wide_string_to_string(const std::wstring & wstr);
   /* Get a line from console input and store it into \a str.
-         \a buffer_size defines maximum of input length. 
+         \a buffer_size defines maximum of input length.
          Return whether the read operation was succesful. */
   bool get_line_from_console(std::string & str, size_t buffer_size, bool keep_newline = false);
 

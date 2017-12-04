@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include "HfstExceptionDefs.h"
@@ -29,7 +29,14 @@ HfstException::HfstException
 HfstException::~HfstException() {}
 
 std::string HfstException::operator() (void) const
-{ 
+{
+  std::ostringstream o;
+  o << "Exception: "<< name << " in file: " << file << " on line: " << line;
+  return o.str();
+}
+
+std::string HfstException::what() const
+{
   std::ostringstream o;
   o << "Exception: "<< name << " in file: " << file << " on line: " << line;
   return o.str();
@@ -47,7 +54,18 @@ std::string HfstException::operator() (void) const
 
 HFST_EXCEPTION_CHILD_DEFINITION(HfstTransducerTypeMismatchException);
 
-HFST_EXCEPTION_CHILD_DEFINITION(ImplementationTypeNotAvailableException);
+//HFST_EXCEPTION_CHILD_DEFINITION(ImplementationTypeNotAvailableException);
+
+ImplementationTypeNotAvailableException::ImplementationTypeNotAvailableException(const std::string &name,const std::string &file,size_t line, hfst::ImplementationType type):
+  HfstException(name, file, line),
+  type(type)
+{};
+
+hfst::ImplementationType ImplementationTypeNotAvailableException::get_type() const
+{
+  return type;
+}
+
 
 HFST_EXCEPTION_CHILD_DEFINITION(FileIsInGZFormatException);
 
@@ -77,6 +95,8 @@ HFST_EXCEPTION_CHILD_DEFINITION(ContextTransducersAreNotAutomataException);
 
 HFST_EXCEPTION_CHILD_DEFINITION(TransducersAreNotAutomataException);
 
+HFST_EXCEPTION_CHILD_DEFINITION(TransducerIsNotAutomatonException);
+
 HFST_EXCEPTION_CHILD_DEFINITION(StateIndexOutOfBoundsException);
 
 HFST_EXCEPTION_CHILD_DEFINITION(TransducerHeaderException);
@@ -103,7 +123,7 @@ HFST_EXCEPTION_CHILD_DEFINITION(MetadataException);
 
 HFST_EXCEPTION_CHILD_DEFINITION(FlagDiacriticsAreNotIdentitiesException);
 
-//HFST_EXCEPTION_CHILD_DEFINITION(SymbolRedefinedException); 
+//HFST_EXCEPTION_CHILD_DEFINITION(SymbolRedefinedException);
 //HFST_EXCEPTION_CHILD_DEFINITION(TransducerHasNoStartStateException);
 //HFST_EXCEPTION_CHILD_DEFINITION(TransducerHasMoreThanOneStartStateException);
 

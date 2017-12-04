@@ -1,6 +1,6 @@
 namespace hfst {
   namespace xfst {
-    enum XfstCommand { 
+    enum XfstCommand {
       ADD_PROPS_CMD,
       APPLY_UP_CMD,
       APPLY_DOWN_CMD,

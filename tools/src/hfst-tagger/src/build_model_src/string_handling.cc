@@ -63,7 +63,7 @@ StringVector split(const std::string &line,char separator)
 WeightedStringVector tokenize_lexicon_line(const std::string &line,
 					   HfstTokenizer &tokenizer)
 {
-  StringVector split_line = split(line,'\t');  
+  StringVector split_line = split(line,'\t');
  
   if (split_line.size() != 2 and split_line.size() != 3)
     { throw InvalidLine(__FILE__ " " STR(__LINE__)); }
@@ -74,8 +74,8 @@ WeightedStringVector tokenize_lexicon_line(const std::string &line,
   std::string weight_str = split_line[1];
 
   if (split_line.size() == 3)
-    { 
-      tag = split_line[1]; 
+    {
+      tag = split_line[1];
       weight_str = split_line[2];
     }
 
@@ -89,12 +89,13 @@ WeightedStringVector tokenize_lexicon_line(const std::string &line,
   if (weight == -1)
     { throw InvalidFloat(weight_str); }
 
-  return WeightedStringVector(entry, weight); 
+  return WeightedStringVector(entry, weight);
 }
 
 WeightedStringVector tokenize_grammar_line(const std::string &line,
 					   HfstTokenizer &tokenizer)
 {
+  (void)tokenizer;
   StringVector split_line = split(line, '\t');
 
   if ((split_line.size() % 2) != 1 or split_line.size() < 3)
@@ -107,18 +108,18 @@ WeightedStringVector tokenize_grammar_line(const std::string &line,
   float weight = get_non_negative_float(split_line.back());
 
   if (weight == -1)
-    { 
-      throw InvalidFloat(weight_str); 
+    {
+      throw InvalidFloat(weight_str);
     }
 
-  return WeightedStringVector(entry, weight); 
+  return WeightedStringVector(entry, weight);
 }
 
 std::string read_model_start_tag(const std::string &line)
 {
   if (line.find("START ") != 0)
     {
-      throw InvalidLine(__FILE__ " " STR(__LINE__)); 
+      throw InvalidLine(__FILE__ " " STR(__LINE__));
     }
 
   std::string model_name = line.substr(6);
@@ -165,43 +166,43 @@ int main(void)
 
   /* Empty lines, strings without weights should throw an exception. */
   try
-    { 
-      static_cast<void>(tokenize_lexicon_line("", tokenizer)); 
+    {
+      static_cast<void>(tokenize_lexicon_line("", tokenizer));
       fail_test(__FILE__,__LINE__);
     }
   catch (const InvalidLine &e)
     { static_cast<void>(e); }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
   
   try
     {
-      static_cast<void>(tokenize_lexicon_line("oof\tNN", tokenizer)); 
+      static_cast<void>(tokenize_lexicon_line("oof\tNN", tokenizer));
       fail_test(__FILE__,__LINE__);
     }
   catch (const InvalidFloat &e)
     { static_cast<void>(e); }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   /* Strings with erroneous weights should throw an exception. */
   try
-    { 
-      static_cast<void>(tokenize_lexicon_line("oof\tNN\tw", tokenizer)); 
+    {
+      static_cast<void>(tokenize_lexicon_line("oof\tNN\tw", tokenizer));
       fail_test(__FILE__,__LINE__);
     }
   catch (const InvalidFloat &e)
     { static_cast<void>(e); }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   /* Basic case. Should work. */
@@ -212,24 +213,24 @@ int main(void)
       if (v.string_vector.size() != 4)
 	{ throw InvalidLine(__FILE__ " " STR(__LINE__)); }
 
-      if (v.string_vector[0] != "o" or v.string_vector[1] != "o" or 
+      if (v.string_vector[0] != "o" or v.string_vector[1] != "o" or
 	  v.string_vector[2] != "f" or v.weight != 0.5)
 	{ throw InvalidLine(__FILE__ " " STR(__LINE__)); }
     }
   catch (const InvalidLine &e)
-    { 
+    {
       std::cerr << "From line: " << e.representation << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
   catch (const InvalidFloat &e)
-    { 
+    {
       std::cerr << "From line: " << e.representation << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   /* Empty word. Should work. */
@@ -245,90 +246,90 @@ int main(void)
     }
   catch (const InvalidLine &e)
     {
-      std::cerr << "From line: " << e.representation << std::endl; 
-      fail_test(__FILE__,__LINE__); 
+      std::cerr << "From line: " << e.representation << std::endl;
+      fail_test(__FILE__,__LINE__);
     }
   catch (const InvalidFloat &e)
-    { 
+    {
       std::cerr << "From line: " << e.representation << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   /* utf-8 chars. Should work. */
   try
     {
-      WeightedStringVector v = tokenize_lexicon_line("älä\tNN\t0.5", 
+      WeightedStringVector v = tokenize_lexicon_line("älä\tNN\t0.5",
 						     tokenizer);
       
       if (v.string_vector.size() != 4)
 	{ throw InvalidLine(__FILE__ " " STR(__LINE__)); }
 
-      if (v.string_vector[0] != "ä" and v.string_vector[1] != "l" and 
+      if (v.string_vector[0] != "ä" and v.string_vector[1] != "l" and
 	  v.string_vector[2] != "ä" and v.weight != 0.5)
 	{ throw InvalidLine(__FILE__ " " STR(__LINE__)); }
     }
   catch (const InvalidLine &e)
-    { 
+    {
       std::cerr << "From line: " << e.representation << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
   catch (const InvalidFloat &e)
-    { 
+    {
       std::cerr << "From line: " << e.representation << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
   
   
   /* Empty lines, lines with only weight and lines with an odd number
      of tags should throw an excpetion. */
   try
-    { 
-      static_cast<void>(tokenize_lexicon_line("", tokenizer)); 
+    {
+      static_cast<void>(tokenize_lexicon_line("", tokenizer));
       fail_test(__FILE__,__LINE__);
     }
   catch (const InvalidLine &e)
     { static_cast<void>(e); }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   try
     {
-      static_cast<void>(tokenize_lexicon_line("0.5", tokenizer)); 
+      static_cast<void>(tokenize_lexicon_line("0.5", tokenizer));
       fail_test(__FILE__,__LINE__);
       
     }
   catch (const InvalidLine &e)
     { static_cast<void>(e); }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   try
     {
-      static_cast<void>(tokenize_lexicon_line("NN\tVBZ\tDT\t0.5", tokenizer)); 
+      static_cast<void>(tokenize_lexicon_line("NN\tVBZ\tDT\t0.5", tokenizer));
       fail_test(__FILE__,__LINE__);
     }
   catch (const InvalidLine &e)
     { static_cast<void>(e); }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   /* Basic case. Should work. */
@@ -340,24 +341,24 @@ int main(void)
       if (v.string_vector.size() != 2)
 	{ throw InvalidLine(__FILE__ " " STR(__LINE__)); }
 
-      if (v.string_vector[0] != "DT" or v.string_vector[1] != "NN" or 
+      if (v.string_vector[0] != "DT" or v.string_vector[1] != "NN" or
 	  v.weight != 0.5)
 	{ throw InvalidLine(__FILE__ " " STR(__LINE__)); }
     }
   catch (const InvalidLine &e)
-    { 
+    {
       std::cerr << "From line: " << e.representation << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
   catch (const InvalidFloat &e)
-    { 
+    {
       std::cerr << "From line: " << e.representation << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   // Empty model name fails.
@@ -368,9 +369,9 @@ int main(void)
   catch (const InvalidLine &e)
     { static_cast<void>(e); }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   // Model name without START tag fails.
@@ -381,9 +382,9 @@ int main(void)
   catch (const InvalidLine &e)
     { static_cast<void>(e); }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   // Model name with tab fails.
@@ -394,9 +395,9 @@ int main(void)
   catch (const InvalidLine &e)
     { static_cast<void>(e); }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   // Regular model name works.
@@ -408,19 +409,19 @@ int main(void)
 	{ throw InvalidLine(__FILE__ " " STR(__LINE__)); }
     }
   catch (const InvalidLine &e)
-    { 
+    {
       std::cerr << "From line: " << e.representation << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
   catch (const InvalidFloat &e)
-    { 
+    {
       std::cerr << "From line: " << e.representation << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   // Empty model name fails.
@@ -431,9 +432,9 @@ int main(void)
   catch (const InvalidLine &e)
     { static_cast<void>(e); }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   // Model name without STOP tag fails.
@@ -444,9 +445,9 @@ int main(void)
   catch (const InvalidLine &e)
     { static_cast<void>(e); }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   // Model name with tab fails.
@@ -457,9 +458,9 @@ int main(void)
   catch (const InvalidLine &e)
     { static_cast<void>(e); }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   // Regular model name works.
@@ -471,19 +472,19 @@ int main(void)
 	{ throw InvalidLine(__FILE__ " " STR(__LINE__)); }
     }
   catch (const InvalidLine &e)
-    { 
+    {
       std::cerr << "From line: " << e.representation << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
   catch (const InvalidFloat &e)
-    { 
+    {
       std::cerr << "From line: " << e.representation << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
   catch (const std::exception &e)
-    { 
+    {
       std::cerr << "Caught: " << e.what() << std::endl;
-      fail_test(__FILE__,__LINE__); 
+      fail_test(__FILE__,__LINE__);
     }
 
   // TEST PASSED

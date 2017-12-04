@@ -10,7 +10,7 @@ FunctionalTransducer::FunctionalTransducer(const HfstBasicTransducer &fst):
   StringSet input_symbols;
   StringSet output_symbols;
   verbose_print("Collecting input and output symbols for tokenization.");
-  collect_symbols_from_fst(input_symbols,output_symbols,fst);  
+  collect_symbols_from_fst(input_symbols,output_symbols,fst);
 
   verbose_print("Defining input symbols.");
   define_multichar_symbols(input_symbols,input_tokenizer);
@@ -23,7 +23,7 @@ void FunctionalTransducer::set_verbose_print(std::ostream &out)
 { verbose_out = &out; }
 
 void FunctionalTransducer::verbose_print(const std::string &msg)
-{ 
+{
   if (verbose_out != NULL)
     { std::cout << msg << std::endl; }
 }
@@ -99,7 +99,7 @@ StringVector FunctionalTransducer::tokenize
        ++it)
     {
       if (not it->empty())
-    { 
+    {
       if (*it == ZERO)
         { *it = EPSILON_SYMBOL; }
       if (*it->begin() == '\\')
@@ -128,7 +128,7 @@ std::string FunctionalTransducer::join(const StringVector & v,
   return joined;
 }
 
-StringVector 
+StringVector
 FunctionalTransducer::apply(const StringVector &v,bool input) const
 {
   StringVectorVector result;
@@ -156,4 +156,4 @@ int main(void)
   std::cerr << output << std::endl;
   std::string input = func_cats.apply_on_output("cat+N+Nom+Pl0\\0");
   std::cerr << input << std::endl;
-}  
+}

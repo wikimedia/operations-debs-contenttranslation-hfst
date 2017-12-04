@@ -8,12 +8,12 @@
 
 using namespace hfst;
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 
   const unsigned int TYPES_SIZE=3;
-  const ImplementationType types [] = {SFST_TYPE, 
-                       TROPICAL_OPENFST_TYPE, 
+  const ImplementationType types [] = {SFST_TYPE,
+                       TROPICAL_OPENFST_TYPE,
                        /*LOG_OPENFST_TYPE,*/
                        FOMA_TYPE};
 
@@ -27,10 +27,10 @@ int main(int argc, char **argv)
       verbose_print("Construction from AT&T format", types[i]);
 
       unsigned int transducers_read=0;
-      FILE * file = fopen((std::string(getenv("srcdir")) + 
+      FILE * file = fopen((std::string(getenv("srcdir")) +
                std::string("/test_transducers.att")).c_str(), "rb");
       assert(file != NULL);
-      try 
+      try
     {
       while (not feof(file))
         {
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
         }
     }
       //catch (hfst::exceptions::NotValidAttFormatException e)
-      catch (const HfstException e) 
+      catch (const HfstException e)
     {
       assert(transducers_read == 4);
     }
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
       remove("transducer2.att");
       remove("transducer.att");
 
-      /* From HfstInputStream. */      
+      /* From HfstInputStream. */
       verbose_print("Writing to HfstOutputStream", types[i]);
 
       HfstTransducer tr1("foo", types[i]);
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
       transducers_read=0;
       while (not in.is_eof())
     {
-      HfstTransducer tr(in);   
+      HfstTransducer tr(in);
       transducers.push_back(tr);
       transducers_read++;
     }

@@ -1,16 +1,16 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #ifndef _FLAG_DIACRITICS_H_
 #define _FLAG_DIACRITICS_H_
 
-#include <iostream>
+#include <iosfwd>
 #include <string>
 #include <map>
 #include <vector>
@@ -18,6 +18,7 @@
 #include <utility>
 
 #include "hfstdll.h"
+#include "HfstDataTypes.h"
 
 /** @file HfstFlagDiacritics.h
     \brief Class declarations for flag diacritic handling. */
@@ -38,27 +39,17 @@ private:
     std::string name;
 public:
     HFSTDLL FdOperation
-      (FdOperator op, FdFeature feat, FdValue val, const std::string& str):
-    op(op), feature(feat), value(val), name(str) {}
+      (FdOperator op, FdFeature feat, FdValue val, const std::string& str);
+
+    // Required for operator[]()
+    HFSTDLL FdOperation(void);
     
-    HFSTDLL FdOperator Operator(void) const { return op; }
-    HFSTDLL FdFeature Feature(void) const { return feature; }
-    HFSTDLL FdValue Value(void) const { return value; }
-    HFSTDLL std::string Name(void) const { return name; }
+    HFSTDLL FdOperator Operator(void) const;
+    HFSTDLL FdFeature Feature(void) const;
+    HFSTDLL FdValue Value(void) const;
+    HFSTDLL std::string Name(void) const;
     
-    HFSTDLL static FdOperator char_to_operator(char c)
-        {
-            switch (c) {
-            case 'P': return Pop;
-            case 'N': return Nop;
-            case 'R': return Rop;
-            case 'D': return Dop;
-            case 'C': return Cop;
-            case 'U': return Uop;
-            default:
-                throw;
-            }
-        }
+    HFSTDLL static FdOperator char_to_operator(char c);
 
     HFSTDLL static bool is_diacritic(const std::string& diacritic_str);
     HFSTDLL static std::string::size_type find_diacritic
@@ -68,7 +59,7 @@ public:
     HFSTDLL static std::string get_operator(const std::string& diacritic);
     HFSTDLL static std::string get_feature(const std::string& diacritic);
     HFSTDLL static std::string get_value(const std::string& diacritic);
-    HFSTDLL static bool has_value(const std::string& diacritic); 
+    HFSTDLL static bool has_value(const std::string& diacritic);
 };
 
 template<class T> class FdState;
@@ -107,52 +98,67 @@ public:
             if(second_full_stop_pos == std::string::npos)
             {
                 assert(op == Cop || op == Dop || op == Rop);
-                feat = str.substr(first_full_stop_pos+1, 
+                feat = str.substr(first_full_stop_pos+1,
                                   last_char_pos-first_full_stop_pos-1);
             }
             else
             {
-                feat = str.substr(first_full_stop_pos+1, 
+                feat = str.substr(first_full_stop_pos+1,
                                   second_full_stop_pos-first_full_stop_pos-1);
-                val = str.substr(second_full_stop_pos+1, 
+                val = str.substr(second_full_stop_pos+1,
                                  last_char_pos-second_full_stop_pos-1);
             }
       
             if(feature_map.count(feat) == 0)
             {
-                FdFeature next = feature_map.size();
+                FdFeature next = hfst::size_t_to_ushort(feature_map.size());
                 feature_map[feat] = next;
             }
             if(value_map.count(val) == 0)
             {
-                FdValue next = value_map.size()+1;
+                FdValue next = hfst::size_t_to_ushort(value_map.size()+1);
                 value_map[val] = next;
             }
-      
-            operations.insert
-              (std::pair<T,FdOperation>
-               (symbol, 
-                FdOperation(op, feature_map[feat], value_map[val], str)));
-            symbol_map.insert(std::pair<std::string,T>(str, symbol));
+
+            FdOperation operation(op, feature_map[feat], value_map[val], str);
+            operations[symbol] = operation;
+            symbol_map[str] = symbol;
         }
     
-    FdFeature num_features() const { return feature_map.size(); }
+    FdFeature num_features() const { return (hfst::FdFeature)feature_map.size(); }
+
     bool is_diacritic(T symbol) const
         { return operations.find(symbol) != operations.end(); }
+
+    std::vector<T> get_symbols_with_feature(const std::string& feature) const
+        {
+            std::vector<T> retval;
+            if (feature_map.count(feature) == 0) {
+                return retval;
+            }
+            FdFeature feature_code = feature_map.at(feature);
+            for (typename std::map<T, FdOperation>::const_iterator it = operations.begin();
+                 it != operations.end(); ++it) {
+                if ((it->second).Feature() == feature_code) {
+                    retval.push_back(it->first);
+                }
+            }
+            return retval;
+        }
       
     const FdOperation* get_operation(T symbol) const
         {
           // for some reason this fails to compile???
-          //std::map<T,FdOperation>::const_iterator i 
+          //std::map<T,FdOperation>::const_iterator i
           //  = operations.find(symbol);
           //return (i==operations.end()) ? NULL : &(i->second);
         
-          return (operations.find(symbol)==operations.end()) ? NULL : 
+          return (operations.find(symbol)==operations.end()) ? NULL :
             &(operations.find(symbol)->second);
         }
     const FdOperation* get_operation(const std::string& symbol) const
         {
-            return (symbol_map.find(symbol)==symbol_map.end()) ? NULL : 
+            return (symbol_map.find(symbol)==symbol_map.end()) ? NULL :
               get_operation(symbol_map.find(symbol)->second);
         }
     
@@ -176,7 +182,7 @@ public:
       
             while(true)
             {
-                std::string::size_type next_diacritic_pos 
+                std::string::size_type next_diacritic_pos
                   = FdOperation::find_diacritic(remaining, length);
                 if(next_diacritic_pos == std::string::npos)
                     break;
@@ -233,7 +239,7 @@ public:
             if(op)
                 return apply_operation(*op);
             return true; // if the symbol isn't a diacritic
-        }    
+        }
     bool apply_operation(const FdOperation& op)
         {
             switch(op.Operator()) {
@@ -263,13 +269,13 @@ public:
           
             case Uop: // unification
               if(values[op.Feature()] == 0 || /* if the feature is unset or */
-                 values[op.Feature()] == op.Value() || /* the feature is at 
-                                                          this value already 
+                 values[op.Feature()] == op.Value() || /* the feature is at
+                                                          this value already
                                                           or */
                  (values[op.Feature()] < 0 &&
-                  (values[op.Feature()]*(-1) != op.Value())) /* the feature is 
-                                                              negatively set 
-                                                              to something 
+                  (values[op.Feature()]*(-1) != op.Value())) /* the feature is
+                                                              negatively set
+                                                              to something
                                                               else */
                  )
                 {

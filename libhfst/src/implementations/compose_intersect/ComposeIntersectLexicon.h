@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 #ifndef COMPOSE_INTERSECT_LEXICON_H
 #define COMPOSE_INTERSECT_LEXICON_H
@@ -49,7 +49,7 @@ namespace hfst
       HfstState get_state(const StatePair &, bool allow_lexicon_epsilons=true);
       StatePair get_pair(HfstState);
       void clear_all_info(void);
-      HfstState map_state_and_add_to_agenda(const StatePair &, 
+      HfstState map_state_and_add_to_agenda(const StatePair &,
                                             bool allow_lexicon_epsilons);
       HfstBasicTransducer &compute_composition_result
     (ComposeIntersectRule *);

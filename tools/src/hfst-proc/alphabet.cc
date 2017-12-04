@@ -152,7 +152,7 @@ Symbolizer::extract_symbol(std::istream& is) const
 
 //////////Function definitions for ProcTransducerAlphabet
 
-ProcTransducerAlphabet::ProcTransducerAlphabet(std::istream& is, 
+ProcTransducerAlphabet::ProcTransducerAlphabet(std::istream& is,
                                        SymbolNumber symbol_count):
   TransducerAlphabet(is, symbol_count), symbol_properties_table(), symbolizer(), blank_symbol(NO_SYMBOL_NUMBER)
 {
@@ -312,7 +312,7 @@ ProcTransducerAlphabet::calculate_caps()
     else
       case_res = 0;
     
-    if(case_res < 0) 
+    if(case_res < 0)
     {
       symbol_properties_table[i].lower = i;
       symbol_properties_table[i].upper = (switched=="")?NO_SYMBOL_NUMBER:symbolizer.find_symbol(switched.c_str());
@@ -345,7 +345,7 @@ ProcTransducerAlphabet::calculate_caps()
         }
         add_symbol(switched, prop);
         if(printDebuggingInformationFlag)
-          std::cout << "Added new symbol '" << switched << "' (" << symbol_table.size()-1 << ") as alternate case for '" 
+          std::cout << "Added new symbol '" << switched << "' (" << symbol_table.size()-1 << ") as alternate case for '"
                     << symbol_table[i] << "' (" << i << ")" << std::endl;
       }
       else
@@ -357,7 +357,7 @@ ProcTransducerAlphabet::calculate_caps()
     
     
     if(printDebuggingInformationFlag &&
-       symbol_properties_table[i].lower != NO_SYMBOL_NUMBER && symbol_properties_table[i].upper != NO_SYMBOL_NUMBER && 
+       symbol_properties_table[i].lower != NO_SYMBOL_NUMBER && symbol_properties_table[i].upper != NO_SYMBOL_NUMBER &&
        symbol_to_string(symbol_properties_table[i].lower).length() != symbol_to_string(symbol_properties_table[i].upper).length())
     {
       std::cout << "Symbol " << i << "'s alternate case has a different string length" << std::endl;
@@ -457,18 +457,18 @@ ProcTransducerAlphabet::caps_helper_single(const char* c, int& case_res)
                                              {"Ԁ","ԥ"}, // Cyrillic Supplement
                                              {"Ḁ","ỿ"}};//Latin Extended Additional
 
-  for(int i = 0; i < 21; i++) 
+  for(int i = 0; i < 21; i++)
   {
-    if(strcmp(c,override_upper[i][0]) == 0) 
+    if(strcmp(c,override_upper[i][0]) == 0)
     {
       case_res = 1;
       return override_upper[i][1];
     }
   }
 
-  for(int i = 0; i < 21; i++) 
+  for(int i = 0; i < 21; i++)
   {
-    if(strcmp(c,override_lower[i][0]) == 0) 
+    if(strcmp(c,override_lower[i][0]) == 0)
     {
       case_res = -1;
       return override_lower[i][1];
@@ -605,7 +605,7 @@ ProcTransducerAlphabet::is_punctuation(const char* c) const
   const char* individual_chars = "×÷";
   for(int i=0;i<8;i++)
   {
-    if(strcmp(c,punct_ranges[i][0]) >= 0 && 
+    if(strcmp(c,punct_ranges[i][0]) >= 0 &&
        strcmp(c,punct_ranges[i][1]) <= 0)
     {
       // a hack to filter out symbols (e.g. tags) that may start with punctuation
@@ -650,7 +650,7 @@ ProcTransducerAlphabet::is_compound_boundary(SymbolNumber symbol) const
 {
 extern bool processCompounds ;
   std::string s = symbol_to_string(symbol);
-  if(!processCompounds) 
+  if(!processCompounds)
     return false;
 
   if(s == "+" || s[s.length()-1] == '+' ||

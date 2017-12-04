@@ -48,7 +48,7 @@ struct fsm *fsm_trie_done(struct fsm_trie_handle *th) {
 		fsm_construct_add_arc(newh, thash->sourcestate, thash->targetstate, thash->insym, thash->outsym);
 	    } else {
 		break;
-	    }		
+	    }
 	}
     }
     for (i = 0; i <= th->used_states; i++) {

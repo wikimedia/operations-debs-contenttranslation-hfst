@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include <string>
@@ -20,46 +20,46 @@ namespace hfst
 {
   HfstOutputStream::HfstOutputStream(ImplementationType type, bool hfst_format):
     type(type), hfst_format(hfst_format), is_open(false)
-  { 
-    if (! HfstTransducer::is_implementation_type_available(type)) {
-      HFST_THROW(ImplementationTypeNotAvailableException);
+  {
+    if (! HfstTransducer::is_lean_implementation_type_available(type)) {
+      throw ImplementationTypeNotAvailableException("ImplementationTypeNotAvailableException", __FILE__, __LINE__, type);
     }
 
     switch(type)
       {
-#if HAVE_SFST
+#if HAVE_SFST || HAVE_LEAN_SFST
       case SFST_TYPE:
-        implementation.sfst = 
+        implementation.sfst =
           new hfst::implementations::SfstOutputStream();
         break;
 #endif
 #if HAVE_OPENFST
       case TROPICAL_OPENFST_TYPE:
-        implementation.tropical_ofst = 
+        implementation.tropical_ofst =
           new hfst::implementations::TropicalWeightOutputStream(hfst_format);
         break;
-#if HAVE_OPENFST_LOG
+#if HAVE_OPENFST_LOG || HAVE_LEAN_OPENFST_LOG
       case LOG_OPENFST_TYPE:
-        implementation.log_ofst = 
+        implementation.log_ofst =
           new hfst::implementations::LogWeightOutputStream();
         break;
 #endif
 #endif
 #if HAVE_FOMA
       case FOMA_TYPE:
-        implementation.foma = 
+        implementation.foma =
           new hfst::implementations::FomaOutputStream();
         break;
 #endif
 #if HAVE_XFSM
       case XFSM_TYPE:
-        implementation.xfsm = 
+        implementation.xfsm =
           new hfst::implementations::XfsmOutputStream(); // throws error, not implemented
         break;
 #endif
 #if HAVE_MY_TRANSDUCER_LIBRARY
       case MY_TRANSDUCER_LIBRARY_TYPE:
-        implementation.my_transducer_library = 
+        implementation.my_transducer_library =
           new hfst::implementations::MyTransducerLibraryOutputStream(hfst_format);
         break;
 #endif
@@ -78,54 +78,54 @@ namespace hfst
     this->is_open=true;
   }
 
-  // FIXME: HfstOutputStream takes a string parameter, 
+  // FIXME: HfstOutputStream takes a string parameter,
   //        HfstInputStream a const char*
   HfstOutputStream::HfstOutputStream
   (const std::string &filename,ImplementationType type, bool hfst_format_):
     type(type), hfst_format(hfst_format_), is_open(false)
-  { 
-    if (! HfstTransducer::is_implementation_type_available(type)) {
-      HFST_THROW(ImplementationTypeNotAvailableException);
+  {
+    if (! HfstTransducer::is_lean_implementation_type_available(type)) {
+      throw ImplementationTypeNotAvailableException("ImplementationTypeNotAvailableException", __FILE__, __LINE__, type);
     }
 
     switch(type)
       {
-#if HAVE_SFST
+#if HAVE_SFST || HAVE_LEAN_SFST
       case SFST_TYPE:
-        implementation.sfst = 
+        implementation.sfst =
           new hfst::implementations::SfstOutputStream(filename);
         break;
 #endif
 #if HAVE_OPENFST
       case TROPICAL_OPENFST_TYPE:
         // FIXME: this should be done in TropicalWeight layer
-        if (filename.compare("") == 0) 
-          implementation.tropical_ofst = 
+        if (filename.compare("") == 0)
+          implementation.tropical_ofst =
             new hfst::implementations::TropicalWeightOutputStream(hfst_format);
         else
-          implementation.tropical_ofst = 
+          implementation.tropical_ofst =
             new hfst::implementations::TropicalWeightOutputStream
             (filename, hfst_format);
         break;
-#if HAVE_OPENFST_LOG
+#if HAVE_OPENFST_LOG || HAVE_LEAN_OPENFST_LOG
       case LOG_OPENFST_TYPE:
-        implementation.log_ofst = 
+        implementation.log_ofst =
           new hfst::implementations::LogWeightOutputStream(filename);
         break;
 #endif
 #endif
 #if HAVE_FOMA
       case FOMA_TYPE:
-        implementation.foma = 
+        implementation.foma =
           new hfst::implementations::FomaOutputStream(filename);
         break;
 #endif
 #if HAVE_XFSM
       case XFSM_TYPE:
-        /* XFSM api only offers a function that reads transducers that takes a filename argument. 
+        /* XFSM api only offers a function that reads transducers that takes a filename argument.
            That is why we don't write an HFST header. */
-        hfst_format = false; 
-        implementation.xfsm = 
+        hfst_format = false;
+        implementation.xfsm =
           new hfst::implementations::XfsmOutputStream(filename);
         break;
 #endif
@@ -154,7 +154,7 @@ namespace hfst
   {
     switch (type)
       {
-#if HAVE_SFST
+#if HAVE_SFST || HAVE_LEAN_SFST
       case SFST_TYPE:
         delete implementation.sfst;
         break;
@@ -163,7 +163,7 @@ namespace hfst
       case TROPICAL_OPENFST_TYPE:
         delete implementation.tropical_ofst;
         break;
-#if HAVE_OPENFST_LOG
+#if HAVE_OPENFST_LOG || HAVE_LEAN_OPENFST_LOG
       case LOG_OPENFST_TYPE:
         delete implementation.log_ofst;
         break;
@@ -216,7 +216,7 @@ namespace hfst
   {
     switch(type)
       {
-#if HAVE_SFST
+#if HAVE_SFST || HAVE_LEAN_SFST
       case SFST_TYPE:
         implementation.sfst->write(c);
         break;
@@ -225,7 +225,7 @@ namespace hfst
       case TROPICAL_OPENFST_TYPE:
         implementation.tropical_ofst->write(c);
         break;
-#if HAVE_OPENFST_LOG
+#if HAVE_OPENFST_LOG || HAVE_LEAN_OPENFST_LOG
       case LOG_OPENFST_TYPE:
         implementation.log_ofst->write(c);
         break;
@@ -267,7 +267,7 @@ namespace hfst
 
     switch(type)
       {
-#if HAVE_SFST
+#if HAVE_SFST || HAVE_LEAN_SFST
       case SFST_TYPE:
         type_value=std::string("SFST");
         break;
@@ -276,7 +276,7 @@ namespace hfst
       case TROPICAL_OPENFST_TYPE:
         type_value=std::string("TROPICAL_OPENFST");
         break;
-#if HAVE_OPENFST_LOG
+#if HAVE_OPENFST_LOG || HAVE_LEAN_OPENFST_LOG
       case LOG_OPENFST_TYPE:
         type_value=std::string("LOG_OPENFST");
         break;
@@ -310,29 +310,29 @@ namespace hfst
     append(header, type_value);
   }
 
-#if HAVE_SFST
+#if HAVE_SFST || HAVE_LEAN_SFST
 void
 HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&
                                                              header,
                                                              HfstTransducer&
                                                              transducer)
 #else
-void 
+void
 HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
                                                              HfstTransducer&)
 #endif
   {
+#if HAVE_SFST || HAVE_LEAN_SFST
     switch(type)
       {
-#if HAVE_SFST
       case SFST_TYPE:
         implementation.sfst->append_implementation_specific_header_data
           (header, transducer.implementation.sfst);
         break;
-#endif
       default:
         break;
       }
+#endif
   }
 
   HfstOutputStream &HfstOutputStream::flush()
@@ -362,7 +362,7 @@ HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
 
     if (type != transducer.type)
       {
-        HFST_THROW_MESSAGE(TransducerTypeMismatchException, 
+        HFST_THROW_MESSAGE(TransducerTypeMismatchException,
                            "operator<<: "
                            "HfstOutputStream and HfstTransducer do not "
                            "have the same type");
@@ -374,7 +374,7 @@ HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
        - the fifth char is a separator:                 "\0"
        - the sixth and seventh char tell the length of the rest of the header
          (beginning after the eighth char)
-       - the eighth char is a separator and is not counted 
+       - the eighth char is a separator and is not counted
          to the header length: "\0"
        - the rest of the header consists of pairs of attributes and their values
          that are each separated by a char "\0"
@@ -387,13 +387,13 @@ HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
        "type\0"     "FOMA\0"
        "name\0"     "\0"
        
-       This is the header of a version 3.0 HFST transducer whose implementation 
-       type is foma and whose name is not defined, i.e. is the empty string "". 
+       This is the header of a version 3.0 HFST transducer whose implementation
+       type is foma and whose name is not defined, i.e. is the empty string "".
        The two bytes "\0\x1c" that form the length field tell that the length of
        the rest of the header (i.e. the sequence of bytes
        "version\03.0\0type\0FOMA\0name\0\0") is 0 * 256 + 28 * 1 = 28 bytes.
 
-       HFST version 3.0 header must contain at least the attributes 'version', 
+       HFST version 3.0 header must contain at least the attributes 'version',
        'type' and 'name' and their values. Implementation-specific attributes
        can follow after these obligatory attributes.
 
@@ -447,7 +447,7 @@ HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
 
     switch (type)
       {
-#if HAVE_SFST
+#if HAVE_SFST || HAVE_LEAN_SFST
       case SFST_TYPE:
         implementation.sfst->write_transducer
           (transducer.implementation.sfst);
@@ -457,8 +457,8 @@ HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
       case TROPICAL_OPENFST_TYPE:
         implementation.tropical_ofst->write_transducer
           (transducer.implementation.tropical_ofst);
-        return *this;    
-#if HAVE_OPENFST_LOG
+        return *this;
+#if HAVE_OPENFST_LOG || HAVE_LEAN_OPENFST_LOG
       case LOG_OPENFST_TYPE:
         implementation.log_ofst->write_transducer
           (transducer.implementation.log_ofst);
@@ -497,7 +497,7 @@ HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
   void HfstOutputStream::close(void) {
     switch (type)
       {
-#if HAVE_SFST
+#if HAVE_SFST || HAVE_LEAN_SFST
       case SFST_TYPE:
         implementation.sfst->close();
         break;
@@ -506,7 +506,7 @@ HfstOutputStream::append_implementation_specific_header_data(std::vector<char>&,
       case TROPICAL_OPENFST_TYPE:
         implementation.tropical_ofst->close();
         break;
-#if HAVE_OPENFST_LOG
+#if HAVE_OPENFST_LOG || HAVE_LEAN_OPENFST_LOG
       case LOG_OPENFST_TYPE:
         implementation.log_ofst->close();
         break;

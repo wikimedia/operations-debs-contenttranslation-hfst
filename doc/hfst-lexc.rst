@@ -29,7 +29,7 @@ Compilation requirements:
 
 - compiler *must* be able to find hfst headers (e.g. ``hfst2/hfst.h``)
 
-- linker *must* be able to find library named hfst (e.g. ``libhfst.so``, 
+- linker *must* be able to find library named hfst (e.g. ``libhfst.so``,
   ``libhfst.dylib``, ``libhfst.dll``, or ``libhfst.a``)
 
 - linker *should* be able to find library named readline, if readline interface
@@ -89,7 +89,7 @@ Usage
 
 The executable is typically called ``hfst-lexc``. It can read
 lexc files and produce HFST binary transducers. For basic operation you may use
-either ``hfst-lexc -o output.hfst input.hlexc`` or 
+either ``hfst-lexc -o output.hfst input.hlexc`` or
 ``hfst-lexc -q < input.hlexc > output.hfsta``. If readline support was compiled
 in, you may also use Xerox lexc lookalike user interface by simply calling
 command ``hfst-lexc`` without any arguments. For more options say
@@ -101,7 +101,7 @@ command ``hfst-lexc`` without any arguments. For more options say
 
 -h, --help                   Print this help message
 -V, --version                Print version info
--v, --verbose                Print verbosely while compiling 
+-v, --verbose                Print verbosely while compiling
 -q, --quiet                  Do not print verbosely while compiling
 -o, --output=OUTFILE         Write output to OUTFILE
 -w, --weighted               Use weighted transducer format
@@ -160,7 +160,7 @@ bug tracking.  Following is sorted according in order of error codenames:
     * *unexpected ULSTRING, expecting LEXICON_NAME [near: `Nouns']*. This
       often means that there is a missing semicolon at the end of lexicon line.
     
-    * *unexpected ';', expecting LEXICON_NAME or ULSTRING or 
+    * *unexpected ';', expecting LEXICON_NAME or ULSTRING or
       XEROX_REGEXP or ':' [near: `;']*. Usually from extraneous
       semicolon at end of lexicon declaration.
 

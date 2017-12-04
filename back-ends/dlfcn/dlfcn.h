@@ -21,16 +21,16 @@
  * This is a modified copy of Ramiro Polla's original library.
  * Modifications were made so that this library can be used as a part
  * of the HFST library.
- * The modifications are indicated in comments. 
+ * The modifications are indicated in comments.
  * ****************
  */
 
 #ifndef DLFCN_H
-#define DLFCN_H 
+#define DLFCN_H
 
 /* HFST addition : The following three lines. */
-#ifdef __cplusplus 
-extern "C" { 
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /* POSIX says these are implementation-defined.
@@ -57,8 +57,8 @@ char *dlerror( void );
 
 
 /* HFST addition: The following three lines. */
-#ifdef __cplusplus 
-} 
-#endif 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* DLFCN_H */

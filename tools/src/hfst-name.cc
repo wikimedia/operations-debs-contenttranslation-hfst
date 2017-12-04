@@ -95,8 +95,8 @@ parse_options(int argc, char** argv)
           {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "n:pt:",
                              long_options, &option_index);
         if (-1 == c)
@@ -144,12 +144,12 @@ process_stream(HfstInputStream& instream, HfstOutputStream& outstream)
 
         if (transducer_n==1)
         {
-          verbose_printf("Naming %s...\n", inputfilename); 
+          verbose_printf("Naming %s...\n", inputfilename);
         }
         else
           {
-            verbose_printf("Naming %s..." SIZE_T_SPECIFIER "\n", 
-                   inputfilename, transducer_n); 
+            verbose_printf("Naming %s..." SIZE_T_SPECIFIER "\n",
+                   inputfilename, transducer_n);
           }
         
         HfstTransducer trans(instream);
@@ -210,7 +210,7 @@ int main( int argc, char **argv ) {
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
         inputfilename, outfilename);
     // here starts the buffer handling part
     HfstInputStream* instream = NULL;

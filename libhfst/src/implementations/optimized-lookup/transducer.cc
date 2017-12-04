@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include "./transducer.h"
@@ -49,7 +49,7 @@ TransducerAlphabet::TransducerAlphabet(std::istream& is,
         }
         symbol_table.push_back(str.c_str());
     }
-    orig_symbol_count = symbol_table.size();
+    orig_symbol_count = hfst::size_t_to_uint(symbol_table.size());
 }
 
 void TransducerAlphabet::add_symbol(char * symbol)
@@ -80,7 +80,7 @@ TransducerAlphabet::TransducerAlphabet(const SymbolTable& st):
             identity_symbol = i;
         }
     }
-    orig_symbol_count = symbol_table.size();
+    orig_symbol_count = hfst::size_t_to_uint(symbol_table.size());
 }
 
 SymbolNumber TransducerAlphabet::symbol_from_string(
@@ -228,8 +228,8 @@ void Encoder::read_input_symbol(const char * s, const int s_num)
         ascii_symbols[(unsigned char)(*s)] = s_num;
     }
     // If there's an ascii tokenized symbol shadowing this, remove it
-    if (strlen(s) > 1 && 
-        should_ascii_tokenize((unsigned char)(*s)) && 
+    if (strlen(s) > 1 &&
+        should_ascii_tokenize((unsigned char)(*s)) &&
         ascii_symbols[(unsigned char)(*s)] != NO_SYMBOL_NUMBER) {
       ascii_symbols[(unsigned char)(*s)] = NO_SYMBOL_NUMBER;
     }
@@ -269,7 +269,7 @@ bool Transducer::initialize_input(const char * input)
             new_symbol[bytes_to_tokenize] = '\0';
             (*input_str_ptr) += bytes_to_tokenize;
             alphabet->add_symbol(new_symbol);
-            k = alphabet->get_symbol_table().size() - 1;
+            k = hfst::size_t_to_uint(alphabet->get_symbol_table().size() - 1);
             encoder->read_input_symbol(new_symbol, k);
             delete [] new_symbol;
         }
@@ -286,10 +286,11 @@ void Transducer::include_symbol_in_alphabet(const std::string & sym)
     if (key != NO_SYMBOL_NUMBER) {
         return;
     }
-    key = alphabet->get_symbol_table().size();
+    key = hfst::size_t_to_uint(alphabet->get_symbol_table().size());
     alphabet->add_symbol(sym);
     char * cstr_for_encoder = new char[sym.size() + 1];
-    std::strcpy(cstr_for_encoder, sym.c_str());
+    //std::strcpy(cstr_for_encoder, sym.c_str());
+    strcpy(cstr_for_encoder, sym.c_str());
     encoder->read_input_symbol(cstr_for_encoder, key);
     delete[] cstr_for_encoder;
 }
@@ -308,6 +309,12 @@ HfstOneLevelPaths * Transducer::lookup_fd(const std::string & s, ssize_t limit,
                                           double time_cutoff)
 {
     return lookup_fd(s.c_str(), limit, time_cutoff);
+}
+
+HfstTwoLevelPaths * Transducer::lookup_fd_pairs(const std::string & s, ssize_t limit,
+                                                double time_cutoff)
+{
+    return lookup_fd_pairs(s.c_str(), limit, time_cutoff);
 }
 
 bool Transducer::is_lookup_infinitely_ambiguous(const std::string & s)
@@ -346,6 +353,39 @@ HfstOneLevelPaths * Transducer::lookup_fd(const char * s, ssize_t limit,
         start_clock = clock();
     }
     HfstOneLevelPaths * results = new HfstOneLevelPaths;
+    if (!initialize_input(s)) {
+        return results;
+    }
+    lookup_paths = new HfstTwoLevelPaths;
+    traversal_states.clear();
+    //current_weight += s.second;
+    get_analyses(0, 0, 0);
+    //current_weight -= s.second;
+    for (HfstTwoLevelPaths::iterator it = lookup_paths->begin();
+         it != lookup_paths->end(); ++it) {
+        HfstOneLevelPath output_path;
+        output_path.first = it->first;
+        for (StringPairVector::const_iterator v_it = (it->second).begin();
+             v_it != (it->second).end(); ++v_it) {
+            output_path.second.push_back(v_it->second);
+        }
+        results->insert(output_path);
+    }
+    delete lookup_paths;
+    lookup_paths = NULL;
+    return results;
+}
+
+HfstTwoLevelPaths * Transducer::lookup_fd_pairs(const char * s, ssize_t limit,
+                                                double time_cutoff)
+{
+    max_lookups = limit;
+    max_time = 0.0;
+    if (time_cutoff > 0.0) {
+        max_time = time_cutoff;
+        start_clock = clock();
+    }
+    HfstTwoLevelPaths * results = new HfstTwoLevelPaths;
     lookup_paths = results;
     if (!initialize_input(s)) {
         lookup_paths = NULL;
@@ -359,7 +399,6 @@ HfstOneLevelPaths * Transducer::lookup_fd(const char * s, ssize_t limit,
     return results;
 }
 
-
 void Transducer::try_epsilon_transitions(unsigned int input_pos,
                                          unsigned int output_pos,
                                          TransitionTableIndex i)
@@ -370,13 +409,14 @@ void Transducer::try_epsilon_transitions(unsigned int input_pos,
         SymbolNumber output = tables->get_transition_output(i);
         TransitionTableIndex target = tables->get_transition_target(i);
         Weight weight = tables->get_weight(i);
+        Weight old_weight = current_weight;
         if (input == 0) // epsilon
         {
-            output_tape.write(output_pos, output);
+            output_tape.write(output_pos, input, output);
             current_weight += weight;
             get_analyses(input_pos, output_pos + 1, target);
             found_transition = true;
-            current_weight -= weight;
+            current_weight = old_weight;
             ++i;
         } else if (alphabet->is_flag_diacritic(input)) {
             FlagDiacriticState flags = flag_state.get_values();
@@ -392,11 +432,11 @@ void Transducer::try_epsilon_transitions(unsigned int input_pos,
                 }
 
                 traversal_states.insert(flag_reachable);
-                output_tape.write(output_pos, output);
+                output_tape.write(output_pos, input, output);
                 current_weight += weight;
                 get_analyses(input_pos, output_pos + 1, target);
                 found_transition = true;
-                current_weight -= weight;
+                current_weight = old_weight;
                 traversal_states.erase(flag_reachable);
             }
             flag_state.assign_values(flags);
@@ -415,7 +455,7 @@ void Transducer::try_epsilon_indices(unsigned int input_pos,
     {
         try_epsilon_transitions(input_pos,
                                 output_pos,
-                                tables->get_index_target(i) - 
+                                tables->get_index_target(i) -
                                 TRANSITION_TARGET_TABLE_START);
         found_transition = true;
     }
@@ -431,6 +471,7 @@ void Transducer::find_transitions(SymbolNumber input,
     {
         if (tables->get_transition_input(i) == input)
         {
+            Weight old_weight = current_weight;
             // We're not going to find an epsilon / flag loop
             traversal_states.clear();
             SymbolNumber output = tables->get_transition_output(i);
@@ -441,12 +482,12 @@ void Transducer::find_transitions(SymbolNumber input,
                 // back in the input tape to find the symbol we want to write
                 output = input_tape[input_pos - 1];
             }
-            output_tape.write(output_pos, output);
+            output_tape.write(output_pos, input, output);
             current_weight += tables->get_weight(i);
             get_analyses(input_pos,
                          output_pos + 1,
                          tables->get_transition_target(i));
-            current_weight -= tables->get_weight(i);
+            current_weight = old_weight;
             found_transition = true;
         }
         else
@@ -467,7 +508,7 @@ void Transducer::find_index(SymbolNumber input,
         find_transitions(input,
                          input_pos,
                          output_pos,
-                         tables->get_index_target(i+input) - 
+                         tables->get_index_target(i+input) -
                          TRANSITION_TARGET_TABLE_START);
         found_transition = true;
     }
@@ -487,7 +528,7 @@ void Transducer::get_analyses(unsigned int input_pos,
 //            ": maximum recursion depth exceeded, discarding results\n";
         return;
     }
-    if (max_lookups >= 0 && lookup_paths->size() >= max_lookups) {
+    if (max_lookups >= 0 && (ssize_t)lookup_paths->size() >= max_lookups) {
         // Back out because we have enough results already
         return;
     }
@@ -503,12 +544,13 @@ void Transducer::get_analyses(unsigned int input_pos,
         i -= TRANSITION_TARGET_TABLE_START;
         // First we check for finality and collect the result
         if (input_tape[input_pos] == NO_SYMBOL_NUMBER) {
-            if (max_lookups < 0 || lookup_paths->size() < max_lookups) {
-                output_tape.write(output_pos, NO_SYMBOL_NUMBER);
+            if (max_lookups < 0 || (ssize_t)lookup_paths->size() < max_lookups) {
+                output_tape.write(output_pos, NO_SYMBOL_NUMBER, NO_SYMBOL_NUMBER);
                 if (tables->get_transition_finality(i)) {
+                    Weight old_weight = current_weight;
                     current_weight += tables->get_weight(i);
                     note_analysis();
-                    current_weight -= tables->get_weight(i);
+                    current_weight = old_weight;
                 }
             }
         }
@@ -552,12 +594,13 @@ void Transducer::get_analyses(unsigned int input_pos,
     else
     {
         if (input_tape[input_pos] == NO_SYMBOL_NUMBER) {
-            if (max_lookups < 0 || lookup_paths->size() < max_lookups) {
-                output_tape.write(output_pos, NO_SYMBOL_NUMBER);
+            if (max_lookups < 0 || (ssize_t)lookup_paths->size() < max_lookups) {
+                output_tape.write(output_pos, NO_SYMBOL_NUMBER, NO_SYMBOL_NUMBER);
                 if (tables->get_index_finality(i)) {
+                    Weight old_weight = current_weight;
                     current_weight += tables->get_final_weight(i);
                     note_analysis();
-                    current_weight -= tables->get_final_weight(i);
+                    current_weight = old_weight;
                 }
             }
         }
@@ -594,22 +637,21 @@ void Transducer::get_analyses(unsigned int input_pos,
                        input_pos, output_pos, i+1);
         }
     }
-    output_tape.write(output_pos, NO_SYMBOL_NUMBER);
+    output_tape.write(output_pos, NO_SYMBOL_NUMBER, NO_SYMBOL_NUMBER);
     ++recursion_depth_left;
 }
 
 void Transducer::note_analysis(void)
 {
-    HfstOneLevelPath result;
-    for (SymbolNumberVector::const_iterator it = output_tape.begin();
-         *it != NO_SYMBOL_NUMBER; ++it) {
-        result.second.push_back(alphabet->string_from_symbol(*it));
+    HfstTwoLevelPath result;
+    for (DoubleTape::const_iterator it = output_tape.begin();
+         it->output != NO_SYMBOL_NUMBER; ++it) {
+        result.second.push_back(StringPair(alphabet->string_from_symbol(it->input),
+                                           alphabet->string_from_symbol(it->output)));
     }
     result.first = current_weight;
     lookup_paths->insert(result);
 }
-
-
 
 Transducer::Transducer():
     header(NULL), alphabet(NULL), tables(NULL),
@@ -759,9 +801,9 @@ void Transducer::write(std::ostream& os) const
     header->write(os);
     alphabet->write(os);
     for(size_t i=0;i<header->index_table_size();i++)
-        tables->get_index(i).write(os, header->probe_flag(Weighted));
+      tables->get_index(hfst::size_t_to_uint(i)).write(os, header->probe_flag(Weighted));
     for(size_t i=0;i<header->target_table_size();i++)
-        tables->get_transition(i).write(os, header->probe_flag(Weighted));
+      tables->get_transition(hfst::size_t_to_uint(i)).write(os, header->probe_flag(Weighted));
 }
 
 Transducer * Transducer::copy(Transducer * t, bool weighted)

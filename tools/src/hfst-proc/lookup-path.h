@@ -47,7 +47,7 @@ class LookupPath
   SymbolNumberVector output_symbols;
   
  public:
-  LookupPath(const ProcTransducer& t, const TransitionTableIndex initial): 
+  LookupPath(const ProcTransducer& t, const TransitionTableIndex initial):
     transducer(t), index(initial), final(false), output_symbols() {}
   
   LookupPath(const LookupPath& o):
@@ -134,7 +134,7 @@ class LookupPathW : public LookupPath
    */
   Weight final_weight;
  public:
-  LookupPathW(const ProcTransducer& t, const TransitionTableIndex initial): 
+  LookupPathW(const ProcTransducer& t, const TransitionTableIndex initial):
         LookupPath(t, initial), weight(0.0f), final_weight(0.0f) {}
   LookupPathW(const LookupPathW& o): LookupPath(o), weight(o.weight),
     final_weight(o.final_weight) {}

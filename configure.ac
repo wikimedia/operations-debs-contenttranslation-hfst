@@ -18,7 +18,7 @@
 # Information on package
 HFST_NAME=hfst
 HFST_MAJOR=3
-HFST_MINOR=10
+HFST_MINOR=13
 HFST_EXTENSION=0
 HFST_VERSION=$HFST_MAJOR.$HFST_MINOR.$HFST_EXTENSION
 
@@ -27,11 +27,11 @@ HFST_VERSION=$HFST_MAJOR.$HFST_MINOR.$HFST_EXTENSION
 # for package-config pc file
 LIBHFST_NAME=hfst
 LIBHFST_MAJOR=3
-LIBHFST_MINOR=10
+LIBHFST_MINOR=13
 LIBHFST_EXTENSION=0
 LIBHFST_VERSION=$LIBHFST_MAJOR.$LIBHFST_MINOR.$LIBHFST_EXTENSION
 
-AC_INIT([hfst], [3.10.0], [hfst-bugs@helsinki.fi], [hfst])
+AC_INIT([hfst], [3.13.0], [hfst-bugs@helsinki.fi], [hfst])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([-Wall std-options foreign check-news])
 
@@ -43,9 +43,9 @@ AC_CONFIG_SRCDIR([libhfst/src/HfstTransducer.h])
 AC_CONFIG_HEADERS([config.h libhfst/src/hfst.hpp])
 
 AC_SUBST([LIBHFST_MAJOR],     [3])
-AC_SUBST([LIBHFST_MINOR],     [10])
+AC_SUBST([LIBHFST_MINOR],     [13])
 AC_SUBST([LIBHFST_EXTENSION], [0])
-AC_SUBST([LIBHFST_VERSION],   [3.10.0])
+AC_SUBST([LIBHFST_VERSION],   [3.13.0])
 AC_SUBST([LIBHFST_NAME],      [hfst])
 
 # long version = version vector cast in base 10000, for automatic comparisons
@@ -56,7 +56,7 @@ AC_SUBST([LIBHFST_NAME],      [hfst])
 # $LIBHFST_MINOR * 10000 + $LIBHFST_EXTENSION + "L"
 # NB! It turned out to be not portable, and can't be used!
 
-AC_DEFINE([HFST_LONGVERSION], [300100000L],
+AC_DEFINE([HFST_LONGVERSION], [300130000L],
           [Define to hfst version vector as long in base 10000])
 AC_DEFINE([HFST_REVISION], ["$Revision$"],
           [Automatically substitute to configure.ac revision])
@@ -71,7 +71,12 @@ AC_ARG_WITH([sfst],
             [with_sfst=yes])
 AS_IF([test "x$with_sfst" != xno], [AC_DEFINE([HAVE_SFST], [1],
                                               [Define to compile SFST support in HFST])])
-AM_CONDITIONAL([WANT_SFST], [test x$with_sfst != xno])
+AS_IF([test "x$with_sfst" == xlean], [AC_DEFINE([HAVE_SFST], [0], [Define not to compile full SFST support in HFST])
+			     	      AC_DEFINE([HAVE_LEAN_SFST], [1], [Define to compile lean SFST support in HFST])])
+
+AM_CONDITIONAL([WANT_SFST], [test x$with_sfst != xno -a x$with_sfst != xlean])
+AM_CONDITIONAL([WANT_LEAN_SFST], [test x$with_sfst == xlean])
+
 AC_ARG_WITH([openfst],
             [AS_HELP_STRING([--with-openfst],
                             [process weighted fsts with OpenFst @<:@default=yes@:>@])],
@@ -80,6 +85,7 @@ AC_ARG_WITH([openfst],
 AS_IF([test "x$with_openfst" != xno], [AC_DEFINE([HAVE_OPENFST], [1],
                                               [Define to compile OpenFst support in HFST])])
 AM_CONDITIONAL([WANT_OPENFST], [test x$with_openfst != xno])
+
 AC_ARG_WITH([openfst-log],
             [AS_HELP_STRING([--with-openfst-log],
                             [enable logarithmic weights @<:@default=yes@:>@])],
@@ -87,7 +93,12 @@ AC_ARG_WITH([openfst-log],
             [with_openfst_log=yes])
 AS_IF([test "x$with_openfst_log" != xno], [AC_DEFINE([HAVE_OPENFST_LOG], [1],
                                               [Define to compile OpenFst with log weight support in HFST])])
-AM_CONDITIONAL([WANT_OPENFST_LOG], [test x$with_openfst_log != xno])
+AS_IF([test "x$with_openfst_log" == xlean], [AC_DEFINE([HAVE_OPENFST_LOG], [0], [Define not to compile OpenFst with full log weight support in HFST])
+				      	     AC_DEFINE([HAVE_LEAN_OPENFST_LOG], [1], [Define to compile OpenFst with lean log weight support in HFST])])
+
+AM_CONDITIONAL([WANT_OPENFST_LOG], [test x$with_openfst_log != xno -a x$with_openfst_log != xlean])
+AM_CONDITIONAL([WANT_LEAN_OPENFST_LOG], [test x$with_openfst_log == xlean])
+
 AC_ARG_WITH([foma],
             [AS_HELP_STRING([--with-foma],
                             [process unweighted fsts with foma @<:@default=yes@:>@])],
@@ -106,10 +117,10 @@ AS_IF([test "x$with_xfsm" != xno], [AC_DEFINE([HAVE_XFSM], [1],
                                               [Define to compile xfsm support in HFST])])
 AM_CONDITIONAL([WANT_XFSM], [test x$with_xfsm != xno])
 
-AS_IF([test "x$with_xfsm" != "xno"], 
+AS_IF([test "x$with_xfsm" != "xno"],
 [AC_CHECK_LIB([xfsm], [main], [], AC_MSG_ERROR([xfsm back-end requested but libxfsm not found]))])
 
-AS_IF([test "x$with_xfsm" != "xno"], 
+AS_IF([test "x$with_xfsm" != "xno"],
 [AC_CHECK_HEADER([xfsm/xfsm_api.h], [xfsmheader_exists=yes], AC_MSG_ERROR([xfsm back-end requested but libxfsm header not found]))])
 
 ### Add here your library ###
@@ -146,10 +157,29 @@ AC_ARG_WITH([readline],
             [with_readline=$withval],
             [with_readline=no])
 AM_CONDITIONAL([WANT_READLINE], [test x$with_readline != xno])
+# make c++11 features optional; this will disable some functions and make compilation slower
+AC_ARG_WITH([c++11],
+            [AS_HELP_STRING([--with-c++11],
+                            [enable c++11 features @<:@default=yes@:>@])],
+            [with_cplusplus_11=$withval],
+            [with_cplusplus_11=yes])
+AS_IF([test "x$with_cplusplus_11" == "xno"], [AC_DEFINE([NO_CPLUSPLUS_11], [1],
+                                              [Define not to have c++11 support])])
+AS_IF([test "x$with_cplusplus_11" == "xno"], [AC_DEFINE([INCLUDE_TR1_UNORDERED_MAP_AND_SET], [1], [Define unordered container header])])
+AS_IF([test "x$with_cplusplus_11" == "xno"], [AC_DEFINE([USE_TR1_UNORDERED_MAP_AND_SET], [1], [Define unordered container namespace])])
+# make it possible to disable loading entries from shared object (openfst back-end feature),
+# since this adds a dependecy on dl library
+AC_ARG_ENABLE([load_so_entries],
+              [AS_HELP_STRING([--enable-load-so-entries],
+                              [enable loading entries from shared objects (openfst feature) @<:@default=yes@:>@])],
+              [enable_load_so_entries=$withval],
+              [enable_load_so_entries=yes])
+AS_IF([test "x$enable_load_so_entries" != xno], [AC_DEFINE([ENABLE_LOAD_SO_ENTRIES], [1],
+                                              [Define to compile with so entry loading enabled])])
 
 AC_ARG_ENABLE([all_tools],
 			  [AS_HELP_STRING([--enable-all-tools],
-							  [build all tools @<:@default=no@:>@])],
+			  [build all tools (excluding legacy programs which must be explicitly enabled with --enable-lexc-wrapper --enable-foma-wrapper --enable-twolc-script and --enable-train-tagger) @<:@default=no@:>@])],
 			  [enable_all_tools=$enableval],
 			  [enable_all_tools=no])
 
@@ -158,7 +188,7 @@ AC_ARG_ENABLE([no_tools],
 							  [build no tools @<:@default=no@:>@])],
 			  [enable_no_tools=$enableval],
 			  [enable_no_tools=no])
-
+AM_CONDITIONAL([ENABLE_NO_TOOLS], [test x$enable_no_tools != xno])
 
 # allow programs to be built separately (sort alphabetically)
 AC_ARG_ENABLE([affix_guessify],
@@ -169,9 +199,9 @@ AC_ARG_ENABLE([affix_guessify],
 AM_CONDITIONAL([WANT_AFFIX_GUESSIFY], [test x$enable_affix_guessify != xno])
 AC_ARG_ENABLE([calculate],
 			  [AS_HELP_STRING([--enable-calculate],
-							  [build calculate tool @<:@default=no@:>@])],
+							  [build calculate tool @<:@default=yes@:>@])],
 			  [enable_calculate=$enableval],
-			  [enable_calculate=$enable_all_tools])
+			  [if test x$enable_no_tools != xno; then enable_calculate=no; else enable_calculate=yes; fi])
 AM_CONDITIONAL([WANT_CALCULATE], [test x$enable_calculate != xno])
 AC_ARG_ENABLE([compare],
 			  [AS_HELP_STRING([--enable-compare],
@@ -222,7 +252,7 @@ AC_ARG_ENABLE([disjunct],
 			  [if test x$enable_no_tools != xno; then enable_disjunct=no; else enable_disjunct=yes; fi])
 AM_CONDITIONAL([WANT_DISJUNCT], [test x$enable_disjunct != xno])
 AC_ARG_ENABLE([expand_equivalences],
-			  [AS_HELP_STRING([--enable-edit-metadata],
+			  [AS_HELP_STRING([--enable-expand-equivalences],
 							  [build acx tool @<:@default=no@:>@])],
 			  [enable_expand_equivalences=$enableval],
 			  [enable_expand_equivalences=$enable_all_tools])
@@ -295,9 +325,9 @@ AC_ARG_ENABLE([invert],
 AM_CONDITIONAL([WANT_INVERT], [test x$enable_invert != xno])
 AC_ARG_ENABLE([lexc-wrapper],
               [AS_HELP_STRING([--enable-lexc-wrapper],
-                              [build lexc-wrapper cli and readline @<:@default=no@:>@])],
+                              [build legacy lexc tool @<:@default=no@:>@])],
               [enable_lexc_wrapper=$enableval],
-              [enable_lexc_wrapper=$enable_all_tools])
+              [enable_lexc_wrapper=no])
 AM_CONDITIONAL([WANT_LEXC_WRAPPER], [test "x$enable_lexc_wrapper" != xno])
 AC_ARG_ENABLE([twolc],
               [AS_HELP_STRING([--enable-twolc],
@@ -305,15 +335,27 @@ AC_ARG_ENABLE([twolc],
               [enable_twolc=$enableval],
               [if test x$enable_no_tools != xno; then enable_twolc=no; else enable_twolc=yes; fi])
 AM_CONDITIONAL([WANT_TWOLC], [test "x$enable_twolc" != xno])
+AC_ARG_ENABLE([twolc-script],
+              [AS_HELP_STRING([--enable-twolc-script],
+                              [build script implementation of twolc @<:@default=no@:>@])],
+              [enable_twolc_script=$enableval],
+              [enable_twolc_script=no])
+AM_CONDITIONAL([WANT_TWOLC_SCRIPT], [test "x$enable_twolc_script" != xno])
 AC_ARG_ENABLE([tagger],
               [AS_HELP_STRING([--enable-tagger],
                               [build tagger utilities @<:@default=no@:>@])],
               [enable_tagger=$enableval],
               [enable_tagger=$enable_all_tools])
 AM_CONDITIONAL([WANT_TAGGER], [test "x$enable_tagger" != xno])
+AC_ARG_ENABLE([train-tagger],
+              [AS_HELP_STRING([--enable-train-tagger],
+                              [build tagger training utilities @<:@default=no@:>@])],
+              [enable_train_tagger=$enableval],
+              [enable_train_tagger=no])
+AM_CONDITIONAL([WANT_TRAIN_TAGGER], [test "x$enable_train_tagger" != xno])
 AC_ARG_ENABLE([lexc],
               [AS_HELP_STRING([--enable-lexc],
-                              [build lexc cli @<:@default=yes@:>@])],
+                              [build lexc tool @<:@default=yes@:>@])],
               [enable_lexc=$enableval],
               [if test x$enable_no_tools != xno; then enable_lexc=no; else enable_lexc=yes; fi])
 AM_CONDITIONAL([WANT_LEXC], [test "x$enable_lexc" != xno])
@@ -395,12 +437,6 @@ AC_ARG_ENABLE([regexp2fst],
 			  [enable_regexp2fst=$enableval],
 			  [if test x$enable_no_tools != xno; then enable_regexp2fst=no; else enable_regexp2fst=yes; fi])
 AM_CONDITIONAL([WANT_REGEXP2FST], [test x$enable_regexp2fst != xno])
-AC_ARG_ENABLE([xfst],
-			  [AS_HELP_STRING([--enable-xfst],
-							  [build xfst tool @<:@default=no@:>@])],
-			  [enable_xfst=$enableval],
-			  [enable_xfst=$enable_all_tools])
-AM_CONDITIONAL([WANT_XFST], [test x$enable_xfst != xno])
 AC_ARG_ENABLE([pmatch2fst],
 			  [AS_HELP_STRING([--enable-pmatch2fst],
 							  [build pmatch2fst tool @<:@default=yes@:>@])],
@@ -449,12 +485,6 @@ AC_ARG_ENABLE([strings2fst],
 			  [enable_strings2fst=$enableval],
 			  [if test x$enable_no_tools != xno; then enable_strings2fst=no; else enable_strings2fst=yes; fi])
 AM_CONDITIONAL([WANT_STRINGS2FST], [test x$enable_strings2fst != xno])
-#AC_ARG_ENABLE([strip_header],
-#			  [AS_HELP_STRING([--enable-strip-header],
-#							  [build strip-header tool @<:@default=yes@:>@])],
-#			  [enable_strip_header=$enableval],
-#			  [enable_strip_header=yes])
-#AM_CONDITIONAL([WANT_STRIP_HEADER], [test x$enable_strip_header != xno])
 AC_ARG_ENABLE([substitute],
 			  [AS_HELP_STRING([--enable-substitute],
 							  [build substitution tool @<:@default=yes@:>@])],
@@ -499,20 +529,20 @@ AC_ARG_ENABLE([txt2fst],
 AM_CONDITIONAL([WANT_TXT2FST], [test x$enable_txt2fst != xno])
 AC_ARG_ENABLE([foma_wrapper],
 			  [AS_HELP_STRING([--enable-foma-wrapper],
-							  [build foma wrapper tool @<:@default=no@:>@])],
+							  [build legacy foma wrapper tool @<:@default=no@:>@])],
 			  [enable_foma_wrapper=$enableval],
-			  [enable_foma_wrapper=$enable_all_tools])
+			  [enable_foma_wrapper=no])
 AM_CONDITIONAL([WANT_FOMA_WRAPPER], [test x$enable_foma_wrapper != xno])
 AC_ARG_ENABLE([xfst],
 			  [AS_HELP_STRING([--enable-xfst],
-							  [build xfst tool @<:@default=no@:>@])],
+							  [build xfst tool @<:@default=yes@:>@])],
 			  [enable_xfst=$enableval],
-			  [enable_xfst=$enable_all_tools])
+			  [if test x$enable_no_tools != xno; then enable_xfst=no; else enable_xfst=yes; fi])
 AM_CONDITIONAL([WANT_XFST], [test x$enable_xfst != xno])
 
 # Check if zlib is available
 AC_CHECK_LIB([z], [main], [zlib_exists=yes], [zlib_exists=no])
-# Check if foma and lexc wrappers are wanted and possible to generate 
+# Check if foma and lexc wrappers are wanted and possible to generate
 AM_CONDITIONAL([GENERATE_FOMA_WRAPPER], [test "x$enable_foma_wrapper" != "xno" -a "x$with_foma" != "xno" -a "x$zlib_exists" != "xno"])
 AM_CONDITIONAL([GENERATE_LEXC_WRAPPER], [test "x$enable_lexc_wrapper" != "xno" -a "x$with_foma" != "xno" -a "x$zlib_exists" != "xno"])
 # The same as variables..
@@ -568,17 +598,6 @@ yacc_use_parser_h_extension=false
 automake_version=`automake --version | head -n 1 | cut '-d ' -f 4`
 AC_DEFINE_UNQUOTED([AUTOMAKE_VERSION], [$automake_version], [Defines automake version])
 
-if test "$automake_version" \< "1.12" ; then
-      #Use *.h extension for parser header file
-      yacc_use_parser_h_extension=true
-      echo "automake version < 1.12, using .h extension for yacc/bison generated header files"
-      AC_DEFINE([YACC_USE_PARSER_H_EXTENSION], [1], [Use *.h extension for parser header file])
-else
-      echo "automake version >= 1.12, using .hh extension for yacc/bison generated header files"
-fi
-
-AM_CONDITIONAL([YACC_USE_PARSER_H_EXTENSION], [test x$yacc_use_parser_h_extension = xtrue])
-
 AC_PROG_LEX
 
 AC_PATH_PROG([GETOPT], [getopts], [false])
@@ -598,10 +617,10 @@ AM_CONDITIONAL([CAN_DOXYGEN], [test x$DOXYGEN != xno])
 # Checks for libraries
 
 AC_LANG_PUSH([C++])
-AS_IF([test "x$with_openfst" != "xno" -a "x$enable_mingw" == "xno"], 
+AS_IF([test "x$with_openfst" != "xno" -a "x$enable_mingw" == "xno" -a "x$enable_load_so_entries" != "xno"],
       [AC_CHECK_LIB([dl], [main])])
 
-AS_IF([test "x$with_openfst" != "xno"], 
+AS_IF([test "x$with_openfst" != "xno"],
       [AC_CHECK_LIB([pthread], [main])]
       [AC_CHECK_LIB([m], [main])])
 
@@ -629,12 +648,19 @@ AC_LANG_POP
 
 AS_IF([test "x$with_unicode_handler" = "xglib"],
       [AC_CHECK_LIB([glib-2.0], [main])
+if test x$ac_cv_lib_glib_2_0_main != xyes ; then
+   AC_MSG_FAILURE([--with-unicode-handler=glib requested but glib-2.0 not found])
+fi
        AC_DEFINE([USE_GLIB_UNICODE], 1, [if using glib for unicode string handling])])
 AS_IF([test "x$with_unicode_handler" = "xicu"],
       [AC_MSG_FAILURE([ICU not yet implemented (--with-unicode-handler=hfst to disable)])])
+AS_IF([test "x$with_unicode_handler" = "xyes"],
+      [AC_MSG_FAILURE([--with-unicode-handler=yes; unicode handler 'yes' not recognized])])
+AS_IF([test "x$with_unicode_handler" = "xno"],
+      [AC_MSG_FAILURE([--with-unicode-handler=no; unicode handler 'no' not recognized])])
 AS_IF([test "x$with_readline" = "xyes"],
-      [AC_SEARCH_LIBS([readline], [readline editline], 
-                      [AC_DEFINE([HAVE_READLINE], 1, [if readline can be used])], 
+      [AC_SEARCH_LIBS([readline], [readline editline],
+                      [AC_DEFINE([HAVE_READLINE], 1, [if readline can be used])],
                       [AC_MSG_FAILURE([readline test failed (--without-readline to disable)])])])
 
 ### Add here your library ###
@@ -647,8 +673,14 @@ AC_CHECK_HEADERS([limits.h stdlib.h string.h error.h glob.h locale.h langinfo.h]
 
 AC_LANG_PUSH([C++])
 
-# Always use c++11 (flag 'c++0x' is understood also by older compilers)
-AS_IF([echo "$CXXFLAGS" | grep '\-std' | grep -E '((gnu\+\+)|(c\+\+))((11)|(0x)|(14)|(1y)|(17)|(1z))' > /dev/null 2> /dev/null], [], [CXXFLAGS="$CXXFLAGS -std=c++0x"])
+# Always use c++11 (flag 'c++0x' is understood also by older compilers) unless --with-c++11=no or --without-c++11 is requested
+# Checks for highest supported C++ standard
+# But, clang++ does not accept invalid OpenFST code, so limit to C++11 for now
+AS_IF([test "x$with_cplusplus_11" != "xno"],[
+AX_CHECK_COMPILE_FLAG([-std=c++11], [CXXFLAGS="$CXXFLAGS -std=c++11"], [
+ AS_IF([echo "$CXXFLAGS" | grep '\-std' | grep -E '((gnu\+\+)|(c\+\+))((11)|(0x)|(14)|(1y)|(17)|(1z))' > /dev/null 2> /dev/null], [], [CXXFLAGS="$CXXFLAGS -std=c++0x"])
+])
+])
 
 AC_CHECK_HEADERS([unordered_map], [], [],
 [#ifdef HAVE_UNORDERED_MAP
@@ -661,10 +693,12 @@ AC_CHECK_HEADERS([unordered_set], [], [],
 #endif
 ])
 
+AS_IF([test "x$with_cplusplus_11" != "xno"],[
 AS_IF([test "x$ac_cv_header_unordered_map" = "xno"],
             [AC_MSG_ERROR(["<unordered_map> not found, it is needed in c++ standard 11 (or higher)"])])
 AS_IF([test "x$ac_cv_header_unordered_set" = "xno"],
             [AC_MSG_ERROR(["<unordered_set> not found, it is needed in c++ standard 11 (or higher)"])])
+])
 
 AC_CHECK_HEADERS([ext/slist])
 
@@ -685,7 +719,7 @@ AS_IF([test "x$with_unicode_handler" = "xglib"],
              [AC_SUBST([GLIB_CPPFLAGS], [`$PKG_CONFIG glib-2.0 --cflags`])
               AC_SUBST([GLIB_LIBS], [`$PKG_CONFIG glib-2.0 --libs`])
              ],
-             [AC_CHECK_HEADERS([glib.h], [], 
+             [AC_CHECK_HEADERS([glib.h], [],
                         [AC_MSG_ERROR([glib headers not found; set CPPFLAGS to -I glib install directiories or use other unicode handler instead])])])])
 # remove if not needed
 AS_IF([test "x$with_unicode_handler" != "xglib"],
@@ -710,8 +744,8 @@ AC_CONFIG_FILES([Makefile doc/Makefile test/Makefile
                  test/tools/fsmbook-tests/Makefile
                  libhfst/Makefile libhfst/src/Makefile
                  libhfst/src/implementations/Makefile
-		 libhfst/src/parsers/Makefile 
-                 libhfst/hfst.pc 
+		 libhfst/src/parsers/Makefile
+                 libhfst/hfst.pc
 		 tools/Makefile tools/src/Makefile tools/src/hfst-proc/Makefile
 		 tools/src/hfst-twolc/Makefile
 		 tools/src/hfst-twolc/src/Makefile
@@ -778,7 +812,6 @@ cat <<EOF
     *                 name: $enable_name
     *                 optimized-lookup: $enable_optimized_lookup
     *                 pmatch: $enable_pmatch
-    *                 tokenize: $enable_tokenize
     *                 proc: $enable_proc
     *                 project: $enable_project
     *                 prune-alphabet: $enable_prune_alphabet
@@ -796,8 +829,11 @@ cat <<EOF
     *                 summarize: $enable_summarize (summarise)
     *                 tail: $enable_tail
     *                 test: $enable_test
+    *                 tokenize: $enable_tokenize (tokenise)
     *                 twolc: $enable_twolc
+    *                 twolc-script: $enable_twolc_script
     *                 tagger: $enable_tagger
+    *                 train-tagger: $enable_train_tagger
     *                 txt2fst: $enable_txt2fst
     *                 xfst: $enable_xfst
     * unicode parsed in corpus tools with: $with_unicode_handler
@@ -805,13 +841,17 @@ EOF
 dnl stick important warnings to bottom
 dnl important licensing information
 dnl according to GNU GPLv2 strict (not plus) is incompatible with Apache
-dnl hope end users never disable ofst 
+dnl hope end users never disable ofst
 AS_IF([test "x$with_openfst" == "xno"],
       [AC_MSG_WARN([Disabling openfst backend will severely cripple libhfst])])
 dnl HFST's case mapping in corpus tools is mainly MES-2 set with other characters
 dnl added as we go
 AS_IF([test "x$with_unicode_handler" = "xhfst"],
       [AC_MSG_WARN([HFST only supports basic unicode handling with limited case mapping tables etc.; for better support consider using glib or ICU --with-unicode-handler])])
+AS_IF([test "x$with_readline" == "xno"],
+      [AC_MSG_WARN([HFST tools will be compiled without readline; editing user input on command line is not supported; for better support consider using --with-readline])])
+AS_IF([test "x$with_cplusplus_11" == "xno"],
+      [AC_MSG_WARN([HFST tools will be compiled without C++11 support; some features will be disabled; for better support consider using --with-c++11])])
 dnl warn about missing "important" tools
 AS_IF([test "x$enable_lexc" == "xno"],
       [AC_MSG_WARN([hfst-lexc is not enabled; enable with --enable-lexc])])
@@ -819,9 +859,11 @@ AS_IF([test "x$enable_twolc" == "xno"],
       [AC_MSG_WARN([hfst-twolc is not enabled; you will not be able to compile xerox twolc grammars; enable using --enable-twolc])])
 
 AS_IF([test "x$enable_tagger" == "xno"],
-      [AC_MSG_WARN([hfst-train-tagger and hfst-tag are not enabled; you will not be able to train and use taggers; enable using --enable-tagger])])
+      [AC_MSG_WARN([hfst-tag is not enabled; you will not be able to use taggers; enable using --enable-tagger])])
 AS_IF([test "x$enable_calculate" == "xno"],
       [AC_MSG_WARN([hfst-calculate is not enabled; you will not be able to compile SFST-PL scripts; enable using --enable-calculate])])
 AS_IF([test "x$enable_xfst" == "xno"],
       [AC_MSG_WARN([hfst-xfst is not enabled; you will not be able to compile XFST scripts; enable using --enable-xfst])])
 AC_MSG_WARN([Python bindings for HFST are not under autotools; see python/README for instructions about how to build and install them])
+AS_IF([test "$automake_version" \< "1.12"],
+      [AC_MSG_WARN([automake version < 1.12; building parsers will fail unless you are building with pre-yacc-generated *.cc files and do not modify the *.yy source files])])

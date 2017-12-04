@@ -214,7 +214,7 @@ void *dlopen( const char *file, int mode )
          * to UNIX's search paths (start with system folders instead of current
          * folder).
          */
-        hModule = LoadLibraryEx( (LPSTR) lpFileName, NULL, 
+        hModule = LoadLibraryEx( (LPSTR) lpFileName, NULL,
                                  LOAD_WITH_ALTERED_SEARCH_PATH );
 
         /* If the object was loaded with RTLD_GLOBAL, add it to list of global

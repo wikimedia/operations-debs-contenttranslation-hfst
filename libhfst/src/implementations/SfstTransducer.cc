@@ -1,30 +1,29 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
+#ifndef MAIN_TEST
+
+#if HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#if HAVE_SFST || HAVE_LEAN_SFST
+
+#include "back-ends/sfst/interface.h"
+#include "back-ends/sfst/fst.h"
 #include "SfstTransducer.h"
 #include "HfstSymbolDefs.h"
 #include <time.h>
 
 using namespace SFST;
 
-#ifndef MAIN_TEST
 namespace hfst { namespace implementations {
-
-    float sfst_seconds_in_harmonize=0;
-
-    float SfstTransducer::get_profile_seconds() {
-      return sfst_seconds_in_harmonize;
-    }
-
-  void sfst_set_hopcroft(bool value) {
-    SFST::Transducer::hopcroft_minimisation=value;
-  }
 
     /** Create an SfstInputStream that reads from stdin. */
   SfstInputStream::SfstInputStream(void):
@@ -39,9 +38,9 @@ namespace hfst { namespace implementations {
     if (filename == std::string())
       { input_file = stdin; }
     else {
-      input_file = fopen(filename.c_str(),"r");
+      input_file = hfst::hfst_fopen(filename.c_str(),"r");
       if (input_file == NULL)
-        { 
+        {
           HFST_THROW(StreamNotReadableException); }
     }
   }
@@ -61,7 +60,7 @@ namespace hfst { namespace implementations {
   char SfstInputStream::stream_get() {
     return (char) fgetc(input_file); }
 
-  short SfstInputStream::stream_get_short() 
+  short SfstInputStream::stream_get_short()
   {
     short i;
     assert(1 == fread(&i,sizeof(i),1,input_file));
@@ -112,17 +111,166 @@ namespace hfst { namespace implementations {
                                    Character c,
                                    Alphabet &alphabet)
   {
-    const char * string_symbol = 
+    const char * string_symbol =
       alphabet.code2symbol(c);
     if (string_number_map.find(string_symbol) == string_number_map.end())
       { string_number_map[string_symbol] = c; }
     else if (string_number_map[string_symbol] != c)
-      { 
+      {
         HFST_THROW_MESSAGE
           (HfstFatalException,
            "SfstInputStream: symbol redefined"); }
   }
 
+    void SfstInputStream::ignore(unsigned int n)
+    {
+      for (unsigned int i=0; i<n; i++)
+        fgetc(input_file);
+    }
+
+    bool SfstInputStream::set_implementation_specific_header_data
+    (StringPairVector &header_data, unsigned int index)
+    {
+      if (index != (header_data.size()-1) )
+        return false;
+
+      if ( not ( strcmp("minimal", header_data[index].first.c_str()) == 0) )
+        return false;
+
+      if ( strcmp("true", header_data[index].second.c_str()) == 0 )
+        is_minimal=true;
+      else if ( strcmp("false", header_data[index].second.c_str()) == 0 )
+        is_minimal=false;
+      else
+        return false;
+
+      return true;
+    }
+
+        Transducer * SfstInputStream::read_transducer()
+  {
+    if (is_eof())
+      {
+        HFST_THROW(StreamIsClosedException); }
+    Transducer * t = NULL;
+    try
+      {
+        // DEBUGGING
+        assert (stream_get() == 'a');
+        stream_unget('a');
+
+        Transducer * t = new Transducer(input_file,true);
+
+        if (not is_minimal) {
+          t->minimised = false;
+          t->deterministic = false;
+        }
+        return t;
+      }
+    catch (const char * p)
+      {
+        delete t;
+        fprintf(stderr, "caught message: \"%s\"\n", p);
+        HFST_THROW(TransducerHasWrongTypeException);
+      }
+    return NULL;
+  }
+    
+  // ---------- SfstOutputStream functions ----------
+
+  SfstOutputStream::SfstOutputStream(void)
+  { ofile = stdout; }
+
+    SfstOutputStream::SfstOutputStream(const std::string &str):
+    filename(std::string(str))
+  {
+    if (filename != std::string()) {
+      ofile = hfst::hfst_fopen(filename.c_str(), "wb");
+      if (ofile == NULL)
+        HFST_THROW(StreamNotReadableException);
+    }
+    else
+      ofile = stdout;
+  }
+
+  void SfstOutputStream::close(void)
+  {
+    if (filename != std::string())
+      { fclose(ofile); }
+  }
+
+    void SfstOutputStream::append_implementation_specific_header_data
+    (std::vector<char> &header, Transducer *t)
+    {
+      std::string min("minimal");
+      for (unsigned int i=0; i<min.length(); i++)
+        header.push_back(min[i]);
+      header.push_back('\0');
+
+      std::string min_value;
+      if (t->minimised && t->deterministic)
+        min_value = std::string("true");
+      else
+        min_value = std::string("false");
+
+      for (unsigned int i=0; i<min_value.length(); i++)
+        header.push_back(min_value[i]);
+      header.push_back('\0');
+    }
+
+    void SfstOutputStream::write(const char &c)
+    {
+      fputc(c,ofile);
+    }
+
+    void SfstOutputStream::write_transducer(Transducer * transducer)
+  {
+    transducer->store(ofile);
+    if (fflush(ofile) != 0) {
+      HFST_THROW_MESSAGE(HfstFatalException,
+                         "An error happened when writing an SfstTransducer.");
+    }
+  }
+
+#if HAVE_SFST
+    
+    class HfstNode2Int {
+
+      struct hashf {
+        size_t operator()(const SFST::Node *node) const {
+          return (size_t)node;
+        }
+      };
+      struct equalf {
+        int operator()(const SFST::Node *n1, const SFST::Node *n2) const {
+          return (n1 == n2);
+        }
+      };
+      typedef SFST::hash_map<SFST::Node*, int, hashf, equalf> NL;
+
+    private:
+      NL number;
+
+    public:
+      int &operator[]( SFST::Node *node ) {
+        NL::iterator it=number.find(node);
+        if (it == number.end())
+          return number.insert(NL::value_type(node, 0)).first->second;
+        return it->second;
+      };
+    };
+
+    float sfst_seconds_in_harmonize=0;
+
+    float SfstTransducer::get_profile_seconds() {
+      return sfst_seconds_in_harmonize;
+    }
+
+  void sfst_set_hopcroft(bool value) {
+    SFST::Transducer::hopcroft_minimisation=value;
+  }
+
+    
   Transducer * SfstTransducer::expand_arcs(Transducer * t, StringSet &unknown)
   {
     Transducer &tc = t->copy();
@@ -131,8 +279,8 @@ namespace hfst { namespace implementations {
   }
 
 
-  std::pair<Transducer*, Transducer*> SfstTransducer::harmonize 
-  (Transducer *t1, Transducer *t2, bool unknown_symbols_in_use) 
+  std::pair<Transducer*, Transducer*> SfstTransducer::harmonize
+  (Transducer *t1, Transducer *t2, bool unknown_symbols_in_use)
   {
 
     try {
@@ -153,7 +301,7 @@ namespace hfst { namespace implementations {
       Transducer * new_t1 = &t1->copy(false, &t2->alphabet);
       new_t1->alphabet.insert_symbols(t2->alphabet);
       SFST::Alphabet::CharMap cm = t1->alphabet.get_char_map();
-      for (SFST::Alphabet::CharMap::const_iterator it = cm.begin(); 
+      for (SFST::Alphabet::CharMap::const_iterator it = cm.begin();
        it != cm.end(); it++) {
     new_t1->alphabet.add_symbol(it->second);
       }
@@ -189,36 +337,11 @@ namespace hfst { namespace implementations {
     }
 
   }
-
-    void SfstInputStream::ignore(unsigned int n)
-    { 
-      for (unsigned int i=0; i<n; i++)
-        fgetc(input_file);
-    }
-
-    bool SfstInputStream::set_implementation_specific_header_data
-    (StringPairVector &header_data, unsigned int index)
-    {
-      if (index != (header_data.size()-1) )
-        return false;
-
-      if ( not ( strcmp("minimal", header_data[index].first.c_str()) == 0) )
-        return false;
-
-      if ( strcmp("true", header_data[index].second.c_str()) == 0 )
-        is_minimal=true;
-      else if ( strcmp("false", header_data[index].second.c_str()) == 0 )
-        is_minimal=false;
-      else
-        return false;
-
-      return true;
-    }
     
     unsigned int SfstTransducer::number_of_states(Transducer* t)
     {
       std::vector<SFST::Node*> indexing;
-      std::pair<size_t, size_t> number_of_nodes_and_transitions = 
+      std::pair<size_t, size_t> number_of_nodes_and_transitions =
         t->nodeindexing(&indexing);
       return number_of_nodes_and_transitions.first;
     }
@@ -226,148 +349,23 @@ namespace hfst { namespace implementations {
     unsigned int SfstTransducer::number_of_arcs(Transducer* t)
     {
       std::vector<SFST::Node*> indexing;
-      std::pair<size_t, size_t> number_of_nodes_and_transitions = 
+      std::pair<size_t, size_t> number_of_nodes_and_transitions =
         t->nodeindexing(&indexing);
       return number_of_nodes_and_transitions.second;
     }
 
 
-    Transducer * SfstInputStream::read_transducer()
-  {
-    if (is_eof())
-      { 
-        HFST_THROW(StreamIsClosedException); }
-    Transducer * t = NULL;
-    try 
-      {
-        // DEBUGGING
-        assert (stream_get() == 'a');
-        stream_unget('a');
 
-        Transducer * t = new Transducer(input_file,true);
-
-        if (not is_minimal) {
-          t->minimised = false;
-          t->deterministic = false;
-        }
-        return t;
-      }
-    catch (const char * p)
-      {
-        delete t;
-        fprintf(stderr, "caught message: \"%s\"\n", p);
-        HFST_THROW(TransducerHasWrongTypeException);
-      }
-    return NULL;
-  }
-
-
-  // ---------- SfstOutputStream functions ----------
-
-  SfstOutputStream::SfstOutputStream(void)
-  { ofile = stdout; }
-
-    SfstOutputStream::SfstOutputStream(const std::string &str):
-    filename(std::string(str))
-  {
-    if (filename != std::string()) {
-      ofile = fopen(filename.c_str(), "wb");
-      if (ofile == NULL)
-        HFST_THROW(StreamNotReadableException);
-    } 
-    else
-      ofile = stdout;
-  }
-
-  void SfstOutputStream::close(void) 
-  {
-    if (filename != std::string())
-      { fclose(ofile); }
-  }
-
-    void SfstOutputStream::append_implementation_specific_header_data
-    (std::vector<char> &header, Transducer *t)
-    {
-      std::string min("minimal");
-      for (unsigned int i=0; i<min.length(); i++)
-        header.push_back(min[i]);
-      header.push_back('\0');
-
-      std::string min_value;
-      if (t->minimised && t->deterministic)
-        min_value = std::string("true");
-      else
-        min_value = std::string("false");
-
-      for (unsigned int i=0; i<min_value.length(); i++)
-        header.push_back(min_value[i]);
-      header.push_back('\0');
-    }
-
-    void SfstOutputStream::write(const char &c)
-    {
-      fputc(c,ofile);
-    }
-
-    void SfstOutputStream::write_transducer(Transducer * transducer)
-  { 
-    transducer->store(ofile); 
-    if (fflush(ofile) != 0) {
-      HFST_THROW_MESSAGE(HfstFatalException, 
-                         "An error happened when writing an SfstTransducer.");
-    }
-  }
 
   void SfstTransducer::print_test(Transducer *t)
   {
     std::cerr << *t;
   }
 
-    unsigned int SfstTransducer::get_biggest_symbol_number(Transducer * t)
-    {
-      unsigned int biggest_number=0;
-      SFST::Alphabet::CharMap cm = t->alphabet.get_char_map();
-      for (SFST::Alphabet::CharMap::const_iterator it = cm.begin(); 
-           it != cm.end(); it++) {
-        if (it->first > biggest_number)
-          biggest_number = it->first;
-      }
-      return biggest_number;
-    }
-
-    StringVector SfstTransducer::get_symbol_vector
-    (Transducer * t)
-    {
-      unsigned int biggest_symbol_number = get_biggest_symbol_number(t);
-      StringVector symbol_vector;
-      symbol_vector.reserve(biggest_symbol_number+1);
-      symbol_vector.resize(biggest_symbol_number+1,"");
-      
-      StringSet alphabet = get_alphabet(t);
-      for (StringSet::const_iterator it = alphabet.begin(); it != alphabet.end(); it++)
-        {
-          unsigned int symbol_number = get_symbol_number(t, it->c_str());
-          symbol_vector.at(symbol_number) = *it;
-        }
-      return symbol_vector;
-    }
-    
-    std::map<std::string, unsigned int> SfstTransducer::get_symbol_map
-    (Transducer * t)
-    {
-      StringSet alphabet = get_alphabet(t);
-      std::map<std::string, unsigned int> symbol_map;
-      for (StringSet::const_iterator it = alphabet.begin(); it != alphabet.end(); it++)
-        {
-          symbol_map[*it] = get_symbol_number(t, it->c_str());
-        }
-      return symbol_map;
-    }
-
   void SfstTransducer::print_alphabet(Transducer *t) {
     fprintf(stderr, "alphabet..\n");
     SFST::Alphabet::CharMap cm = t->alphabet.get_char_map();
-    for (SFST::Alphabet::CharMap::const_iterator it = cm.begin(); 
+    for (SFST::Alphabet::CharMap::const_iterator it = cm.begin();
          it != cm.end(); it++)
       fprintf(stderr, "%i\t%s\n",it->first,it->second);
     fprintf(stderr, "..alphabet\n");
@@ -382,13 +380,13 @@ namespace hfst { namespace implementations {
   }
 
   Transducer * SfstTransducer::create_empty_transducer(void)
-  { Transducer * retval = new Transducer(); 
+  { Transducer * retval = new Transducer();
     initialize_alphabet(retval);
     return retval;
   }
   
   Transducer * SfstTransducer::create_epsilon_transducer(void)
-  { Transducer * t = new Transducer; 
+  { Transducer * t = new Transducer;
     initialize_alphabet(t);
     t->root_node()->set_final(1);
     return t; }
@@ -406,7 +404,7 @@ namespace hfst { namespace implementations {
   { Transducer * t = new Transducer;
     initialize_alphabet(t);
     Node * n = t->new_node();
-    t->root_node()->add_arc(Label(inumber, 
+    t->root_node()->add_arc(Label(inumber,
                                   onumber),n,t);
     n->set_final(1);
     return t; }
@@ -414,7 +412,7 @@ namespace hfst { namespace implementations {
 
     Transducer * SfstTransducer::define_transducer(const std::string &symbol)
   { Transducer * t = new Transducer;
-    initialize_alphabet(t); 
+    initialize_alphabet(t);
     Node * n = t->new_node();
 
     unsigned int number;
@@ -458,7 +456,7 @@ namespace hfst { namespace implementations {
         Node * temp = t->new_node();
 
         unsigned int inumber,onumber;
-        if (is_epsilon(it->first) || 
+        if (is_epsilon(it->first) ||
             strcmp(it->first.c_str(),"<>") == 0 )
           inumber=0;
         else
@@ -515,11 +513,11 @@ namespace hfst { namespace implementations {
       {
         Node * temp = t->new_node();
 
-        for (StringPairSet::const_iterator it2 = (*it).begin(); 
-             it2 != (*it).end(); it2++ ) 
+        for (StringPairSet::const_iterator it2 = (*it).begin();
+             it2 != (*it).end(); it2++ )
           {
             unsigned int inumber,onumber;
-            if (is_epsilon(it2->first) || 
+            if (is_epsilon(it2->first) ||
                 strcmp(it2->first.c_str(),"<>") == 0 )
               inumber=0;
             else
@@ -545,8 +543,8 @@ namespace hfst { namespace implementations {
   { return &t->determinise(); }
   
   Transducer * SfstTransducer::minimize(Transducer * t)
-  { Transducer * retval = &t->minimise(false); 
-    retval->alphabet.copy(t->alphabet); 
+  { Transducer * retval = &t->minimise(false);
+    retval->alphabet.copy(t->alphabet);
     return retval; }
   
   Transducer * SfstTransducer::remove_epsilons(Transducer * t)
@@ -556,7 +554,7 @@ namespace hfst { namespace implementations {
   { return &t->kleene_star(); }
   
   Transducer * SfstTransducer::repeat_plus(Transducer * t)
-  { Transducer * star = repeat_star(t); 
+  { Transducer * star = repeat_star(t);
     t = &(*t + *star);
     delete star;
     return t; }
@@ -598,14 +596,14 @@ namespace hfst { namespace implementations {
   { return &t->reverse(); }
   
   Transducer * SfstTransducer::extract_input_language(Transducer * t)
-  { 
+  {
     Transducer * retval = &t->lower_level();
 
     // projection includes in the alphabet only symbols that
     // occur in the input side, which we do not want
 
     SFST::Alphabet::CharMap _cm = t->alphabet.get_char_map();
-    for (SFST::Alphabet::CharMap::const_iterator it 
+    for (SFST::Alphabet::CharMap::const_iterator it
            = _cm.begin(); it != _cm.end(); it++) {
       retval->alphabet.add_symbol(it->second, it->first);
     }
@@ -615,7 +613,7 @@ namespace hfst { namespace implementations {
     retval = substitute(retval, internal_unknown, internal_identity);
     delete tmp;
 
-    return retval; 
+    return retval;
   }
   
   Transducer * SfstTransducer::extract_output_language(Transducer * t)
@@ -627,7 +625,7 @@ namespace hfst { namespace implementations {
     // occur in the output side, which we do not want
 
     SFST::Alphabet::CharMap _cm = t->alphabet.get_char_map();
-    for (SFST::Alphabet::CharMap::const_iterator it 
+    for (SFST::Alphabet::CharMap::const_iterator it
            = _cm.begin(); it != _cm.end(); it++) {
       retval->alphabet.add_symbol(it->second, it->first);
     }
@@ -701,7 +699,7 @@ namespace hfst { namespace implementations {
       bool added_fd_state = false;
       
       if (fd_state_stack) {
-        if(fd_state_stack->back().get_table().get_operation(l.lower_char()) 
+        if(fd_state_stack->back().get_table().get_operation(l.lower_char())
            != NULL) {
           fd_state_stack->push_back(fd_state_stack->back());
           if(fd_state_stack->back().apply_operation(l.lower_char()))
@@ -713,18 +711,18 @@ namespace hfst { namespace implementations {
         }
       }
             
-      /* Handle spv here. Special symbols (flags, epsilons) are always 
+      /* Handle spv here. Special symbols (flags, epsilons) are always
          inserted. */
       Character lc=l.lower_char();
       Character uc=l.upper_char();
       std::string istring("");
       std::string ostring("");
 
-      if (!filter_fd || 
+      if (!filter_fd ||
           fd_state_stack->back().get_table().get_operation(lc) == NULL)
         istring = std::string(t->alphabet.write_char(lc));
 
-      if (!filter_fd || 
+      if (!filter_fd ||
           fd_state_stack->back().get_table().get_operation(uc) == NULL)
         ostring = std::string(t->alphabet.write_char(uc));
 
@@ -735,9 +733,9 @@ namespace hfst { namespace implementations {
 
       spv.push_back(StringPair(istring, ostring));
     
-      res = extract_paths(t, arc[i]->target_node(), all_visitations, 
+      res = extract_paths(t, arc[i]->target_node(), all_visitations,
                             path_visitations,
-                            callback, cycles, 
+                            callback, cycles,
                             fd_state_stack, filter_fd, spv);
       spv.pop_back();
       
@@ -752,7 +750,7 @@ namespace hfst { namespace implementations {
   static const int BUFFER_START_SIZE = 64;
   
     void SfstTransducer::extract_paths
-    (Transducer * t, hfst::ExtractStringsCb& callback, int cycles, 
+    (Transducer * t, hfst::ExtractStringsCb& callback, int cycles,
      FdTable<SFST::Character>* fd, bool filter_fd)
     {
     if(!t->root_node())
@@ -760,15 +758,15 @@ namespace hfst { namespace implementations {
     
     HfstNode2Int all_visitations;
     HfstNode2Int path_visitations;
-    vector<hfst::FdState<Character> >* fd_state_stack = 
-      (fd==NULL) ? NULL : 
+    vector<hfst::FdState<Character> >* fd_state_stack =
+      (fd==NULL) ? NULL :
       new std::vector<hfst::FdState<Character> >
       (1, hfst::FdState<Character>(*fd));
     
     StringPairVector spv;
     hfst::implementations::extract_paths
       (t, t->root_node(), all_visitations, path_visitations,
-       callback, cycles, fd_state_stack, filter_fd, 
+       callback, cycles, fd_state_stack, filter_fd,
        spv);
 
     // add epsilon path, if needed
@@ -783,7 +781,7 @@ namespace hfst { namespace implementations {
   /* Get a random path from transducer \a t. */
   static HfstTwoLevelPath random_path(Transducer *t) {
     
-    HfstTwoLevelPath path;    
+    HfstTwoLevelPath path;
     Node * current_t_node = t->root_node();
 
     /* If we cannot proceed, all elements in \a path whose index is smaller
@@ -792,9 +790,9 @@ namespace hfst { namespace implementations {
     int last_index=0;
 
     std::vector<SFST::Node*> indexing;
-    std::pair<size_t, size_t> number_of_nodes_and_transitions = 
+    std::pair<size_t, size_t> number_of_nodes_and_transitions =
       t->nodeindexing(&indexing);
-    unsigned int number_of_nodes = 
+    unsigned int number_of_nodes =
       (unsigned int) number_of_nodes_and_transitions.first;
     
     /* Whether a state has been visited. */
@@ -802,7 +800,7 @@ namespace hfst { namespace implementations {
     visited.reserve(number_of_nodes);
 
     /* Whether the state is marked as broken, i.e. we cannot proceed from
-       that state. These arrays are used for giving more probability for 
+       that state. These arrays are used for giving more probability for
        shorter paths if \a t is cyclic. */
     std::vector<int> broken;
     broken.reserve(number_of_nodes);
@@ -824,7 +822,7 @@ namespace hfst { namespace implementations {
       /* If we cannot proceed, return the longest path so far. */
       if (t_transitions.empty() || broken[current_t_node->index]) {
     for (int i=(int)path.second.size()-1; i>=last_index; i--) {
-      path.second.pop_back(); 
+      path.second.pop_back();
     }
     return path;
       }
@@ -838,9 +836,9 @@ namespace hfst { namespace implementations {
     
     Node * t_target = arc.target_node();
 
-    std::string istring 
+    std::string istring
       = t->alphabet.code2symbol(arc.label().lower_char());
-    std::string ostring 
+    std::string ostring
       = t->alphabet.code2symbol(arc.label().upper_char());
     if (istring.compare("<>") == 0)
       istring = std::string(internal_epsilon);
@@ -855,18 +853,18 @@ namespace hfst { namespace implementations {
       if ( (rand() % 4) == 0 ) {  // randomly return the path so far,
         return path;
       } // or continue.
-      last_index = (int)path.second.size();  
-    } 
+      last_index = (int)path.second.size();
+    }
 
     /* Give more probability for shorter paths. */
 
     if ( broken[ t_target->index ] == 0 ) {
-      if ( visited[ t_target->index ] == 1 ) 
+      if ( visited[ t_target->index ] == 1 )
         if ( (rand() % 4) == 0 )
           broken[ t_target->index ] = 1;
     }
     
-    if ( visited[ t_target->index ] == 1 ) { 
+    if ( visited[ t_target->index ] == 1 ) {
       if ( (rand() % 4) == 0 )
         broken[ t_target->index ] = 1;
     }
@@ -874,7 +872,7 @@ namespace hfst { namespace implementations {
     /* Proceed to the target state. */
     current_t_node = t_target;
     break;
-      }     
+      }
     }
     return path;
   };
@@ -918,7 +916,7 @@ namespace hfst { namespace implementations {
         }
       results.insert(path);
 
-      --max_num;    
+      --max_num;
     }
   }
 
@@ -948,7 +946,7 @@ namespace hfst { namespace implementations {
     if (is_epsilon(new_symbol))
       new_symbol_ = std::string("<>");
 
-    Transducer * retval = 
+    Transducer * retval =
       &t->replace_char(t->alphabet.add_symbol(old_symbol_.c_str()),
                        t->alphabet.add_symbol(new_symbol_.c_str()));
     retval->alphabet.copy(t->alphabet);
@@ -956,7 +954,7 @@ namespace hfst { namespace implementations {
 
   Transducer * SfstTransducer::substitute
   (Transducer *t, const StringPair &symbol_pair, Transducer *tr)
-  { 
+  {
     std::string isymbol = symbol_pair.first;
     std::string osymbol = symbol_pair.second;
     if (is_epsilon(isymbol))
@@ -964,7 +962,7 @@ namespace hfst { namespace implementations {
     if (is_epsilon(osymbol))
       osymbol = std::string("<>");
 
-    Transducer * retval 
+    Transducer * retval
       = &t->splice( Label(
                           t->alphabet.add_symbol(isymbol.c_str()),
                           t->alphabet.add_symbol(osymbol.c_str()) ), tr );
@@ -975,7 +973,7 @@ namespace hfst { namespace implementations {
   
   Transducer * SfstTransducer::compose
   (Transducer * t1, Transducer * t2)
-  { 
+  {
     return &t1->operator||(*t2); }
 
   Transducer * SfstTransducer::concatenate
@@ -990,11 +988,11 @@ namespace hfst { namespace implementations {
   (Transducer * t, const StringPairVector &spv)
   {
     Node *node= t->root_node();
-    for (StringPairVector::const_iterator it = spv.begin(); 
-         it != spv.end(); it++) 
+    for (StringPairVector::const_iterator it = spv.begin();
+         it != spv.end(); it++)
       {
         unsigned int inumber,onumber;
-        if (is_epsilon(it->first) || 
+        if (is_epsilon(it->first) ||
             strcmp(it->first.c_str(),"<>") == 0 )
           inumber=0;
         else
@@ -1024,21 +1022,21 @@ namespace hfst { namespace implementations {
 
   Transducer * SfstTransducer::subtract
   (Transducer * t1, Transducer * t2)
-  { 
-    try { 
+  {
+    try {
       unsigned int t1_alphabet_size = t1->alphabet.size();
       // This will cause an exception when SFST calculates the negation
       // that is needed in subtraction.
       if (t1_alphabet_size == 0)  {
     t1->alphabet.insert(Label(1,1)); // insert a dummy symbol pair
-      } 
-      Transducer * retval = &t1->operator/(*t2); 
+      }
+      Transducer * retval = &t1->operator/(*t2);
       if (t1_alphabet_size == 0) {
     t1->alphabet.clear_char_pairs(); // remove the dummy symbol pair
     t1->complete_alphabet();
       }
       return retval;
-    } 
+    }
     catch (const char *msg) {
       fprintf(stderr, "ERROR: %s\n", msg);
       HFST_THROW_MESSAGE(HfstFatalException, std::string(msg));
@@ -1058,14 +1056,14 @@ namespace hfst { namespace implementations {
   bool SfstTransducer::is_automaton(Transducer * t)
   {
     return t->is_automaton();
-  } 
+  }
 
 
     FdTable<SFST::Character>* SfstTransducer::get_flag_diacritics(Transducer * t)
   {
     FdTable<SFST::Character>* table = new FdTable<SFST::Character>();
     SFST::Alphabet::CharMap cm = t->alphabet.get_char_map();
-    for (SFST::Alphabet::CharMap::const_iterator it 
+    for (SFST::Alphabet::CharMap::const_iterator it
            = cm.begin(); it != cm.end(); it++) {
       if(FdOperation::is_diacritic(it->second))
         table->define_diacritic(it->first, it->second);
@@ -1090,7 +1088,7 @@ namespace hfst { namespace implementations {
     std::vector<SFST::Label> label;
 
     SFST::Alphabet::CharMap cm = alpha.get_char_map();
-    for( SFST::Alphabet::CharMap::const_iterator it=cm.begin(); 
+    for( SFST::Alphabet::CharMap::const_iterator it=cm.begin();
      it!=cm.end(); it++ ) {
       SFST::Character c=it->first;
       char *s=it->second;
@@ -1100,7 +1098,7 @@ namespace hfst { namespace implementations {
       }
     }
     
-    for( std::set<SFST::Label>::const_iterator it=alpha.begin(); 
+    for( std::set<SFST::Label>::const_iterator it=alpha.begin();
      it!=alpha.end(); it++ ) {
       SFST::Label l=*it;
       if (strcmp(alpha.code2symbol(l.upper_char()), symbol_to_remove) != 0 &&
@@ -1119,33 +1117,6 @@ namespace hfst { namespace implementations {
       alpha.insert( label[i] );
   }
 
-  StringSet SfstTransducer::get_alphabet(Transducer * t)
-  {
-    StringSet s;
-    SFST::Alphabet::CharMap cm = t->alphabet.get_char_map();
-    for ( SFST::Alphabet::CharMap::const_iterator it = cm.begin();
-          it != cm.end(); it++ ) {
-      if (strcmp(it->second, "<>") == 0)
-        s.insert(internal_epsilon);
-      else
-        s.insert( std::string(it->second) );
-    }
-    return s;
-  }
-
-    unsigned int SfstTransducer::get_symbol_number
-    (Transducer *t, 
-     const std::string &symbol)
-  {
-    if (symbol == "@_EPSILON_SYMBOL_@")
-      return 0;
-    int i = t->alphabet.symbol2code(symbol.c_str());
-    if (i == EOF) {
-      HFST_THROW(SymbolNotFoundException);
-    }
-    return (unsigned int)i;
-  }
-
   StringPairSet SfstTransducer::get_symbol_pairs(Transducer *t)
   {
     StringPairSet s;
@@ -1159,13 +1130,13 @@ namespace hfst { namespace implementations {
 
         if (isymbol == NULL) {
           HFST_THROW_MESSAGE(HfstFatalException, "input number not found");
-          //fprintf(stderr, "ERROR: input number %i not found\n", 
+          //fprintf(stderr, "ERROR: input number %i not found\n",
           //        it->lower_char());
           //exit(1);
         }
         if (osymbol == NULL) {
           HFST_THROW_MESSAGE(HfstFatalException, "output number not found");
-          //fprintf(stderr, "ERROR: input number %i not found\n", 
+          //fprintf(stderr, "ERROR: input number %i not found\n",
           //        it->upper_char());
           //exit(1);
         }
@@ -1190,7 +1161,7 @@ namespace hfst { namespace implementations {
   {
     if ( l.lower_char() == 1 && l.upper_char() == 1 )     // cross product "?:?"
       {
-        for (hfst::StringSet::iterator it1 = s.begin(); it1 != s.end(); it1++) 
+        for (hfst::StringSet::iterator it1 = s.begin(); it1 != s.end(); it1++)
           {
         if (not FdOperation::is_diacritic(*it1)) {
 
@@ -1200,8 +1171,8 @@ namespace hfst { namespace implementations {
               << std::endl;
         assert(false);
           }
-          for (hfst::StringSet::iterator it2 = s.begin(); 
-           it2 != s.end(); it2++) 
+          for (hfst::StringSet::iterator it2 = s.begin();
+           it2 != s.end(); it2++)
         {
           if (not FdOperation::is_diacritic(*it2)) {
             int onumber = t->alphabet.symbol2code(it2->c_str());
@@ -1210,8 +1181,8 @@ namespace hfst { namespace implementations {
                 << std::endl;
               assert(false);
             }
-            if (inumber != onumber) {  
-              // add transitions of type x:y 
+            if (inumber != onumber) {
+              // add transitions of type x:y
               // (non-identity cross-product of symbols in s)
               origin->add_arc( Label(inumber, onumber), target, t );
             }
@@ -1225,7 +1196,7 @@ namespace hfst { namespace implementations {
       }
     else if (l.lower_char() == 2 || l.upper_char() == 2 )  // identity "?:?"
       {
-        for (hfst::StringSet::iterator it = s.begin(); it != s.end(); it++) 
+        for (hfst::StringSet::iterator it = s.begin(); it != s.end(); it++)
           {
         if (not FdOperation::is_diacritic(*it)) {
           int number = t->alphabet.symbol2code(it->c_str());
@@ -1241,7 +1212,7 @@ namespace hfst { namespace implementations {
       }
     else if (l.lower_char() == 1)  // "?:x"
       {
-        for (hfst::StringSet::iterator it = s.begin(); it != s.end(); it++) 
+        for (hfst::StringSet::iterator it = s.begin(); it != s.end(); it++)
           {
         if (not FdOperation::is_diacritic(*it)) {
           int number = t->alphabet.symbol2code(it->c_str());
@@ -1256,7 +1227,7 @@ namespace hfst { namespace implementations {
       }
     else if (l.upper_char() == 1)  // "x:?"
       {
-        for (hfst::StringSet::iterator it = s.begin(); it != s.end(); it++) 
+        for (hfst::StringSet::iterator it = s.begin(); it != s.end(); it++)
           {
         if (not FdOperation::is_diacritic(*it)) {
           int number = t->alphabet.symbol2code(it->c_str());
@@ -1268,7 +1239,7 @@ namespace hfst { namespace implementations {
           origin->add_arc( Label(l.lower_char(), number), target, t );
         }
       }
-      }  
+      }
     // keep the original transition in all cases
     return;
   }
@@ -1305,55 +1276,138 @@ namespace hfst { namespace implementations {
     expand2(t, t->root_node(), new_symbols, visited_nodes);
   }
 
+#endif // HAVE_SFST
+
+    // These functions are needed in transducer type conversions
+
+    void SfstTransducer::delete_transducer(Transducer * t)
+    { delete t; }
+    
+      StringSet SfstTransducer::get_alphabet(Transducer * t)
+  {
+    StringSet s;
+    SFST::Alphabet::CharMap cm = t->alphabet.get_char_map();
+    for ( SFST::Alphabet::CharMap::const_iterator it = cm.begin();
+          it != cm.end(); it++ ) {
+      if (strcmp(it->second, "<>") == 0)
+        s.insert(internal_epsilon);
+      else
+        s.insert( std::string(it->second) );
+    }
+    return s;
+  }
+
+    unsigned int SfstTransducer::get_symbol_number
+    (Transducer *t,
+     const std::string &symbol)
+  {
+    if (symbol == "@_EPSILON_SYMBOL_@")
+      return 0;
+    int i = t->alphabet.symbol2code(symbol.c_str());
+    if (i == EOF) {
+      HFST_THROW(SymbolNotFoundException);
+    }
+    return (unsigned int)i;
+  }
+    
+    unsigned int SfstTransducer::get_biggest_symbol_number(Transducer * t)
+    {
+      unsigned int biggest_number=0;
+      SFST::Alphabet::CharMap cm = t->alphabet.get_char_map();
+      for (SFST::Alphabet::CharMap::const_iterator it = cm.begin();
+           it != cm.end(); it++) {
+        if (it->first > biggest_number)
+          biggest_number = it->first;
+      }
+      return biggest_number;
+    }
+    
+    StringVector SfstTransducer::get_symbol_vector
+    (Transducer * t)
+    {
+      unsigned int biggest_symbol_number = get_biggest_symbol_number(t);
+      StringVector symbol_vector;
+      symbol_vector.reserve(biggest_symbol_number+1);
+      symbol_vector.resize(biggest_symbol_number+1,"");
+      
+      StringSet alphabet = get_alphabet(t);
+      for (StringSet::const_iterator it = alphabet.begin(); it != alphabet.end(); it++)
+        {
+          unsigned int symbol_number = get_symbol_number(t, it->c_str());
+          symbol_vector.at(symbol_number) = *it;
+        }
+      return symbol_vector;
+    }
+    
+    std::map<std::string, unsigned int> SfstTransducer::get_symbol_map
+    (Transducer * t)
+    {
+      StringSet alphabet = get_alphabet(t);
+      std::map<std::string, unsigned int> symbol_map;
+      for (StringSet::const_iterator it = alphabet.begin(); it != alphabet.end(); it++)
+        {
+          symbol_map[*it] = get_symbol_number(t, it->c_str());
+        }
+      return symbol_map;
+    }
 
 } }
 
+#endif // HAVE_SFST || HAVE_LEAN_SFST
+
 #else // MAIN_TEST was defined
-using namespace hfst::implementations;
+
 #include <iostream>
 
+#if HAVE_SFST
 bool does_sfst_alphabet_contain(SFST::Transducer *t, const char *str)
 {
   SFST::Alphabet::CharMap cm = t->alphabet.get_char_map();
-  for (SFST::Alphabet::CharMap::const_iterator it = cm.begin(); 
+  for (SFST::Alphabet::CharMap::const_iterator it = cm.begin();
        it != cm.end(); it++) {
     if (strcmp(str, it->second) == 0) {
       return true; }
-  } 
+  }
   return false;
 }
+#endif
 
-int main(int argc, char * argv[]) 
+int main(int argc, char * argv[])
 {
+#if HAVE_SFST
     std::cout << "Unit tests for " __FILE__ ":";
 
+    using namespace hfst::implementations;
     // Test alphabet pruning
     SFST::Transducer * t = SfstTransducer::define_transducer("a", "b");
 
     SFST::Transducer * t_input = SfstTransducer::extract_input_language(t);
-    std::cout << "#1.5" << std::endl;
-    assert( does_sfst_alphabet_contain(t_input, "a") && 
+    assert( does_sfst_alphabet_contain(t_input, "a") &&
         does_sfst_alphabet_contain(t_input, "b")  );
 
     SFST::Transducer * t_output = SfstTransducer::extract_output_language(t);
-    assert( does_sfst_alphabet_contain(t_output, "a") && 
+    assert( does_sfst_alphabet_contain(t_output, "a") &&
         does_sfst_alphabet_contain(t_output, "b")  );
 
     SFST::Transducer * t_min = SfstTransducer::minimize(t_input);
-    assert( does_sfst_alphabet_contain(t_min, "a") && 
+    assert( does_sfst_alphabet_contain(t_min, "a") &&
         does_sfst_alphabet_contain(t_min, "b")  );
 
     SFST::Transducer * t_eps_free = SfstTransducer::remove_epsilons(t_output);
-    assert( does_sfst_alphabet_contain(t_eps_free, "a") && 
+    assert( does_sfst_alphabet_contain(t_eps_free, "a") &&
         does_sfst_alphabet_contain(t_eps_free, "b")  );
 
     SFST::Transducer * t_subst = SfstTransducer::substitute(t, "a", "c");
-    assert( does_sfst_alphabet_contain(t_subst, "a") && 
-        does_sfst_alphabet_contain(t_subst, "b")  && 
-        does_sfst_alphabet_contain(t_subst, "c") );    
+    assert( does_sfst_alphabet_contain(t_subst, "a") &&
+        does_sfst_alphabet_contain(t_subst, "b")  &&
+        does_sfst_alphabet_contain(t_subst, "c") );
 
     std::cout << std::endl << "ok" << std::endl;
     return EXIT_SUCCESS;
+#else // HAVE_SFST
+    std::cout << "Skipping unit tests for " << __FILE__ << ", SfstTransducer has not been enabled" << std::endl;
+    return 77;
+#endif // HAVE_SFST
 }
 #endif // MAIN_TEST
 

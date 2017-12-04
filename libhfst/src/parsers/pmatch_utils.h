@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 /**
@@ -21,6 +21,8 @@
 #include <set>
 #include <time.h>
 #include <iomanip>
+#include <cmath>
+#include <algorithm>
 #include "HfstTransducer.h"
 #include "HfstXeroxRules.h"
 #include "xre_utils.h"
@@ -34,24 +36,31 @@ struct PmatchObject;
 struct PmatchTransducerContainer;
 
 typedef std::pair<std::string, std::string> StringPair;
+typedef float WordVecFloat;
+struct WordVector;
 
 extern char* data;
 extern char* startptr;
 extern size_t len;
 extern std::map<std::string, PmatchObject*> definitions;
+extern std::map<std::string, std::string> variables;
 extern std::vector<std::map<std::string, PmatchObject*> > call_stack;
 extern std::map<std::string, PmatchObject*> def_insed_expressions;
 extern std::set<std::string> inserted_names;
 extern std::set<std::string> unsatisfied_insertions;
 extern std::set<std::string> used_definitions;
 extern std::set<std::string> function_names;
+extern std::set<std::string> capture_names;
+extern std::vector<WordVector> word_vectors;
 extern ImplementationType format;
 extern bool verbose;
 extern bool flatten;
+extern bool include_cosine_distances;
+extern std::string includedir;
 extern clock_t timer;
-extern clock_t tmp_timer;
 extern int minimization_guard_count;
 extern bool need_delimiters;
+extern WordVecFloat vector_similarity_projection_factor;
 
 struct PmatchUtilityTransducers;
 const std::string RC_ENTRY_SYMBOL = "@PMATCH_RC_ENTRY@";
@@ -67,13 +76,19 @@ const std::string BOUNDARY_SYMBOL = "@BOUNDARY@";
 const std::string ENTRY_SYMBOL = "@PMATCH_ENTRY@";
 const std::string EXIT_SYMBOL = "@PMATCH_EXIT@";
 
+// These are used as arguments for casing functions
+enum Side {
+    Both,
+    Upper,
+    Lower
+};
+
 void add_to_pmatch_symbols(StringSet symbols);
 void warn(std::string warning);
 PmatchUtilityTransducers* get_utils();
 void zero_minimization_guard(void);
 bool symbol_in_global_context(std::string & sym);
 bool symbol_in_local_context(std::string & sym);
-bool should_use_cache(void);
 PmatchObject * symbol_from_global_context(std::string & sym);
 PmatchObject * symbol_from_local_context(std::string & sym);
 
@@ -114,7 +129,43 @@ HfstTransducer * add_pmatch_delimiters(HfstTransducer * regex);
  */
 PmatchTransducerContainer * epsilon_to_symbol_container(std::string s);
 PmatchTransducerContainer * make_end_tag(std::string tag);
+PmatchTransducerContainer * make_capture_tag(std::string tag);
+PmatchTransducerContainer * make_captured_tag(std::string tag);
+PmatchObject * make_with_tag_entry(std::string key, std::string value);
+PmatchObject * make_with_tag_exit(std::string key);
+
+std::vector<std::pair<WordVector, WordVecFloat> > get_top_n(
+    size_t n,
+    const std::vector<WordVector> & vecs,
+    WordVector & comparison_point);
+
+std::vector<std::pair<WordVector, WordVecFloat> > get_top_n_transformed(
+    size_t n,
+    const std::vector<WordVector> & vecs,
+    std::vector<WordVecFloat> plane_vec,
+    std::vector<WordVecFloat> comparison_point,
+    WordVecFloat translation_term,
+    bool negative);
+
+template<typename T> std::vector<T> pointwise_minus(std::vector<T> l,
+                                                    std::vector<T> r);
+template<typename T> std::vector<T> pointwise_plus(std::vector<T> l,
+                                                   std::vector<T> r);
+template<typename T> std::vector<T> pointwise_multiplication(T,
+                                                             std::vector<T> r);
+template<typename T> T dot_product(std::vector<T> l,
+                                   std::vector<T> r);
+template<typename T> T square_sum(std::vector<T> v);
+template<typename T> T norm(std::vector<T> v);
+WordVecFloat cosine_distance(WordVector left, WordVector right);
+PmatchObject * compile_like_arc(std::string word1, std::string word2,
+                                unsigned int nwords = 10, bool is_negative = false);
+PmatchObject * compile_like_arc(std::string word,
+                                unsigned int nwords = 10);
+
 PmatchTransducerContainer * make_counter(std::string name);
+
+hfst::StringSet get_non_special_alphabet(HfstTransducer * t);
 HfstTransducer * make_list(HfstTransducer * t,
                            ImplementationType f = format);
 HfstTransducer * make_exc_list(HfstTransducer * t,
@@ -152,6 +203,8 @@ double get_weight(const char* s);
 
 void init_globals(void);
 
+string expand_includes(const string & script);
+
 /**
  * @brief compile new transducer
  */
@@ -159,7 +212,9 @@ std::map<std::string, HfstTransducer*>
     compile(const std::string& pmatch,
             std::map<std::string,hfst::HfstTransducer*>& defs,
             hfst::ImplementationType type,
-            bool be_verbose, bool do_flatten);
+            bool be_verbose = false, bool do_flatten = false,
+            bool include_cosine_distances = false,
+            std::string includedir = "");
 
 void print_size_info(HfstTransducer * net);
 
@@ -167,8 +222,31 @@ void print_size_info(HfstTransducer * net);
  * @brief Given a text file, read it line by line and return an acceptor
  * of a disjunction of the lines
  */
-HfstTransducer * read_text(char * filename,
-                           ImplementationType type = TROPICAL_OPENFST_TYPE);
+HfstTransducer * read_text(std::string filename,
+                           ImplementationType type = TROPICAL_OPENFST_TYPE,
+                           bool spaced_text = false);
+
+HfstTransducer * read_spaced_text(std::string filename,
+                                  ImplementationType type = TROPICAL_OPENFST_TYPE);
+
+/**
+ * @brief Concatenate include directory with filename to get a real path
+ * (unless the filename is already an absolute path)
+ */
+std::string path_from_filename(char * filename);
+
+struct WordVector
+{
+    std::string word;
+    std::vector<WordVecFloat> vector;
+    WordVecFloat norm;
+};
+
+/**
+ * @brief Given a list of words and their vector representations, parse it into
+ * hfst::pmatch::word_vectors
+ */
+void read_vec(std::string filename);
 
 /**
  * @brief Given a text file, read it line by line and return a tokenized
@@ -177,7 +255,7 @@ HfstTransducer * read_text(char * filename,
 std::vector<std::vector<std::string> > read_args(char * filename, unsigned int argcount);
 
 /** @brief Return a transducer that accepts a single string from an array of
- *  char *. 
+ *  char *.
  */
 
 /* First some magic templates for compile-time length checking */
@@ -300,7 +378,7 @@ struct PmatchUtilityTransducers
     static HfstTransducer * make_combining_accent_acceptor(
         ImplementationType type = TROPICAL_OPENFST_TYPE);
     
-/** @brief Return a transducer that accepts one arabic numeral character. 
+/** @brief Return a transducer that accepts one arabic numeral character.
  */
     static HfstTransducer * make_latin1_numeral_acceptor(
         ImplementationType type = TROPICAL_OPENFST_TYPE);
@@ -324,12 +402,12 @@ struct PmatchUtilityTransducers
     HfstTransducer * make_capify(
         ImplementationType type = TROPICAL_OPENFST_TYPE);
     
-    HfstTransducer * cap(HfstTransducer & t);
-    HfstTransducer * optcap(HfstTransducer & t);
-    HfstTransducer * tolower(HfstTransducer & t);
-    HfstTransducer * toupper(HfstTransducer & t);
-    HfstTransducer * opt_tolower(HfstTransducer & t);
-    HfstTransducer * opt_toupper(HfstTransducer & t);
+    HfstTransducer * cap(HfstTransducer & t, Side side = Both,
+                         bool optional = false);
+    HfstTransducer * tolower(HfstTransducer & t, Side side = Both,
+                             bool optional = false);
+    HfstTransducer * toupper(HfstTransducer & t, Side side = Both,
+                             bool optional = false );
 };
 
 struct PmatchObject;
@@ -344,24 +422,33 @@ struct PmatchObject {
     std::string name; // optional, given if the object appears as a definition
     double weight;
     int line_defined;
+    clock_t my_timer;
     HfstTransducer * cache;
+    bool parent_is_context;
     PmatchObject(void);
     void start_timing(void)
         {
             if (verbose && name != "") {
-                tmp_timer = clock();
+                my_timer = clock();
             }
         }
     void report_time(void)
         {
             if (verbose && name != "") {
-                double duration = (clock() - tmp_timer) /
+                double duration = (clock() - my_timer) /
                     (double) CLOCKS_PER_SEC;
                 std::cerr << name << " compiled in " << duration << " seconds\n";
+                
             }
         }
+    bool should_use_cache(void)
+        {
+            return name != "" && call_stack.size() == 0;
+        }
+    
     virtual HfstTransducer * evaluate(PmatchEvalType eval_type = Transducer) = 0;
     virtual HfstTransducer * evaluate(std::vector<PmatchObject *> args);
+    virtual void mark_context_children(void) { parent_is_context = true; }
     virtual std::string as_string(void) { return ""; }
     virtual StringPair as_string_pair(void)
         { return StringPair("", ""); }
@@ -392,7 +479,6 @@ struct PmatchQuestionMark: public PmatchObject {
     StringPair as_string_pair(void)
         { return StringPair(
                 hfst::internal_identity, hfst::internal_identity); }
-    
 };
 
 enum PmatchUnaryOp {
@@ -416,9 +502,27 @@ enum PmatchUnaryOp {
     OptToLower,
     OptToUpper,
     AnyCase,
+    CapUpper,
+    OptCapUpper,
+    ToLowerUpper,
+    ToUpperUpper,
+    OptToLowerUpper,
+    OptToUpperUpper,
+    AnyCaseUpper,
+    CapLower,
+    OptCapLower,
+    ToLowerLower,
+    ToUpperLower,
+    OptToLowerLower,
+    OptToUpperLower,
+    AnyCaseLower,
     MakeSigma,
     MakeList,
-    MakeExcList
+    MakeExcList,
+    LC,
+    NLC,
+    RC,
+    NRC
 };
 
 enum PmatchBinaryOp {
@@ -472,6 +576,11 @@ struct PmatchNumericOperation: public PmatchObject{
     PmatchNumericOperation(PmatchNumericOp _op, PmatchObject * _root):
         op(_op), root(_root) {}
     HfstTransducer * evaluate(PmatchEvalType eval_type = Transducer);
+    void mark_context_children(void)
+        {
+            parent_is_context = true;
+            root->mark_context_children();
+        }
 };
 
 struct PmatchUnaryOperation: public PmatchObject{
@@ -480,6 +589,11 @@ struct PmatchUnaryOperation: public PmatchObject{
     PmatchUnaryOperation(PmatchUnaryOp _op, PmatchObject * _root):
         op(_op), root(_root) {}
     HfstTransducer * evaluate(PmatchEvalType eval_type = Transducer);
+    void mark_context_children(void)
+        {
+            parent_is_context = true;
+            root->mark_context_children();
+        }
 };
 
 struct PmatchBinaryOperation: public PmatchObject{
@@ -490,6 +604,12 @@ struct PmatchBinaryOperation: public PmatchObject{
         op(_op), left(_left), right(_right) {}
     HfstTransducer * evaluate(PmatchEvalType eval_type = Transducer);
     StringPair as_string_pair(void);
+    void mark_context_children(void)
+        {
+            parent_is_context = true;
+            left->mark_context_children();
+            right->mark_context_children();
+        }
 };
 
 struct PmatchTernaryOperation: public PmatchObject{
@@ -500,6 +620,13 @@ struct PmatchTernaryOperation: public PmatchObject{
     PmatchTernaryOperation(PmatchTernaryOp _op, PmatchObject * _left, PmatchObject * _middle, PmatchObject * _right):
         op(_op), left(_left), middle(_middle), right(_right) {}
     HfstTransducer * evaluate(PmatchEvalType eval_type = Transducer);
+    void mark_context_children(void)
+        {
+            parent_is_context = true;
+            left->mark_context_children();
+            middle->mark_context_children();
+            right->mark_context_children();
+        }
 };
 
 struct PmatchTransducerContainer: public PmatchObject{
@@ -512,7 +639,10 @@ struct PmatchTransducerContainer: public PmatchObject{
             t->convert(format);
         }
         HfstTransducer * retval = new HfstTransducer(*t);
-        retval->set_final_weights(weight, true);
+        retval->set_final_weights(hfst::double_to_float(weight), true);
+        if (name != "") {
+            retval->set_name(name);
+        }
         return retval;
     }
 };
@@ -527,6 +657,7 @@ struct PmatchFunction: public PmatchObject {
 
     HfstTransducer * evaluate(std::vector<PmatchObject *> funargs);
     HfstTransducer * evaluate(PmatchEvalType eval_type = Transducer);
+
 };
 
 struct PmatchFuncall: public PmatchObject {
@@ -551,6 +682,14 @@ struct PmatchFuncall: public PmatchObject {
             }
             return retval;
         }
+    void mark_context_children(void)
+        {
+            for (std::vector<PmatchObject *>::iterator it = args->begin();
+                 it != args->end(); ++it) {
+                (*it)->mark_context_children();
+            }
+            parent_is_context = true;
+        }
 };
 
 struct PmatchBuiltinFunction: public PmatchObject {
@@ -558,8 +697,16 @@ struct PmatchBuiltinFunction: public PmatchObject {
     PmatchBuiltin type;
     PmatchBuiltinFunction(PmatchBuiltin _type,
                           std::vector<PmatchObject*>* argument_vector):
-        type(_type), args(argument_vector) {}
+    args(argument_vector), type(_type) {}
     HfstTransducer * evaluate(PmatchEvalType eval_type = Transducer);
+    void mark_context_children(void)
+        {
+            parent_is_context = true;
+            for (std::vector<PmatchObject *>::iterator it = args->begin();
+                 it != args->end(); ++it) {
+                (*it)->mark_context_children();
+            }
+        }
 };
 
 using hfst::xeroxRules::ReplaceArrow;
@@ -574,6 +721,11 @@ struct PmatchRestrictionContainer: public PmatchObject
     PmatchRestrictionContainer(PmatchObject * l, MappingPairVector * c):
         left(l), contexts(c) { }
     HfstTransducer * evaluate(PmatchEvalType eval_type = Transducer);
+    void mark_context_children(void)
+        {
+            parent_is_context = true;
+            left->mark_context_children();
+        }
 };
 
 struct PmatchMarkupContainer: public PmatchObject
@@ -583,6 +735,12 @@ struct PmatchMarkupContainer: public PmatchObject
     PmatchMarkupContainer(PmatchObject * l, PmatchObject * r):
         left(l), right(r) {}
     HfstTransducer * evaluate(PmatchEvalType eval_type = Transducer);
+    void mark_context_children(void)
+        {
+            parent_is_context = true;
+            left->mark_context_children();
+            right->mark_context_children();
+        }
 };
 
 struct PmatchMappingPairsContainer: public PmatchObject
@@ -646,8 +804,8 @@ struct PmatchReplaceRuleContainer: public PmatchObject
         arrow(pairs->arrow), mapping(pairs->mapping_pairs) {}
     PmatchReplaceRuleContainer(PmatchMappingPairsContainer * pairs,
                                PmatchContextsContainer * contexts):
-        arrow(pairs->arrow), mapping(pairs->mapping_pairs),
-        context(contexts->context_pairs), type(contexts->type) {}
+        arrow(pairs->arrow), type(contexts->type),
+          mapping(pairs->mapping_pairs), context(contexts->context_pairs) {}
     hfst::xeroxRules::Rule make_mapping(void);
     HfstTransducer * evaluate(PmatchEvalType eval_type = Transducer);
 };

@@ -20,7 +20,7 @@ test_transducer_functions test_hfst_basic_transducer test_flag_diacritics \
 test_examples
 
 # sources for programs
-test_rules_SOURCES=test_rules.cc 
+test_rules_SOURCES=test_rules.cc
 test_constructors_SOURCES=test_constructors.cc
 test_streams_SOURCES=test_streams.cc
 test_tokenizer_SOURCES=test_tokenizer.cc

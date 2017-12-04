@@ -7,7 +7,7 @@
 
 const State SequenceModelComponent::START_STATE = 0;
 
-typedef HfstBasicTransducer::HfstTransitionGraphAlphabet
+typedef HfstBasicTransducer::HfstAlphabet
 HfstTransitionGraphAlphabet;
 
 using hfst::internal_epsilon;
@@ -51,7 +51,7 @@ void SequenceModelComponent::add_symbols_from(const HfstBasicTransducer &fst)
 void SequenceModelComponent::add_symbol(const std::string &string_symbol)
 {
   if (symbol_to_number_map.count(string_symbol) == 0)
-    { 
+    {
       symbol_to_number_map[string_symbol] = number_to_symbol_map.size();
       number_to_symbol_map.push_back(string_symbol);
     }
@@ -90,15 +90,15 @@ void SequenceModelComponent::add_transitions_from
 {
   for (State s = 0; s <= static_cast<int>(fst.get_max_state()); ++s)
     {
-      const HfstBasicTransducer::HfstTransitions transitions = fst[s];
+      const hfst::implementations::HfstBasicTransitions transitions = fst[s];
 
       Symbol2TransitionDataMap &symbol_to_transition = transition_map[s];
 
-      for (HfstBasicTransducer::HfstTransitions::const_iterator it = 
+      for (hfst::implementations::HfstBasicTransitions::const_iterator it =
 	     transitions.begin();
 	   it != transitions.end();
 	   ++it)
-	{ 
+	{
 	  Symbol symbol = symbol_to_number_map[it->get_input_symbol()];
 	  
 	  add_transition_to_map(symbol_to_transition,
@@ -139,7 +139,7 @@ Weight SequenceModelComponent::get_final_weight(State state) const
   return state_final_weight_map[state];
 }
 
-TransitionData SequenceModelComponent::get_transition(State state, 
+TransitionData SequenceModelComponent::get_transition(State state,
 						      Symbol symbol)
 {
 #ifndef OPTIMIZE_DANGEROUSLY
@@ -147,14 +147,14 @@ TransitionData SequenceModelComponent::get_transition(State state,
     { throw InvalidState(); }
 #endif // OPTIMIZE_DANGEROUSLY
 
-  const Symbol2TransitionDataMap &symbol_to_transition = 
-    transition_map.at(state);  
+  const Symbol2TransitionDataMap &symbol_to_transition =
+    transition_map.at(state);
   if (symbol_to_transition.count(symbol) == 0)
-    { 
+    {
       if (symbol_to_transition.count(DEFAULT) == 0)
-	{ 
+	{
 	  std::cerr << state << " " << symbol << std::endl;
-	  throw InvalidKey(); 
+	  throw InvalidKey();
 	}
       
       // Can't use the regular []-operator, since symbol_to_transition
@@ -218,77 +218,77 @@ int main(void)
 
   // Check clockwise transitions.
   assert(sequence_model_component.get_transition
-	 (0, SequenceModelComponent::get_symbol("a")).weight == 
+	 (0, SequenceModelComponent::get_symbol("a")).weight ==
 	 static_cast<float>(0.1));
 
   assert(sequence_model_component.get_transition
-	 (0, SequenceModelComponent::get_symbol("a")).target == 
+	 (0, SequenceModelComponent::get_symbol("a")).target ==
 	 static_cast<float>(1));
 
   assert(sequence_model_component.get_transition
-	 (1, SequenceModelComponent::get_symbol("a")).weight == 
+	 (1, SequenceModelComponent::get_symbol("a")).weight ==
 	 static_cast<float>(0.2));
 
   assert(sequence_model_component.get_transition
-	 (1, SequenceModelComponent::get_symbol("a")).target == 
+	 (1, SequenceModelComponent::get_symbol("a")).target ==
 	 static_cast<float>(2));
 
   assert(sequence_model_component.get_transition
-	 (2, SequenceModelComponent::get_symbol("a")).weight == 
+	 (2, SequenceModelComponent::get_symbol("a")).weight ==
 	 static_cast<float>(0.3));
 
   assert(sequence_model_component.get_transition
-	 (2, SequenceModelComponent::get_symbol("a")).target == 
+	 (2, SequenceModelComponent::get_symbol("a")).target ==
 	 static_cast<float>(3));
 
   assert(sequence_model_component.get_transition
-	 (3, SequenceModelComponent::get_symbol("a")).weight == 
+	 (3, SequenceModelComponent::get_symbol("a")).weight ==
 	 static_cast<float>(0.4));
 
   assert(sequence_model_component.get_transition
-	 (3, SequenceModelComponent::get_symbol("a")).target == 
+	 (3, SequenceModelComponent::get_symbol("a")).target ==
 	 static_cast<float>(0));
 
   // Check counter-clockwise transitions.
   assert(sequence_model_component.get_transition
-	 (0, SequenceModelComponent::get_symbol("b")).weight == 
+	 (0, SequenceModelComponent::get_symbol("b")).weight ==
 	 static_cast<float>(1.1));
 
   assert(sequence_model_component.get_transition
-	 (0, SequenceModelComponent::get_symbol("b")).target == 
+	 (0, SequenceModelComponent::get_symbol("b")).target ==
 	 static_cast<float>(3));
 
   assert(sequence_model_component.get_transition
-	 (1, SequenceModelComponent::get_symbol("b")).weight == 
+	 (1, SequenceModelComponent::get_symbol("b")).weight ==
 	 static_cast<float>(1.4));
 
   assert(sequence_model_component.get_transition
-	 (1, SequenceModelComponent::get_symbol("b")).target == 
+	 (1, SequenceModelComponent::get_symbol("b")).target ==
 	 static_cast<float>(0));
 
   assert(sequence_model_component.get_transition
-	 (2, SequenceModelComponent::get_symbol("b")).weight == 
+	 (2, SequenceModelComponent::get_symbol("b")).weight ==
 	 static_cast<float>(1.3));
 
   assert(sequence_model_component.get_transition
-	 (2, SequenceModelComponent::get_symbol("b")).target == 
+	 (2, SequenceModelComponent::get_symbol("b")).target ==
 	 static_cast<float>(1));
 
   assert(sequence_model_component.get_transition
-	 (3, SequenceModelComponent::get_symbol("b")).weight == 
+	 (3, SequenceModelComponent::get_symbol("b")).weight ==
 	 static_cast<float>(1.2));
 
   assert(sequence_model_component.get_transition
-	 (3, SequenceModelComponent::get_symbol("b")).target == 
+	 (3, SequenceModelComponent::get_symbol("b")).target ==
 	 static_cast<float>(2));
 
   // Check default transition
   assert(sequence_model_component.get_transition
-	 (1, SequenceModelComponent::get_symbol("c")).target == 
+	 (1, SequenceModelComponent::get_symbol("c")).target ==
 	 static_cast<float>(2));
 
   assert(sequence_model_component.get_transition
-	 (1, SequenceModelComponent::get_symbol("c")).weight == 
-	 static_cast<float>(10.0));  
+	 (1, SequenceModelComponent::get_symbol("c")).weight ==
+	 static_cast<float>(10.0));
 }
 #endif // MAIN_TEST

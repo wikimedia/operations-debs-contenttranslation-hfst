@@ -12,7 +12,9 @@ EXTRA_DIST=test.sh \
 	invert_net.xfst invert_net.att \
 	minus_net.xfst minus_net.att \
 	intersect_net.xfst intersect_net.att \
-	negate_net.xfst negate_net.att \
+	negate_net_1.xfst negate_net_1.att \
+	negate_net_2.xfst negate_net_2.att \
+	negate_net_fail.xfst \
 	one_plus_net.xfst one_plus_net.att \
 	zero_plus_net.xfst zero_plus_net.att \
 	determinize_net.xfst determinize_net.att \
@@ -51,7 +53,6 @@ EXTRA_DIST=test.sh \
 	quoted_literals.xfst quoted_literals.att \
 	define.xfst define.att \
 	define_function.xfst define_function.att \
-	define_fail.xfst \
 	eliminate_flag.xfst eliminate_flag.output \
 	empty_context.xfst empty_context.output \
 	set_variable.xfst set_variable.output \
@@ -157,6 +158,7 @@ EXTRA_DIST=test.sh \
 	replace_test_51.xfst replace_test_51.output \
 	replace_test_52.xfst replace_test_52.output \
 	replace_test_53.xfst replace_test_53.output \
+	replace_test_flags_1.xfst replace_test_flags_1.att \
 	weighted_parallel_rules_1.xfst weighted_parallel_rules_1.output \
 	weighted_parallel_rules_2.xfst weighted_parallel_rules_2.output \
 	weighted_parallel_rules_3.xfst weighted_parallel_rules_3.output \
@@ -179,8 +181,8 @@ EXTRA_DIST=test.sh \
 	replace_markup_5.att replace_markup_5.xfst \
 	replace_markup_6.att replace_markup_6.xfst \
 	replace_markup_7.att replace_markup_7.xfst \
-	priority_union_1.att priority_union_1.att \
-	priority_union_2.att priority_union_2.att \
-	priority_union_3.att priority_union_3.att \
-	priority_union_4.att priority_union_4.att
+	priority_union_1.att priority_union_1.xfst \
+	priority_union_2.att priority_union_2.xfst \
+	priority_union_3.att priority_union_3.xfst \
+	priority_union_4.att priority_union_4.xfst
 check_DATA=test.sh

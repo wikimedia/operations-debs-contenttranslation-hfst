@@ -1,14 +1,16 @@
 #ifdef WINDOWS
-
+#pragma warning(disable: 4161)
+#pragma warning(disable: 4103)
 #include <windows.h>
 #include <string>
 
 #include <cstdarg>
 #include <cstdio>
+#include "HfstDataTypes.h"
 
 #include <iostream> // for debugging
 
-namespace hfst 
+namespace hfst
 {
   int hfst_fprintf_console(FILE * stream, const char * format, ...)
   {
@@ -32,7 +34,7 @@ namespace hfst
           MultiByteToWideChar(CP_UTF8 , 0 , pstr.c_str() , -1, NULL , 0 );
         wchar_t* wstr = new wchar_t[wchars_num];
         MultiByteToWideChar(CP_UTF8 , 0 ,
-                            pstr.c_str() , -1, wstr , wchars_num );                             
+                            pstr.c_str() , -1, wstr , wchars_num );
         int retval = WriteConsoleW(stdHandle, wstr, wchars_num-1, &numWritten, NULL);
         delete[] wstr;
 
@@ -48,12 +50,12 @@ namespace hfst
 
   bool get_line_from_console(std::string & str, size_t buffer_size, bool keep_newline /* = false*/)
   {
-    bool DEBUG = false;  
+    bool DEBUG = false;
     SetConsoleCP(65001);
     const HANDLE stdIn = GetStdHandle(STD_INPUT_HANDLE);
     WCHAR * buffer = new WCHAR [buffer_size];
     DWORD numRead = 0;
-    if (ReadConsoleW(stdIn, buffer, size_t(buffer_size/4), &numRead, NULL))
+    if (ReadConsoleW(stdIn, buffer, hfst::size_t_to_uint(buffer_size/4), &numRead, NULL))
       {
         if (DEBUG) { std::cerr << "get_line_from_console: numRead is " << numRead << std::endl; }
         

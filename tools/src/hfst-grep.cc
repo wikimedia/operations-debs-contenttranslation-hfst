@@ -105,12 +105,12 @@ print_usage()
     fprintf(message_out, "Usage: %s [OPTIONS...] PATTERN [FILE...]\n"
            "Search for PATTERN in each FILE or standard input.\n"
            "Pattern is, by default, a Xerox regular expression (XRE).\n"
-           "Example: hfst-grep 'h e l l o %%  w o r l d' menu.h menu.c\n"   
+           "Example: hfst-grep 'h e l l o %%  w o r l d' menu.h menu.c\n"
         "\n", program_name);
 
     // options, grouped
     print_common_program_options(message_out);
-    fprintf(message_out, 
+    fprintf(message_out,
             "  -9, --format=TYPE       compile expressions to TYPE "
             "automata\n");
     fprintf(message_out, "\n");
@@ -221,7 +221,7 @@ parse_options(int argc, char** argv)
         {
           HFST_GETOPT_COMMON_LONG,
           HFST_GETOPT_UNARY_LONG,
-          // add tool-specific options here 
+          // add tool-specific options here
           {"format", required_argument, 0, '9'},
           {"extended-regexp", no_argument, 0, 'E'},
           {"fixed-strings", no_argument, 0, 'F'},
@@ -266,8 +266,8 @@ parse_options(int argc, char** argv)
           {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT
                              "EFGPXe:f:IwxzqmbnOad:D:rLlcZA:B:C:uU9:",
                              long_options, &option_index);
@@ -412,7 +412,7 @@ parse_options(int argc, char** argv)
             print_short_help();
             return EXIT_FAILURE;
           }
-        else 
+        else
           {
             regexp = strdup(argv[optind]);
             optind++;
@@ -497,12 +497,12 @@ read_matcher(HfstInputStream& instream)
           }
         if (transducer_n==1)
         {
-          verbose_printf("Reading matcher %s...\n", inputname); 
+          verbose_printf("Reading matcher %s...\n", inputname);
         }
         else
         {
           verbose_printf("Reading matcher %s..." SIZE_T_SPECIFIER "\n", inputname,
-                         transducer_n); 
+                         transducer_n);
         }
         if (transducer_n > 1)
           {
@@ -557,7 +557,7 @@ extend_matcher_with_options()
         verbose_printf("Adding color codes to match boundaries...\n");
         HfstTransducer colorStart("@_EPSILON_SYMBOL_@", "[31m", format);
         HfstTransducer colorEnd("@_EPSILON_SYMBOL_@", "[00m", format);
-        HfstTransducer coloured = 
+        HfstTransducer coloured =
             colorStart.concatenate(*matcher).concatenate(colorEnd);
         matcher = new HfstTransducer(coloured, format);
       }
@@ -567,7 +567,7 @@ extend_matcher_with_options()
         verbose_printf("Adding brackets to match boundaries...\n");
         HfstTransducer colorStart("@_EPSILON_SYMBOL_@", "{{{", format);
         HfstTransducer colorEnd("@_EPSILON_SYMBOL_@", "}}}", format);
-        HfstTransducer coloured = 
+        HfstTransducer coloured =
             colorStart.concatenate(*matcher).concatenate(colorEnd);
         matcher = new HfstTransducer(coloured, format);
       }
@@ -577,7 +577,7 @@ extend_matcher_with_options()
                       "(currently space)...\n");
         HfstTransducer nonWordCharLeft(" ", format);
         HfstTransducer nonWordCharRight(" ", format);
-        HfstTransducer wordBounded = 
+        HfstTransducer wordBounded =
             nonWordCharLeft.concatenate(*matcher).concatenate(nonWordCharRight);
         matcher = new HfstTransducer(wordBounded, format);
       }
@@ -588,7 +588,7 @@ extend_matcher_with_options()
         HfstTransducer rightAny("@_IDENTITY_SYMBOL_@", format);
         leftAny.repeat_star();
         rightAny.repeat_star();
-        HfstTransducer oneMatch = 
+        HfstTransducer oneMatch =
             leftAny.concatenate(*matcher).concatenate(rightAny);
         matcher = new HfstTransducer(oneMatch, format);
         matcher->repeat_plus();

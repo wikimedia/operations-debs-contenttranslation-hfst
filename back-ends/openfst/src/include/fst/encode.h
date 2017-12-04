@@ -23,15 +23,7 @@
 
 #include <climits>
 
-#ifdef USE_TR1_UNORDERED_MAP
-#include <tr1/unordered_map>
-using std::tr1::unordered_map;
-using std::tr1::unordered_multimap;
-#else
-#include <unordered_map>
-using std::unordered_map;
-using std::unordered_multimap;
-#endif
+#include <fst/unordered_map.h> // Changed HFST
 
 #include <string>
 #include <vector>
@@ -178,7 +170,7 @@ template <class A>  class EncodeTable {
 
   static EncodeTable<A> *Read(istream &strm, const string &source);
 
-  const uint32 flags() const { return flags_ & kEncodeFlags; }
+  /*const*/ uint32 flags() const { return flags_ & kEncodeFlags; }
 
   int RefCount() const { return ref_count_.count(); }
   int IncrRefCount() { return ref_count_.Incr(); }
@@ -359,8 +351,8 @@ template <class A> class EncodeMapper {
     return props & mask;
   }
 
-  const uint32 flags() const { return flags_; }
-  const EncodeType type() const { return type_; }
+  /*const*/ uint32 flags() const { return flags_; }
+  /*const*/ EncodeType type() const { return type_; }
   const EncodeTable<A> &table() const { return *table_; }
 
   bool Write(ostream &strm, const string& source) {

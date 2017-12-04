@@ -17,5 +17,5 @@ for f in $TOOLDIR/hfst-{compare,compose,compose-intersect,concatenate,disjunct,m
         fi
     fi
 done
-rm version.out 2>1 > /dev/null
+rm version.out 2> /dev/null > /dev/null
 HFST_OPTIONS="$old_opts"

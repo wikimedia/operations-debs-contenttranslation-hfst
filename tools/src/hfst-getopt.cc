@@ -21,7 +21,7 @@ int optind = 1;
 std::vector<char *> free_arguments;
 std::vector<char *> other_arguments;
 
-char getopt_long(int argc, char * /*const*/ argv [], const char * optstring, 
+int getopt_long(int argc, char * /*const*/ argv [], const char * optstring,
                  const struct option * longopts, int * longindex)
 {
   // check that there are more args

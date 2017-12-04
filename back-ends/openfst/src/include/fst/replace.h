@@ -22,15 +22,7 @@
 #ifndef FST_LIB_REPLACE_H__
 #define FST_LIB_REPLACE_H__
 
-#ifdef USE_TR1_UNORDERED_MAP
-#include <tr1/unordered_map>
-using std::tr1::unordered_map;
-using std::tr1::unordered_multimap;
-#else
-#include <unordered_map>
-using std::unordered_map;
-using std::unordered_multimap;
-#endif
+#include <fst/unordered_map.h> // Changed HFST
 
 #include <set>
 #include <string>
@@ -1058,7 +1050,7 @@ class ArcIterator< ReplaceFst<A, T> > {
 
     // If state is already cached, use cached arcs array.
     if (fst_.GetImpl()->HasArcs(state_)) {
-      (fst_.GetImpl())->template CacheImpl<A>::InitArcIterator(state_,
+      (fst_.GetImpl())->CacheImpl<A>::InitArcIterator(state_,
                                                                &cache_data_);
       num_arcs_ = cache_data_.narcs;
       arcs_ = cache_data_.arcs;      // 'arcs_' is a ptr to the cached arcs.

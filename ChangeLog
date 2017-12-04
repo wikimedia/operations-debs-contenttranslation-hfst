@@ -1,4 +1,652 @@
-97c1285 (HEAD -> master, origin/master, origin/HEAD) Swap implementations of commands 'apply up' and 'apply down' in hfst-xfst, making them work as they do in foma and xfst.
+f6bc1cd (HEAD -> master, origin/master, origin/HEAD) -W/--no-weights overrides earlier -w (or -w implied by -g) options
+cb9916d Add missing files.
+c92bcaf Add missing files to dist.
+d98ffa7 Initial commit of finnish-tagtools scripts Includes a few ones from FinnPos modified for our purposes
+ee4662b Merge branch 'master' of https://github.com/hfst/hfst
+d6a247e Added a variable "xerox-composition", default to "on"
+355aaf9 allow creating HfstInputStream's from std::istream's
+8ff49aa Use libreadline in hfst-pmatch when available
+b5b7995 [].with(X = Y) feature in pmatch This provides support in the pmatch2fst compiler to define "global flags" with the syntax [your expression here].with(X = Y). This will set up a flag diacritic readable from anywhere within the brackets, even if Ins()ed.
+0858e63 Support getting a list of operations involved with a particular feature. This also involves making define_diacritic() redefine the meaning of symbols if called multiple times on the same symbol number.
+4d4471d tokenize tests should pass again
+f81dcb5 tokenize --giella-cg: assume FST handles space around tags
+b07c47b Merge branch 'master' of https://github.com/hfst/hfst
+60e5c28 Check for success of the now-working test suite.
+acf3c78 Cleanup of remainder of the pmatch test suite Many cases of adding set "need-separators off"; many cases of fixing mistaken test assumptions; one case of fixing code; one case of removing test that was already in pmatch2fst-functionality.sh; one case of removing entire test because it was trying to do something impossible; one case of relaxing test assumptions that should be possibly revisited. Multiple FIXMEs left but all the tests now pass.
+2669274 Make both-sided OptCap() be actually both-sided. It still doesn't downcase the continuation of words, which is possibly a bug.
+64a1874 tokenize --giella-cg: remove as_cg_tag, just need is_cg_tag now
+9decc11 Modify check for list symbols. It was conflicting with left markers for Xerox rules (@LM@), causing a test to very surprisingly break (it didn't even seem to be using optimized-lookup format at all..)
+4e4ba7c Add tests for Lst() and Exc()
+7a0176a Avoid keeping an extra copy of the tokenizing dictionary in memory (fixes https://github.com/hfst/hfst/issues/362)
+8c10e1d Consider list symbols (@L..." and "@X...") to be special
+e4dff09 hfst-tokenize --giella-cg, is_tag: check if symbol Multichar_symbol
+3ec59da tokenize --giella-cg: non-verbose as default
+862ea0e Add C and C++ dlls to dist.
+d653123 Fix misspelling of nrc for nlc
+c005a4a Merge branch 'master' of https://github.com/hfst/hfst
+86dcec6 Fix runtime handling of contexts and compilation of negative contexts. This was broken when the processing state stack was changed to accommodate "RTN safety". The local state is now pushed into a stack when entering a context and pushed again when exiting it, and popped when backtracking out of those situations.
+10967c4 set need-delimiters no for more tests that were broken by it
+06cbb20 Made Xerox output of unknowns follow Xerox
+97ecf44 Merge pull request #359 from kartikm/patch-1
+23dcc54 Fixed typo
+134d5a5 Works around issue #358
+21b0e82 Actually support multiple different Capture() names
+be9e214 Instead of names, use pointers to the calling transducers for rtn calls
+34bf445 Don't track returns from Ins() arcs in the call stack Pushing returns from Ins() calls to the call stack were clobbering nested calls. This is unnecessary, because we have the necessary information about the correct return location from the stack depth variable anyway.
+1358576 Use hfst-pmatch --newline in the tests so we don't see irrelevant blank lines
+e6f7067 Decrement recursion counter when returning from main loop due to no input
+528952f A somewhat hacky fix to a bug introduced by changes to RTN processing pmatch is lacking recursion depth with each RTN entered. This is mostly a problem due to eventually running out of depth and truncating results. For now we reset depth at the start of each input, which makes sense anyway, but the leak should really be fixed.
+c45f620 In locate mode, omit blank lines even if in blankline mode if we didn't print anything
+74f3a6f Remember captures for the duration of the entire input. Also avoid copying the captured vectors around, instead passing iterators to input
+01c2fd7 Fix short form of end tagging also disable automatic disabling of need-separators when encountering a context
+f2b6c8c Merge branch 'master' of https://github.com/hfst/hfst
+64528f7 In blankline-separated mode, keep blanklines in output too
+b0a17a2 Merge branch 'master' of https://github.com/hfst/hfst
+31f0767 Include pre-swig-generated wrappers to source distribution. Update README.
+de22111 Remove bashisms that was breaking tests that apparently are not run with bash
+368acef Fix tokenize backtrack regression, need to handle @PMATCH_BACKTRACK@ explicitly
+da0ab47 Fix test which was probably written with a misunderstanding of replace rules
+ed5ac3b Reinstate and fix some tests by moving them from pmatch-tests.sh (where escaping done by the testing script breaks some tests) to pmatch2fst-functionality.sh
+882ee74 Allow term complement of named transducers
+2686525 Merge branch 'master' of https://github.com/hfst/hfst
+215a482 Support backreferences (Capture())
+eea79b8 Update README.
+e1d519c Link to exact place in page.
+27d3e1c Update README.
+2e93516 For installation instructions, link to PyPI pages instead of KitWiki.
+b68f146 Update README.
+7a3618e Make Like() and Unlike() much faster by not sorting the whole vocabulary (by doing an insertion sort of the n best words) and only calculating each comparison key once
+85f8a8c Fixed binding of freely insert operator in hfst-twolc.
+83eea8b Remove unnecessary (debug?) prints.
+e10be33 Actually use other than ascii characters in att file.
+5102d2d Fix some typos in test.sh. Replace epsilon with empty string in fst2strings.py. Read input in utf-8 format in prolog2fst.py, if possible.
+394284b Fix a typo.
+b52f348 Test if hfst-xfst exists after all options are processed.
+cdaa748 Implement an equivalent python script for all command line tools needed in tests.
+c6dae7a When using python for tests, also replace part of command line tools with equivalent python scripts.
+88a70d3 Fix a couple of typos.
+ef65667 Update python package version number. Use .cpp extension.
+7bc8e18 Update README.
+778ebca Get rid of unnecessary CommandLine in python api. Fix some typos.
+1c345ef Error functions are void, not int.
+b8edb3a Import sys.version_info before using it...
+6a2107c Use extension cpp for all c++ files in pypi package. Also use the c++ implementation of foma backend by default.
+4319046 A couple more fixes.
+3f63a4e Fix some issues noticed by clang.
+27c30ee Add a c++ version of foma backend for testing.
+31c91c3 Add arguments to function declaration.
+0b46845 Fix a couple more typos.
+a117e05 Fix some typos.
+7604850 Improve test script and add expected results for cases where xfst solution does not exist but the result from hfst script is checked.
+c459207 Add two more python implementations for fsmbook tests.
+c75cbb8 Merge branch 'master' of https://github.com/hfst/hfst
+61be454 Add Unlike() operation, which could be better named also add option for whether information about cosine distances should be included in the result when compiling word vector operations
+87cb7d6 Two more python tests...
+42ba171 Add two more python tests.
+221f8dc Add more tests.
+e25e2d4 Add python test for FinnishNumerals
+7d917a4 Allow empty string as input for hfst.fst and hfst.fsa and interpret it as epsilon.
+3842501 Use xfst instead of python for slow tests.
+5962b3a Add one more python test.
+7b3dccb Add python test.
+dd5ed1f Fix broken test assumption
+a45a97d Prohibit EndTagging printable-empty lengths of input
+77d5c7b Fix single-character transducers not getting automatic context separators
+432d16c Verbose message about automatic separators
+7bf07dd Make using Ins() -arcs safe Ins() arcs are no longer locally greedy, so there is no semantic difference between network inclusion with Ins() or by explicitly embedding. eg. define greedy "a+"; now the following work the same way: Ins(greedy) {abc} greedy {abc}
+adc3b0b Use temp weights rather than subtractions like in pmatch
+1378513 Fix test by having need-separators off
+849d297 Minimize automatic delimiter contexts
+97a7b05 Merge pull request #352 from unhammer/tokenise-lib
+2fcc665 Merge branch 'master' into tokenise-lib
+ef026f1 Add option --silent to tests.
+c0996a8 Add .0000000000 to tests; ToDo: Trim trailing 0 after the dot, then trim the dot; ToDo: Investigate where std::fixed gets disabled
+1fe2af9 Wrap compile_twolc_file inside a class as TwolcCompiler::compile.
+dbd0d14 Revert "Removed rounding"
+813f2d3 Add keyword arguments to compile_twolc_file.
+786af19 Removed rounding
+702425e Add twolc files to pypi setup.
+30e3c4f Fix a typo.
+e8acc1a Flush and close the stream.
+2b26a3b Add tests for 'compile_twolc_file'.
+b27f993 Remember to reset also the second parser.
+7fb07f5 Add a possibility to reset twolc parsers between reading several twolc files.
+251cef5 Add option --local-hfst to setup.py.
+87a77e7 Add a tentative implementation of twolc compilation.
+4567609 Make code clearer and add documentation.
+8738272 Keep track of weights along context checking paths and unify weight handling
+539592b Merge branch 'master' of https://github.com/hfst/hfst
+31950de Add beam mode to result filtering
+532925d Make sure TOP has the right name if it's eg. loaded from a @bin""
+dc9bf4e Make sure the HfstTransducer name and the container names match
+5289eb3 Fixes issue 353. Unbelievably, the return value for a weight-returning get_weight() was bool, which after casting mostly worked until it ran into negative weights.
+2bfb55c Fix problem with rtns that are referred but not really present
+2dd7767 Improve help messages of scripts.
+1548480 Add hfst-specific options --with-c++11 and --without-c++11 to setup.py.
+f285400 Use HFST_THROW macro instead of plain throw for HfstExceptions.
+4be886d If USE_FOMA_EPSILON_REMOVAL is defined, use foma for epsilon removal in minimization for unweighted TropicalWeightTransducers to make it faster.
+7b03fd0 Add an option --verbose to test.sh.
+5463306 Fix the way unordered containers are used on windows with python2.7.
+48de6fd Give pythonpath as first optional argument for each test, except for stream tests that take it as a second optional argument. Also specify coding for each test.
+dbb055f round weight to zero decimals, non-sci, in cg/giellacg vislcg3 doesn't (yet) accept floating point weights
+8d38925 Use by default c++11 unordered_map and unordered_set, unless otherwise specified via definitions (INCLUDE_TR1_UNORDERED_MAP_AND_SET and USE_TR1_UNORDERED_MAP_AND_SET).
+31cd16c Merge branch 'master' of https://github.com/hfst/hfst
+8f17d4e Add boolean CPP_STD_11=True to control c++11 support.
+baec687 Move tokenize to correct alphabetical place.
+194b9cc Couple of fixes to vc 2008 compilation without c++11 support.
+38ad594 Fix issues noticed when compiling without c++11 support with VC 2008 on Windows.
+89ddca2 Merge branch 'master' of https://github.com/hfst/hfst
+8121be6 Fixed bug 341 (priority union)
+318fdb5 Add an option --without-c++11 (defaults to 'no') to compile hfst without c++11 support.
+d3a5c5d c++ standard is set in configure, do not set it here
+ee84e29 make hfst-tokenise usable as a lib; include simple string→string fn
+fbf8d49 Update documentation and setup.
+9617edb Add a quick fix to missing 'strtof' in msvc 2012.
+b22626e Add a function cross_product that takes an iterable object of transducers. Document other similar functions.
+b1fbf8b Add simple help messages.
+195ef73 Add a function 'compose' that takes a list of transducers. Comment out a debug print.
+8cb5ee5 Skip calculate_funtionality.py test until it is fixed.
+b9aa618 Add a script that copies files needed for creating a distribution for windows.
+72b1463 Add a script for generating cc and hh files from yacc/flex sources for windows. Update copy script for windows. Change flex token ECHO to ECHO_ to prevent collision with flex/yacc macro with the same name.
+0b61a94 Make script faster.
+06a6c9d More fsmbook python scripts.
+88cc5bf Add a simple --help message to test.sh. Add python versions of two tests.
+3649018 Add new python scripts.
+3ec8d35 If --python is requested in test.sh, use python API also for hfst scripts that have an equivalent python script.
+0ebc87e Add options --python and --pythonpath to test.sh which enable compiling xfst files also via the python API.
+7266f93 Add an example for HfstBasicTransducer.remove_transition.
+f2a547f clang requires libc++ and osx version >= 10.7.
+9a60444 Add function HfstBasicTransducer.remove_final_weight and document it. Also improve documentation of HfstBasicTransducer.remove_transition and HfstBasicTransducer.add_transition.
+a2dbe8e Add function HfstBasicTransducer::remove_final_weight.
+9950d90 Add option --restricted-mode (-R) to hfst-xfst. If it is requested, Write and read operations are allowed only in current directory (i.e. pathnames cannot contain '/' or '\') and system calls are disabled.
+059b5b0 Add tests for hfst-xfst's 'negate' command.
+cdab3f7 Add a function HfstTransducer::negate() which is equivalent to [?* - A] (where A is the transducer) with the exception that flag diacritics are treated as ordinary symbols. Use the function to implement 'negate' command of hfst-xfst.
+4001b45 Allow complement/negation only for automata.
+a741bdc (tag: v3.12.2) Ready for release 3.12.2.
+56534b3 Add missing file.
+cc2dea5 Merge branch 'master' of https://github.com/hfst/hfst
+22383de Check more carefully which backends are actually enabled.
+4cebb75 Actually remove commented code instead of making it visible.
+c811b35 Remove commented code.
+357ab0f Remove commented code.
+f9796b3 Update README.
+60742c4 Add extra compile option -std=c++0x.
+25ce84e Reapply changes in commit de59747. Require at least automake 1.12, unless building from pre-yacc-generated sources.
+750a3ca Revert changes in commit de59747. Allow automake older than 1.12.
+0ae7b1e Use std::unordered_map instead of hash_map.
+0b3a248 Use unordered_map instead of hash_map.
+8b4b1d4 Skip lexc wrapper test.
+d11b00e Add a simple exception handling mechanism.
+02e16cb Fix a typo.
+de59747 Stop supporting automake < 1.12. Warn that build will fail unless building with pre-flex-generated sources.
+e776ecc Remove commented code. Remove unnecessary variables.
+8b30936 Skip hfst-train-tagger and hfst-twolc-loc tools in version and help message testing.
+ba28c39 Add missing file to dist.
+b29e140 Remove lexc wrapper tests.
+4033c44 Disable lexc and foma wrappers unless explicitly requested. Fix a typo in --enable-expand-equivalences.
+5035132 Actually enable hfst-calculate and hfst-xfst by default as promised in commit 244b9b5...
+31fc7c7 Add missing condition.
+5191c88 Add option --with-openfst-log=lean to configure which supports only reading, writing and converting log openfst transducers.
+30d3792 Actually check if --with-sfst=lean is configured when compiling sfst functions.
+94eda73 Add configure option --with-sfst=lean which supports a limited set of sfst functions (reading, writing and converting between formats).
+5df548e Add missing const to definition, remove second argument of HFST_THROW.
+214ab27 Add function 'has_weights'. Make function 'get_profile_seconds' public.
+a27f845 Add function 'get_profile_seconds' for profiling foma back-end.
+1b64f33 Add function 'has_weights' and make function 'get_profile_seconds' static.
+244b9b5 Remove duplicate of AC_ARG_ENABLE([xfst]). Enable hfst-calculate and hfst-xfst by default.
+e47f010 Remove commented code. Make sure that code compiles when openfst backend is disabled. Add comments to some functions.
+d0a1e91 Use iosfwd header instead of iostream when possible. Try to include only header files that are actually needed.
+389679d Clean temporary files generated by tests. Add some files to be ignored.
+610572f Merge branch 'master' of https://github.com/hfst/hfst
+f66f396 Check for nested context conditions, ignoring the inner ones
+d8db552 Update man pages. Remove man pages of tools that are no longer supported. Update copyright year.
+62da656 Disable hfst-twolc script and hfst-train-tagger tool unless explicitly enabled with --enable-twolc-script and --enable-train-tagger.
+e369608 Add files to be ignored.
+142bfca By default, implement hfst-twolc as a single program and disable the script (can be controlled via --enable-twolc-script).
+98e08f6 Get rid of hfst-twolc-system tool. The script hfst-twolc will soon be replaced by a single program.
+e30202c Update windows scripts according to recent changes in twolc processing.
+d676043 Update files ignored by git.
+ae820a5 Revert to earlier version of htwolc-main.cc which calls twolc parsers directly instead of TwolcCompiler class. The latter approach sometimes causes a segmentation fault.
+d96b441 Define warning and error streams in TwolcCompiler constructor.
+9c0cca4 Throw an error instead of calling exit(1) when parsing input.
+b820f11 Handle twolc error and warning streams.
+e116a74 Add TwolcCompiler class and use it in htwolc program. Move CommandLine under libhfst/src/parsers.
+9a19088 Move most twolc code from tools/src to libhfst/src/parsers.
+0705bec if no --superblanks, newlines won't be in [], so need to print on unblanked newlines
+1351257 --giella-cg: only treat superblanks if given --superblanks
+efa0964 Update list of files ignored by git.
+19fd1d1 Add an option to use htwolc in twolc tests. Disable it by default.
+59cfdce Rename twolc files.
+a6029ef Rename twolc parser and lexer files. Move functions under namespace hfst::twolcpre[1|2|3].
+5844621 Actually exclude htwolc from installation.
+7661b38 Add an alternative implementation of hfst-twolc which does all processing in a single program. Exclude it from installation until it is properly tested.
+52d5257 only warn for backtrack-on-substrings-without-analyses if --verbose
+3936fdb Control output of htwolcpre1.
+0cc7582 Change names of extern twolc variables and add functions to access some of them.
+f9a69b2 Add missing new file hfst_sfst_extensions.cc.
+d5baf5a Separate twolc parsing and command line tools to their own files.
+035b6ab Use separate prefixes in twolc lexers and parsers.
+d3c4de9 Handle '^<' and '^>' operators in lexc regular expressions correctly. Should fix issue #346.
+6165347 Space-separated mode
+144a3f3 Ignore generated sfst source files.
+dc90602 Merge branch 'master' of https://github.com/hfst/hfst
+9f7208b Improve pmatch compilation error handling, still leaks memory at exit
+3767b51 Add new function 'compile_sfst_file'.
+512245b Merge branch 'master' of https://github.com/hfst/hfst
+4649b83 Reorder and add norm caching
+460cded clearer error message for when there is backtracking into substrings that have no analyses
+0705c3c Apply recent changes in filenames and locations.
+3560d0b Move sfst compilation from tools/src to libhfst/src/parsers.
+bc49e55 Fix namespace and class names.
+9f356e7 Change file and namespace names.
+3f8d457 Small fixes to sfst compilation.
+c28d2c5 Further separate sfst compilation and command line program.
+0ccd6fe Reorganize sfst compilation into separate compilation units.
+b9b8585 Fix xfst and twolc tests. Use rm -f when removing files that are conditionally created.
+52d3cbf Remove all exe extensions from hfst-twolc and hfst-twolc-loc because they are scripts.
+99d37e6 Remove exe extensions from hfst-twolc and hfst-twolc-loc because they are scripts.
+b9b678e Start separating sfst parser and command line program to their own files. Add a prefix 'sfst' to flex/bison functions and variables.
+9733812 Rename HfstCompiler, hfst-compiler and hfst-scanner to SfstCompiler, sfst-compiler and sfst-scanner.
+ea9fb6b Add a test for hfst.regex using 'definitions'.
+2a7ad84 Add a keyword argument 'definitions' to regex that takes a dictionary mapping transducer names into transducers.
+6c76128 Add regexp operator documentation also to web pages.
+2322ecc Modify regex documentation.
+3155955 Tentatively add documentation about regexp operators.
+77b6444 use ccache if possible, slightly faster travises
+1ab384d Update fst_to_fsa and fsa_to_fst. Support both HfstTransducer and HfstBasicTransducer formats.
+663224d Catch exceptions when compiling pmatch expressions. Add new tests for pmatch functions.
+43e0644 Do not exit on pmatch compiling errors, throw 1 and catch it in command line program.
+0556161 Merge remote-tracking branch 'refs/remotes/origin/master'
+51b811e Small math fix + revert to float, which wasn't causing problems after all
+e1c9af0 Modify fst_to_fsa and fsa_to_fst.
+aaf2f8b Support special symbols and single-character symbols without separator in fsa_to_fst. Update also documentation.
+ebea326 Add simple tests for fst_to_fsa and fsa_to_fst. Also test modifying transitions of an HfstBasicTransducer.
+ecb78d0 Rewrite HfstBasicTransducer's transitions() and state_and_transitions(). Tentatively add an implementation for functions fst_to_fsa and fsa_to_fst.
+a65ca94 Remove HfstBasicTransitions and HfstStates from HfstBasicTransducer and use hfst::implementations::HfstBasicTransitions and hfst::implementations::HfstBasicStates instead.
+4579f7d Give the pythonpath as command line argument for tests that use 'from __future__ import' instead of catenating it to the beginning of file. The import must happen in the beginning of file.
+3dda726 Rename HfstTransitions to HfstBasicTransitions.
+68155b3 Add docstrings and dummy implementations for functions fst_to_fsa and fsa_to_fst.
+4a2814d Document the changes to api.
+3d1a1ce Use the version of HfstBasicTransducer.transitions() returning a reference. Add HfstBasicTransition.set_weight to python api. Add tests for modifying transition weights.
+17e0027 Fix a typo.
+04accec Add help message to copy-for-windows.sh and comments to foma wrappers.
+3688695 Typedef and templatize vector math, reformulate as per article description
+95c022c Add help message.
+1cd8cb8 Add help message.
+dd2f230 Fix vector reading for case where lines don't end with a separator
+5bcb93d Support hfst.compile_xfst_file only for python3.
+4995953 Fix a typo.
+20f39cd Fix copying files on mac as well as pip packaging issues.
+7f60005 Update file instead of deleting it...
+49b0ef9 Tentatively also support python version 2.
+52016b2 Actually copy all files.
+01744fa Omit sdk directory on windows if compiling for python3.5 or higher. Do not redefine _MSC_VER. Do not call subprocess on mac until it works correctly.
+b44f91d Update README.
+f677972 Check if we are compiling with visual studio 14.
+b17eb3d Update PyPI documentation.
+a6ca66b Add missing file.
+410d6ef Get rid of unnecessary libraries.
+f1572e1 Merge branch 'master' of https://github.com/hfst/hfst
+75fcdd9 Fix chaining of functions in example.
+d655229 Minor version bump to combat repo inconsistencies
+91539f0 oops, reset variable
+5566426 add transliterate output mode
+416373d Update documentation.
+b5736dc Add missing file.
+43db07a Move ReplaceType under hfst.xerox_rules. Reorganize some internal functions.
+bc8983e Move python code from swig interface file under module hfst.
+3aff142 Check if readline package is available.
+391f73a Do not keep input to interactive commands in readline history.
+68e1b87 Update description.
+0ff9821 Support apply up and apply down in hfst.start_xfst().
+c687c09 Document return values of compile_xfst_file and compile_lexc_file.
+12da4ae Warn user about missing readline support if --with-readline is not requested. Issue an error if --with-unicode-handler is called as such or with a value of 'yes' or 'no'. Make it possible to disable loading entries from shared object (openfst back-end feature).
+9731e75 Update version number to 3.12.1. Handle links to future and earlier releases so that they are easier to update. Add a README.
+764399e Remove doc/libhfst.py as documentation has been moved under directory doc/hfst/.
+f3df0b9 Add more documentation for XreCompiler. Fix links to installation instructions.
+d2666d6 pre-increment (thanks, cppcheck)
+5712054 Add the script for creating python package. Convert README to dos format.
+4abf93e Update package scripts.
+4888fc6 Add a script for creating package which contains 64-bit python bindings for python3 for mac osx.
+18df468 Add a script fpr creating 64-bit python bindings for python 3.3 and 3.4 for windows.
+4790986 Add README files for python packages for mac and windows.
+3519e4c Add a script for creating the lgpl package.
+0cb9fb5 Add alternative files for making LGPL release of HFST.
+fea6723 (tag: v3.12.1) Add missing files to dist. Do not print termination message when performing tokenize tests.
+65962bf Ready for release 3.12.1.
+77c845d Fix flag elimination bug (reported in issue #342).
+c827bb6 Do not call fsm_destroy until issue with 'double free or corruption' has been fixed.
+3b0e58a Provide a get_current_dir_name() for platforms without one
+b0fb7a6 Merge branch 'master' of https://github.com/hfst/hfst
+65a4d79 Search for included files under scriptdir, not working dir. If an included filename is non-absolute, prefix it with the directory the script was in when trying to read it. This only happens in non-Windows environments for now.
+f5e94d7 Free allocated memory.
+6144e75 tokenise -g: check for eof
+cf46e69 Apply more changes from latest release of foma.
+a9f8397 Apply some changes from newest release of foma.
+cc8c96b Make a separate directory python/pypi for creating pypi packages.
+479789e Rename the pypi package to 'hfst' and use a four-number versioning scheme. Also define '__version__'. Add an empty config file as hfst c++ headers include it.
+eb304f0 tests: trying sed instead of awk for exit on <STREAMCMD:FLUSH>
+798383d tokenize: handle Apertium-style superblanks in --giella-cg format
+7922399 Provide a way to scale the vector similarity calculations via variable
+166d418 Merge branch 'master' of https://github.com/hfst/hfst
+9bc5315 parse word2vec -style text format and assume first line is info
+5d3f6b8 Do not allow unescaped dots in regular expressions.
+ce5e2a5 Merge branch 'master' of https://github.com/hfst/hfst
+a8f21f0 Observe HAVE_SFST and HAVE_FOMA when including back-end header files.
+8a9c0de nwords catenate-style argument for Like() function
+1433e45 Merge branch 'master' of https://github.com/hfst/hfst
+1ec8e03 Add experimental two-vector model for word sense
+72d4f72 (tag: v3.12.0) Ready for release 3.12.0.
+da86647 Read vector models and do simple ranking
+42df833 Small fixes to memory leaks and efficiency.
+e2abd89 Fix some memory leaks.
+da54acc Fix leaks reported by valgrind.
+92cf4dc Fix more memory leaks.
+9bd9749 Fix some lost memory issues reported by valgrind.
+6e129a4 Remove unnecessary variable. Delete transducer definitions and latest regexp when destructor is called.
+d700309 flush given outstream, not necessarily cout
+8d4f824 Add a destructor to XfstCompiler.
+6b10aab Update README.
+863e94a Add missing files to dist and remove generated ones.
+e4c1304 Rename hfst.rules into hfst.sfst_rules. Fix hfst.types into hfst.ImplementationType in tests.
+80f18a8 Use single quotes instead of double quotes in docstrings.
+52a9d75 Add test for hfst.xerox_rules.
+00b020c Rename xerox_replace_left and xerox_restriction back to replace_left and restriction in package hfst.xerox_rules.
+d1556dd Fix documentation of parameter 'output' of function 'extract_paths'.
+3df4a48 Sentence separation for finnpos-mode
+d3058c7 Issue a warning if automake is too old, which can make build fail if pre-generated yacc files are modified.
+9166cdc Move ImplementationTypes and ReplaceTypes to their own classes and get rid of package hfst.types.
+6d6c631 Fix datatypes used in for loops.
+c6aa5e1 Fix some typos in documentation.
+8073675 Use renamed versions of xerox rule functions.
+ae70056 Tentatively add HfstXeroxRules to python API in package hfst.xerox_rules.
+dee0176 Fix some more warnings.
+37edbbb Fix minor warnings generated by clang.
+faa7647 Fix typos in ifdef guards.
+41c5a32 Add a simple script for fetching statistics about hfst downloads.
+d9d8077 Update pypi setup.
+822f4bb doh, forgot to add test expected output
+cccba22 hfst-tokenise giella-cg: fix indentation issue with backtracking
+5a26269 Fix still some warnings.
+32c82b3 giella-cg backtracking: ensure ignored spaces are still output
+03d6a23 Do not warn about pragma push/pop issues or unsafe cstring functions on windows
+9c12094 Use hfst::hfst_fopen instead of fopen. Fix some warnings related to datatype conversions.
+d64cb49 Add function hfst::hfst_fopen that uses fopen_s when compiling with msvc.
+5ed27ea Fix some warnings caused by conversions (possible loss of data).
+b93a144 Do not use extern templates when compiling with msvc.
+73f7e18 Remove files generated by the tests.
+61ac4f8 Add a batch file version of test.sh for testing the python bindings on windows.
+b53a128 Fix warnings.
+7cb8740 Update pypi setup script.
+cc9cca4 Remove unnecessary back-end include directories as well as commented code from Makefiles.
+fd5f007 Fix some minor warnings.
+ec114ea --giella-cg support for @PMATCH_BACKTRACK@ symbol (#337)
+15fbb1f Update windows script.
+097826c Remove extra comma from initialization.
+d6b001d Add missing header file.
+9b3c122 Fix warnings generated when compiling with -Wall.
+a0dee64 Fix most of the warnings generated when compiling with -Wall.
+89b2061 rename --gtd to --giella-cg, and more descriptive help text
+335df14 Add support for compiling on windows.
+85585c4 Fix a typo.
+e628f55 Add a manifest file for pypi packaging.
+48c34ef Tentatively add a setup file for creating pypi packages.
+6abde49 update to proc to make it possible to weight surface forms
+5e379fc Update windows compilation script.
+1f55a51 Define int64 for msvc.
+21f52d0 Implement snprintf for msvc compilation.
+c05469e Replace definition _Bool with Boolean, as _Bool conflicts with typedefs in msvc header files.
+00bbb1d Get rid of unnecessary typenames and typos noticed during compiling HFST on windows.
+b160c07 Forward declare back-end implementation datatypes and wrap their destructors.
+067c3c9 Add missing <iterator> header.
+2f0c8df Add missing std:: to vector.
+34e99ad Issue an error message if glib unicode handler is requested but not found.
+d28075c Declare all functions that are needed in start_xfst().
+ec34dea Add math.h
+4a3be6b Make preparations for supporting OpenFst version 1.5.4.
+c9940f6 Include HfstBasicTransducer.h instead of HfstTransitionGraph.h.
+8560638 Add extern templates.
+dc96953 Remove unnecessary OpenFst headers and use forward declarations instead.
+699c098 Wrap StdVectorFst and LogFst destructors as both classes are forward declared.
+7f81f41 Forward declare as much as possible when using OpenFst library. Also remove unnecessary include directives and add missing std namespaces.
+a0b2fb3 Prepend missing 'std::'.
+c8137fa Make HfstBasicTransducer and HfstBasicTransition fully implemented classes instead of generated template specializations.
+eb5b877 Improve the way error messages are handled.
+b8278ec Change 'import libhfst' to 'import hfst'.
+2b9e44b Move implementations of HfstTropicalTransducerTransitionData away from header file.
+ce05c67 Merge branch 'master' of https://github.com/hfst/hfst
+3ec0d09 Alter expected result to conform with newly expected behaviour
+759605c Do not allow newline characters inside quoted literals.
+f296b6b Merge branch 'master' of https://github.com/hfst/hfst
+63d7544 Allocate enough memory for XRE error message.
+f968ebf Trying out facility for communicating sentence boundaries to plain tokenization mode
+6a78c4c Merge branch 'master' of https://github.com/hfst/hfst
+bf2ded3 Don't print size info when unverbose
+5a33841 Don't separate tokens with empty lines in plain tokenization mode
+d0a1b55 Warn about undefined multichar symbols when compiling lexc in verbose mode.
+5d2c67d Fix a typo in option handling.
+e2fee81 Tentatively add an option --do-not-minimize to hfst-regexp2fst which performs determinization instead of minimization. Also make hfst-xfst use determinization if variable 'minimal' is set to 'OFF'. Implement this by adding function hfst::set_minimization(bool) to HFST API and a function HfstTransducer::optimize() which performs minimization, or determinization if hfst::set_minimization(false) has been called. Replace calls to minimize() with optimize() in parts of HFST code relevant to the tools mentioned.
+82aa26e Get rid of CR-LF newlines.
+44f2e21 Remove commented code.
+94b7607 Print an error message if output type is defined several times.
+966a895 Fix mismatched free/delete reported by valgrind.
+6dc1d8f Do not use strdup with -std=c99.
+407a517 Use delete_foma instead of delete/free when deallocating memory used by a foma transducer.
+07508b5 Limit to C++11 for now
+d15b4be Use free with malloc, not delete.
+b693b3a Add a function 'void LexcCompiler::reset()' and use it in XfstCompiler when reading lexc input again.
+bc5ac27 Remove revision info from output of hfst-info as it doesn't work correctly in git.
+ace4801 Pass cascade argument by reference in lookup_cascading functions.
+e2ea4cb Fix a typo in function 'strip_percents' which resulted in incorrectly escaped zeros.
+92a7152 delete more lines
+9f940a3 remove osx lines from yml
+f7bd085 Unobservable change - nothing happened here
+d1bf79b close #336: off-by-one segfaults in OlLetterTrie
+2574e27 Avoid using projections in casing functions (which cause minimization issues with large weighted transducers).
+73a3ff0 Parametrize optionality in casing functions
+0adc1f9 Make sure there's no case fallthrough
+58eb35d Fix other casing functions too
+c366c4c Another fix to Cap()
+704c1c7 Merge branch 'master' of https://github.com/hfst/hfst
+5a5df2d Change operation of Cap() and make timing per-object
+44f0ae7 Fix missing empty lines in output when cascading composition is used.
+284f9d0 Add an option --max-number=N for OL transducers which limits the number of results. If not defined, defaults to 5 for infinitely ambiguous input and to infinity for finitely ambiguous input.
+5686864 There are some problems in using the bindings with python version 2, so refer only to python3 in README.
+5a17fb0 Add a missing 'break' to switch block, making variable infinite_cutoff work correctly.
+4c2f26f If no results are found, print it only once.
+d703776 Tentatively add support for --xfst=print-pairs for OL transducers.
+b7fcab9 Remember to flush the streams also when no results are found.
+7ba32cf Merge branch 'master' of https://github.com/hfst/hfst
+bc7a80a Implement a pair-lookup for optimized-lookup transducers.
+ce3133f Add a fourth argument of type hfst::ImplementationType to the constructor and a function get_type() to ImplementationTypeNotAvailableException.
+4ffe105 Print to console on windows if print-pairs is specified.
+587f3c0 Do not print extra newlines in cascading composition.
+4353894 Fix a bug/typo in string comparison.
+72de782 Improve documentation in HfstTransducer.lookup.
+0c888e9 Rename HfstBasicTransducer.lookup_fd to HfstBasicTransducer.lookup and add an argument 'obey_flags'.
+d5493ac Rename HfstTransitionGraph's lookup_fd to lookup and change some parameter names to be more descriptive.
+56a8d2f Add instructions for linking hfst c++ library statically in comments.
+67e25ff Add missing file to windows scripts.
+8db14ce (tag: v3.11.0) Ready for release 3.11.0.
+fe37aa0 Update morphology checks.
+8d3f162 Update EXTRA_DIST.
+6dac246 Do not use binary transducers in tests.
+ee62c44 Add missing doc file.
+a367645 Mention that python tests are no longer available.
+da2678d Skip Python tests as they can now be performed in the folder python/test.
+ea47f0b One more stray memory leaking cache
+95e3480 Memory conservation: only cache named objects and always minimize them.
+6b113b2 Merge branch 'master' of https://github.com/hfst/hfst
+974d240 Turn off automatic delimiter-contexts ("set need-separators off") in the presence of user-defined contexts
+01fccfd Use docstrings.i instead of swig's autodoc. Document the contents of hfst and hfst.exceptions modules.
+4322ca7 Add a docstrings file created semiautomatically from doxygen documentation.
+816ce6c Add at least a simple docstring for all functions.
+82c8f6a Merge branch 'master' of https://github.com/hfst/hfst
+1b11fbf Obey -i option for giving the pmatch archive filename
+4620b1b std=c++ works on OS X but not Linux, so disable Linux+Clang
+d245a74 Test if gnu++ appeases Travis' clang
+3d9c66b Include needed m4
+5e73db3 Copy hfst-ospell's C++11+ detection
+9af66d0 short int -> short; long int -> long
+daa457e Yet more documentation..
+e1b01ff More docstrings.
+711a089 Add docstrings.
+acf5696 tokenise: don't skip output-empties
+b5b4434 tokenise: don't let empty analyses affect weight classes
+18f5a2b travis: fix indentation
+62d216a getopt_long() returns an int, not char; this is important because char is unsigned on many platforms which means char(-1) is 255
+39d28d1 Do not check if lookup is infinitely ambiguous if --time-cutoff is defined.
+c42af37 Remove redundant flag diacritic check. It was once removed, but got pushed there again.
+b7b5882 Add support for --cascade also for optimized-lookup transducers.
+9169e38 Support combination --cascade=composition --xfst=print-pairs.
+51a0b61 Merge branch 'master' of https://github.com/hfst/hfst
+ef6ed81 Fix the way cycle limit argument is passed.
+9ad0950 Merge branch 'master' of https://github.com/hfst/hfst
+6d94c90 Add a preliminary omorfi-friendly conll-u mode
+45a0bf2 Remove redundant filtering of paths containing flag diacritics. Flags are handled already in function HfstBasicTransducer::lookup_fd.
+5c7135a Implement option --cascade.
+18d5e66 Tentatively add option --cascade to hfst-lookup.
+1dcad09 Print error message if --xfst=obey-flags is used with optimized-lookup transducers. They always obey flag diacritics.
+670ee39 Merge branch 'master' of https://github.com/hfst/hfst
+f903d9c When doing apply up or down in hfst-xfst's, check if 'obey-flags' is ON or OFF.
+8e9c6e6 travis: --enable-silent-rules
+a253b8d Add an argument obey_flags=false to is_lookup_infinitely_ambiguous functions.
+14bdd9c Make is_lookup_infinitely_ambiguous aware of flags. Use typedef hfst::StringVector in HfstLookupFlagDiacritics to prevent conflicting definitions in hfst-twolc which defines a class StringVector.
+349fb73 Add option obey_flags=false to lookup_fd.
+fdf912a Add tentative script for converting from doxygen documentation to docstrings.
+7618907 Modify function visibility.
+bc01c0b Control visibility of functions in HfstTransducer.
+b535aa6 Follow foma and xfst convention for operator ignore '/', i.e. expand any identities and unknowns before inserting the strings to be ignored.
+c1b4341 Add an argument 'force' to HfstTransducer::harmonize which makes the function harmonize also FOMA_TYPE transducers.
+724b4e9 Obey variable 'print-sigma' when print_net is called.
+6bec507 Add brief descriptions for hfst packages.
+ca892d1 Document the implementation types.
+98764da Fix bugs in options --xfst=show-flags and --xfst=obey-flags when non-optimized lookup is performed.
+93b9fe2 Close the outstream when done. Not doing this was causing a bug where some buffered data never got written to the output file.
+7d97106 Obey variable 'print-pairs' when performing apply down in non-optimized format.
+ac2fc3a Add parentheses in conditionals of function 'flag_build' to ensure correct interpretation. Also remove redundant code.
+28867c1 Allow punctuation as context in the "need-separators on" mode
+0cd05ee Add "need-separators no" to test script to reflect changed default in pmatch
+2597799 exclude gcc from osx builds
+7dfa8ec Track used symbol names
+81128c2 Allow lowercase define()
+52a4ca4 Merge branch 'master' of https://github.com/hfst/hfst
+af71662 Add side arguments to casing functions
+7c1b388 Revert back to the original extra_link_args in python bindings.
+2d5c670 Rename examples.py to test_examples.py. Perform tests in a more logical order.
+4c8a1e3 Update documentation about linking to the HFST C++ library.
+9f8ca0f If --enable-no-tools is used, skip tests in test/tools/.
+41dc9a2 Mention module hfst.types.
+a8c3e56 Remember to apply modifications to weight pushing to tests and hfst package.
+835f0ef Get rid of TO_FINAL_STATE and TO_INITIAL_STATE and replace function 'push_weights' with 'push_weights_to_start' and 'push_weights_to_end'.
+d05b9db Wrap HfstTransducer implementation types in package 'hfst.types'.
+5e1a245 Add missing files to dist.
+58d4602 Update README. Handle linking to extension library better.
+de888b6 Update README. Handle cases where an implementation type is not available. Add missing files to dist.
+1a68126 Fix a typo in URL.
+7a2296b Update link in README.
+861baf6 tokeniser: --weight-classes=N opt, as in hfst-proc
+151f1fa Add functions lookup_optimize, remove_optimization and copy to HfstTransducer.
+4efc9af Make HfstTransducer() create the empty transducer.
+0f237c1 Comment out hfst_ol::set_extract_tags_mode(bool). Improve error messages in att and prolog readers.
+57426ca Remove unnecessary commented file.
+b7139cd Fix HfstException documentation.
+3b13bf5 Merge branch 'master' of https://github.com/hfst/hfst
+7e6d27c Fix a typo.
+9f4ceb7 Merge branch 'master' of https://github.com/hfst/hfst
+829c9e2 Implement remaining variables in the library and support them in hfst-pmatch, with the exception of need-separators which has to be specified during rule compilation, at least for now.
+457c5de Document AttReader and PrologReader.
+8695c47 Add HfstException::what() to python api.
+2cffffa Add an alias what() for operator() to HfstException.
+5fdf61a Add class PrologReader and tests for it.
+77eda55 Add a new class AttReader and tests for it.
+18edac5 Add package hfst to setup. The package is essentially a wrapper around libhfst module which is still available as before.
+e41f131 travis: re-encrypt channel to #hfst
+6329bb8 Use all implementation formats in tests.
+5a5018c Do not use default_fst_type as pmatch transducers are always in ol format.
+b38f87b Add stream tests.
+ccaea0e Represent empty transducers as empty lines so that read_att_transducer will work correctly.
+fe66b18 Remove unnecessary files.
+bf5511d Forgot to do git add before committing...
+3710f91 Update test examples.py and add it to test.sh. Remove extra files.
+7d5064d Add directory tree for package 'hfst' and its subpackages 'exceptions' and 'rules'. This package encapsulates module libhfst.
+7818c1e Delete unnecessary file.
+91b86a0 Rewrite part of tests. Document the interface file.
+657013d Add new tests.
+3b4c186 Merge pull request #323 from unhammer/tokenise--gtd-tags-are-multichars
+67125ab rm unneeded import
+d927d79 pmatch: store input/output_symbol_strings, _parts refer to them
+c665f8a Add missing endverbatim tag.
+884d1dc Add missing file.
+bc87fc5 Get rid of HfstFile wrapper.
+30cde02 Try to preserve the names of transducers when converting.
+90b3328 Expand prolog tests. Fix a small bug in naming transducers.
+8e61537 Forgot to update testfile.
+63a0456 Add a new function for reading prolog input and improve the way att input is handled.
+9ef38f7 Split part of code related to reading att input into a separate function. Change the way transducer name is set when reading prolog input.
+6d12e0d erge branch 'master' of https://github.com/hfst/hfst
+22f1c47 Modify documentation, update tests, add new functions.
+d14bc2f link to travis; bug tracker link sf→github
+e8c7fd6 README is now symlink to README.rst; for more readable github
+2258354 travis: no irc notes on success
+1d8a1f4 travis: encrypt IRC channel for hfst/hfst
+38c9544 Add HfstTokenizer examples as tests.
+c635cd4 More documentation to HfstTokenizer.
+c1ca3b6 Add more examples for HfstTokenizer.
+0dc0cf4 Reorganize doxygen documentation to represent the new module structure of hfst python api.
+95d658c Remove hfst.py, a directory structure is needed instead for doxygen.
+5025aab Add new documentation for hfst python package.
+4749745 Add more tests.
+8f8b345 Split python tests to several files.
+45aeb38 Skip one more failing pmatch test.
+83dee76 Add missing files to dist.
+a44b99e erge branch 'master' of https://github.com/hfst/hfst
+b5ca1ec Add more documentation and modify functions.
+579ee71 Merge branch 'master' of https://github.com/hfst/hfst
+8050575 A PmatchContainer constructor taking a std::vector<HfstTransducer>. This should leave the passed vector untouched.
+88aa682 Add more documentation.
+ab82047 Add a simple test for XreCompiler.
+a25eb2b A new test.
+caf1ca8 XreCompiler::setOutputToConsole is needed, uncomment it.
+f6acf2a Split c++ code to multiple files from libhfst.i. Update URL in setup.py.
+780374a Merge branch 'master' of https://github.com/hfst/hfst
+4c9ca19 Settle on a way to handle variable names with dashes (which look like minus signs)
+967cc78 actually run the tokenize tests
+5df87b6 Add more failing tests.
+775a499 Fix some typos.
+2e77e2d Add missing files to dist.
+11ebca0 Merge branch 'master' of https://github.com/hfst/hfst
+067e637 Merging master
+4c9d43a Variable setting and reading
+881b81c Use -Wno-deprecated also for tests.
+85cb277 Modify messages that get printed during make check.
+0761730 Skip tests that do not exist. Make prints more informative.
+573324e Skip failing pmatch tests.
+164e621 Add missing tests for ConvertTransducerFormat. Compile them with -Wno-deprecated.
+f945e17 travis: irc notifications on build failure
+0229baa Merge branch 'master' of https://github.com/hfst/hfst
+93ed0db Remove const declarations from openfst back-end that cause compiler warnings.
+5df2a2b Run g++ with -j2 (not -j) on travis; o/w runs out of memory
+54b8f45 Comment out a function that is not defined.
+48c91b8 Specify -Wno-deprecated also for tests in folders hfst-tagger and hfst-twolc.
+810c330 https://travis-ci.org test rules
+708171e doh, define multichar-symbols (for 2eb6888)
+2eb6888 test for #320 / bf26db9
+3aecdbc Merge branch 'master' of github.com:hfst/hfst
+bf26db9 only change case if sf and lm case differ (#320)
+b3782de Remove a rule that cannot be matched since a rule has already been defined for "DownCase(" earlier.
+5ad3487 Add the keyword const to arrays used to store xfst commands.
+79c7dfe Make compiler happy by using strdup instead of plain const char *.
+f6d9953 Handle return values of fread in foma and sfst back-ends to prevent warnings during compilation.
+214b7b6 Fix a typo.
+862e858 Replace foma binary files that are used for testing results from lexc with equivalent files in prolog format. Then the tests will not depend on the foma back-end.
+680389b tokenize tests
+2b7cf7e tokenize: new --gtd Giellatekno/Divvun mode
+adb37d4 tokenise: fix #318, header parsing for TOP
+76e9069 Fix a bug in flag elimination involving multiple flags. Fixes bug #315.
+f653780 Evaluate transducers (as opposed to argumentless functions) where declared
+e6c6e82 (tag: v3.10.0) Ready for release 3.10.0.
+97c1285 Swap implementations of commands 'apply up' and 'apply down' in hfst-xfst, making them work as they do in foma and xfst.
 85ef34c Forgot to add before latest commit...
 13280ea Edit warning about converting native foma transducers.
 b31a6c1 Fix typo: swap left and right.

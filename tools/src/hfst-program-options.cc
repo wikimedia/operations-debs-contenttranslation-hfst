@@ -19,8 +19,8 @@
 void print_common_program_options(FILE *file) {
 
   fprintf(file, "Common options:\n"
-          "  -h, --help             Print help message\n"  
-          "  -V, --version          Print version info\n"  
+          "  -h, --help             Print help message\n"
+          "  -V, --version          Print version info\n"
           "  -v, --verbose          Print verbosely while processing\n"
           "  -q, --quiet            Only print fatal erros and requested "
           "output\n"
@@ -53,7 +53,7 @@ void print_common_unary_program_options(FILE *file) {
 
 void print_common_unary_program_parameter_instructions(FILE *file) {
 
-  fprintf(file, 
+  fprintf(file,
       "If OUTFILE or INFILE is missing or -, standard streams will be used.\n"
       "Format of result depends on format of INFILE\n"
       );
@@ -64,7 +64,7 @@ void print_common_unary_program_parameter_instructions(FILE *file) {
 //   compose
 //   concatenate
 //   conjunct
-//   disjunct, 
+//   disjunct,
 void print_common_binary_program_options(FILE *file) {
 
   fprintf(file, "Input/Output options:\n"
@@ -76,7 +76,7 @@ void print_common_binary_program_options(FILE *file) {
 
 void print_common_binary_program_parameter_instructions(FILE *file) {
 
-  fprintf(file, 
+  fprintf(file,
       "If OUTFILE, or either INFILE1 or INFILE2 is missing or -,\n"
       "standard streams will be used.\n"
       "INFILE1, INFILE2, or both, must be specified.\n"
@@ -84,12 +84,12 @@ void print_common_binary_program_parameter_instructions(FILE *file) {
       "both should have the same format.\n"
       );
 
-  fprintf(file, 
+  fprintf(file,
       "\n"
       "The operation is applied pairwise for INFILE1 and INFILE2\n"
       "that must have the same number of transducers.\n"
       "If INFILE2 has only one transducer, the operation is applied for\n"
-      "each transducer in INFILE1 keeping the second transducer constant.\n"  
+      "each transducer in INFILE1 keeping the second transducer constant.\n"
       );
 
 }

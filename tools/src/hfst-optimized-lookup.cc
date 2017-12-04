@@ -28,7 +28,7 @@
 
 //#ifdef _MSC_VER
 //#  include <windows.h>
-//#endif 
+//#endif
 
 #ifdef _MSC_VER
 #  include "hfst-string-conversions.h"
@@ -75,14 +75,14 @@ bool print_usage(void)
     "N must be a positive integer. B must be a non-negative float.\n" <<
     "S must be a non-negative float. The default, 0.0, indicates no cutoff.\n"
     "Options -n and -b are combined with AND, i.e. they both restrict the output.\n" <<
-    "\n" << 
+    "\n" <<
     "STREAM can be { input, output, both }. If not given, defaults to {both}.\n" <<
 #ifdef _MSC_VER
     "Input is read interactively via the console, i.e. line by line from the user.\n" <<
-    "If you redirect input from a file, use --pipe-mode=input. Output is by default\n" << 
+    "If you redirect input from a file, use --pipe-mode=input. Output is by default\n" <<
     "printed to the console. If you redirect output to a file, use --pipe-mode=output.\n" <<
 #else
-    "Input is read interactively line by line from the user. If you redirect input\n" << 
+    "Input is read interactively line by line from the user. If you redirect input\n" <<
     "from a file, use --pipe-mode=input. --pipe-mode=output is ignored on non-windows\n" <<
     "platforms.\n" <<
 #endif
@@ -236,7 +236,7 @@ int main(int argc, char **argv)
                    strcmp(optarg, "out") == 0 || strcmp(optarg, "OUT") == 0)
             { pipe_output = true; }
           else
-            { std::cerr << "--pipe-mode argument " << std::string(optarg) << " unrecognised\n\n"; 
+            { std::cerr << "--pipe-mode argument " << std::string(optarg) << " unrecognised\n\n";
               return EXIT_FAILURE; }
           break;
           
@@ -308,7 +308,7 @@ void TransducerHeader::skip_hfst3_header(FILE * f)
         if (type_field != std::string::npos) {
             if (header_tail.find("HFST_OL") != type_field + 5 &&
                 header_tail.find("HFST_OLW") != type_field + 5) {
-                delete headervalue;
+                delete[] headervalue;
                 throw HeaderParsingException();
             }
         }
@@ -437,8 +437,8 @@ void Encoder::read_input_symbols(KeyTable * kt)
           ascii_symbols[(unsigned char)(*p)] = k;
       }
       // If there's an ascii tokenized symbol shadowing this, remove it
-      if (strlen(p) > 1 && 
-          (unsigned char)(*p) <= 127 && 
+      if (strlen(p) > 1 &&
+          (unsigned char)(*p) <= 127 &&
           ascii_symbols[(unsigned char)(*p)] != NO_SYMBOL_NUMBER) {
           ascii_symbols[(unsigned char)(*p)] = NO_SYMBOL_NUMBER;
       }
@@ -466,7 +466,7 @@ void runTransducer (genericTransducer T)
       input_string[i] = NO_SYMBOL_NUMBER;
     }
 
-  char * str = (char*)(malloc(MAX_IO_STRING*sizeof(char)));  
+  char * str = (char*)(malloc(MAX_IO_STRING*sizeof(char)));
   *str = 0;
   char * old_str = str;
 
@@ -480,7 +480,7 @@ void runTransducer (genericTransducer T)
           if (! hfst::get_line_from_console(linestr, MAX_IO_STRING*sizeof(char)))
             break;
           str = strdup(linestr.c_str());
-          old_str = str;     
+          old_str = str;
         }
       else
 #endif
@@ -526,10 +526,10 @@ void runTransducer (genericTransducer T)
             {
 #ifdef WINDOWS
           if (!pipe_output)
-              hfst_fprintf_console(stdout, "%s\t+?\n\n", str);
+              hfst_fprintf_console(stdout, "%s\t%s\t+?\n\n", str, str);
           else
 #endif
-              std::cout << str << "\t+?" << std::endl << std::endl;
+              std::cout << str << "\t" << str << "\t+?" << std::endl << std::endl;
 
 #ifdef WINDOWS
           if (!pipe_output)
@@ -742,7 +742,7 @@ void IndexTableReader::get_index_vector(void)
     {
       size_t j = i * TransitionIndex::SIZE;
       SymbolNumber * input = (SymbolNumber*)(TableIndices + j);
-      TransitionTableIndex * index = 
+      TransitionTableIndex * index =
         (TransitionTableIndex*)(TableIndices + j + sizeof(SymbolNumber));
       indices.push_back(new TransitionIndex(*input,*index));
     }
@@ -766,9 +766,9 @@ void TransitionTableReader::get_transition_vector(void)
     {
       size_t j = i * Transition::SIZE;
       SymbolNumber * input = (SymbolNumber*)(TableTransitions + j);
-      SymbolNumber * output = 
+      SymbolNumber * output =
         (SymbolNumber*)(TableTransitions + j + sizeof(SymbolNumber));
-      TransitionTableIndex * target = 
+      TransitionTableIndex * target =
        (TransitionTableIndex*)(TableTransitions + j + 2 * sizeof(SymbolNumber));
       transitions.push_back(new Transition(*input,
                                            *output,
@@ -785,7 +785,7 @@ bool TransitionTableReader::Matches(SymbolNumber s)
 
 bool TransitionTableReader::get_finality(TransitionTableIndex i)
 {
-  if (i >= TRANSITION_TARGET_TABLE_START) 
+  if (i >= TRANSITION_TARGET_TABLE_START)
     {
       return transitions[i - TRANSITION_TARGET_TABLE_START]->final();
     }
@@ -891,7 +891,7 @@ void Transducer::try_epsilon_indices(SymbolNumber * input_symbol,
       try_epsilon_transitions(input_symbol,
                               output_symbol,
                               original_output_string,
-                              indices[i]->target() - 
+                              indices[i]->target() -
                               TRANSITION_TARGET_TABLE_START);
     }
 }
@@ -940,7 +940,7 @@ void Transducer::find_index(SymbolNumber input,
                        input_symbol,
                        output_symbol,
                        original_output_string,
-                       indices[i+input]->target() - 
+                       indices[i+input]->target() -
                        TRANSITION_TARGET_TABLE_START);
     }
 }
@@ -1090,10 +1090,10 @@ void Transducer::printAnalyses(std::string prepend)
         {
 #ifdef WINDOWS
           if (!pipe_output)
-            hfst_fprintf_console(stdout, "%s\t+?\n\n", prepend.c_str());
+            hfst_fprintf_console(stdout, "%s\t%s\t+?\n\n", prepend.c_str(), prepend.c_str());
           else
 #endif
-          std::cout << prepend << "\t+?" << std::endl << std::endl;
+          std::cout << prepend << "\t" << prepend << "\t+?" << std::endl << std::endl;
 
 #ifdef WINDOWS
           if (!pipe_output)
@@ -1115,7 +1115,7 @@ void Transducer::printAnalyses(std::string prepend)
               else
 #endif
                 std::cout << prepend << "\t";
-            }                   
+            }
 
 #ifdef WINDOWS
           if (!pipe_output)
@@ -1146,10 +1146,10 @@ void TransducerUniq::printAnalyses(std::string prepend)
 
 #ifdef WINDOWS
       if (!pipe_output)
-        hfst_fprintf_console(stdout, "%s\t+?\n\n", prepend.c_str());
+        hfst_fprintf_console(stdout, "%s\t%s\t+?\n\n", prepend.c_str(), prepend.c_str());
       else
 #endif
-        std::cout << prepend << "\t+?" << std::endl << std::endl;
+        std::cout << prepend << "\t" << prepend << "\t+?" << std::endl << std::endl;
 
 #ifdef WINDOWS
       if (!pipe_output)
@@ -1199,10 +1199,10 @@ void TransducerFdUniq::printAnalyses(std::string prepend)
     {
 #ifdef WINDOWS
   if (!pipe_output)
-    hfst_fprintf_console(stdout, "%s\t+?\n\n", prepend.c_str());
+    hfst_fprintf_console(stdout, "%s\t%s\t+?\n\n", prepend.c_str(), prepend.c_str());
   else
 #endif
-      std::cout << prepend << "\t+?" << std::endl << std::endl;
+      std::cout << prepend << "\t" << prepend << "\t+?" << std::endl << std::endl;
 
 #ifdef WINDOWS
   if (!pipe_output)
@@ -1352,7 +1352,7 @@ void IndexTableReaderW::get_index_vector(void)
     {
       size_t j = i * TransitionWIndex::SIZE;
       SymbolNumber * input = (SymbolNumber*)(TableIndices + j);
-      TransitionTableIndex * index = 
+      TransitionTableIndex * index =
         (TransitionTableIndex*)(TableIndices + j + sizeof(SymbolNumber));
       indices.push_back(new TransitionWIndex(*input,*index));
     }
@@ -1376,9 +1376,9 @@ void TransitionTableReaderW::get_transition_vector(void)
     {
       size_t j = i * TransitionW::SIZE;
       SymbolNumber * input = (SymbolNumber*)(TableTransitions + j);
-      SymbolNumber * output = 
+      SymbolNumber * output =
         (SymbolNumber*)(TableTransitions + j + sizeof(SymbolNumber));
-      TransitionTableIndex * target = 
+      TransitionTableIndex * target =
         (TransitionTableIndex*)(TableTransitions + j + 2 * sizeof(SymbolNumber));
       Weight * weight =
         (Weight*)(TableTransitions + j + 2 * sizeof(SymbolNumber) + sizeof(TransitionTableIndex));
@@ -1400,7 +1400,7 @@ bool TransitionTableReaderW::Matches(SymbolNumber s)
 
 bool TransitionTableReaderW::get_finality(TransitionTableIndex i)
 {
-  if (i >= TRANSITION_TARGET_TABLE_START) 
+  if (i >= TRANSITION_TARGET_TABLE_START)
     {
       return transitions[i - TRANSITION_TARGET_TABLE_START]->final();
     }
@@ -1426,7 +1426,7 @@ void TransducerW::set_symbol_table(void)
 
 void TransducerW::try_epsilon_transitions(SymbolNumber * input_symbol,
                                           SymbolNumber * output_symbol,
-                                          SymbolNumber * 
+                                          SymbolNumber *
                                           original_output_string,
                                           TransitionTableIndex i)
 {
@@ -1434,7 +1434,7 @@ void TransducerW::try_epsilon_transitions(SymbolNumber * input_symbol,
   std::cerr << "try epsilon transitions " << i << " " << current_weight << std::endl;
 #endif
 
-  if (transitions.size() <= i) 
+  if (transitions.size() <= i)
     {
       return;
     }
@@ -1455,7 +1455,7 @@ void TransducerW::try_epsilon_transitions(SymbolNumber * input_symbol,
 
 void TransducerWFd::try_epsilon_transitions(SymbolNumber * input_symbol,
                                             SymbolNumber * output_symbol,
-                                            SymbolNumber * 
+                                            SymbolNumber *
                                             original_output_string,
                                             TransitionTableIndex i)
 {
@@ -1521,7 +1521,7 @@ void TransducerW::try_epsilon_indices(SymbolNumber * input_symbol,
       try_epsilon_transitions(input_symbol,
                               output_symbol,
                               original_output_string,
-                              indices[i]->target() - 
+                              indices[i]->target() -
                               TRANSITION_TARGET_TABLE_START);
     }
 }
@@ -1536,7 +1536,7 @@ void TransducerW::find_transitions(SymbolNumber input,
   std::cerr << "find transitions " << i << " " << current_weight << std::endl;
 #endif
 
-  if (transitions.size() <= i) 
+  if (transitions.size() <= i)
     {
       return;
     }
@@ -1571,7 +1571,7 @@ void TransducerW::find_index(SymbolNumber input,
 #if OL_FULL_DEBUG
   std::cerr << "find index " << i << " " << current_weight << std::endl;
 #endif
-  if (indices.size() <= i) 
+  if (indices.size() <= i)
     {
       return;
     }
@@ -1583,7 +1583,7 @@ void TransducerW::find_index(SymbolNumber input,
                        input_symbol,
                        output_symbol,
                        original_output_string,
-                       indices[i+input]->target() - 
+                       indices[i+input]->target() -
                        TRANSITION_TARGET_TABLE_START);
     }
 }
@@ -1636,10 +1636,10 @@ void TransducerW::printAnalyses(std::string prepend)
     {
 #ifdef WINDOWS
       if (!pipe_output)
-        hfst_fprintf_console(stdout, "%s\t+?\n\n", prepend.c_str());
+        hfst_fprintf_console(stdout, "%s\t%s\t+?\n\n", prepend.c_str(), prepend.c_str());
       else
 #endif
-          std::cout << prepend << "\t+?" << std::endl << std::endl;
+          std::cout << prepend << "\t" << prepend << "\t+?" << std::endl << std::endl;
 
 #ifdef WINDOWS
       if (!pipe_output)
@@ -1665,7 +1665,7 @@ void TransducerW::printAnalyses(std::string prepend)
           {
 #ifdef WINDOWS
             if (!pipe_output)
-              hfst_fprintf_console(stdout, "%s\t", prepend.c_str()); 
+              hfst_fprintf_console(stdout, "%s\t", prepend.c_str());
             else
 #endif
               std::cout << prepend << "\t";
@@ -1715,10 +1715,10 @@ void TransducerWUniq::printAnalyses(std::string prepend)
     {
 #ifdef WINDOWS
       if (!pipe_output)
-        hfst_fprintf_console(stdout, "%s\t+?\n", prepend.c_str());
+        hfst_fprintf_console(stdout, "%s\t%s\t+?\n", prepend.c_str(), prepend.c_str());
       else
 #endif
-        std::cout << prepend << "\t+?" << std::endl;
+        std::cout << prepend << "\t" << prepend << "\t+?" << std::endl;
 
 #ifdef WINDOWS
       if (!pipe_output)
@@ -1797,10 +1797,10 @@ void TransducerWFdUniq::printAnalyses(std::string prepend)
     {
 #ifdef WINDOWS
       if (!pipe_output)
-        hfst_fprintf_console(stdout, "%s\t+?", prepend);
+        hfst_fprintf_console(stdout, "%s\t%s\t+?", prepend, prepend);
       else
 #endif
-        std::cout << prepend << "\t+?" << std::endl;
+        std::cout << prepend << "\t" << prepend << "\t+?" << std::endl;
 
 #ifdef WINDOWS
       if (!pipe_output)
@@ -1824,7 +1824,7 @@ void TransducerWFdUniq::printAnalyses(std::string prepend)
     }
   std::multimap<Weight, std::string>::iterator display_it;
   for (display_it = weight_sorted_map.begin();
-       display_it != weight_sorted_map.end(), i < maxAnalyses;
+       display_it != weight_sorted_map.end() && i < maxAnalyses;
        display_it++, i++)
     {
       if (outputType == xerox)
@@ -1903,7 +1903,7 @@ void TransducerW::get_analyses(SymbolNumber * input_symbol,
       if (*input_symbol == NO_SYMBOL_NUMBER)
         {
           *output_symbol = NO_SYMBOL_NUMBER;
-          if (transitions.size() <= i) 
+          if (transitions.size() <= i)
             {
               return;
             }

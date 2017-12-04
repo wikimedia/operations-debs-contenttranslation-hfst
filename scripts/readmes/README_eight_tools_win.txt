@@ -11,7 +11,7 @@ This package contains the following command line tools for 64-bit Windows:
   - hfst-pmatch2fst
 
 
-For more info about the tools, see their KitWiki pages: 
+For more info about the tools, see their KitWiki pages:
 
   <https://kitwiki.csc.fi/twiki/bin/view/KitWiki/HfstXfst>
   <https://kitwiki.csc.fi/twiki/bin/view/KitWiki/HfstLexc>
@@ -25,7 +25,7 @@ For more info about the tools, see their KitWiki pages:
 or run hfst-TOOLNAME --help in command prompt.
 
 
-For more info about the HFST project, see: 
+For more info about the HFST project, see:
   <http://hfst.sourceforge.net/>
 
 
@@ -34,7 +34,7 @@ Usage
 
 The tools hfst-xfst, hfst-lookup, hfst-optimized-lookup and hfst-pmatch work
 by default in an interactive mode. They can be started either by
-double-clicking the icon (opens up a new console window) or executing 
+double-clicking the icon (opens up a new console window) or executing
 'hfst-[xfst|lookup|optimized-lookup|pmatch]' in command prompt (runs the
 program in the same window). They read input from the console, i.e. line by
 line from the user and print their output to the console. Both control+D and

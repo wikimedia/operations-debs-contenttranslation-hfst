@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include "HfstSymbolDefs.h"
@@ -155,7 +155,7 @@ bool is_default(const char * str)
       for (HfstTwoLevelPaths::const_iterator it = paths.begin();
            it != paths.end(); it++)
         {
-          unsigned int length = it->second.size();
+          unsigned int length = (unsigned int)it->second.size();
           max_path_length = (length > max_path_length)? length : max_path_length;
         }
       return (int)max_path_length;
@@ -169,14 +169,14 @@ bool is_default(const char * str)
       for (HfstTwoLevelPaths::const_iterator it = paths.begin();
            it != paths.end(); it++)
         {
-          unsigned int length = it->second.size();
+          unsigned int length = (unsigned int)it->second.size();
           max_path_length = (length > max_path_length)? length : max_path_length;
         }
 
       for (HfstTwoLevelPaths::const_iterator it = paths.begin();
            it != paths.end(); it++)
         {
-          unsigned int length = it->second.size();
+          unsigned int length = (unsigned int)it->second.size();
           if (length == max_path_length)
             {
               result.insert(*it);

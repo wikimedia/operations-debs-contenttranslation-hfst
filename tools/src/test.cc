@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
 
       // ----- repeat_star -----
       {
-    HfstTransducer test0_plus = HfstTransducer(test0).repeat_plus(); 
+    HfstTransducer test0_plus = HfstTransducer(test0).repeat_plus();
     HfstTransducer test1_plus = HfstTransducer(test1).repeat_plus();
     HfstTransducer test2_plus = HfstTransducer(test2).repeat_plus();
     HfstTransducer test3_plus = HfstTransducer(test3).repeat_plus();
@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
 
       // ----- repeat_plus -----
       {
-    HfstTransducer test0_plus = HfstTransducer(test0).repeat_plus();      
+    HfstTransducer test0_plus = HfstTransducer(test0).repeat_plus();
     HfstTransducer test1_plus = HfstTransducer(test1).repeat_plus();
     HfstTransducer test2_plus = HfstTransducer(test2).repeat_plus();
     HfstTransducer test3_plus = HfstTransducer(test3).repeat_plus();
@@ -190,10 +190,10 @@ int main(int argc, char **argv) {
 
       // ----- repeat_n -----
       {
-    const int MAX_REPEAT_N = 5; 
+    const int MAX_REPEAT_N = 5;
     for (int n=0; n <= MAX_REPEAT_N; n++) {
 
-      HfstTransducer test0_n = HfstTransducer(test0).repeat_n(n); 
+      HfstTransducer test0_n = HfstTransducer(test0).repeat_n(n);
       HfstTransducer test1_n = HfstTransducer(test1).repeat_n(n);
       HfstTransducer test2_n = HfstTransducer(test2).repeat_n(n);
       HfstTransducer test3_n = HfstTransducer(test3).repeat_n(n);
@@ -213,9 +213,9 @@ int main(int argc, char **argv) {
 
       // ----- repeat_n_minus -----
       {
-    const int MAX_REPEAT_N = 5; 
+    const int MAX_REPEAT_N = 5;
     for (int n=0; n <= MAX_REPEAT_N; n++) {
-      HfstTransducer test0_n = HfstTransducer(test0).repeat_n_minus(n); 
+      HfstTransducer test0_n = HfstTransducer(test0).repeat_n_minus(n);
       HfstTransducer test1_n = HfstTransducer(test1).repeat_n_minus(n);
       HfstTransducer test2_n = HfstTransducer(test2).repeat_n_minus(n);
       HfstTransducer test3_n = HfstTransducer(test3).repeat_n_minus(n);
@@ -235,9 +235,9 @@ int main(int argc, char **argv) {
 
       // ----- repeat_n_plus -----
       {
-    const int MAX_REPEAT_N = 1; 
+    const int MAX_REPEAT_N = 1;
     for (int n=0; n <= MAX_REPEAT_N; n++) {
-      HfstTransducer test0_n = HfstTransducer(test0).repeat_n_plus(n); 
+      HfstTransducer test0_n = HfstTransducer(test0).repeat_n_plus(n);
       HfstTransducer test1_n = HfstTransducer(test1).repeat_n_plus(n);
       HfstTransducer test2_n = HfstTransducer(test2).repeat_n_plus(n);
       HfstTransducer test3_n = HfstTransducer(test3).repeat_n_plus(n);
@@ -249,7 +249,7 @@ int main(int argc, char **argv) {
 
       assert (HfstTransducer::test_equivalence( test0_n, test1_n ) );
       assert (HfstTransducer::test_equivalence( test0_n, test2_n ) );
-      assert (HfstTransducer::test_equivalence( test0_n, test3_n ) );     
+      assert (HfstTransducer::test_equivalence( test0_n, test3_n ) );
     }
       }
       printf("repeat_n_plus tested\n");
@@ -257,11 +257,11 @@ int main(int argc, char **argv) {
 
       // ----- repeat_n_to_k -----
       {
-    const int REPEAT_N_MAX = 2; 
+    const int REPEAT_N_MAX = 2;
     const int REPEAT_K_MAX = 3;
     for (int n=0; n <= REPEAT_N_MAX; n++) {
       for (int k=n; k <= REPEAT_K_MAX; k++) {
-        HfstTransducer test0_n = HfstTransducer(test0).repeat_n_to_k(n,k); 
+        HfstTransducer test0_n = HfstTransducer(test0).repeat_n_to_k(n,k);
         HfstTransducer test1_n = HfstTransducer(test1).repeat_n_to_k(n,k);
         HfstTransducer test2_n = HfstTransducer(test2).repeat_n_to_k(n,k);
         HfstTransducer test3_n = HfstTransducer(test3).repeat_n_to_k(n,k);
@@ -282,7 +282,7 @@ int main(int argc, char **argv) {
       
       // ----- optionalize -----
       {
-    HfstTransducer test0_opt = HfstTransducer(test0).optionalize();      
+    HfstTransducer test0_opt = HfstTransducer(test0).optionalize();
     HfstTransducer test1_opt = HfstTransducer(test1).optionalize();
     HfstTransducer test2_opt = HfstTransducer(test2).optionalize();
     HfstTransducer test3_opt = HfstTransducer(test3).optionalize();
@@ -339,8 +339,8 @@ int main(int argc, char **argv) {
 
 
   ImplementationType types[] = {TROPICAL_OPENFST_TYPE, LOG_OPENFST_TYPE, SFST_TYPE, FOMA_TYPE};
-  for (int i=0; i<4; i++) 
-    {      
+  for (int i=0; i<4; i++)
+    {
       fprintf(stderr, "testing transducers of type %i\n", types[i]);
 
       // open two output streams to file
@@ -461,7 +461,7 @@ int main(int argc, char **argv) {
     HfstTransducer &substitute(Key old_key, Key new_key);
     HfstTransducer &substitute(const std::string &old_symbol,
                    const std::string &new_symbol);
-    HfstTransducer &substitute(const KeyPair &old_key_pair, 
+    HfstTransducer &substitute(const KeyPair &old_key_pair,
                    const KeyPair &new_key_pair);
     HfstTransducer &substitute(const StringSymbolPair &old_symbol_pair,
                    const StringSymbolPair &new_symbol_pair);

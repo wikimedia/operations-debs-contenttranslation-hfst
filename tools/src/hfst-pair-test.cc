@@ -77,7 +77,7 @@ print_usage()
         "\n", program_name);
 
     print_common_program_options(message_out);
-    fprintf(message_out, 
+    fprintf(message_out,
         "Input/Output options:\n"
         "  -i, --input=INFILE     Read input rule file from INFILE\n"
         "  -o, --output=OUTFILE   Write test output to OUTFILE\n"
@@ -111,11 +111,11 @@ print_usage()
         "positive mode, all of the pair strings should be allowed and in\n"
         "negative mode they should be disallowed. In Xerox mode the cases\n"
         "are read from a twolc source file and both positive and negative\n"
-        "cases can occur.\n"       
+        "cases can occur.\n"
         );
     fprintf(message_out, "\n");
     fprintf(message_out,
-        "Ordinarily, positive test mode is in use. Option -N switches to\n" 
+        "Ordinarily, positive test mode is in use. Option -N switches to\n"
         "negative test mode. The exit code for a successful test is 0. \n"
         "The exit code is 1 otherwise. A successful test will print\n"
         "\"Test passed\". A failing test prints \"Test failed\" and\n"
@@ -170,8 +170,8 @@ parse_options(int argc, char** argv)
             {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "I:NX",
                              long_options, &option_index);
         if (-1 == c)
@@ -208,15 +208,15 @@ parse_options(int argc, char** argv)
 #include "inc/check-params-unary.h"
 
     if (inputfilename == std::string("<stdin>"))
-      { 
-        error(EXIT_FAILURE, 0, 
+      {
+        error(EXIT_FAILURE, 0,
               "The rule transducer file needs to be given using option -i."//,
               /*inputfilename*/);
       }
     return EXIT_CONTINUE;
 }
 
-std::string &replace_all_substr(const std::string &substr, 
+std::string &replace_all_substr(const std::string &substr,
                                 const std::string &repl,
                                 std::string &str)
 {
@@ -231,7 +231,7 @@ std::string &replace_all_substr(const std::string &substr,
 #define PTPC "PAIR_TEST_PERC_COL"
 // perc_escaped is a string where special symols are escaped using
 // %. Transform it into a string where specail symbols are escaped
-// using \. 
+// using \.
 std::string backslash_escape(std::string perc_escaped)
 {
   replace_all_substr("%%", PTPP, perc_escaped);
@@ -248,11 +248,11 @@ HfstState get_target(const std::string &isymbol,
 {
   HfstState identity_target = -1;
 
-  for (HfstBasicTransducer::HfstTransitions::const_iterator it = t[s].begin();
+  for (hfst::implementations::HfstBasicTransitions::const_iterator it = t[s].begin();
        it != t[s].end();
        ++it)
     {
-      if (it->get_input_symbol() == isymbol and 
+      if (it->get_input_symbol() == isymbol and
       it->get_output_symbol() == osymbol)
     { return it->get_target_state(); }
       if (it->get_input_symbol() == "@_IDENTITY_SYMBOL_@" and
@@ -260,7 +260,7 @@ HfstState get_target(const std::string &isymbol,
     { identity_target = it->get_target_state(); }
     }
 
-  if 
+  if
     (isymbol == osymbol and known_symbols.find(isymbol) == known_symbols.end())
     { return identity_target; }
   else
@@ -283,7 +283,7 @@ int test(const StringPairVector &tokenized_pair_string,
     {
       s = get_target(it->first,it->second,s,t,known_symbols);
       if (s == (unsigned int)-1)
-    { 
+    {
       if (positive)
         { return 1; }
       else
@@ -297,7 +297,7 @@ int test(const StringPairVector &tokenized_pair_string,
     { return 1; }
   else if (not is_final_state(s,t))
     { return 0; }
-  else 
+  else
     { return 1; }
 }
 
@@ -417,22 +417,22 @@ int test(const StringPairVector &tokenized_pair_string,
   if (positive)
     {
       if (positive_exit_code == 1 and not silent)
-    { 
-      fprintf(outfile,"FAIL: %s REJECTED\n\n",pair_string.c_str()); 
+    {
+      fprintf(outfile,"FAIL: %s REJECTED\n\n",pair_string.c_str());
     }
       if (positive_exit_code == 0 and verbose)
-    { 
+    {
       fprintf(outfile,"%s PASSED\n\n",pair_string.c_str()); }
       return positive_exit_code;
     }
   else
     {
       if (negative_exit_code == 1 and not silent)
-    { 
-      fprintf(outfile,"FAIL: %s PASSED\n\n",pair_string.c_str()); 
+    {
+      fprintf(outfile,"FAIL: %s PASSED\n\n",pair_string.c_str());
     }
       if (negative_exit_code == 0 and verbose)
-    { 
+    {
       fprintf(outfile,"%s REJECTED\n\n",pair_string.c_str()); }
       return negative_exit_code;
     }
@@ -467,11 +467,11 @@ void get_symbols(HfstBasicTransducer &t,SymbolSet &known_symbols)
 {
   for (HfstBasicTransducer::const_iterator it = t.begin(); it != t.end(); ++it)
     {
-      for (HfstBasicTransducer::HfstTransitions::const_iterator jt = 
+      for (hfst::implementations::HfstBasicTransitions::const_iterator jt =
          it->begin();
        jt != it->end();
        ++jt)
-    { 
+    {
       known_symbols.insert(jt->get_input_symbol());
       known_symbols.insert(jt->get_output_symbol());
     }
@@ -510,12 +510,12 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
         transducer_n++;
         if (transducer_n==1)
           {
-            verbose_printf("Reading %s...\n", inputfilename); 
+            verbose_printf("Reading %s...\n", inputfilename);
           }
         else
           {
             verbose_printf("Reading %s..." SIZE_T_SPECIFIER "\n", inputfilename,
-                           transducer_n); 
+                           transducer_n);
           }
         HfstTransducer trans(inputstream);
     rule_transducer_type = trans.get_type();
@@ -581,14 +581,14 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
                   (tokenized_pair_string.end(),
                    StringPair("@#@",hfst::internal_epsilon));
                 
-                new_exit_code = 
+                new_exit_code =
                   test(tokenized_pair_string,line,grammar,rule_names,
                        positive_test,outfile,known_symbols);
                 
               }
             catch (const hfst::UnescapedColsFound &e)
               {
-                error(EXIT_FAILURE, 0, 
+                error(EXIT_FAILURE, 0,
                       "The correspondence %s contains unquoted colon-symbols. If "
                       "you want to input pairs where either symbol is epsilon, "
                       "use 0 e.g. \"m a s s 0:e s\".\n",
@@ -601,7 +601,7 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
               { exit_code = new_exit_code; }
             
           } // while lines in input
-        free(line); 
+        free(line);
       }
     else
       {
@@ -643,8 +643,8 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
                 test_case = strip_space(test_case);
 
                 positive_test_cases.push_back(test_case);
-                verbose_printf("Positive test case: %s...\n", 
-                               test_case.c_str());        
+                verbose_printf("Positive test case: %s...\n",
+                               test_case.c_str());
               }
             else if (is_negative_test_line(line))
               {
@@ -653,26 +653,26 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
                 test_case = strip_space(test_case);
                 
                 negative_test_cases.push_back(test_case);
-                verbose_printf("Negative test case: %s %s...\n", 
-                               line, test_case.c_str());        
+                verbose_printf("Negative test case: %s %s...\n",
+                               line, test_case.c_str());
               }
             else
               { continue; }
                         
             
           } // while lines in input
-        free(line); 
+        free(line);
         
         if (positive_test_cases.size() % 2 != 0)
           {
-            error(EXIT_FAILURE, 0, 
+            error(EXIT_FAILURE, 0,
                   "Got an odd number of positive test cases. Every input string\n"
                   "has to have an output string.\n");
           }
 
         if (negative_test_cases.size() % 2 != 0)
           {
-            error(EXIT_FAILURE, 0, 
+            error(EXIT_FAILURE, 0,
                   "Got an odd number of negative test cases. Every input string\n"
                   "has to have an output string.\n");
           }
@@ -683,12 +683,12 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
             const std::string &output_case = positive_test_cases[i + 1];
 
             StringPairVector test_case;
-            try 
+            try
               {
                 // We need to convert the %-escaped input and output
                 // string to \-escpaed strings for input_toknizer.
                 test_case = input_tokenizer.tokenize_string_pair
-                  (backslash_escape(input_case) + ":" + 
+                  (backslash_escape(input_case) + ":" +
                    backslash_escape(output_case), false);
                 test_case.insert
                   (test_case.begin(),
@@ -700,10 +700,10 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
               }
             catch (const hfst::UnescapedColsFound &e)
               {
-                error(EXIT_FAILURE, 0, 
+                error(EXIT_FAILURE, 0,
                       "The correspondence %s %s contains unescaped "
                       "colon-symbols. Escape them using %%.",
-                      input_case.c_str(), output_case.c_str(), line);
+                      input_case.c_str(), output_case.c_str()/*, line*/);
               }
 
             int new_exit_code = test(test_case,
@@ -729,7 +729,7 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
                 // We need to convert the %-escaped input and output
                 // string to \-escpaed strings for input_toknizer.
                 test_case = input_tokenizer.tokenize_string_pair
-                  (backslash_escape(input_case) + ":" + 
+                  (backslash_escape(input_case) + ":" +
                    backslash_escape(output_case), false);
                 test_case.insert
                   (test_case.begin(),
@@ -740,10 +740,10 @@ process_stream(HfstInputStream& inputstream, FILE* outstream)
               }
             catch (const hfst::UnescapedColsFound &e)
               {
-                error(EXIT_FAILURE, 0, 
+                error(EXIT_FAILURE, 0,
                       "The correspondence %s %s contains unquoted "
                       "colon-symbols. Quote them using %%.",
-                      input_case.c_str(), output_case.c_str(), line);
+                      input_case.c_str(), output_case.c_str()/*, line*/);
               }
 
             int new_exit_code = test(test_case,
@@ -780,17 +780,17 @@ int main( int argc, char **argv ) {
     {
         fclose(inputfile);
     }
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
         inputfilename, outfilename);
 
     // here starts the buffer handling part
     HfstInputStream* instream = NULL;
-    try 
+    try
       {
         instream = (inputfile != stdin) ?
           new HfstInputStream(inputfilename) :
           new HfstInputStream();
-      } 
+      }
     catch(const HfstException e)
       {
         error(EXIT_FAILURE, 0, "%s is not a valid transducer file",

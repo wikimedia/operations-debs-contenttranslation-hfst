@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 //! @file lexc-utils.cc
@@ -196,14 +196,14 @@ void
 token_update_positions(const char *token)
 {
     size_t token_length = strlen(token);
-    int newlines = count_newlines(token);
+    int newlines = hfst::size_t_to_int(count_newlines(token));
     hlexclloc.first_line = hlexclloc.last_line;
     hlexclloc.last_line = (hlexclloc.first_line + newlines);
     // FIXME: columns equal bytes not characters
     hlexclloc.first_column = hlexclloc.last_column + 1;
     if (0 == newlines)
     {
-        hlexclloc.last_column = (hlexclloc.first_column + token_length);
+        hlexclloc.last_column = (hlexclloc.first_column + hfst::size_t_to_int(token_length));
     }
     else
     {
@@ -219,14 +219,14 @@ strdup_token_positions()
     // N.B. reason for this error format is automagic support by vim/emacs/jedit
     // must be â€œfilename:lineno:colno-lineno:colno: stuffâ€�
     // c.f. http://www.gnu.org/prep/standards/standards.html#Errors
-    char* filenames_lines_cols = (char*)malloc(sizeof(char) * 
+    char* filenames_lines_cols = (char*)malloc(sizeof(char) *
             (strlen(hlexcfilename) + 100));
     // linenumbers and columns
-    if( (hlexclloc.first_line == hlexclloc.last_line) && 
+    if( (hlexclloc.first_line == hlexclloc.last_line) &&
         (hlexclloc.first_column == (hlexclloc.last_column - 1)) )
     {
         // TRANSLATORS: filename, line and column
-        (void)sprintf(filenames_lines_cols, "%s:%d.%d", 
+      (void)sprintf(filenames_lines_cols, "%s:%d.%d",
             hlexcfilename, hlexclloc.first_line, hlexclloc.first_column);
     }
     else if ( hlexclloc.first_line == hlexclloc.last_line )
@@ -280,7 +280,7 @@ strip_percents(const char* s, bool do_zeros)
     if (do_zeros)
       {
         // worst case scenario is string of 0's...
-        rv = (char*)malloc(sizeof(char) * 
+        rv = (char*)malloc(sizeof(char) *
                              strlen(s) * strlen("@0@")
                              + 1);
       }
@@ -298,7 +298,7 @@ strip_percents(const char* s, bool do_zeros)
       {
         if (in_at)
           {
-            if (*p == '@')
+            if (*c == '@')
               {
                 in_at = false;
               }
@@ -420,14 +420,14 @@ strdup_nonconst_part(const char* token, const char* prefix,
     varpart_len = strlen(token) - prefix_len - suffix_len;
     assert(varpart_len <= token_len);
 
-    if (prefix == NULL) 
+    if (prefix == NULL)
       { assert(strncmp(token, "", prefix_len) == 0); }
-    else 
+    else
       { assert(strncmp(token, prefix, prefix_len) == 0); }
 
-    if (suffix == NULL) 
+    if (suffix == NULL)
       { assert(strncmp(token + prefix_len + varpart_len, "", suffix_len) == 0); }
-    else 
+    else
       { assert(strncmp(token + prefix_len + varpart_len, suffix, suffix_len) == 0); }
 
     (void)memcpy(token_part, token + prefix_len, varpart_len);
@@ -473,7 +473,7 @@ pair<vector<string>, vector<string> > find_med_alingment(const vector<string> &s
         
     }
     for(unsigned int i = 1; i <= len2; ++i)
-    {    
+    {
         d[0][i] = insertion * i;
         dir[0][i] = INSERT;
     }
@@ -493,9 +493,9 @@ pair<vector<string>, vector<string> > find_med_alingment(const vector<string> &s
                 d[i][j] = sub;
                 dir[i][j] = SUBSTITUTE;
             }
-             // It's important to prioritize "del" when it has the same value as "ins"" because we want the first 
+             // It's important to prioritize "del" when it has the same value as "ins"" because we want the first
              // string to have zeroes before the second one.
-             // For example, if we have two strings: abc and xyz, we would prefer the output 000abc:xyz000 
+             // For example, if we have two strings: abc and xyz, we would prefer the output 000abc:xyz000
              // over abc000:000xyz, because we need to invert the transducer to use it for the analysis and in lookup
              // we want zeroes as late as possible on the upper side.
              // Anyway, the order of this two following blocks determines the order of zeroes on upper/lower side
@@ -516,7 +516,7 @@ pair<vector<string>, vector<string> > find_med_alingment(const vector<string> &s
     vector<string> medcwordout;
     
     int x, y, i ;
-    for ( x = s1.size(), y = s2.size(), i = 0; (x > 0) || (y > 0); i++)
+    for ( x = hfst::size_t_to_int(s1.size()), y = hfst::size_t_to_int(s2.size()), i = 0; (x > 0) || (y > 0); i++)
     {
         int dirValue = dir[x][y];
          
@@ -549,5 +549,5 @@ pair<vector<string>, vector<string> > find_med_alingment(const vector<string> &s
 }
         
     
-} } 
+} }
 

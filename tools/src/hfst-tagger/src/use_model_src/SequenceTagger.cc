@@ -14,8 +14,8 @@ State sentence_state = 0;
 SequenceTagger::SequenceTagger
 (SequenceModelComponent &sequence_model_component):
   sequence_model_component(sequence_model_component),
-  states(0),
-  sentences(0)  
+  //  states(0),
+  sentences(0)
 {}
 
 SequenceTagger::~SequenceTagger(void)
@@ -64,7 +64,7 @@ WeightedStringPairVector SequenceTagger::operator[]
 
 inline void SequenceTagger::process_configuration
 (const SentenceTransducer &sentence_transducer,
- const StatePair &configuration, 
+ const StatePair &configuration,
  State result_state,
  AcyclicAutomaton &result)
 {
@@ -74,12 +74,12 @@ inline void SequenceTagger::process_configuration
 
   // Get the sentence transducer transitions for state sentence_state.
 
-  const Symbol2TransitionDataMap &sentence_transitions = 
+  const Symbol2TransitionDataMap &sentence_transitions =
     sentence_transducer[sentence_state];
 
   // Iterate throught the sentence transitions, get corresponding model
   // transitions and construct the composition of the transitions in result.
-  for (Symbol2TransitionDataMap::const_iterator it = 
+  for (Symbol2TransitionDataMap::const_iterator it =
 	 sentence_transitions.begin();
        it != sentence_transitions.end();
        ++it)
@@ -89,14 +89,14 @@ inline void SequenceTagger::process_configuration
       Weight sentence_weight = it->second.weight;
       State  sentence_target = it->second.target;
 
-      TransitionData model_transition = 
+      TransitionData model_transition =
 	sequence_model_component.get_transition(model_state,symbol);
 
       State  model_target = model_transition.target;
       Weight model_weight = model_transition.weight;
 
       StatePair new_configuration(sentence_target,model_target);
-      State result_target = 
+      State result_target =
 	get_state(new_configuration,sentence_transducer,result);
 
       if (result_target == -1)
@@ -113,12 +113,12 @@ inline State SequenceTagger::get_state
  AcyclicAutomaton &result)
 {
   if (sentence_state != configuration.first)
-    { 
-      result.finalize_position(); 
+    {
+      result.finalize_position();
       sentence_state = configuration.first;
     }
 
-  StatePair2StateMap::iterator configuration_it = 
+  StatePair2StateMap::iterator configuration_it =
     state_pair_to_state_map.find(configuration);
 
   if (configuration_it == state_pair_to_state_map.end())
@@ -130,7 +130,7 @@ inline State SequenceTagger::get_state
       state_pair_to_state_map[configuration] = result_state;
       state_to_state_pair_map.push_back(configuration);
 
-      Weight sentence_final_weight = 
+      Weight sentence_final_weight =
 	sentence_transducer.get_final_weight(configuration.first);
 
       Weight model_final_weight =
@@ -145,7 +145,7 @@ inline State SequenceTagger::get_state
   return configuration_it->second;
 }
 
-WeightedStringPairVector 
+WeightedStringPairVector
 SequenceTagger::get_weighted_analysis(AcyclicAutomaton &result) const
 {
   WeightedStringPairVector tagging;
@@ -158,12 +158,12 @@ SequenceTagger::get_weighted_analysis(AcyclicAutomaton &result) const
   // We know that each word should have exactly one tag, so there should
   // be an even number or entries.
 
-  // Go from format 
+  // Go from format
   // word1:word1 tag1:tag1 word2:word2 tag2:tag2 ...
   // to format
   // word1:tag1 word2:tag2 ...
   for (size_t i = 0; i < path.second.size(); ++i)
-    { 
+    {
       if (path.second[i] == -1)
 	{ continue; }
 

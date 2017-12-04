@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 #include "ComposeIntersectRulePair.h"
 
@@ -58,17 +58,17 @@ namespace hfst
     
     bool ComposeIntersectRulePair::transitions_computed
     (HfstState state,size_t symbol)
-    { return state_transition_vector.at(state).find(symbol) 
+    { return state_transition_vector.at(state).find(symbol)
     != state_transition_vector.at(state).end(); }
     
     HfstState ComposeIntersectRulePair::get_state(const StatePair &p)
     {
       if (! has_pair(p))
-    { 
-      pair_state_map[p] = state_pair_vector.size();
+    {
+      pair_state_map[p] = hfst::size_t_to_uint(state_pair_vector.size());
       state_pair_vector.push_back(p);
       state_transition_vector.push_back(SymbolTransitionMap());
-      return state_pair_vector.size() - 1;
+      return hfst::size_t_to_uint(state_pair_vector.size() - 1);
     }
       return pair_state_map[p];
     }
@@ -88,7 +88,7 @@ namespace hfst
       const StatePair &state_pair = state_pair_vector[s];
       return fst1->get_final_weight(state_pair.first) +
     fst2->get_final_weight(state_pair.second);
-    } 
+    }
 
     void ComposeIntersectRulePair::compute_transition_set
     (HfstState state, size_t symbol)
@@ -96,11 +96,11 @@ namespace hfst
       StatePair state_pair = state_pair_vector[state];
       const ComposeIntersectRule::TransitionSet &fst1_transitions =
     fst1->get_transitions(state_pair.first,symbol);
-      ComposeIntersectRule::TransitionSet::const_iterator it = 
+      ComposeIntersectRule::TransitionSet::const_iterator it =
     fst1_transitions.begin();
       const ComposeIntersectRule::TransitionSet &fst2_transitions =
     fst2->get_transitions(state_pair.second,symbol);
-      ComposeIntersectRule::TransitionSet::const_iterator jt = 
+      ComposeIntersectRule::TransitionSet::const_iterator jt =
     fst2_transitions.begin();
  
       (void)state_transition_vector[state][symbol];
@@ -111,7 +111,7 @@ namespace hfst
         {
           size_t output = it->olabel;
           HfstState target = get_state(StatePair(it->target,jt->target));
-          float weight = it->weight + jt->weight;         
+          float weight = it->weight + jt->weight;
           add_transition(transitions,target,symbol,output,weight);
           ++it; ++jt;
         }
@@ -135,15 +135,15 @@ using hfst::implementations::ComposeIntersectRule;
 using hfst::implementations::ComposeIntersectRulePair;
 
 std::ostream &ComposeIntersectRulePair::print(std::ostream &out)
-{ 
+{
   HfstState s = ComposeIntersectRulePair::START;
   while (1)
     {
-      for (ComposeIntersectRule::SymbolSet::const_iterator it = 
+      for (ComposeIntersectRule::SymbolSet::const_iterator it =
          ComposeIntersectRule::symbol_set.begin();
        it != ComposeIntersectRule::symbol_set.end();
        ++it)
-    {     
+    {
       const TransitionSet &transitions = get_transitions(s,*it);
       for (TransitionSet::const_iterator jt = transitions.begin();
            jt != transitions.end();
@@ -154,7 +154,7 @@ std::ostream &ComposeIntersectRulePair::print(std::ostream &out)
           << HfstTropicalTransducerTransitionData::get_symbol(jt->ilabel) << "\t"
           << HfstTropicalTransducerTransitionData::get_symbol(jt->olabel) << "\t"
           << jt->weight << std::endl;
-        }     
+        }
     }
       out << s << "\t" << get_final_weight(s) << std::endl;
       ++s;
@@ -169,6 +169,7 @@ std::ostream &operator<<
 { return p.print(out); }
 
 #include <cassert>
+#include <sstream>
 
 int main(int argc, char * argv[])
 {
@@ -195,8 +196,12 @@ int main(int argc, char * argv[])
     }
   catch (const StateNotDefined &e)
   { std::cerr << e() << std::endl; } */ // FIXME get_transitions wants size_t as second argument
-  std::cout << "Print:" << std::endl;
-  std::cout << compose_intersect_rule_pair << std::endl;
+
+  
+  std::string str;
+  std::stringstream sstr(str);
+  sstr << "Print:" << std::endl;
+  sstr << compose_intersect_rule_pair << std::endl;
 
   std::cout << "ok" << std::endl;
 

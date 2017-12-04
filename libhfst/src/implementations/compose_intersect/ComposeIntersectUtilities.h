@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #ifndef HEADER_COMPOSE_INTERSECT_UTILITIES_H
@@ -93,10 +93,10 @@ namespace hfst
       XVector container_;
 
       const_iterator get_least_upper_bound(const X &x) const
-      { 
+      {
         const_iterator it = container_.begin();
         for ( ; it != container_.end(); ++it)
-          { 
+          {
         if (! comparator(*it,x))
           { break; }
           }
@@ -104,10 +104,10 @@ namespace hfst
       }
 
       iterator get_least_upper_bound(const X &x)
-      { 
+      {
         iterator it = container_.begin();
         for ( ; it != container_.end(); ++it)
-          { 
+          {
         if (! comparator(*it,x))
           { break; }
           }

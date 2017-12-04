@@ -10,7 +10,7 @@ using namespace hfst;
 using hfst::implementations::HfstBasicTransition;
 using hfst::implementations::HfstBasicTransducer;
 
-bool function(const StringPair &sp, StringPairSet &sps) 
+bool function(const StringPair &sp, StringPairSet &sps)
 {
   if (sp.second.compare(sp.first) != 0)
     return false;
@@ -31,13 +31,13 @@ bool function(const StringPair &sp, StringPairSet &sps)
 }
 
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 
   const unsigned int TYPES_SIZE=3;
-  const ImplementationType types [] = {SFST_TYPE, 
-                       TROPICAL_OPENFST_TYPE, 
-                       /*LOG_OPENFST_TYPE,*/ 
+  const ImplementationType types [] = {SFST_TYPE,
+                       TROPICAL_OPENFST_TYPE,
+                       /*LOG_OPENFST_TYPE,*/
                        FOMA_TYPE};
 
   HfstBasicTransducer tr1;
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
   tr2.add_state(2);
   tr2.set_final_weight(2, 0);
   tr2.add_transition
-    (0, HfstBasicTransition(1, "@_IDENTITY_SYMBOL_@", 
+    (0, HfstBasicTransition(1, "@_IDENTITY_SYMBOL_@",
                 "@_IDENTITY_SYMBOL_@", 0) );
   tr2.add_transition
     (1, HfstBasicTransition(2, "bar", "bar", 0) );
@@ -60,12 +60,12 @@ int main(int argc, char **argv)
 
   // The disjunction should be
   HfstBasicTransducer disj;
-  disj.add_state(1);  
-  disj.add_state(2);  
+  disj.add_state(1);
+  disj.add_state(2);
   disj.set_final_weight(2, 0);
 
   disj.add_transition
-    (0, HfstBasicTransition(1, "@_IDENTITY_SYMBOL_@", 
+    (0, HfstBasicTransition(1, "@_IDENTITY_SYMBOL_@",
                 "@_IDENTITY_SYMBOL_@", 0) );
   disj.add_transition
     (0, HfstBasicTransition(1, "foo", "foo", 0) );
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
 
       Tr1.disjunct(Tr2).minimize();
       // Tr1 is expanded to [ @_UNKNOWN_SYMBOL_@:foo | bar:foo ]
-      // Tr2 is expanded to 
+      // Tr2 is expanded to
       // [ [ @_IDENTITY_SYMBOL_@:@_IDENTITY_SYMBOL_@ | foo:foo ] [ bar:bar ] ]
  
       assert(Tr1.compare(Disj));
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
   {
     ImplementationType type=FOMA_TYPE;
     
-    /* Create a simple lexicon transducer 
+    /* Create a simple lexicon transducer
        [[foo bar foo] | [foo bar baz]]. */
     
     HfstTokenizer tok;
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
     words.disjunct(t);
     
     
-    /* Create a rule transducer that optionally replaces 
+    /* Create a rule transducer that optionally replaces
        "bar" with "baz" between "foo" and "foo". */
     
     HfstTransducerPair context
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
       (context, mapping, optional, alphabet);
     
     
-    /* Apply the rule transducer to the lexicon. */  
+    /* Apply the rule transducer to the lexicon. */
     words.compose(rule).minimize();
     
     
@@ -170,7 +170,7 @@ int main(int argc, char **argv)
     
     try {
       words.extract_paths(results);
-    } 
+    }
     catch (TransducerIsCyclicException e)
       {
     /* This should not happen because transducer is not cyclic. */
@@ -178,7 +178,7 @@ int main(int argc, char **argv)
     exit(1);
       }
     
-    /* Go through all paths. */  
+    /* Go through all paths. */
     for (HfstTwoLevelPaths::const_iterator it = results.begin();
          it != results.end(); it++)
       {
@@ -193,8 +193,8 @@ int main(int argc, char **argv)
         istring.append(IT->first);
         ostring.append(IT->second);
       }
-    /*fprintf(stdout, "%s : %s\n", 
-        istring.c_str(), 
+    /*fprintf(stdout, "%s : %s\n",
+        istring.c_str(),
         ostring.c_str());*/
       }
   }

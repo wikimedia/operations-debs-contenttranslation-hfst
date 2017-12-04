@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #ifndef _HFST_EXCEPTION_DEFS_H_
@@ -17,11 +17,12 @@ void hfst_set_exception(std::string name);
 std::string hfst_get_exception();
 
 #include "hfstdll.h"
+#include "HfstDataTypes.h"
 
 //! @file HfstExceptionDefs.h
 //! @brief A file for exceptions
 
-//! @brief Base class for HfstExceptions. Holds its own name and the file 
+//! @brief Base class for HfstExceptions. Holds its own name and the file
 //! and line number where it was thrown.
 struct HfstException
 {
@@ -33,6 +34,8 @@ struct HfstException
   ~HfstException();
   //! @brief Get the error message.
   HFSTDLL std::string operator() (void) const;
+  // An alias for python
+  HFSTDLL std::string what() const;
 };
 
 //! @brief Macro to throw an exception of type @a E.
@@ -53,7 +56,7 @@ struct HfstException
 //! @brief Declare a subclass of @a HfstException of type @a CHILD.
 #define HFST_EXCEPTION_CHILD_DECLARATION(CHILD) \
     struct CHILD : public HfstException \
-    { CHILD(const std::string &name,const std::string &file,size_t line); } 
+    { CHILD(const std::string &name,const std::string &file,size_t line); }
 
 //! Define a subclass of @a HfstException of type @a CHILD.
 #define HFST_EXCEPTION_CHILD_DEFINITION(CHILD) \
@@ -77,8 +80,8 @@ struct HfstException
 //! @brief Two or more HfstTransducers are not of the same type
 HFST_EXCEPTION_CHILD_DECLARATION(HfstTransducerTypeMismatchException);
 
-/** \brief The library required by the implementation type requested 
-    is not linked to HFST. 
+/** \brief The library required by the implementation type requested
+    is not linked to HFST.
 
 An example:
 \verbatim
@@ -86,15 +89,25 @@ try {
   HfstTransducer("foo", "bar", type);
 } catch (ImplementationTypeNotAvailableException e) {
   fprintf(stderr, "ERROR: Type requested is not available.\n");
-} 
+}
 \endverbatim
 */
-HFST_EXCEPTION_CHILD_DECLARATION(ImplementationTypeNotAvailableException);
+//HFST_EXCEPTION_CHILD_DECLARATION(ImplementationTypeNotAvailableException);
+
+class ImplementationTypeNotAvailableException : public HfstException
+{
+ private:
+  hfst::ImplementationType type;
+ public:
+  ImplementationTypeNotAvailableException(const std::string &name,const std::string &file,size_t line, hfst::ImplementationType type);
+  hfst::ImplementationType get_type() const;
+};
+
 
 /** \brief Function has not been implemented (yet). */
 HFST_EXCEPTION_CHILD_DECLARATION(FunctionNotImplementedException);
 
-/** \brief Stream cannot be read. 
+/** \brief Stream cannot be read.
 
 Thrown by
 hfst::HfstTransducer(const hfst::HfstInputStream&) and
@@ -106,14 +119,14 @@ try {
   HfstInputStream in("foofile");
 } catch (StreamNotReadableException e) {
   fprintf(stderr, "ERROR: file cannot be read.\n");
-}  
+}
 \endverbatim
 */
 HFST_EXCEPTION_CHILD_DECLARATION(StreamNotReadableException);
 
-/** \brief Stream cannot be written. 
+/** \brief Stream cannot be written.
 
-Thrown by hfst::HfstOutputStream::operator<< and 
+Thrown by hfst::HfstOutputStream::operator<< and
 hfst::HfstTransducer::write_in_att_format
 
 An example:
@@ -124,12 +137,12 @@ try {
   out << tr;
 } catch (StreamCannotBeWrittenException e) {
   fprintf(stderr, "ERROR: file cannot be written.\n");
-}  
+}
 \endverbatim
 */
 HFST_EXCEPTION_CHILD_DECLARATION(StreamCannotBeWrittenException);
 
-/** \brief Stream is closed. 
+/** \brief Stream is closed.
 
     Thrown by hfst::HfstTransducer::write_in_att_format
     hfst::HfstTransducer(FILE*, ImplementationType, const std::string&)
@@ -146,7 +159,7 @@ try {
   out << tr;
 } catch (StreamIsClosedException e) {
   fprintf(stderr, "ERROR: stream to file is closed.\n");
-}  
+}
 \endverbatim
 */
 HFST_EXCEPTION_CHILD_DECLARATION(StreamIsClosedException);
@@ -155,12 +168,12 @@ HFST_EXCEPTION_CHILD_DECLARATION(StreamIsClosedException);
 
     Thrown by
     hfst::HfstTransducer(const hfst::HfstInputStream&)
-    hfst::HfstInputStream() 
+    hfst::HfstInputStream()
     hfst::HfstInputStream(const std::string&)
 */
 HFST_EXCEPTION_CHILD_DECLARATION(EndOfStreamException);
 
-/** \brief Transducer is cyclic. 
+/** \brief Transducer is cyclic.
 
     thrown by hfst::HfstTransducer::extract_paths and
     hfst::HfstTransducer::extract_paths_fd. An example:
@@ -180,11 +193,11 @@ try {
 HFST_EXCEPTION_CHILD_DECLARATION(TransducerIsCyclicException);
 
 
-/** \brief The stream does not contain transducers. 
+/** \brief The stream does not contain transducers.
 
-    Thrown by 
+    Thrown by
     hfst::HfstTransducer(const hfst::HfstInputStream&)
-    hfst::HfstInputStream() 
+    hfst::HfstInputStream()
     hfst::HfstInputStream(const std::string&)
 
     An example. The file "foofile" contains
@@ -201,14 +214,14 @@ try {
   HfstInputStream in("foofile");
 } catch (NotTransducerStreamException e) {
   fprintf(stderr, "ERROR: file does not contain transducers.\n");
-}  
+}
 \endverbatim
 */
 HFST_EXCEPTION_CHILD_DECLARATION(NotTransducerStreamException);
 
 HFST_EXCEPTION_CHILD_DECLARATION(FileIsInGZFormatException);
 
-/** \brief The stream is not in valid AT&T format. 
+/** \brief The stream is not in valid AT&T format.
 
     An example. The file "testfile.att" contains
 
@@ -237,7 +250,7 @@ fprintf(stderr, "Read %i transducers in total.\n", (int)transducers.size());
 \endverbatim
 
 
-    thrown by 
+    thrown by
     hfst::HfstTransducer::HfstTransducer(FILE*,ImplementationType,const std::string&)
 */
 HFST_EXCEPTION_CHILD_DECLARATION(NotValidAttFormatException);
@@ -246,7 +259,7 @@ HFST_EXCEPTION_CHILD_DECLARATION(NotValidPrologFormatException);
 
 HFST_EXCEPTION_CHILD_DECLARATION(NotValidLexcFormatException);
 
-/** \brief State is not final (and cannot have a final weight). 
+/** \brief State is not final (and cannot have a final weight).
 
     An example:
 
@@ -276,7 +289,7 @@ HFST_EXCEPTION_CHILD_DECLARATION(StateIsNotFinalException);
 
 \verbatim
 ImplementationType type = SFST_TYPE;
-// The second context transducer is 
+// The second context transducer is
 HfstTransducerPair contexts(HfstTransducer("c", type),
                             HfstTransducer("c", "d", type));
 HfstTransducer mapping("a", "b", type);
@@ -293,7 +306,6 @@ HFST_EXCEPTION_CHILD_DECLARATION(ContextTransducersAreNotAutomataException);
 
 
 
-
 /** \brief Transducers are not automata.
 
     This exception is thrown by
@@ -303,6 +315,8 @@ HFST_EXCEPTION_CHILD_DECLARATION(ContextTransducersAreNotAutomataException);
     output symbols in all its transitions.
 */
 HFST_EXCEPTION_CHILD_DECLARATION(TransducersAreNotAutomataException);
+
+HFST_EXCEPTION_CHILD_DECLARATION(TransducerIsNotAutomatonException);
 
 /** \brief The StateId argument is not valid.
 
@@ -318,7 +332,7 @@ float w = tr.get_final_weight(2);
 HFST_EXCEPTION_CHILD_DECLARATION(StateIndexOutOfBoundsException);
 
 
-/** \brief Transducer has a malformed HFST header. 
+/** \brief Transducer has a malformed HFST header.
 
     Thrown by hfst::HfstTransducer(HfstInputStream&)
     hfst::HfstInputStream()
@@ -327,7 +341,7 @@ HFST_EXCEPTION_CHILD_DECLARATION(StateIndexOutOfBoundsException);
 HFST_EXCEPTION_CHILD_DECLARATION(TransducerHeaderException);
 
 
-/** \brief An OpenFst transducer does not have an input symbol table. 
+/** \brief An OpenFst transducer does not have an input symbol table.
 
     When converting from OpenFst to tropical or log HFST, the OpenFst transducer
     must have at least an input symbol table. If the output symbol table
@@ -355,21 +369,21 @@ An example:
 \verbatim
 HfstTransducer foo("foo", SFST_TYPE);
 HfstTransducer bar("bar", FOMA_TYPE);
-foo.disjunct(bar);   // an exception is thrown 
+foo.disjunct(bar);   // an exception is thrown
 \endverbatim
 */
 HFST_EXCEPTION_CHILD_DECLARATION(TransducerTypeMismatchException);
 
 
 
-/** \brief The set of transducer pairs is empty. 
+/** \brief The set of transducer pairs is empty.
 
     Thrown by rule functions in namespace #hfst::rules. An example:
 
 \verbatim
     HfstTransducerPairVector contexts; // contexts is empty
     HfstTransducer rest = hfst::rules::restriction
-      (contexts, mapping, alphabet, twol_type, direction); 
+      (contexts, mapping, alphabet, twol_type, direction);
 \endverbatim
 */
 HFST_EXCEPTION_CHILD_DECLARATION(EmptySetOfContextsException);
@@ -392,16 +406,16 @@ HFST_EXCEPTION_CHILD_DECLARATION(SpecifiedTypeRequiredException);
 HFST_EXCEPTION_CHILD_DECLARATION(HfstFatalException);
 
 
-/** \brief Transducer has wrong type. 
+/** \brief Transducer has wrong type.
 
     This exception suggests that an HfstTransducer has not been properly
     initialized, probably due to a bug in the HFST library. Alternatively
-    the default constructor of HfstTransducer has been called at some point. 
+    the default constructor of HfstTransducer has been called at some point.
 
     @see hfst::HfstTransducer() */
 HFST_EXCEPTION_CHILD_DECLARATION(TransducerHasWrongTypeException);
 
-/** \brief String is not valid utf-8. 
+/** \brief String is not valid utf-8.
 
     This exception suggests that an input string is not valid utf8.
 
@@ -414,7 +428,7 @@ HFST_EXCEPTION_CHILD_DECLARATION(SymbolNotFoundException);
 
 HFST_EXCEPTION_CHILD_DECLARATION(FlagDiacriticsAreNotIdentitiesException);
 
-//HFST_EXCEPTION_CHILD_DECLARATION(SymbolRedefinedException); 
+//HFST_EXCEPTION_CHILD_DECLARATION(SymbolRedefinedException);
 //HFST_EXCEPTION_CHILD_DECLARATION(TransducerHasNoStartStateException);
 //HFST_EXCEPTION_CHILD_DECLARATION(TransducerHasMoreThanOneStartStateException);
 

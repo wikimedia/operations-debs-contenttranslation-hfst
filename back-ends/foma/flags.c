@@ -49,7 +49,7 @@ struct flags {
 /* or neither.                                                                     */
 /* The languages FAIL, SUCCEED is then the union of all symbols that cause         */
 /* compatibility or incompatibility.                                               */
-/* We intersect all these filters, creating a large filter that we compose both on */ 
+/* We intersect all these filters, creating a large filter that we compose both on */
 /* the upper side of the network and the lower side:                               */
 /* RESULT = FILTER .o. ORIGINAL .o. FILTER                                         */
 /* We can't simply intersect the language with FILTER because the lower side flags */
@@ -57,7 +57,7 @@ struct flags {
 /* Finally, we replace the affected arcs with EPSILON arcs, and call               */
 /* sigma_cleanup() to purge the symbols not occurring on arcs.                     */
 
-/// 
+///
 ///Eliminate a flag from a network. If called with name = NULL, eliminate all flags.
 ///
 
@@ -71,7 +71,7 @@ struct fsm *flag_eliminate(struct fsm *net, char *name) {
 
     flags = flag_extract(net);
     /* Check that flag actually exists in net */
-    if (name != NULL) { 
+    if (name != NULL) {
         for (found = 0, f = flags; f != NULL; f = f->next) {
             if (strcmp(name,f->name) == 0)
                 found = 1;
@@ -151,7 +151,7 @@ struct fsm *flag_create_symbol(int type, char *name, char *value) {
     strcat(string, ".");
     strcat(string, name);
     if (strcmp(value,"") != 0) {
-        strcat(string, ".");    
+        strcat(string, ".");
         strcat(string, value);
     }
     strcat(string, "@");
@@ -322,8 +322,8 @@ struct flags *flag_extract (struct fsm *net) {
             flags->type  = flag_get_type(sigma->symbol);
             flags->name  = flag_get_name(sigma->symbol);
             flags->value = flag_get_value(sigma->symbol);
-        }        
-    }    
+        }
+    }
     return(flags);
 }
 
@@ -339,7 +339,7 @@ int flag_check(char *s) {
     if (*(s+i) == '@') { i++; goto s1; } return 0;
  s1:
     if (*(s+i) == 'C') { i++; goto s4; }
-    if (*(s+i) == 'N' || *(s+i) == 'E' || *(s+i) == 'U' || *(s+i) == 'P') { i++; goto s2; } 
+    if (*(s+i) == 'N' || *(s+i) == 'E' || *(s+i) == 'U' || *(s+i) == 'P') { i++; goto s2; }
     if (*(s+i) == 'R' || *(s+i) == 'D') { i++; goto s3; } return 0;
  s2:
     if (*(s+i) == '.') { i++; goto s5; } return 0;
@@ -348,21 +348,21 @@ int flag_check(char *s) {
  s4:
     if (*(s+i) == '.') { i++; goto s7; } return 0;
  s5:
-    if (*(s+i) != '.' && *(s+i) != '\0') { i++; goto s8; } return 0;   
+    if (*(s+i) != '.' && *(s+i) != '\0') { i++; goto s8; } return 0;
  s6:
-    if (*(s+i) != '.' && *(s+i) != '\0') { i++; goto s9; } return 0;   
+    if (*(s+i) != '.' && *(s+i) != '\0') { i++; goto s9; } return 0;
  s7:
     if (*(s+i) != '.' && *(s+i) != '\0') { i++; goto s10; } return 0;
  s8:
-   if (*(s+i) == '.') { i++; goto s7; } 
-   if (*(s+i) != '.' && *(s+i) != '\0') { i++; goto s8; } return 0; 
+   if (*(s+i) == '.') { i++; goto s7; }
+   if (*(s+i) != '.' && *(s+i) != '\0') { i++; goto s8; } return 0;
  s9:
     if (*(s+i) == '@') { i++; goto s11; }
     if (*(s+i) == '.') { i++; goto s7; }
     if (*(s+i) != '.' && *(s+i) != '\0') { i++; goto s9; } return 0;
 
  s10:
-    if (*(s+i) == '@') {i++; goto s11;} 
+    if (*(s+i) == '@') {i++; goto s11;}
     if (*(s+i) != '.' && *(s+i) != '\0') { i++; goto s10; } return 0;
  s11:
     if (*(s+i) == '\0') {return 1;} return 0;
@@ -371,25 +371,25 @@ int flag_check(char *s) {
 int flag_get_type(char *string) {
     if (strncmp(string+1,"U.",2) == 0) {
 	return FLAG_UNIFY;
-    }    
+    }
     if (strncmp(string+1,"C.",2) == 0) {
 	return FLAG_CLEAR;
-    }    
+    }
     if (strncmp(string+1,"D.",2) == 0) {
 	return FLAG_DISALLOW;
-    }    
+    }
     if (strncmp(string+1,"N.",2) == 0) {
 	return FLAG_NEGATIVE;
-    }    
+    }
     if (strncmp(string+1,"P.",2) == 0) {
 	return FLAG_POSITIVE;
-    }    
+    }
     if (strncmp(string+1,"R.",2) == 0) {
 	return FLAG_REQUIRE;
-    }    
+    }
     if (strncmp(string+1,"E.",2) == 0) {
 	return FLAG_EQUAL;
-    }    
+    }
     return 0;
 }
 
@@ -491,7 +491,7 @@ struct fsm *flag_twosided(struct fsm *net) {
   maxstate++;
   for (i = 0; i < tail; i++) {
 
-    if ((fsm+i)->target == -1) 
+    if ((fsm+i)->target == -1)
       continue;
     if ((*(isflag+(fsm+i)->in) || *(isflag+(fsm+i)->out)) && (fsm+i)->in != (fsm+i)->out) {
       if (*(isflag+(fsm+i)->in) && !*(isflag+(fsm+i)->out)) {

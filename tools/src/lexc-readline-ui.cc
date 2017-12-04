@@ -54,7 +54,7 @@ static HfstTransducerVector rules_;
 void
 lexc_banner()
 {
-  fprintf(message_out, 
+  fprintf(message_out,
           "         *******************************************************\n"
           "         *   Helsinki FS Lexicon Compiler %s (" PACKAGE_VERSION ")     *\n"
           "         *         cloned from Xerox original by               *\n"

@@ -23,10 +23,10 @@ namespace SFST {
     Index previous;
     Label label;
 
-    Gen( Node *n, Label l=Label::epsilon , Index p=undef ) 
+    Gen( Node *n, Label l=Label::epsilon , Index p=undef )
       : node(n), previous(p), label(l) {}
 
-    void print( vector<Gen> &paths, FILE *file, Alphabet &alphabet, 
+    void print( vector<Gen> &paths, FILE *file, Alphabet &alphabet,
                 OutputType ot )
     {
       if (previous != undef) {

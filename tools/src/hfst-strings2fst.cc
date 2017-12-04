@@ -51,7 +51,7 @@ using std::pair;
 #include "HfstTransducer.h"
 #include "HfstInputStream.h"
 #include "HfstOutputStream.h"
-#include "implementations/HfstTransitionGraph.h"
+#include "implementations/HfstBasicTransducer.h"
 #include "hfst-commandline.h"
 #include "hfst-program-options.h"
 #include "hfst-tool-metadata.h"
@@ -127,9 +127,9 @@ print_usage()
     // c.f. http://www.gnu.org/prep/standards/standards.html#g_t_002d_002dhelp
     fprintf(message_out, "Usage: %s [OPTIONS...] [INFILE]\n"
         "Compile string pairs and pair-strings into transducer(s)\n"
-        "\n", program_name); 
+        "\n", program_name);
         print_common_program_options(message_out);
-        fprintf(message_out, 
+        fprintf(message_out,
     "Input/Output options:\n"
     "  -i, --input=INFILE     Read input strings from INFILE\n"
     "  -o, --output=OUTFILE   Write output transducer to OUTFILE\n");
@@ -150,14 +150,14 @@ print_usage()
         );
         fprintf(message_out, "\n");
 
-        fprintf(message_out, 
+        fprintf(message_out,
         "If OUTFILE or INFILE is missing or -, standard streams will be used.\n"
         "FMT can be { foma, openfst-tropical, openfst-log, sfst, \n"
     "optimized-lookup-weighted, optimized-lookup-unweighted }.\n"
         "If EPS is not defined, the default representation of @0@ is used.\n"
         "Option --norm precedes option --log.\n"
         "The FILE of option -m lists all multichar-symbols, each symbol\n"
-        "on its own line.\n"   
+        "on its own line.\n"
         "Backslash '\\' may be used to escape ':', tab and itself. For any\n"
         "other symbol x '\\x' means x literally, i.e. is the same as 'x'.\n"
         "The weight of a string can be given after the string separated\n"
@@ -200,7 +200,7 @@ parse_options(int argc, char** argv)
           {0,0,0,0}
         };
         int option_index = 0;
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "je:234pSm:f:",
                              long_options, &option_index);
         if (-1 == c)
@@ -286,7 +286,7 @@ process_stream(HfstOutputStream& outstream)
       if (tab == NULL)
         {
           string_end = line;
-          while ((*string_end != '\0') && (*string_end != '\n') && 
+          while ((*string_end != '\0') && (*string_end != '\n') &&
                  (*string_end != '\r'))
             {
               string_end++;
@@ -319,7 +319,7 @@ process_stream(HfstOutputStream& outstream)
                 (line,has_spaces); }
         }
       catch (const hfst::UnescapedColsFound &e)
-        { 
+        {
           if (pairstrings)
             {
               error_at_line
@@ -335,7 +335,7 @@ process_stream(HfstOutputStream& outstream)
                  "String `%s' contains unescaped `:'-symbols,\n"
                  "which are not pair separators. Use `\\:\' for literal `:'.\n"
                  "If you are compiling pair strings, use option -p.",
-                 line);              
+                 line);
             }
         }
       catch (const IncorrectUtf8CodingException &e)
@@ -357,11 +357,11 @@ process_stream(HfstOutputStream& outstream)
         {
           HfstBasicTransducer tr;
 
-      if (logarithmic_weights_e) 
+      if (logarithmic_weights_e)
         {
           path_weight = take_negative_logarithm_e(weight);
         }
-      else if (logarithmic_weights_10) 
+      else if (logarithmic_weights_10)
         {
           path_weight = take_negative_logarithm_10(weight);
         }
@@ -384,7 +384,7 @@ process_stream(HfstOutputStream& outstream)
     {
       HfstTransducer res(disjunction, output_format);
 
-      if (normalize_weights) 
+      if (normalize_weights)
         {
           verbose_printf("Normalising weights...\n");
       res.transform_weights(&divide_by_sum_of_weights);
@@ -408,7 +408,7 @@ process_stream(HfstOutputStream& outstream)
 }
 
 
-int main( int argc, char **argv ) 
+int main( int argc, char **argv )
 {
 #ifdef WINDOWS
   _setmode(1, _O_BINARY);
@@ -423,7 +423,7 @@ int main( int argc, char **argv )
 
   if (multichar_symbol_filename != NULL)
     {
-      verbose_printf("Reading multichar symbols from %s\n", 
+      verbose_printf("Reading multichar symbols from %s\n",
                      multichar_symbol_filename);
       std::ifstream multichar_in(multichar_symbol_filename);
       (void)multichar_in.peek();
@@ -431,12 +431,12 @@ int main( int argc, char **argv )
         { error(EXIT_FAILURE, errno,"Multichar symbol file can't be read."); }
       char multichar_line[1000];
       while (multichar_in.good())
-        { 
+        {
           multichar_in.getline(multichar_line,1000);
           if (strlen(multichar_line) > 0)
-            { 
+            {
               verbose_printf("Defining multichar symbol %s\n",multichar_line);
-              multichar_symbols.push_back(multichar_line); 
+              multichar_symbols.push_back(multichar_line);
             }
         }
     }
@@ -446,7 +446,7 @@ int main( int argc, char **argv )
     {
       fclose(outfile);
     }
-  verbose_printf("Reading from %s, writing to %s\n", 
+  verbose_printf("Reading from %s, writing to %s\n",
                  inputfilename, outfilename);
   // here starts the buffer handling part
   HfstOutputStream* outstream = (outfile != stdout) ?

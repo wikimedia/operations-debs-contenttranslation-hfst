@@ -34,7 +34,7 @@ void SplitToVector(char* full, const char* delim, vector<char*>* vec,
                     bool omit_empty_strings) {
   char *p = full;
   while (p) {
-    if (p = strpbrk(full, delim))
+    if ((p = strpbrk(full, delim)))
       p[0] = '\0';
     if (!omit_empty_strings || full[0] != '\0')
       vec->push_back(full);

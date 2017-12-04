@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #ifndef _HFST_EPSILON_HANDLER_H_
@@ -20,7 +20,7 @@ namespace hfst {
   protected:
     typedef std::vector<hfst::implementations::HfstState> HfstStateVector;
     // the path of consecutive input epsilon transitions
-    HfstStateVector epsilon_path; 
+    HfstStateVector epsilon_path;
     size_t max_cycles; // maximum number of consecutive epsilon cycles allowed
     size_t cycles;     // number of cycles detected so far
   public:

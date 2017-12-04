@@ -14,24 +14,24 @@
    - transform_weights
    
    Functions:
-      concatenate 
-      determinize 
-      disjunct 
-      input_project 
-      intersect 
-      invert 
-      minimize 
-      optionalize 
-      output_project 
-      remove_epsilons 
-      repeat_n 
-      repeat_n_minus 
-      repeat_n_plus 
-      repeat_n_to_k 
-      repeat_plus 
-      repeat_star 
-      reverse 
-      subtract 
+      concatenate
+      determinize
+      disjunct
+      input_project
+      intersect
+      invert
+      minimize
+      optionalize
+      output_project
+      remove_epsilons
+      repeat_n
+      repeat_n_minus
+      repeat_n_plus
+      repeat_n_to_k
+      repeat_plus
+      repeat_star
+      reverse
+      subtract
    are tested in command line tool tests
 */
 
@@ -53,12 +53,12 @@ bool compare_alphabets(const HfstTransducer &t1, const HfstTransducer &t2)
   // DEBUG
   if (not retval)
     {
-      for (StringSet::const_iterator it = alpha1.begin(); 
+      for (StringSet::const_iterator it = alpha1.begin();
        it != alpha1.end(); it++) {
     std::cerr << *it << std::endl;
       }
       std::cerr << "--" << std::endl;
-      for (StringSet::const_iterator it = alpha2.begin(); 
+      for (StringSet::const_iterator it = alpha2.begin();
        it != alpha1.end(); it++) {
     std::cerr << *it << std::endl;
       }
@@ -78,10 +78,10 @@ bool compare_string_vectors(const StringVector &v1, const StringVector &v2,
       std::string v1_string;
       std::string v2_string;
 
-      for (unsigned int i=0; i<v1.size(); i++) { 
+      for (unsigned int i=0; i<v1.size(); i++) {
     v1_string.append(v1[i]);
       }
-      for (unsigned int i=0; i<v2.size(); i++) { 
+      for (unsigned int i=0; i<v2.size(); i++) {
     v2_string.append(v2[i]);
       }
       // fprintf(stderr, "####### comparing strings '%s' and '%s'...\n", v1_string.c_str(), v2_string.c_str() ); // debug
@@ -112,7 +112,7 @@ bool do_hfst_lookup_paths_contain(const HfstOneLevelPaths &results,
   for (HfstOneLevelPaths::const_iterator it = results.begin();
        it != results.end(); it++)
     {
-      if (compare_string_vectors(it->second, expected_path, true)) 
+      if (compare_string_vectors(it->second, expected_path, true))
     {
       found = true;
       weight = it->first;
@@ -125,12 +125,12 @@ bool do_hfst_lookup_paths_contain(const HfstOneLevelPaths &results,
   if (not test_path_weight)
     return true;
   
-  if (weight > (path_weight - 0.01) && 
+  if (weight > (path_weight - 0.01) &&
       weight < (path_weight + 0.01))
     return true;
   fprintf(stderr, "FAIL: The path weight is %f, %f expected.\n",
       weight, path_weight);
-  return false;  
+  return false;
 }
 
 bool do_results_contain(const HfstTwoLevelPaths &paths,
@@ -158,7 +158,7 @@ bool do_results_contain(const HfstTwoLevelPaths &paths,
     {
       if (not test_path_weight)
         return true;
-      if (it->first > (weight - 0.01) && 
+      if (it->first > (weight - 0.01) &&
           it->first < (weight + 0.01))
         return true;
     }
@@ -171,7 +171,7 @@ bool do_results_contain(const HfstTwoLevelPaths &paths,
   for (WeightedPaths<float>::Set::const_iterator it = paths.begin();
        it != paths.end(); it++)
     {
-      fprintf(stderr, "%s:%s\t%f\n", 
+      fprintf(stderr, "%s:%s\t%f\n",
           it->istring.c_str(), it->ostring.c_str(), it->weight);
     }
     }*/
@@ -218,13 +218,13 @@ bool modify_transitions(const StringPair &sp, StringPairSet &sps)
 }
 
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 
   const unsigned int TYPES_SIZE=3;
-  const ImplementationType types [] = {SFST_TYPE, 
-                       TROPICAL_OPENFST_TYPE, 
-                       /*LOG_OPENFST_TYPE,*/ 
+  const ImplementationType types [] = {SFST_TYPE,
+                       TROPICAL_OPENFST_TYPE,
+                       /*LOG_OPENFST_TYPE,*/
                                        FOMA_TYPE};
 
   /* For all transducer implementation types, perform the following tests: */
@@ -317,7 +317,7 @@ int main(int argc, char **argv)
 
     HfstTransducer t1("foo", "bar", types[i]);
     HfstTransducer t2("foo", "bar", types[i]);
-    /* Go through all implementation formats 
+    /* Go through all implementation formats
        and get back to the original one.*/
     for (unsigned int j=0; j<=TYPES_SIZE; j++)
       {
@@ -361,8 +361,8 @@ int main(int argc, char **argv)
     expected_results.insert(StringPair("mouse","mice"));
 
     HfstTwoLevelPaths results;
-    animals.extract_paths(results, 
-                3, /* max_num */ 
+    animals.extract_paths(results,
+                3, /* max_num */
                 0  /* cycles */ );
 
     /* Test that results are as expected. */
@@ -411,10 +411,10 @@ int main(int argc, char **argv)
     // FATAL: EncodeMapper: Weight-encoded arc has non-trivial weight
     if (types[i] != LOG_OPENFST_TYPE)
       {
-        HfstTransducer hippopotamus1("hippopotamus", "hippopotami", 
+        HfstTransducer hippopotamus1("hippopotamus", "hippopotami",
                      tok, types[i]);
         hippopotamus1.set_final_weights(1.2);
-        HfstTransducer hippopotamus2("hippopotamus", "hippopotamuses", 
+        HfstTransducer hippopotamus2("hippopotamus", "hippopotamuses",
                      tok, types[i]);
         hippopotamus2.set_final_weights(1.4);
         animals.disjunct(hippopotamus1);
@@ -442,7 +442,7 @@ int main(int argc, char **argv)
     StringVector lookup_cat = tok.tokenize_one_level("cat");
     StringVector lookup_dog = tok.tokenize_one_level("dog");
     StringVector lookup_mouse = tok.tokenize_one_level("mouse");
-    StringVector lookup_hippopotamus 
+    StringVector lookup_hippopotamus
       = tok.tokenize_one_level("hippopotamus");
 
     /* where results of lookup are stored */
@@ -508,7 +508,7 @@ int main(int argc, char **argv)
     // FATAL: SingleShortestPath: Weight needs to have the path property
     // and be right distributive: log
     if (types[i] != LOG_OPENFST_TYPE)
-      {     
+      {
 
         /* Function n_best. */
         verbose_print("function n_best", types[i]);
@@ -555,7 +555,7 @@ int main(int argc, char **argv)
              &&
              do_results_contain
              (results3, "mouse", "mice", 1.7, true));
-        }       
+        }
 
         HfstTransducer animals4(animals);
         animals4.n_best(4);
@@ -574,7 +574,7 @@ int main(int argc, char **argv)
              &&
              do_results_contain
              (results4, "dog", "dogs", 2.5, true));
-        }               
+        }
 
         HfstTransducer animals5(animals);
         animals5.n_best(5);
@@ -596,7 +596,7 @@ int main(int argc, char **argv)
              &&
              do_results_contain
              (results5, "cat", "cats", 3.0, true));
-        }               
+        }
 
       }
     
@@ -673,14 +673,14 @@ int main(int argc, char **argv)
       {
         verbose_print("function push_weights", types[i]);
 
-        /* Create an HFST basic transducer [a:b] with transition 
+        /* Create an HFST basic transducer [a:b] with transition
            weight 0.3 and final weight 0.5. */
         HfstBasicTransducer t;
         t.add_state(1);
         t.add_transition(0, HfstBasicTransition(1, "a", "b", 0.3));
         t.set_final_weight(1, 0.5);
         
-        /* Convert to tropical OpenFst format and push weights 
+        /* Convert to tropical OpenFst format and push weights
            toward final and initial states. */
         HfstTransducer T_final(t, TROPICAL_OPENFST_TYPE);
         T_final.push_weights(TO_FINAL_STATE);
@@ -693,10 +693,10 @@ int main(int argc, char **argv)
         
         /* Test the final weight. */
         try {
-          /* Rounding can affect the precision. */  
+          /* Rounding can affect the precision. */
           assert(0.79 < t_final.get_final_weight(1) &&
              t_final.get_final_weight(1) < 0.81);
-        } 
+        }
         /* If the state does not exist or is not final */
         //catch (hfst::exceptions::HfstArgumentException e) {
         catch (const HfstException e) {
@@ -705,10 +705,10 @@ int main(int argc, char **argv)
 
         /* Test the transition weight. */
         try {
-          HfstBasicTransducer::HfstTransitions transitions = t_initial[0];
+          hfst::implementations::HfstBasicTransitions transitions = t_initial[0];
           assert(transitions.size() == 1);
           float weight = transitions.begin()->get_weight();
-          /* Rounding can affect the precision. */  
+          /* Rounding can affect the precision. */
           assert(0.79 < weight &&
              weight < 0.81);
         }
@@ -730,7 +730,7 @@ int main(int argc, char **argv)
         verbose_print("functions set_final_weights and "
               "transform_weights", types[i]);
         
-        /* Create an HFST basic transducer [a:b] with transition 
+        /* Create an HFST basic transducer [a:b] with transition
            weight 0.3 and final weight 0.5. */
         HfstBasicTransducer t;
         t.add_state(1);
@@ -744,8 +744,8 @@ int main(int argc, char **argv)
         T.push_weights(TO_FINAL_STATE);
 
         /* Convert back to HFST basic transducer and test the weight. */
-        HfstBasicTransducer tc(T);      
-        try {       
+        HfstBasicTransducer tc(T);
+        try {
           assert(0.24 < tc.get_final_weight(1) &&
              tc.get_final_weight(1) < 0.26);
         }
@@ -773,7 +773,7 @@ int main(int argc, char **argv)
     t1.substitute("t", "T", false, true);
     t1.substitute("@_EPSILON_SYMBOL_@", "<eps>");
     t1.substitute("a", "A");
-    t1.substitute("T", "T");      // special 
+    t1.substitute("T", "T");      // special
     t1.substitute("foo", "bar");  // cases
     HfstTransducer t1_("CAt<eps>", "cATs", tok, types[i]);
     assert(t1.compare(t1_));
@@ -868,7 +868,7 @@ int main(int argc, char **argv)
       HfstTransducer id2id_copy(id2id);
       HfstTransducer id2id_copy2(id2id);
       
-      a2b_copy.concatenate(id2id_copy);   
+      a2b_copy.concatenate(id2id_copy);
       assert(id2id_copy.compare(id2id_copy2));
       assert(id2id_copy.get_alphabet() == id2id_copy2.get_alphabet());
     }
@@ -878,7 +878,7 @@ int main(int argc, char **argv)
       HfstTransducer id2id_copy(id2id);
       HfstTransducer id2id_copy2(id2id);
       
-      a2b_copy.disjunct(id2id_copy);      
+      a2b_copy.disjunct(id2id_copy);
       assert(id2id_copy.compare(id2id_copy2));
       assert(id2id_copy.get_alphabet() == id2id_copy2.get_alphabet());
     }
@@ -888,7 +888,7 @@ int main(int argc, char **argv)
       HfstTransducer id2id_copy(id2id);
       HfstTransducer id2id_copy2(id2id);
       
-      a2b_copy.intersect(id2id_copy);     
+      a2b_copy.intersect(id2id_copy);
       assert(id2id_copy.compare(id2id_copy2));
       assert(id2id_copy.get_alphabet() == id2id_copy2.get_alphabet());
     }
@@ -898,7 +898,7 @@ int main(int argc, char **argv)
       HfstTransducer id2id_copy(id2id);
       HfstTransducer id2id_copy2(id2id);
       
-      a2b_copy.subtract(id2id_copy);      
+      a2b_copy.subtract(id2id_copy);
       assert(id2id_copy.compare(id2id_copy2));
       assert(id2id_copy.get_alphabet() == id2id_copy2.get_alphabet());
     }
@@ -908,7 +908,7 @@ int main(int argc, char **argv)
       HfstTransducer id2id_copy(id2id);
       HfstTransducer id2id_copy2(id2id);
       
-      a2b_copy.compose(id2id_copy);   
+      a2b_copy.compose(id2id_copy);
       assert(id2id_copy.compare(id2id_copy2));
       assert(id2id_copy.get_alphabet() == id2id_copy2.get_alphabet());
     }
@@ -918,12 +918,12 @@ int main(int argc, char **argv)
       HfstTransducer id2id_copy(id2id);
       HfstTransducer id2id_copy2(id2id);
       
-      a2b_copy.insert_freely(id2id_copy);     
+      a2b_copy.insert_freely(id2id_copy);
       assert(id2id_copy.compare(id2id_copy2));
       assert(id2id_copy.get_alphabet() == id2id_copy2.get_alphabet());
     }
 
-    /* Test that binary functions work when the argument and the calling 
+    /* Test that binary functions work when the argument and the calling
        object are the same. */
     {
       HfstTransducer foo("foo", types[i]);

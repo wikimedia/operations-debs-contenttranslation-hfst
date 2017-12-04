@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include "HfstStrings2FstTokenizer.h"
@@ -55,7 +55,7 @@ void HfstStrings2FstTokenizer::add_multichar_symbol_head
 {
   if (multichar_symbol.empty())
     { throw EmptyMulticharSymbol(); }
-  StringVector tokenized_multichar_symbol = 
+  StringVector tokenized_multichar_symbol =
     tokenizer.tokenize_one_level(multichar_symbol);
   std::string multichar_symbol_head(*tokenized_multichar_symbol.begin());
   tokenizer.add_multichar_symbol
@@ -71,7 +71,7 @@ StringPairVector HfstStrings2FstTokenizer::tokenize_pair_string
   else
     {
       tokenized_str = tokenizer.tokenize_one_level(str);
-      StringVector::iterator new_end = 
+      StringVector::iterator new_end =
     std::remove(tokenized_str.begin(),tokenized_str.end(),BACKSLASH);
       tokenized_str.erase(new_end,tokenized_str.end());
     }
@@ -105,17 +105,17 @@ StringPairVector HfstStrings2FstTokenizer::make_pair_vector
        ++it)
     {
       if (! is_pair_input_symbol(it,v.end()))
-    { 
+    {
       std::string symbol = unescape(*it);
-      symbol = (symbol.empty() || symbol == eps ? 
+      symbol = (symbol.empty() || symbol == eps ?
             EPSILON_SYMBOL : symbol);
       spv.push_back(StringPair(symbol,symbol)); }
       else
     {
-      std::string input = (it->empty() || *it == eps ? 
+      std::string input = (it->empty() || *it == eps ?
                    EPSILON_SYMBOL : unescape(*it));
       ++(++it);
-      std::string output = (it->empty() || *it == eps ? 
+      std::string output = (it->empty() || *it == eps ?
                 EPSILON_SYMBOL : unescape(*it));
       spv.push_back(StringPair(input,output));
     }
@@ -130,15 +130,15 @@ StringPairVector HfstStrings2FstTokenizer::make_pair_vector
   StringVector::const_iterator input_it = input.begin();
   StringVector::const_iterator output_it = output.begin();
   while (input_it != input.end() && output_it != output.end())
-    { 
+    {
       std::string input_symbol = unescape(*input_it);
       std::string output_symbol = unescape(*output_it);
 
       spv.push_back
-        (StringPair(input_symbol.empty() || input_symbol == eps ? 
+        (StringPair(input_symbol.empty() || input_symbol == eps ?
                     EPSILON_SYMBOL : input_symbol,
-                    output_symbol.empty() || output_symbol == eps ? 
-                    EPSILON_SYMBOL : output_symbol)); 
+                    output_symbol.empty() || output_symbol == eps ?
+                    EPSILON_SYMBOL : output_symbol));
       ++input_it;
       ++output_it;
     }
@@ -147,14 +147,14 @@ StringPairVector HfstStrings2FstTokenizer::make_pair_vector
       for ( ; output_it != output.end(); ++output_it)
     { spv.push_back
         (StringPair(EPSILON_SYMBOL,
-            output_it->empty() || *output_it == eps ? 
+            output_it->empty() || *output_it == eps ?
             EPSILON_SYMBOL : unescape(*output_it))); }
     }
   else
     {
       for ( ; input_it != input.end(); ++input_it)
     { spv.push_back
-        (StringPair(input_it->empty() || *input_it == eps ? 
+        (StringPair(input_it->empty() || *input_it == eps ?
             EPSILON_SYMBOL : unescape(*input_it),
             EPSILON_SYMBOL)); }
     }
@@ -219,7 +219,7 @@ void HfstStrings2FstTokenizer::check_cols(const std::string &symbol)
     { throw UnescapedColsFound(); }
       size_t pos = 0;
       while ((pos = symbol.find(COL_CHAR,pos+1)) != std::string::npos)
-    { 
+    {
       if (symbol[pos-1] != BACKSLASH_CHAR)
         { throw UnescapedColsFound(); }
       if (pos > 1 && symbol[pos-2] == BACKSLASH_CHAR)
@@ -237,7 +237,7 @@ int HfstStrings2FstTokenizer::get_col_pos(const std::string &str)
   for (size_t i = 1; i < str.size(); ++i)
     {
       if (str[i] == COL_CHAR && str[i-1] != BACKSLASH_CHAR)
-    { return i; }
+        { return (int)i; }
     }
   return -1;
 }
@@ -250,7 +250,7 @@ StringVector HfstStrings2FstTokenizer::split_at_spaces(const std::string &str)
   for (StringVector::const_iterator it = sv.begin(); it != sv.end(); ++it)
     {
       if (*it == SPACE && ! symbol.empty())
-      { 
+      {
         res.push_back(symbol);
         while (it + 1 != sv.end() && *(it + 1) == SPACE)
           { ++it; }
@@ -259,12 +259,12 @@ StringVector HfstStrings2FstTokenizer::split_at_spaces(const std::string &str)
           { break; }
       }
       else if (* it == SPACE)
-    { 
+    {
       while (it + 1 != sv.end() && *(it + 1) == SPACE)
         { ++it; }
     }
       else if (*it == COL && ! symbol.empty())
-    { 
+    {
       res.push_back(symbol);
       res.push_back(COL);
       symbol = EMPTY;
@@ -291,8 +291,8 @@ void test_ps
   for (StringPairVector::const_iterator it = spv.begin();
        it != spv.end();
        ++it)
-    { 
-      if (it->first != it->second)      
+    {
+      if (it->first != it->second)
     { std::cout << it->first << " : " << it->second << std::endl; }
       else
     { std::cout << it->first << std::endl; }
@@ -309,8 +309,8 @@ void test_sp
   for (StringPairVector::const_iterator it = spv.begin();
        it != spv.end();
        ++it)
-    { 
-      if (it->first != it->second)      
+    {
+      if (it->first != it->second)
     { std::cout << it->first << " : " << it->second << std::endl; }
       else
     { std::cout << it->first << std::endl; }

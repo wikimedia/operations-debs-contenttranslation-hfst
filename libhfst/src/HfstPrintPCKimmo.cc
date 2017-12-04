@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include "HfstTransducer.h"
@@ -25,14 +25,14 @@ print_pckimmo(FILE* out, HfstTransducer& t)
          state != mutt->end();
          ++state)
       {
-        for (HfstBasicTransducer::HfstTransitions::const_iterator arc = 
+        for (hfst::implementations::HfstBasicTransitions::const_iterator arc =
              state->begin();
              arc != state->end();
              ++arc)
           {
             std::string first = arc->get_input_symbol();
             std::string second = arc->get_output_symbol();
-            pairs.insert(pair<std::string,std::string>(first, second));
+            pairs.insert(std::pair<std::string,std::string>(first, second));
           }
         ++last;
       }
@@ -40,10 +40,10 @@ print_pckimmo(FILE* out, HfstTransducer& t)
     unsigned int numwidth = 0;
     for (unsigned int i = 1; i < last; i *= 10, numwidth++)
       {}
-    // first line is input symbols per pair 
+    // first line is input symbols per pair
     // (left corner is digit width + 2)
     fprintf(out, "%*s  ", numwidth, " ");
-    for (std::set<pair<std::string, std::string> >::const_iterator p = pairs.begin();
+    for (std::set<std::pair<std::string, std::string> >::const_iterator p = pairs.begin();
          p != pairs.end();
          ++p)
       {
@@ -64,7 +64,7 @@ print_pckimmo(FILE* out, HfstTransducer& t)
     fprintf(out, "\n");
     // (left corner is digit width + 2)
     fprintf(out, "%*s  ", numwidth, " ");
-    for (std::set<pair<std::string, std::string> >::const_iterator p = pairs.begin();
+    for (std::set<std::pair<std::string, std::string> >::const_iterator p = pairs.begin();
          p != pairs.end();
          ++p)
       {
@@ -98,23 +98,23 @@ print_pckimmo(FILE* out, HfstTransducer& t)
           }
         // map everything to sink state 0 first
         std::map<std::pair<std::string,std::string>,HfstState> transitions;
-        for(std::set<pair<std::string,std::string> >::const_iterator p = pairs.begin();
+        for(std::set<std::pair<std::string,std::string> >::const_iterator p = pairs.begin();
             p != pairs.end();
             ++p)
           {
             transitions[*p] = -1;
           }
-        for (HfstBasicTransducer::HfstTransitions::const_iterator arc = 
+        for (hfst::implementations::HfstBasicTransitions::const_iterator arc =
              state->begin();
              arc != state->end();
              ++arc)
           {
             std::string first = arc->get_input_symbol();
             std::string second = arc->get_output_symbol();
-            transitions[pair<std::string,std::string>(first,second)] = 
+            transitions[std::pair<std::string,std::string>(first,second)] =
                 arc->get_target_state();
           }
-        for(std::map<std::pair<std::string,std::string>,HfstState>::const_iterator trans = 
+        for(std::map<std::pair<std::string,std::string>,HfstState>::const_iterator trans =
             transitions.begin();
             trans != transitions.end();
             ++trans)

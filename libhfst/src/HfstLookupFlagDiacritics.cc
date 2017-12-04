@@ -1,13 +1,15 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include "HfstLookupFlagDiacritics.h"
+
+using hfst::StringVector;
 
 DiacriticOperators FlagDiacriticTable::diacritic_operators;
 DiacriticFeatures FlagDiacriticTable::diacritic_features;
@@ -84,7 +86,7 @@ void FlagDiacriticTable::split_diacritic(const std::string &diacritic_string)
   // Third character is always the first fullstop.
   size_t first_full_stop_pos = 2;
   // Find the second full stop, if there is one.
-  size_t second_full_stop_pos = 
+  size_t second_full_stop_pos =
     diacritic_string.find('.',first_full_stop_pos+1);
   size_t last_char_pos = diacritic_string.size() - 1;
   if (second_full_stop_pos == std::string::npos)
@@ -93,17 +95,17 @@ void FlagDiacriticTable::split_diacritic(const std::string &diacritic_string)
          (diacritic_operators[diacritic_string] == Dop) ||
          (diacritic_operators[diacritic_string] == Rop));
       diacritic_has_value[diacritic_string] = false;
-      diacritic_features[diacritic_string] = 
+      diacritic_features[diacritic_string] =
     diacritic_string.substr(first_full_stop_pos+1,
                 last_char_pos - first_full_stop_pos - 1);
     }
   else
     {
       diacritic_has_value[diacritic_string] = true;
-      diacritic_features[diacritic_string] = 
+      diacritic_features[diacritic_string] =
     diacritic_string.substr(first_full_stop_pos+1,
                 second_full_stop_pos-first_full_stop_pos - 1);
-      diacritic_values[diacritic_string] = 
+      diacritic_values[diacritic_string] =
     diacritic_string.substr(second_full_stop_pos+1,
                 last_char_pos - second_full_stop_pos - 1);
     }
@@ -115,7 +117,7 @@ FlagDiacriticTable::FlagDiacriticTable(void):
 
 bool FlagDiacriticTable::is_diacritic(const std::string &symbol)
 { //return diacritic_operators.find(symbol) != diacritic_operators.end(); }
-  bool res = is_genuine_diacritic(symbol); 
+  bool res = is_genuine_diacritic(symbol);
   if (res)
     split_diacritic(symbol);
   return res;
@@ -150,9 +152,9 @@ void FlagDiacriticTable::require(std::string &feature,
                  std::string &value)
 {
   if (feature_values.find(feature) == feature_values.end())
-    { 
+    {
       error_flag = true;
-      return; 
+      return;
     }
   else if (feature_values[feature] != value)
     { error_flag = true; }
@@ -172,7 +174,7 @@ void FlagDiacriticTable::unify(std::string &feature,
     { set_positive_value(feature,value); }
   // If feature set to something else negatively, set it to value.
   else if (feature_values[feature] != value)
-    { 
+    {
       if (! feature_polarities[feature])
     { set_positive_value(feature,value); }
     }
@@ -184,7 +186,7 @@ void FlagDiacriticTable::clear(std::string &feature)
   feature_polarities.erase(feature);
 }
 
-/*void 
+/*void
 FlagDiacriticTable::define_diacritic(short diacritic_number,
                      const std::string &diacritic_string)
 { if (is_genuine_diacritic(diacritic_string))
@@ -286,7 +288,7 @@ void FlagDiacriticTable::display(short diacritic)
     }
   else
     {
-      std::cout << diacritic_operators[diacritic] 
+      std::cout << diacritic_operators[diacritic]
         << " "
         << diacritic_features[diacritic]
         << " "
@@ -372,8 +374,8 @@ int main(void)
   std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
-  std::cout 
-    << "\"@P.NeedNoun.ON@ @P.BlaBla.ON@ @C.NeedNoun@ @D.NeedNoun.ON@\"" 
+  std::cout
+    << "\"@P.NeedNoun.ON@ @P.BlaBla.ON@ @C.NeedNoun@ @D.NeedNoun.ON@\""
     << " should pass:";
   fdt.insert_number(1);
   fdt.insert_number(7);
@@ -382,7 +384,7 @@ int main(void)
   std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
-  std::cout 
+  std::cout
     << "\"@P.NeedNoun.ON@ @P.BlaBla.ON@ @C.NeedNoun@ @D.NeedNoun.ON@ "
     << "@R.BlaBla.ON@\" should pass:";
   fdt.insert_number(1);
@@ -393,7 +395,7 @@ int main(void)
   std::cout << " " << ! fdt.fails() << std::endl;
   assert(fdt.fails() == false);
   fdt.reset();
-  std::cout 
+  std::cout
     << "\"@P.NeedNoun.ON@ @C.NeedNoun@ @D.NeedNoun.ON@ @R.BlaBla.ON@\""
     << " should fail:";
   fdt.insert_number(1);

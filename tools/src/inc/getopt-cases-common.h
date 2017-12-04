@@ -32,8 +32,8 @@ case 's':
   break;
 case 'o':
   outfilename = hfst_strdup(optarg);
-  outfile = hfst_fopen(outfilename, "w");
-  if (outfile == stdout) 
+  outfile = ::hfst_fopen(outfilename, "w");
+  if (outfile == stdout)
     {
       free(outfilename);
       outfilename = hfst_strdup("<stdout>");

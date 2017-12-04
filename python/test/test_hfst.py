@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
+from __future__ import print_function
 import sys
-sys.path.insert(1, '/home/eaxelson/hfst-git/hfst/python/')
-
-import libhfst
+if len(sys.argv) > 1:
+    sys.path.insert(0, sys.argv[1])
+import hfst
 import os.path
 from inspect import currentframe
 
@@ -9,20 +11,43 @@ def get_linenumber():
     cf = currentframe()
     return cf.f_back.f_lineno
 
-for type in (libhfst.TROPICAL_OPENFST_TYPE, libhfst.FOMA_TYPE):
+from sys import version
+if int(version[0]) > 2:
+    def unicode(s, c):
+        return s
 
-    print('\n--- Testing implementation type %s ---\n' % libhfst.fst_type_to_string(type))
+types = []
+if hfst.HfstTransducer.is_implementation_type_available(hfst.ImplementationType.TROPICAL_OPENFST_TYPE):
+    types.append(hfst.ImplementationType.TROPICAL_OPENFST_TYPE)
+if hfst.HfstTransducer.is_implementation_type_available(hfst.ImplementationType.FOMA_TYPE):
+    types.append(hfst.ImplementationType.FOMA_TYPE)
+    print('HERE!!!')
 
-    libhfst.set_default_fst_type(type)
+for type in types:
+
+    print('\n--- Testing implementation type %s ---\n' % hfst.fst_type_to_string(type))
+
+    hfst.set_default_fst_type(type)
 
     tr1 = None
     tr2 = None
     tr3 = None
 
+    type_ = hfst.ImplementationType.TROPICAL_OPENFST_TYPE
+    ostr = hfst.HfstOutputStream(filename='foobar.hfst', type=type_)
+
+    tr_ = hfst.regex('{foo}:{bar}::0.5')
+    tr_.convert(type_)
+
+    ostr.write(tr_)
+    ostr.write(tr_)
+    ostr.flush()
+    ostr.close()
+
     if not os.path.isfile('foobar.hfst'):
         raise RuntimeError('Missing file: foobar.hfst')
 
-    istr = libhfst.HfstInputStream('foobar.hfst')
+    istr = hfst.HfstInputStream('foobar.hfst')
     numtr = 0
     try:
         tr1 = istr.read()
@@ -31,7 +56,7 @@ for type in (libhfst.TROPICAL_OPENFST_TYPE, libhfst.FOMA_TYPE):
         numtr += 1
         tr3 = istr.read()
         numtr += 1
-    except libhfst.EndOfStreamException:
+    except hfst.exceptions.EndOfStreamException:
         pass
     except:
         raise RuntimeError(get_linenumber())
@@ -40,10 +65,10 @@ for type in (libhfst.TROPICAL_OPENFST_TYPE, libhfst.FOMA_TYPE):
     if numtr != 2:
         raise RuntimeError(get_linenumber())
 
-    tr1.convert(libhfst.get_default_fst_type())
-    tr2.convert(libhfst.get_default_fst_type())
+    tr1.convert(hfst.get_default_fst_type())
+    tr2.convert(hfst.get_default_fst_type())
 
-    ostr = libhfst.HfstOutputStream(filename='foobar2.hfst')
+    ostr = hfst.HfstOutputStream(filename='foobar2.hfst')
     ostr.write(tr1)
     ostr.write(tr2)
     ostr.flush()
@@ -53,7 +78,7 @@ for type in (libhfst.TROPICAL_OPENFST_TYPE, libhfst.FOMA_TYPE):
     TR2 = None
     TR3 = None
 
-    istr = libhfst.HfstInputStream('foobar2.hfst')
+    istr = hfst.HfstInputStream('foobar2.hfst')
     numtr = 0
     try:
         TR1 = istr.read()
@@ -62,7 +87,7 @@ for type in (libhfst.TROPICAL_OPENFST_TYPE, libhfst.FOMA_TYPE):
         numtr += 1
         TR3 = istr.read()
         numtr += 1
-    except libhfst.EndOfStreamException:
+    except hfst.exceptions.EndOfStreamException:
         pass
     except:
         raise RuntimeError(get_linenumber())
@@ -77,134 +102,142 @@ for type in (libhfst.TROPICAL_OPENFST_TYPE, libhfst.FOMA_TYPE):
         raise RuntimeError(get_linenumber())
 
     # Copy constructor
-    transducer = libhfst.HfstTransducer(TR1)
+    transducer = hfst.HfstTransducer(TR1)
     if not (TR1.compare(transducer)):
         raise RuntimeError(get_linenumber())
     if not (transducer.compare(TR1)):
         raise RuntimeError(get_linenumber())
 
     # Read lexc
-    tr = libhfst.compile_lexc_file('test.lexc')
+    tr = hfst.compile_lexc_file('test.lexc')
     tr.insert_freely(tr1)
     tr.minimize()
     tr.insert_freely(('A','B'))
     tr.minimize()
 
+    # Read sfst
+    tr = hfst.compile_sfst_file('test.sfstpl')
+    assert(not (tr == None))
+
     # Substitute
-    tr = libhfst.regex('a a:b b;')
+    tr = hfst.regex('a a:b b;')
     tr.substitute('a', 'A', input=True, output=False)
-    eq = libhfst.regex('A:a A:b b;')
+    eq = hfst.regex('A:a A:b b;')
     if not (tr.compare(eq)):
         raise RuntimeError(get_linenumber())
 
-    tr = libhfst.regex('a a:b b;')
+    tr = hfst.regex('a a:b b;')
     tr.substitute('a', 'A', input=False, output=True)
-    eq = libhfst.regex('a:A a:b b;')
+    eq = hfst.regex('a:A a:b b;')
     if not (tr.compare(eq)):
         raise RuntimeError(get_linenumber())
 
-    tr = libhfst.regex('a a:b b;')
+    tr = hfst.regex('a a:b b;')
     tr.substitute('a','A')
-    eq = libhfst.regex('A A:b b;')
+    eq = hfst.regex('A A:b b;')
     if not (tr.compare(eq)):
         raise RuntimeError(get_linenumber())
 
-    tr = libhfst.regex('a a:b b;')
+    tr = hfst.regex('a a:b b;')
     tr.substitute(('a','b'),('A','B'))
-    eq = libhfst.regex('a A:B b;')
+    eq = hfst.regex('a A:B b;')
     if not (tr.compare(eq)):
         raise RuntimeError(get_linenumber())
 
-    tr = libhfst.regex('a a:b b;')
+    tr = hfst.regex('a a:b b;')
     tr.substitute(('a','b'),(('A','B'),('B','C'),('C','D')))
-    eq = libhfst.regex('a [A:B|B:C|C:D] b;')
+    eq = hfst.regex('a [A:B|B:C|C:D] b;')
     if not (tr.compare(eq)):
         raise RuntimeError(get_linenumber())
 
-    tr = libhfst.regex('a a:b b;')
+    tr = hfst.regex('a a:b b;')
     tr.substitute(('a','b'),(('A','B'),('B','C'),('C','D')))
-    eq = libhfst.regex('a [A:B|B:C|C:D] b;')
+    eq = hfst.regex('a [A:B|B:C|C:D] b;')
     if not (tr.compare(eq)):
         raise RuntimeError(get_linenumber())
 
-    tr = libhfst.regex('a a:b b;')
+    tr = hfst.regex('a a:b b;')
     tr.substitute({'a':'A', 'b':'B', 'c':'C'})
-    eq = libhfst.regex('A A:B B;')
+    eq = hfst.regex('A A:B B;')
     if not (tr.compare(eq)):
         raise RuntimeError(get_linenumber())
 
-    tr = libhfst.regex('a a:b b;')
+    tr = hfst.regex('a a:b b;')
     tr.substitute({('a','a'):('A','a'), ('a','b'):('a','B'), ('c','c'):('C','c')})
-    eq = libhfst.regex('A:a a:B b;')
+    eq = hfst.regex('A:a a:B b;')
     if not (tr.compare(eq)):
         raise RuntimeError(get_linenumber())
 
-    tr = libhfst.regex('a a:b b;')
-    sub = libhfst.regex('[c:d]+;')
+    tr = hfst.regex('a a:b b;')
+    sub = hfst.regex('[c:d]+;')
     tr.substitute(('a','b'),sub)
-    eq = libhfst.regex('a [c:d]+ b;')
+    eq = hfst.regex('a [c:d]+ b;')
     if not (tr.compare(eq)):
         raise RuntimeError(get_linenumber())
 
     # push weights
-    tr = libhfst.regex('[a::1 a:b::0.3 b::0]::0.7;')
-    tr.push_weights(libhfst.TO_INITIAL_STATE)
-    tr.push_weights(libhfst.TO_FINAL_STATE)
+    tr = hfst.regex('[a::1 a:b::0.3 b::0]::0.7;')
+    tr.push_weights_to_start()
+    tr.push_weights_to_end()
 
     # set final weights
-    tr = libhfst.regex('(a a:b (b));')
+    tr = hfst.regex('(a a:b (b));')
     tr.set_final_weights(0.1)
     tr.set_final_weights(0.4, True)
 
     # reading and writing in text format
-    f = open('testfile.att', 'w')
+    f = open('testfile_.att', 'w')
     f.write('0 1 foo bar 0.5\n\
 0 1 fo ba 0.2\n\
 0 1 f b 0\n\
 1 2 baz baz\n\
 2 0.1\n\
---\n')
+--\n\n')
     f.close()
 
     numtr = 0
-    f = libhfst.hfst_open('testfile.att', 'r')
-    while not f.is_eof():
-        TR = libhfst.read_att(f)
-        numtr += 1
+    f = open('testfile_.att', 'r')
     try:
-        libhfst.read_att(f)
-    except libhfst.EndOfStreamException:
+        while True:
+            TR = hfst.read_att_transducer(f)
+            numtr += 1
+    except hfst.exceptions.EndOfStreamException:
         pass
     f.close()
     if numtr != 2:
         raise RuntimeError(get_linenumber())
 
-    f = libhfst.hfst_open('foo_att_prolog', 'w')
+    f = open('foo_att_prolog', 'w')
     f.write('-- in ATT format --\n')
     TR.write_att(f)
     f.write('-- in prolog format --\n')
-    TR.write_prolog(f, 'FOOBAR_TRANSDUCER')
+    TR.write_prolog(f)
     f.close()
 
-    fsm = libhfst.read_att_string(' 0\t 1 a b\n\
+    fsm = hfst.read_att_string(' 0\t 1 a b\n\
                                 1 2 c   d 0.5\n\
 2 \n\
 2 3 \t\te f\n\
                                     3   0.3 ')
-    #if not fsm.compare(libhfst.regex('a:b c:d::0.5 (e:f::0.3)')):
+    #if not fsm.compare(hfst.regex('a:b c:d::0.5 (e:f::0.3)')):
     #    raise RuntimeError('read_att_string failed')
 
     # Lookup and path extraction
-    tr = libhfst.regex('foo:bar::0.5 | foo:baz')
+    tr = hfst.regex('foo:bar::0.5 | foo:baz')
 
-    print('tr.lookup')
+    f = open('foo', 'w')
     try:
-        print(tr.lookup('foo', max_number=5, output='text'))
-    except libhfst.FunctionNotImplementedException:
-        print('converting...')
-        TR = libhfst.HfstTransducer(tr)
-        TR.convert(libhfst.HFST_OLW_TYPE)
-        print(TR.lookup('foo', max_number=5, output='text'))
+        print(tr.lookup('foo', max_number=5, output='text'), file=f)
+    except hfst.exceptions.FunctionNotImplementedException:
+        TR = hfst.HfstTransducer(tr)
+        TR.convert(hfst.ImplementationType.HFST_OLW_TYPE)
+        print(TR.lookup('foo', max_number=5, output='text'), file=f)
+
+    tr_ = tr.copy()
+    tr.lookup_optimize()
+    tr.lookup('foo', max_number=5, output='text', file=f)
+    tr.remove_optimization()
+    assert(tr.compare(tr_))
 
 #  def lookup_fd(self, lookup_path, **kvargs):
 #      max_weight = None
@@ -212,17 +245,18 @@ for type in (libhfst.TROPICAL_OPENFST_TYPE, libhfst.FOMA_TYPE):
 #      output='dict' # 'dict' (default), 'text', 'raw'
 
 
-    fsm = libhfst.HfstBasicTransducer(tr)
-    print(fsm.lookup_fd((('foo'))))
+    fsm = hfst.HfstBasicTransducer(tr)
+    print(fsm.lookup((('foo'))), file=f)
 
-    print('tr.extract_paths')
-    print(tr.extract_paths(obey_flags='True', filter_flags='False', max_number=3, output='dict'))
+    print(tr.extract_paths(obey_flags='True', filter_flags='False', max_number=3, output='dict'), file=f)
 
     def test_fst(input, result):
-        tr1_ = libhfst.fst(input)
-        tr2_ = libhfst.regex(result)
+        tr1_ = hfst.fst(input)
+        tr2_ = hfst.regex(result)
         if not tr1_.compare(tr2_):
             raise RuntimeError('test_fst failed with input: ' + input)
+
+    f.close()
 
     # Create automaton:
     # unweighted
@@ -236,12 +270,15 @@ for type in (libhfst.TROPICAL_OPENFST_TYPE, libhfst.FOMA_TYPE):
     # Special inputs
     test_fst('*** FOO ***', '{*** FOO ***}')
 
-    try:
-        foo = libhfst.fst('')
-        raise RuntimeError(get_linenumber())
-    except RuntimeError as e:
-        if not e.__str__() == 'Empty word.':
-            raise RuntimeError(get_linenumber())
+    foo = hfst.fst('')
+    eps = hfst.epsilon_fst()
+    assert(foo.compare(eps))
+    #try:
+    #    foo = hfst.fst('')
+    #    raise RuntimeError(get_linenumber())
+    #except RuntimeError as e:
+    #    if not e.__str__() == 'Empty word.':
+    #        raise RuntimeError(get_linenumber())
 
     # Create transducer:
     # unweighted
@@ -259,18 +296,24 @@ for type in (libhfst.TROPICAL_OPENFST_TYPE, libhfst.FOMA_TYPE):
     # Special inputs
     test_fst({'*** FOO ***':'+++ BAR +++'}, '{*** FOO ***}:{+++ BAR +++}')
 
-    try:
-        foo = libhfst.fst({'':'foo'})
-        raise RuntimeError(get_linenumber())
-    except RuntimeError as e:
-        if not e.__str__() == 'Empty word.':
-            raise RuntimeError(get_linenumber())
-    try:
-        foo = libhfst.fst({'foo':''})
-        raise RuntimeError(get_linenumber())
-    except RuntimeError as e:
-        if not e.__str__() == 'Empty word.':
-            raise RuntimeError(get_linenumber())
+    foo = hfst.fst({'':'foo'})
+    tr = hfst.regex('0:{foo}')
+    assert(foo.compare(tr))
+    foo = hfst.fst({'foo':''})
+    tr = hfst.regex('{foo}:0')
+    assert(foo.compare(tr))
+    #try:
+    #    foo = hfst.fst({'':'foo'})
+    #    raise RuntimeError(get_linenumber())
+    #except RuntimeError as e:
+    #    if not e.__str__() == 'Empty word.':
+    #        raise RuntimeError(get_linenumber())
+    #try:
+    #    foo = hfst.fst({'foo':''})
+    #    raise RuntimeError(get_linenumber())
+    #except RuntimeError as e:
+    #    if not e.__str__() == 'Empty word.':
+    #        raise RuntimeError(get_linenumber())
 
     # Tokenized input
     def test_tokenized(tok, pathin, pathout, exp, weight=0):
@@ -279,13 +322,13 @@ for type in (libhfst.TROPICAL_OPENFST_TYPE, libhfst.FOMA_TYPE):
             tokenized = tok.tokenize_one_level(pathin)
         else:
             tokenized = tok.tokenize(pathin, pathout)
-        if not libhfst.tokenized_fst(tokenized, weight).compare(libhfst.regex(exp)):
+        if not hfst.tokenized_fst(tokenized, weight).compare(hfst.regex(exp)):
             if pathout == None:
                 raise RuntimeError('test_tokenized failed with input: ' + pathin)
             else:
                 raise RuntimeError('test_tokenized failed with input: ' + pathin + ", " + pathout)
 
-    tok = libhfst.HfstTokenizer()
+    tok = hfst.HfstTokenizer()
 
     test_tokenized(tok, 'foobar', None, '[f o o b a r]')
     test_tokenized(tok, 'foobar', 'foobar', '[f o o b a r]')
@@ -313,123 +356,150 @@ for type in (libhfst.TROPICAL_OPENFST_TYPE, libhfst.FOMA_TYPE):
     test_tokenized(tok, 'fööbär', 'föbar', '[fööbär:b 0:a 0:r]')
     test_tokenized(tok, 'föfööfö', 'föföföföö', '[föö]')
 
-    tok = libhfst.HfstTokenizer()
+    tok = hfst.HfstTokenizer()
     tok.add_skip_symbol('?')
     tok.add_skip_symbol(' ')
     test_tokenized(tok, 'How is this tokenized?', None, '[H o w i s t h i s t o k e n i z e d]')
     tok.add_skip_symbol(' is ')
     test_tokenized(tok, 'How is this tokenized?', None, '[H o w t h i s t o k e n i z e d]')
 
-    tok = libhfst.HfstTokenizer()
-    tok.add_multichar_symbol(libhfst.EPSILON) # TODO: should this be included by default???
+    tok = hfst.HfstTokenizer()
+    tok.add_multichar_symbol(hfst.EPSILON) # TODO: should this be included by default???
     test_tokenized(tok, '@_EPSILON_SYMBOL_@foo', None, '[f o o]')
 
-    if not libhfst.tokenized_fst([(libhfst.EPSILON,'b'),('f','a'),('o','a'),('o','r')]).compare(libhfst.regex('[0:b f:a o:a o:r]')):
+    if not hfst.tokenized_fst([(hfst.EPSILON,'b'),('f','a'),('o','a'),('o','r')]).compare(hfst.regex('[0:b f:a o:a o:r]')):
         raise RuntimeError(get_linenumber())
 
     # Is this ok???
-    if not libhfst.regex('"' + libhfst.EPSILON + '"').compare(libhfst.regex('[0]')):
+    if not hfst.regex('"' + hfst.EPSILON + '"').compare(hfst.regex('[0]')):
         raise RuntimeError(get_linenumber())
-    if not libhfst.regex('"' + libhfst.IDENTITY + '"').compare(libhfst.regex('[?]')):
+    if not hfst.regex('"' + hfst.IDENTITY + '"').compare(hfst.regex('[?]')):
         raise RuntimeError(get_linenumber())
-    if not libhfst.regex('"' + libhfst.UNKNOWN + '":"' + libhfst.UNKNOWN + '"').compare(libhfst.regex('[?:?]')):
+    if not hfst.regex('"' + hfst.UNKNOWN + '":"' + hfst.UNKNOWN + '"').compare(hfst.regex('[?:?]')):
         raise RuntimeError(get_linenumber())
 
     # other python functions
-    if not libhfst.empty_fst().compare(libhfst.regex('[0-0]')):
+    if not hfst.empty_fst().compare(hfst.regex('[0-0]')):
         raise RuntimeError(get_linenumber())
-    if not libhfst.epsilon_fst().compare(libhfst.regex('[0]')):
+    if not hfst.epsilon_fst().compare(hfst.regex('[0]')):
         raise RuntimeError(get_linenumber())
-    if not libhfst.epsilon_fst(-1.5).compare(libhfst.regex('[0]::-1.5')):
+    if not hfst.epsilon_fst(-1.5).compare(hfst.regex('[0]::-1.5')):
         raise RuntimeError(get_linenumber())
 
     # Non-ascii characters and unknowns/identities
-    tr1 = libhfst.regex('Ä:é å ?;')
-    tr2 = libhfst.regex('? Ö;')
+    tr1 = hfst.regex('Ä:é å ?;')
+    tr2 = hfst.regex('? Ö;')
     tr1.concatenate(tr2)
-    result = libhfst.regex('Ä:é å [Ä|é|å|Ö|?] [Ä|é|å|Ö|?] Ö;')
+    result = hfst.regex('Ä:é å [Ä|é|å|Ö|?] [Ä|é|å|Ö|?] Ö;')
     if not tr1.compare(result):
         raise RuntimeError(get_linenumber())
 
-    tr1 = libhfst.regex('ñ ?:á;')
-    tr2 = libhfst.regex('Ê:?;')
+    tr1 = hfst.regex('ñ ?:á;')
+    tr2 = hfst.regex('Ê:?;')
     tr1.concatenate(tr2)
-    result = libhfst.regex('ñ [ñ:á|á|Ê:á|?:á] [Ê:ñ|Ê|Ê:á|Ê:?];')
+    result = hfst.regex('ñ [ñ:á|á|Ê:á|?:á] [Ê:ñ|Ê|Ê:á|Ê:?];')
     if not tr1.compare(result):
         raise RuntimeError(get_linenumber())
 
     # Other functions (TODO: more extensixe checks)
-    tr = libhfst.regex('[foo]|[foo bar]|[f o o bar baz]')
+    tr = hfst.regex('[foo]|[foo bar]|[f o o bar baz]')
     if not tr.longest_path_size() == 5:
         raise RuntimeError(get_linenumber())
     result = tr.extract_longest_paths()
     if not len(result) == 1:
         raise RuntimeError(get_linenumber())
-    result = tr.extract_shortest_paths()    
+    result = tr.extract_shortest_paths()
     if not len(result) == 1:
         raise RuntimeError(get_linenumber())
 
     # XfstCompiler
-    if libhfst.compile_xfst_file('test_pass.xfst') != 0:
-        raise RuntimeError(get_linenumber())
-    if libhfst.compile_xfst_file('test_fail.xfst') == 0:
-        raise RuntimeError(get_linenumber())
-    if libhfst.compile_xfst_file('test_fail.xfst', quit_on_fail=False, verbosity=0) != 0:
-        raise RuntimeError(get_linenumber())
+    if int(version[0]) > 2:
+        import io
+        msg = io.StringIO()
+        if hfst.compile_xfst_file('test_pass.xfst', verbosity=0, output=msg, error=msg) != 0:
+            raise RuntimeError(get_linenumber())
+        if hfst.compile_xfst_file('test_fail.xfst', verbosity=0, output=msg, error=msg) == 0:
+            raise RuntimeError(get_linenumber())
+        if hfst.compile_xfst_file('test_fail.xfst', quit_on_fail=False, verbosity=0, output=msg, error=msg) != 0:
+            raise RuntimeError(get_linenumber())
 
     # regex compiler
     import io
     msg = io.StringIO()
-    msg.write('This is the error message:\n')
-    tr = libhfst.regex('foo\\', error=msg)
+    msg.write(unicode('This is the error message:\n', 'utf-8'))
+    tr = hfst.regex('foo\\', error=msg)
     if (tr == None):
-        msg.write('This was the error message.\n')
-        print(msg.getvalue())
+        msg.write(unicode('This was the error message.\n', 'utf-8'))
+        # print(msg.getvalue())
     import sys
     msg = sys.stdout
-    tr = libhfst.regex('foo\\', error=msg)
+    tr = hfst.regex('foo\\', error=msg)
 
     # lexc compiler
     msg = io.StringIO()
-    tr = libhfst.compile_lexc_file('test.lexc', output=msg, verbosity=2)
-    print('This is the output from lexc:')
-    print(msg.getvalue())
+    tr = hfst.compile_lexc_file('test.lexc', output=msg, verbosity=2)
+    # print('This is the output from lexc:')
+    # print(msg.getvalue())
 
-print('\n--- Testing HfstBasicTransducer ---\n')
+    # default constructor
+    tr = hfst.HfstTransducer()
+    assert(tr.compare(hfst.empty_fst()))
+
+    defs = {'foo':hfst.regex('Foo'), 'bar':hfst.regex('Bar')}
+    tr = hfst.regex('foo bar', definitions=defs)
+    assert(tr.compare(hfst.regex('Foo Bar')))
+    tr = hfst.regex('foo bar')
+    assert(tr.compare(hfst.regex('foo bar')))
+
+# print('\n--- Testing HfstBasicTransducer ---\n')
 
 # Create basic transducer, write it to file, read it, and test equivalence
-fsm = libhfst.HfstBasicTransducer()
+fsm = hfst.HfstBasicTransducer()
 fsm.add_state(0)
 fsm.add_state(1)
 fsm.set_final_weight(1, 0.3)
-tr = libhfst.HfstBasicTransition(1, 'foo', 'bar', 0.5)
+tr = hfst.HfstBasicTransition(1, 'foo', 'bar', 0.5)
 fsm.add_transition(0, tr)
 fsm.add_transition(0, 0, 'baz', 'baz')
 fsm.add_transition(0, 0, 'baz', 'BAZ', 0.1)
 
-f = libhfst.hfst_open('foo_basic', 'w')
+f = open('foo_basic', 'w')
 fsm.write_att(f)
 f.close()
 
-f = libhfst.hfst_open('foo_basic', 'r')
-fsm2 = libhfst.HfstBasicTransducer.read_att(f, libhfst.EPSILON)
+f = open('foo_basic', 'r')
+fsm2 = hfst.HfstBasicTransducer(hfst.read_att_transducer(f, hfst.EPSILON))
 f.close()
 
-FSM = libhfst.HfstTransducer(fsm, libhfst.FOMA_TYPE)
-FSM2 = libhfst.HfstTransducer(fsm2, libhfst.FOMA_TYPE)
-    
-if not (FSM.compare(FSM2)):
-    raise RuntimeError(get_linenumber())
+# Modify weights of a basic transducer
+fsm = hfst.HfstBasicTransducer()
+fsm.add_state(0)
+fsm.add_state(1)
+fsm.set_final_weight(1, 0.3)
+fsm.add_transition(0, 0, 'baz', 'baz')
+arcs = fsm.transitions(0)
+arcs[0].set_weight(0.5)
+arcs = fsm.transitions(0)
+assert(arcs[0].get_weight() == 0.5)
 
-for type in (libhfst.TROPICAL_OPENFST_TYPE, libhfst.FOMA_TYPE):
-    FSM.convert(type)
-    Fsm = libhfst.HfstBasicTransducer(FSM)
-    FSM2.convert(type)
-    Fsm2 = libhfst.HfstBasicTransducer(FSM2)
+# comparison can fail because of rounding
+#for type in types:
+#    FSM = hfst.HfstTransducer(fsm, type)
+#    FSM2 = hfst.HfstTransducer(fsm2, type)
+#
+#    if not (FSM.compare(FSM2)):
+#        raise RuntimeError(get_linenumber())
+#
+# this test does not assert anything
+#for type in types:
+#    FSM.convert(type)
+#    Fsm = hfst.HfstBasicTransducer(FSM)
+#    FSM2.convert(type)
+#    Fsm2 = hfst.HfstBasicTransducer(FSM2)
 
 
 # Print basic transducer
-fsm = libhfst.HfstBasicTransducer()
+fsm = hfst.HfstBasicTransducer()
 for state in [0,1,2]:
     fsm.add_state(state)
 fsm.add_transition(0,1,'foo','bar',1)
@@ -438,30 +508,65 @@ fsm.add_transition(1,2,'baz','baz',0)
 fsm.set_final_weight(2,0.5)
 
 # Different ways to print the transducer
+f = open('foo', 'w')
 for state in fsm.states():
     for arc in fsm.transitions(state):
-        print('%i ' % (state), end='')
-        print(arc)
+        print('%i ' % (state), end='', file=f)
+        print(arc, file=f)
     if fsm.is_final_state(state):
-        print('%i %f' % (state, fsm.get_final_weight(state)) )
+        print('%i %f' % (state, fsm.get_final_weight(state)), file=f )
 
 for state, arcs in enumerate(fsm):
     for arc in arcs:
-        print('%i ' % (state), end='')
-        print(arc)
+        print('%i ' % (state), end='', file=f)
+        print(arc, file=f)
     if fsm.is_final_state(state):
-        print('%i %f' % (state, fsm.get_final_weight(state)) )
+        print('%i %f' % (state, fsm.get_final_weight(state)), file=f)
 
 index=0
 for state in fsm.states_and_transitions():
     for transition in state:
-        print('%u\t%u\t%s\t%s\t%.2f' % (index, transition.get_target_state(), transition.get_input_symbol(), transition.get_output_symbol(), transition.get_weight()))
+        print('%u\t%u\t%s\t%s\t%.2f' % (index, transition.get_target_state(), transition.get_input_symbol(), transition.get_output_symbol(), transition.get_weight()), file=f)
     if fsm.is_final_state(index):
-        print('%s\t%.2f' % (index, fsm.get_final_weight(index)))
+        print('%s\t%.2f' % (index, fsm.get_final_weight(index)), file=f)
     index = index + 1
 
-print(fsm)
+print(fsm, file=f)
+f.close()
 
-tr = libhfst.HfstBasicTransducer(libhfst.regex('foo'))
+tr = hfst.HfstBasicTransducer(hfst.regex('foo'))
 tr.substitute({'foo':'bar'})
 tr.substitute({('foo','foo'):('bar','bar')})
+
+tr = hfst.fst({'foo':'bar'})
+fst = hfst.HfstBasicTransducer(tr)
+fsa = hfst.fst_to_fsa(fst, '^')
+fst = hfst.fsa_to_fst(fsa, '^')
+TR = hfst.HfstTransducer(fst)
+assert(TR.compare(tr))
+
+tr = hfst.regex('{foo}:{bar}|{FOO}:{BAR}')
+fsm = hfst.HfstBasicTransducer(tr)
+net = fsm.states_and_transitions()
+for state in net:
+    for arc in state:
+        arc.set_input_symbol(arc.get_input_symbol() + '>')
+        arc.set_output_symbol('<' + arc.get_output_symbol())
+        arc.set_weight(arc.get_weight() - 0.5)
+
+for state, arcs in enumerate(fsm):
+    for arc in arcs:
+        arc.set_input_symbol('<' + arc.get_input_symbol())
+        arc.set_output_symbol(arc.get_output_symbol() + '>')
+        arc.set_weight(arc.get_weight() - 1.5)
+
+for state in fsm:
+    for arc in state:
+        arc.set_input_symbol('' + arc.get_input_symbol() + '')
+        arc.set_output_symbol('' + arc.get_output_symbol() + '')
+        arc.set_weight(arc.get_weight() - 0.5)
+
+tr = hfst.regex('[["<f>" "<o>" "<o>"]:["<b>" "<a>" "<r>"]|["<F>" "<O>" "<O>"]:["<B>" "<A>" "<R>"]]::-7.5')
+assert(not (tr == None))
+TR = hfst.HfstTransducer(fsm)
+assert(TR.compare(tr))

@@ -11,13 +11,13 @@ using hfst::implementations::HfstBasicTransducer;
 using hfst::implementations::HfstBasicTransition;
 
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 
   const unsigned int TYPES_SIZE=3;
-  const ImplementationType types [] = {SFST_TYPE, 
-                       TROPICAL_OPENFST_TYPE, 
-                       /*LOG_OPENFST_TYPE,*/ 
+  const ImplementationType types [] = {SFST_TYPE,
+                       TROPICAL_OPENFST_TYPE,
+                       /*LOG_OPENFST_TYPE,*/
                        FOMA_TYPE};
 
   for (unsigned int i=0; i<TYPES_SIZE; i++)
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 
       /* From AT&T format. */
       verbose_print("Construction from AT&T format", types[i]);
-      FILE * file = fopen((std::string(getenv("srcdir")) + 
+      FILE * file = fopen((std::string(getenv("srcdir")) +
                std::string("/foobar.att")).c_str(), "rb");
       assert(file != NULL);
       unsigned int linecount = 0;
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 
       assert(foobar.compare(foobar_att));
 
-      /* From HfstInputStream. 
+      /* From HfstInputStream.
      Tests also functions get_type, set_name and get_name. */
       verbose_print("Construction from HfstInputStream", types[i]);
       HfstOutputStream out("testfile.hfst", foobar.get_type());

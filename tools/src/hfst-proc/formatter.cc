@@ -118,6 +118,76 @@ OutputFormatter::preprocess_finals(const LookupPathSet& finals) const
   return clipped_finals;
 }
 
+//////////Function definitions for TransliterateOutputFormatter
+
+ProcResult
+TransliterateOutputFormatter::process_finals(const LookupPathSet& finals, CapitalizationState caps) const
+{
+  ProcResult results;
+  LookupPathSet new_finals = preprocess_finals(finals);
+
+  for(LookupPathSet::const_iterator it=new_finals.begin(); it!=new_finals.end(); it++)
+  {
+    std::ostringstream res;
+    res << token_stream.get_alphabet().symbols_to_string((*it)->get_output_symbols(), caps);
+    if(dynamic_cast<const LookupPathW*>(*it) != NULL && displayWeightsFlag)
+      res << '~' << dynamic_cast<const LookupPathW*>(*it)->get_weight() << '~';
+
+    results.push_back(res.str());
+  }
+  return results;
+}
+
+void
+TransliterateOutputFormatter::print_word(const TokenVector& surface_form,
+                                  ProcResult const &analyzed_forms) const
+{
+  // any superblanks in the surface form should not be printed as part of the
+  // analysis output, but should be output directly afterwards
+  TokenVector output_surface_form;
+  std::vector<unsigned int> superblanks;
+  for(TokenVector::const_iterator it=surface_form.begin(); it!=surface_form.end(); it++)
+  {
+    if(it->type == Superblank)
+    {
+      output_surface_form.push_back(Token::as_symbol(token_stream.to_symbol(*it)));
+      superblanks.push_back(it->superblank_index);
+    }
+    else 
+    {
+      output_surface_form.push_back(*it);
+    }
+  }
+
+  if(printDebuggingInformationFlag) 
+  {
+    std::cout << "surface_form consists of " << output_surface_form.size() << " tokens" << std::endl;
+  }
+
+  bool first = true;
+  for(ProcResult::const_iterator it=analyzed_forms.begin(); it!=analyzed_forms.end(); it++)
+  {
+    if(!first) 
+    {
+      token_stream.ostream() << "/" ;
+    }
+    token_stream.ostream() << *it;
+    first = false;
+  }
+
+  for(size_t i=0;i<superblanks.size();i++)
+  {
+    token_stream.ostream() << token_stream.get_superblank(superblanks[i]);
+  }
+}
+void
+TransliterateOutputFormatter::print_unknown_word(const TokenVector& surface_form) const
+{
+  token_stream.write_escaped(surface_form);
+}
+
+
+
 //////////Function definitions for ApertiumOutputFormatter
 
 ProcResult
@@ -137,6 +207,8 @@ ApertiumOutputFormatter::process_finals(const LookupPathSet& finals, Capitalizat
   }
   return results;
 }
+
+////////
 
 void
 ApertiumOutputFormatter::print_word(const TokenVector& surface_form,

@@ -37,7 +37,7 @@
 #include "HfstTransducer.h"
 #include "HfstInputStream.h"
 #include "HfstOutputStream.h"
-#include "implementations/HfstTransitionGraph.h"
+#include "implementations/HfstBasicTransducer.h"
 
 using hfst::HfstTransducer;
 using hfst::HfstInputStream;
@@ -175,7 +175,7 @@ print_usage()
            );
     fprintf(message_out, "\n");
     print_common_unary_program_parameter_instructions(message_out);
-    fprintf(message_out, 
+    fprintf(message_out,
             "LABEL must be a symbol name in single arc in transducer,\n"
             "or colon separated pair defining an arc.\n"
             "If TFILE is specified, FLABEL must be a pair.\n"
@@ -208,7 +208,7 @@ parse_options(int argc, char** argv)
         {
         HFST_GETOPT_COMMON_LONG,
         HFST_GETOPT_UNARY_LONG,
-          // add tool-specific options here 
+          // add tool-specific options here
             {"from-label", required_argument, 0, 'f'},
             {"from-file", required_argument, 0, 'F'},
             {"to-label", required_argument, 0, 't'},
@@ -219,8 +219,8 @@ parse_options(int argc, char** argv)
             {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "f:F:t:T:R9C",
                              long_options, &option_index);
         if (-1 == c)
@@ -302,7 +302,7 @@ parse_options(int argc, char** argv)
               "Must state name of labels to rewrite with -f or -F");
         return EXIT_FAILURE;
     }
-    if ((to_label == 0) && (to_transducer_filename == 0) && 
+    if ((to_label == 0) && (to_transducer_filename == 0) &&
             (from_file_name == 0))
     {
         error(EXIT_FAILURE, 0,
@@ -361,15 +361,15 @@ do_substitute(HfstBasicTransducer& trans, size_t transducer_n)
         }
       if (transducer_n < 2)
         {
-          verbose_printf("Substituting pair %s:%s with transducer %s...\n", 
+          verbose_printf("Substituting pair %s:%s with transducer %s...\n",
                          from_pair->first.c_str(),
                          from_pair->second.c_str(),
                          to_name);
         }
       else
         {
-          verbose_printf("Substituting pair %s:%s with transducer %s... " SIZE_T_SPECIFIER "\n", 
-                         from_pair->first.c_str(), 
+          verbose_printf("Substituting pair %s:%s with transducer %s... " SIZE_T_SPECIFIER "\n",
+                         from_pair->first.c_str(),
                          from_pair->second.c_str(), to_name,
                          transducer_n);
         }
@@ -385,12 +385,12 @@ do_substitute(HfstBasicTransducer& trans, size_t transducer_n)
         }
       if (transducer_n < 2)
         {
-          verbose_printf("Substituting id. label %s with transducer %s...\n", 
+          verbose_printf("Substituting id. label %s with transducer %s...\n",
                          from_label, to_name);
         }
       else
         {
-          verbose_printf("Substituting id. label %s with transducer %s... " SIZE_T_SPECIFIER "\n", 
+          verbose_printf("Substituting id. label %s with transducer %s... " SIZE_T_SPECIFIER "\n",
                          from_label, to_name,
                          transducer_n);
         }
@@ -472,15 +472,15 @@ do_substitute(HfstTransducer& trans, size_t transducer_n)
         }
       if (transducer_n < 2)
         {
-          verbose_printf("Substituting pair %s:%s with transducer %s...\n", 
+          verbose_printf("Substituting pair %s:%s with transducer %s...\n",
                          from_pair->first.c_str(),
                          from_pair->second.c_str(),
                          to_name);
         }
       else
         {
-          verbose_printf("Substituting pair %s:%s with transducer %s... " SIZE_T_SPECIFIER "\n", 
-                         from_pair->first.c_str(), 
+          verbose_printf("Substituting pair %s:%s with transducer %s... " SIZE_T_SPECIFIER "\n",
+                         from_pair->first.c_str(),
                          from_pair->second.c_str(), to_name,
                          transducer_n);
         }
@@ -496,12 +496,12 @@ do_substitute(HfstTransducer& trans, size_t transducer_n)
         }
       if (transducer_n < 2)
         {
-          verbose_printf("Substituting id. label %s with transducer %s...\n", 
+          verbose_printf("Substituting id. label %s with transducer %s...\n",
                          from_label, to_name);
         }
       else
         {
-          verbose_printf("Substituting id. label %s with transducer %s... " SIZE_T_SPECIFIER "\n", 
+          verbose_printf("Substituting id. label %s with transducer %s... " SIZE_T_SPECIFIER "\n",
                          from_label, to_name,
                          transducer_n);
         }
@@ -551,7 +551,7 @@ process_stream(HfstInputStream& instream)
         HfstInputStream tostream(to_transducer_filename);
         to_transducer = new HfstTransducer(tostream);
         tostream.close();
-      } catch (NotTransducerStreamException ntse)  
+      } catch (NotTransducerStreamException ntse)
         {
           error(EXIT_FAILURE, 0, "%s is not a valid transducer file",
                 to_transducer_filename);
@@ -688,7 +688,7 @@ process_stream(HfstInputStream& instream)
                                 hfst::internal_epsilon.c_str());
                 }
 
-              if (from_pair && to_pair) 
+              if (from_pair && to_pair)
                 {
                   if (!in_order) {
                     pair_substitution_map->operator[](*from_pair) = *to_pair;
@@ -698,7 +698,7 @@ process_stream(HfstInputStream& instream)
                     do_substitute(trans, transducer_n);
                   }
                 }
-              else if (from_label && to_label) 
+              else if (from_label && to_label)
                 {
                   if (!in_order) {
                     label_substitution_map->operator[](std::string(from_label)) = std::string(to_label);
@@ -709,7 +709,7 @@ process_stream(HfstInputStream& instream)
                   }
                 }
               else {
-                try 
+                try
                   {
                     do_substitute(trans, transducer_n);
                   }
@@ -719,7 +719,7 @@ process_stream(HfstInputStream& instream)
                       {
                         if (!silent) {
                           warning(0, 0, "substitution is not supported for this transducer type"
-                                  " falling back to internal formats and trying..."); 
+                                  " falling back to internal formats and trying...");
                         }
                         fallback = new HfstBasicTransducer(trans);
                         warnedAlready = true;
@@ -734,14 +734,14 @@ process_stream(HfstInputStream& instream)
           free(line);
 
           // perform label-to-label substitution right away
-          if (!in_order && symbol_map_in_use) 
+          if (!in_order && symbol_map_in_use)
             {
               trans.substitute(*label_substitution_map);
               symbol_map_in_use=false;
             }
 
           // perform symbol pair-to-symbol pair substitution right away
-          if (!in_order && symbol_pair_map_in_use) 
+          if (!in_order && symbol_pair_map_in_use)
             {
               trans.substitute(*pair_substitution_map);
               symbol_pair_map_in_use=false;
@@ -780,9 +780,9 @@ process_stream(HfstInputStream& instream)
         }
       if (from_file)
         {
-            char* composed_name = static_cast<char*>(malloc(sizeof(char) * 
+            char* composed_name = static_cast<char*>(malloc(sizeof(char) *
                                          (strlen(from_file_name) +
-                                          strlen("substitutions-from-%s")) 
+                                          strlen("substitutions-from-%s"))
                                           + 1));
             if (sprintf(composed_name, "substitute-from-%s",
                         from_file_name) > 0)
@@ -790,9 +790,9 @@ process_stream(HfstInputStream& instream)
                 hfst_set_name(trans, trans, composed_name);
                 free(composed_name);
               }
-            composed_name = static_cast<char*>(malloc(sizeof(char) * 
+            composed_name = static_cast<char*>(malloc(sizeof(char) *
                                          (strlen(from_file_name) +
-                                          strlen("♲%s")) 
+                                          strlen("♲%s"))
                                           + 1));
             if (sprintf(composed_name, "♲%s",
                         from_file_name) > 0)
@@ -803,10 +803,10 @@ process_stream(HfstInputStream& instream)
         }
       else if (from_label && to_label)
         {
-            char* composed_name = static_cast<char*>(malloc(sizeof(char) * 
+            char* composed_name = static_cast<char*>(malloc(sizeof(char) *
                                          (strlen(from_label) +
                                           strlen(to_label) +
-                                          strlen("substitute-%s-with-%s")) 
+                                          strlen("substitute-%s-with-%s"))
                                           + 1));
             if (sprintf(composed_name, "substitute-%s-with-%s",
                         from_label, to_label) > 0)
@@ -814,10 +814,10 @@ process_stream(HfstInputStream& instream)
                 hfst_set_name(trans, trans, composed_name);
                 free(composed_name);
               }
-            composed_name = static_cast<char*>(malloc(sizeof(char) * 
+            composed_name = static_cast<char*>(malloc(sizeof(char) *
                                          (strlen(from_label) +
                                           strlen(to_label) +
-                                          strlen("%s ♲ %s")) 
+                                          strlen("%s ♲ %s"))
                                           + 1));
             if (sprintf(composed_name, "%s ♲ %s",
                         from_label, to_label) > 0)
@@ -832,10 +832,10 @@ process_stream(HfstInputStream& instream)
           if (from_label == NULL) // make scan-build happy, this should not happen
             throw "Error: from_label has a NULL value.";
 
-            char* composed_name = static_cast<char*>(malloc(sizeof(char) * 
+            char* composed_name = static_cast<char*>(malloc(sizeof(char) *
                                          (strlen(from_label) +
                                           strlen(to_transducer_filename) +
-                                          strlen("substitute-%s-with-net-%s")) 
+                                          strlen("substitute-%s-with-net-%s"))
                                          + 1));
             if (sprintf(composed_name, "substitute-%s-with-net-%s",
                         from_label, to_transducer_filename) > 0)
@@ -843,10 +843,10 @@ process_stream(HfstInputStream& instream)
                 hfst_set_name(trans, trans, composed_name);
                 free(composed_name);
               }
-            composed_name = static_cast<char*>(malloc(sizeof(char) * 
+            composed_name = static_cast<char*>(malloc(sizeof(char) *
                                          (strlen(from_label) +
                                           strlen(to_transducer_filename) +
-                                          strlen("%s ♲ %s")) 
+                                          strlen("%s ♲ %s"))
                                          + 1));
             if (sprintf(composed_name, "%s ♲ %s",
                         from_label, to_transducer_filename) > 0)
@@ -876,7 +876,7 @@ process_stream(HfstInputStream& instream)
 }
 
 
-int main( int argc, char **argv ) 
+int main( int argc, char **argv )
 {
 #ifdef WINDOWS
   _setmode(0, _O_BINARY);
@@ -898,7 +898,7 @@ int main( int argc, char **argv )
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
         inputfilename, outfilename);
 
     if (from_file != NULL)

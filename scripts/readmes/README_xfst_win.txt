@@ -1,10 +1,10 @@
 
 This package contains the command line tool hfst-xfst.exe for 64-bit Windows.
 
-For more info about the tool, see: 
+For more info about the tool, see:
   <https://kitwiki.csc.fi/twiki/bin/view/KitWiki/HfstXfst>
 
-For more info about the HFST project, see: 
+For more info about the HFST project, see:
   <http://hfst.sourceforge.net/>
 
 
@@ -12,7 +12,7 @@ Usage
 -----
 
 The tool works by default in an interactive mode. It can be started either by
-double-clicking the icon (opens up a new console window) or executing 
+double-clicking the icon (opens up a new console window) or executing
 'hfst-xfst' in command prompt (runs the program in the same window).
 
 A prompt 'hfst[N]:' is shown when the program runs, N being the number of

@@ -1,13 +1,13 @@
 %option 8Bit batch nounput noyywrap prefix="hlexc"
 
 %{
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 //! @file lexc-lexer.cc
@@ -20,17 +20,18 @@
 #  include <config.h>
 #endif
 
-#ifdef YACC_USE_PARSER_H_EXTENSION
-  #include "lexc-parser.h"
-#else
-  #include "lexc-parser.hh"
-#endif
-
+#include "lexc-parser.hh"
 #include "lexc-utils.h"
+#include "HfstDataTypes.h"
 
 #include <assert.h>
 
+
 extern void hlexcerror(const char *text);
+
+#undef YY_FATAL_ERROR
+#define YY_FATAL_ERROR(msg) hlexcerror(msg);
+
 %}
 
 /* c.f. Unicode Standard 5.1 D92 Table 3-7 */
@@ -64,7 +65,7 @@ XREUNRESTRICTED [\x21-\x7e\n]{-}[- <>%!:;@0~""\\&?$+*/_{}\]\[-]
 
 /* RegExp. stuff */
 XREALPHA {XREUNRESTRICTED}|{U8H}|{EC}
-XREOPERATOR [~\\&\-/\t |+*$_\]\[{}()0?:""]|"@\""|"$."|"$?"|"./."|"<>"|".#."|"."[riul]
+XREOPERATOR [~\\&\-/\t |+*$_\]\[{}()0?:""]|"@\""|"$."|"$?"|"./."|"<>"|"^>"|"^<"|".#."|"."[riul]
 XREQUOTSTRING "\""([^""\n;]|"%;"|"\\\"")*"\""
 XRECHAR {XREOPERATOR}|{XREALPHA}|{XREQUOTSTRING}
 XRETOKEN {XRECHAR}+
@@ -248,7 +249,7 @@ LWSP [\r\n\t ]
 
 }
 
-<ENDED>. { 
+<ENDED>. {
     hfst::lexc::token_update_positions(hlexctext);
 
 }

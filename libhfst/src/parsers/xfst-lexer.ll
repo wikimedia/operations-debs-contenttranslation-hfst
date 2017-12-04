@@ -1,13 +1,13 @@
 %option 8Bit batch noyywrap prefix="hxfst"
 
 %{
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 //! @file xfst-lexer.ll
@@ -24,19 +24,18 @@ namespace hfst {
   class HfstTransducer;
 }
 
-#ifdef YACC_USE_PARSER_H_EXTENSION
-  #include "xfst-parser.h"
-#else
-  #include "xfst-parser.hh"
-#endif
-
-
+#include "xfst-parser.hh"
 #include "xfst-utils.h"
 #include "XfstCompiler.h"
 
 #include <assert.h>
 
+#include "HfstDataTypes.h"
+
 extern void hxfsterror(const char *text);
+
+#undef YY_FATAL_ERROR
+#define YY_FATAL_ERROR(msg) hxfsterror(msg)
 
 int source_stack_size = 0;
 
@@ -102,12 +101,12 @@ LWSP [\t ]*
 }
 
 ^{LWSP}("apply up"|"up"){LWSP}(""|"\r")$ {
-    if (hfst::xfst::xfst_->getReadInteractiveTextFromStdin()) 
+    if (hfst::xfst::xfst_->getReadInteractiveTextFromStdin())
     {
         // let XfstCompiler take care of the input to apply up command
         return APPLY_UP;
     }
-    else 
+    else
     {
         // read input to apply up command
         BEGIN(APPLY_STATE);
@@ -120,14 +119,14 @@ LWSP [\t ]*
 }
 
 ^{LWSP}("apply down"|"down"){LWSP}(""|"\r")$ {
-    if (hfst::xfst::xfst_->getReadInteractiveTextFromStdin()) 
+    if (hfst::xfst::xfst_->getReadInteractiveTextFromStdin())
     {
         // let XfstCompiler take care of the input to apply down command
         return APPLY_DOWN;
     }
-    else 
+    else
     {
-        // read input to apply down command    
+        // read input to apply down command
         BEGIN(APPLY_STATE);
         return APPLY_DOWN;
     }
@@ -244,12 +243,12 @@ LWSP [\t ]*
 
 "echo"{WSP}+.* {
     hxfstlval.text = hfst::xfst::strstrip(hxfsttext + strlen("echo "));
-    return ECHO;
+    return ECHO_;
 }
 
 ^{LWSP}"echo"{WSP}* {
     hxfstlval.text = strdup("");
-    return ECHO;
+    return ECHO_;
 }
 
 ^{LWSP}("edit properties"|"edit") {
@@ -465,8 +464,8 @@ LWSP [\t ]*
 }
 
 ^{LWSP}("quit"|"exit"|"bye"|"stop"|"hyvästi"|"au revoir"|"näkemiin"|"viszlát"|"auf wiedersehen"|"has") {
-    hxfstlval.name = strdup("");         
-    return QUIT;                         
+    hxfstlval.name = strdup("");
+    return QUIT;
 }
 
 ^{LWSP}("lexc"|"read lexc") {
@@ -652,22 +651,22 @@ LWSP [\t ]*
 
     // search for a special end string
     std::string str(hxfsttext);
-    std::size_t end_found = str.find("<ctrl-d>"); 
+    std::size_t end_found = str.find("<ctrl-d>");
 
-    // CASE 1: no end string found: the rest is input to apply 
+    // CASE 1: no end string found: the rest is input to apply
     if (end_found == std::string::npos) {
-        hxfstlval.text = hxfsttext;
+        hxfstlval.text = strdup(hxfsttext);
         return APPLY_INPUT;
     }
 
     // CASE 2: there are other commands after the input to apply
     unsigned int total_length = (unsigned int)strlen(hxfsttext);
-    unsigned int endpos = (unsigned int)end_found; 
+    unsigned int endpos = (unsigned int)end_found;
 
     // copy the input to apply and set is as return value
     char * buf = (char*) malloc(endpos + 1);
     for (unsigned int i=0; i < endpos; i++)
-    { 
+    {
       buf[i] = hxfsttext[i];
     }
     buf[endpos] = '\0';
@@ -675,18 +674,18 @@ LWSP [\t ]*
     free(buf);
 
     // put back the rest of the input text, excluding the "<ctrl-d>"
-    if (total_length > 0) 
+    if (total_length > 0)
     {
       // unput modifies hxfsttext, so it must be copied before unputting
       char * text_read = strdup(hxfsttext);
       // unputting must be done in reverse order
-      for(unsigned int i=total_length-1; 
+      for(unsigned int i=total_length-1;
           i >= (endpos + (unsigned int)strlen("<ctrl-d>"));
           i--)
       {
         unput(*(text_read+i));
       }
-      free(text_read); 
+      free(text_read);
     }
 
     return APPLY_INPUT;
@@ -702,14 +701,14 @@ LWSP [\t ]*
     unsigned int total_length = (unsigned int)strlen(hxfsttext);
 
     // compile regex to find out where it ends
-    // as a positive side effect, the regex is also conveniently compiled 
+    // as a positive side effect, the regex is also conveniently compiled
     // into a transducer which is stored in XfstCompiler::latest_regex_compiled
     (void) hfst::xfst::xfst_->compile_regex(hxfsttext, chars_read);
 
     // copy the input to regex and set is as return value
     char * buf = (char*) malloc(chars_read+1);
     for (unsigned int i=0; i < chars_read; i++)
-    { 
+    {
       buf[i] = hxfsttext[i];
     }
     buf[chars_read] = '\0';
@@ -717,7 +716,7 @@ LWSP [\t ]*
     free(buf);
 
     // put back the rest of the input text
-    if (total_length > 0) 
+    if (total_length > 0)
     {
       // unput modifies hxfsttext, so it must be copied before unputting
       char * text_read = strdup(hxfsttext);
@@ -726,7 +725,7 @@ LWSP [\t ]*
       {
         unput(*(text_read+i));
       }
-      free(text_read); 
+      free(text_read);
     }
    
     return REGEX;
@@ -736,20 +735,20 @@ LWSP [\t ]*
   // ^ include directive
 
   FILE * tmp = NULL;
-  if ((tmp = fopen(hfst::xfst::strstrip(hxfsttext), "r" )) != NULL) 
+  if ((tmp = hfst::hfst_fopen(hfst::xfst::strstrip(hxfsttext), "r" )) != NULL)
   {
     //printf("Opening file '%s'.\n", hfst::xfst::strstrip(hxfsttext));
     // push the included text onto the lexer stack
     hxfstpush_buffer_state(hxfst_create_buffer(tmp, 32000));
     ++source_stack_size;
-  } 
-  else 
+  }
+  else
   {
     char buffer [1024];
     sprintf(buffer, "Error opening file '%s'\n",hfst::xfst::strstrip(hxfsttext));
     hxfsterror(buffer);
-  } 
-  BEGIN(INITIAL); 
+  }
+  BEGIN(INITIAL);
 }
 
 ">"{WSP}*{NAMETOKEN} {
@@ -827,7 +826,7 @@ LWSP [\t ]*
     if (source_stack_size < 0) {
       yyterminate();
     }
-    // EOF encountered because reaching end of included input 
+    // EOF encountered because reaching end of included input
     else {
       hxfstpop_buffer_state();
     }

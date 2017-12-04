@@ -353,7 +353,7 @@ protected:
 public:
   
     // Each TransitionIndex has an input symbol and a target index.
-    static const size_t SIZE = 
+    static const size_t SIZE =
         sizeof(SymbolNumber) + sizeof(TransitionTableIndex);
 
     TransitionIndex(SymbolNumber input,
@@ -390,9 +390,9 @@ protected:
 
 public:
 
-    // Each transition has an input symbol an output symbol and 
+    // Each transition has an input symbol an output symbol and
     // a target index.
-    static const size_t SIZE = 
+    static const size_t SIZE =
         2 * sizeof(SymbolNumber) + sizeof(TransitionTableIndex);
 
     Transition(SymbolNumber input,
@@ -437,7 +437,7 @@ private:
     void get_index_vector(void);
 public:
     IndexTableReader(FILE * f,
-                     TransitionTableIndex index_count): 
+                     TransitionTableIndex index_count):
         number_of_table_entries(index_count)
         {
             table_size = number_of_table_entries*TransitionIndex::SIZE;
@@ -525,8 +525,8 @@ public:
     bool get_finality(TransitionTableIndex i);
 
     TransitionVector &operator() (void)
-        { 
-            return transitions; 
+        {
+            return transitions;
         }
 };
 
@@ -706,7 +706,7 @@ private:
 public:
   
     // Each TransitionIndex has an input symbol and a target index.
-    static const size_t SIZE = 
+    static const size_t SIZE =
         sizeof(SymbolNumber) + sizeof(TransitionTableIndex);
 
     TransitionWIndex(SymbolNumber input,
@@ -749,15 +749,15 @@ class TransitionW
 {
 private:
     SymbolNumber input_symbol;
-    SymbolNumber output_symbol;  
+    SymbolNumber output_symbol;
     TransitionTableIndex target_index;
     Weight transition_weight;
 
 public:
 
-    // Each transition has an input symbol an output symbol and 
+    // Each transition has an input symbol an output symbol and
     // a target index, as well as a weight.
-    static const size_t SIZE = 
+    static const size_t SIZE =
         2 * sizeof(SymbolNumber) + sizeof(TransitionTableIndex) + sizeof(Weight);
 
     TransitionW(SymbolNumber input,
@@ -818,7 +818,7 @@ private:
     void get_index_vector(void);
 public:
     IndexTableReaderW(FILE * f,
-                      TransitionTableIndex index_count): 
+                      TransitionTableIndex index_count):
         number_of_table_entries(index_count)
         {
             table_size = number_of_table_entries*TransitionWIndex::SIZE;
@@ -906,8 +906,8 @@ public:
     bool get_finality(TransitionTableIndex i);
 
     TransitionWVector &operator() (void)
-        { 
-            return transitions; 
+        {
+            return transitions;
         }
 };
 

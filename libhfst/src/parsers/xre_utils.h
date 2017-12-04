@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 /**
@@ -18,7 +18,7 @@
 #define GUARD_xre_utils_h
 
 #include <map>
-#include "HfstTransducer.h"
+#include "HfstDataTypes.h"
 
 namespace hfst { namespace xre {
 
@@ -55,6 +55,8 @@ char* strip_percents(const char *s);
 
  char* strip_newline(char *s);
 
+ void count_lines(const char * s);
+
 /**
  * @brief add percents to string to form valid XRE symbol.
  */
@@ -65,13 +67,13 @@ char* add_percents(const char* s);
  */
 char* get_quoted(const char *s);
 
-char* parse_quoted(const char *s);
+ char* parse_quoted(const char *s, unsigned int & length);
 
 int* get_n_to_k(const char* s);
 
 double get_weight(const char* s);
  
-/** 
+/**
  * @brief If \a s is of form "<foo>", free \a s and return an escaped version
  * of it: "@_<foo>_@". Else, return \a s.
  */
@@ -103,7 +105,7 @@ HfstTransducer* compile_first(const std::string& xre,
                               hfst::ImplementationType type,
                               unsigned int & chars_read);
 
-/** 
+/**
  * @brief For a single-transition transducer, if the transition symbol is a name for
  * transducer definition, expand the transition into the corresponding transducer.
  */
@@ -145,6 +147,8 @@ bool is_valid_function_call(const char * name, const std::vector<HfstTransducer>
  void warn_about_hfst_special_symbol(const char * symbol);
  /* Warn about \a symbol if it is of form "<.*>" or "all" and verbose mode is on. */
  void warn_about_xfst_special_symbol(const char * symbol);
+
+ void check_multichar_symbol(const char * symbol);
 
  bool has_non_identity_pairs(const HfstTransducer * t);
 

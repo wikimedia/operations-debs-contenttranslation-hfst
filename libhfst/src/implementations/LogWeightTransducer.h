@@ -1,50 +1,76 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #ifndef _LOG_WEIGHT_TRANSDUCER_H_
 #define _LOG_WEIGHT_TRANSDUCER_H_
 
-#include "HfstSymbolDefs.h"
-#include "HfstExceptionDefs.h"
-#include "HfstFlagDiacritics.h"
-
 #if HAVE_CONFIG_H
   #include "../../../config.h"
 #endif
 
-#ifdef _MSC_VER
- #include "back-ends/openfstwin/src/include/fst/fstlib.h"
-#else
- #include "back-ends/openfst/src/include/fst/fstlib.h"
-#endif // _MSC_VER
+#if HAVE_OPENFST_LOG || HAVE_LEAN_OPENFST_LOG
+
+#include "HfstSymbolDefs.h"
+#include "HfstExceptionDefs.h"
+#include "HfstFlagDiacritics.h"
 
 #include "HfstExtractStrings.h"
 #include <cstdio>
 #include <string>
 #include <sstream>
-#include <iostream>
-//#include "HfstAlphabet.h"
+#include <iosfwd>
+#include <fstream>
+
+#ifdef OPENFST_VERSION_1_5_4
+  #include "back-ends/openfst/src/include/fst/fst-decl.h"
+#else
+namespace fst
+{
+  template <class W> class TropicalWeightTpl;
+  typedef TropicalWeightTpl<float> TropicalWeight;
+
+  template <class W> class LogWeightTpl;
+  typedef LogWeightTpl<float> LogWeight;
+
+  template <class W> class ArcTpl;
+  typedef ArcTpl<TropicalWeight> StdArc;
+  typedef ArcTpl<LogWeight> LogArc;
+
+  template <class A> class VectorFst;
+  typedef VectorFst<StdArc> StdVectorFst;
+  typedef VectorFst<LogArc> LogFst;
+
+  class SymbolTable;
+}
+#endif
+
+#include <stdint.h>
+#ifdef _MSC_VER
+typedef __int64 int64;
+#else
+typedef int64_t int64;
+#endif // _MSC_VER
 
 /** @file LogWeightTransducer.h
     \brief Declarations of functions and datatypes that form a bridge between
     HFST API and OpenFst's transducers with logarithmic weights. */
 
-namespace hfst { 
+namespace hfst {
 namespace implementations
 {
   using namespace fst;
   ;
-  typedef LogArc::StateId StateId;
+  typedef unsigned int StateId;
   typedef VectorFst<LogArc> LogFst;
 
   typedef std::vector<LogArc> LogArcVector;
-  struct LogArcLessThan { 
+  struct LogArcLessThan {
     bool operator() (const LogArc &arc1,const LogArc &arc2) const; };
 
   using std::ostream;
@@ -53,17 +79,18 @@ namespace implementations
 
   void openfst_log_set_hopcroft(bool value);
 
-  class LogWeightInputStream 
+  class LogWeightInputStream
   {
   private:
     std::string filename;
-    ifstream i_stream;
-    istream &input_stream;
+    std::ifstream i_stream;
+    std::istream &input_stream;
     void skip_identifier_version_3_0(void);
     void skip_hfst_header(void);
   public:
     LogWeightInputStream(void);
     LogWeightInputStream(const std::string &filename);
+    LogWeightInputStream(std::istream &is);
     void close(void);
     bool is_eof(void) const;
     bool is_bad(void) const;
@@ -78,72 +105,26 @@ namespace implementations
     void stream_unget(char c);
     
     static bool is_fst(FILE * f);
-    static bool is_fst(istream &s);
+    static bool is_fst(std::istream &s);
   };
 
-  class LogWeightOutputStream 
+  class LogWeightOutputStream
   {
   private:
     std::string filename;
-    ofstream o_stream;
-    ostream &output_stream;
-    //void write_3_0_library_header(std::ostream &out);
+    std::ofstream o_stream;
+    std::ostream &output_stream;
   public:
-    LogWeightOutputStream(void); 
+    LogWeightOutputStream(void);
     LogWeightOutputStream(const std::string &filename);
     void close(void);
     void write(const char &c);
     void write_transducer(LogFst * transducer);
   };
 
-  class LogWeightTransitionIterator;
-
-  typedef StateId LogWeightState;
-
-  class LogWeightStateIterator 
-    {
-    protected:
-      StateIterator<LogFst> * iterator;
-    public:
-      LogWeightStateIterator(LogFst * t);
-      ~LogWeightStateIterator(void);
-      void next(void);
-      bool done(void);
-      LogWeightState value(void);
-    };
- 
-
-  class LogWeightTransition
-    {
-    protected:
-      LogArc arc;
-      LogFst * t;
-    public:
-      LogWeightTransition(const LogArc &arc, LogFst *t);
-      ~LogWeightTransition(void);
-      std::string get_input_symbol(void) const;
-      std::string get_output_symbol(void) const;
-      LogWeightState get_target_state(void) const;
-      LogWeight get_weight(void) const;
-    };
-
-
-  class LogWeightTransitionIterator
-    {
-    protected:
-      ArcIterator<LogFst> * arc_iterator;
-      LogFst * t;
-    public:
-      LogWeightTransitionIterator(LogFst * t, StateId state);
-      ~LogWeightTransitionIterator(void);
-      void next(void);
-      bool done(void);
-      LogWeightTransition value(void);
-    };
-  
-
   class LogWeightTransducer
     {
+#if HAVE_OPENFST_LOG
     public:
       static LogFst * create_empty_transducer(void);
       static LogFst * create_epsilon_transducer(void);
@@ -222,7 +203,7 @@ namespace implementations
       
       static bool are_equivalent(LogFst *one, LogFst *another);
       static bool is_cyclic(LogFst * t);
-      static bool is_automaton(LogFst * t);      
+      static bool is_automaton(LogFst * t);
 
       static FdTable<int64>* get_flag_diacritics(LogFst * t);
 
@@ -255,7 +236,7 @@ namespace implementations
       static void remove_from_alphabet
         (LogFst *t, const std::string &symbol);
       static StringSet get_alphabet(LogFst *t);
-      static unsigned int get_symbol_number(LogFst *t, 
+      static unsigned int get_symbol_number(LogFst *t,
                         const std::string &symbol);
 
       static NumberNumberMap create_mapping(LogFst * t1, LogFst * t2);
@@ -271,9 +252,9 @@ namespace implementations
     private:
       static fst::SymbolTable create_symbol_table(std::string name);
       static void initialize_symbol_tables(LogFst *t);
-      static void remove_symbol_table(LogFst *t);      
+      static void remove_symbol_table(LogFst *t);
       
-      /* Maps state numbers in AT&T text format to state ids used by 
+      /* Maps state numbers in AT&T text format to state ids used by
          OpenFst transducers. */
       typedef std::map<int, StateId> StateMap;
 
@@ -281,9 +262,9 @@ namespace implementations
         (LogFst *t, int state_number, StateMap &state_map);
 
       static int has_arc(LogFst &t,
-                  LogArc::StateId sourcestate,                          
-                  LogArc::Label ilabel, 
-                  LogArc::Label olabel);
+                         /*LogArc::StateId*/ int sourcestate,
+                         /*LogArc::Label*/ int ilabel,
+                         /*LogArc::Label*/ int olabel);
       static void disjunct_as_tries(LogFst &t1,
                              StateId t1_state,
                              const LogFst * t2,
@@ -304,7 +285,15 @@ namespace implementations
       static StateId get_initial_state(LogFst *t);
       static void represent_empty_transducer_as_having_one_state(LogFst *t);
 
+#endif // HAVE_OPENFST_LOG
+      // needed in lean implementation
+    public:
+      void delete_transducer(LogFst * t);
+
     };
 
 } }
+
+#endif // #if HAVE_OPENFST_LOG || HAVE_LEAN_OPENFST_LOG
+
 #endif

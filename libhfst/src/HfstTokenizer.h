@@ -11,7 +11,7 @@
 #define _HFST_TOKENIZER_H_
 #include "HfstSymbolDefs.h"
 #include "HfstExceptionDefs.h"
-#include <iostream>
+#include <iosfwd>
 #include <climits>
 #include <string>
 
@@ -52,16 +52,16 @@ namespace hfst
     HFSTDLL MultiCharSymbolTrie(void);
     HFSTDLL ~MultiCharSymbolTrie(void);
     HFSTDLL void add(const char * p);
-    HFSTDLL const char * find(const char * p) const;  
+    HFSTDLL const char * find(const char * p) const;
   };
   
   /** \brief A tokenizer for creating transducers from UTF-8 strings.
 
       Strings are tokenized from left to right using longest match tokenization.
-      For example, if the tokenizer contains a multicharacter symbol 
+      For example, if the tokenizer contains a multicharacter symbol
       "foo" and a skip symbol "fo",
       the string "foo" is tokenized as "foo:foo".
-      If the tokenizer contains a multicharacter symbol "fo" and a skip 
+      If the tokenizer contains a multicharacter symbol "fo" and a skip
       symbol "foo",
       the string "foo" is tokenized as an empty string.
 
@@ -76,13 +76,13 @@ namespace hfst
       //    A:A <br />:<br /> p:p a:a r:r a:a g:g r:r a:a p:p h:h !:!
 \endverbatim
 
-      @note The tokenizer only tokenizes utf-8 strings. 
-      Special symbols (see #String) are not included in the tokenizer 
+      @note The tokenizer only tokenizes utf-8 strings.
+      Special symbols (see #String) are not included in the tokenizer
       unless added to it.
 
       @see hfst::HfstTransducer::HfstTransducer(const std::string&, const HfstTokenizer&, ImplementationType type) */
   class HfstTokenizer
-  {  
+  {
   private:
     MultiCharSymbolTrie multi_char_symbols;
     StringSet skip_symbol_set;
@@ -94,18 +94,18 @@ namespace hfst
     /** \brief Create a tokenizer that recognizes utf-8 symbols. */
     HFSTDLL HfstTokenizer();
 
-    /** \brief Add a symbol to be skipped to this tokenizer. 
+    /** \brief Add a symbol to be skipped to this tokenizer.
 
         After skipping a symbol, tokenization is always started again.
-        For example if we have a multicharacter symbol "foo" and a 
-        skip symbol "bar", the string "fobaro" will be tokenized 
+        For example if we have a multicharacter symbol "foo" and a
+        skip symbol "bar", the string "fobaro" will be tokenized
         "f" "o" "o", not "foo". */
     HFSTDLL void add_skip_symbol(const std::string &symbol);
 
-    /** \brief Add a multicharacter symbol \a symbol to this tokenizer. 
+    /** \brief Add a multicharacter symbol \a symbol to this tokenizer.
 
         If a multicharacter symbol has a skip symbol inside it, it is
-        not considered a multicharacter symbol. For example if we have 
+        not considered a multicharacter symbol. For example if we have
         a multicharacter symbol "foo" and a skip symbol "bar", the string
         "fobaro" will be tokenized "f" "o" "o", not "foo". */
     HFSTDLL void add_multichar_symbol(const std::string& symbol);
@@ -118,7 +118,7 @@ namespace hfst
 
     HFSTDLL static StringPairVector tokenize_space_separated(const std::string & str);
 
-    /** \brief Tokenize the string pair \a input_string : \a output_string. 
+    /** \brief Tokenize the string pair \a input_string : \a output_string.
 
         If one string has more tokens than the other, epsilons will be
         inserted to the end of the tokenized string with less tokens
@@ -139,21 +139,23 @@ namespace hfst
     //! \brief If @a input_String is not valid utf-8, throw an
     //! @a IncorrectUtf8CodingException.
     //!
-    //! A string is non-valid if: 
+    //! A string is non-valid if:
     //!   - It contains one of the unsigned bytes 192, 193, 245, 246 and 247.
-    //!   - If it is not made up of sequences of one initial byte (0xxxxxxx, 
-    //!     110xxxxx, 1110xxxx or 11110xxx) followed by an appropriate number 
+    //!   - If it is not made up of sequences of one initial byte (0xxxxxxx,
+    //!     110xxxxx, 1110xxxx or 11110xxx) followed by an appropriate number
     //!     of continuation bytes (10xxxxxx).
     //!     -# Initial bytes 0xxxxxxx represent ASCII chars and may not be
     //!        followed by a continuation byte.
-    //!     -# Initial bytes 110xxxxx are followed by exactly one 
+    //!     -# Initial bytes 110xxxxx are followed by exactly one
     //!        continuation byte.
     //!     -# Initial bytes 1110xxxx are followed by exactly two continuation
     //!        bytes.
-    //!     -# Initial bytes 11110xxx are followed by exactly three 
+    //!     -# Initial bytes 11110xxx are followed by exactly three
     //!        continuation bytes.
     //! (For reference: http://en.wikipedia.org/wiki/UTF-8)
     HFSTDLL static void check_utf8_correctness(const std::string &input_string);
+
+    HFSTDLL static unsigned int check_utf8_correctness_and_calculate_length(const std::string &input_string);
   };
 }
 #endif

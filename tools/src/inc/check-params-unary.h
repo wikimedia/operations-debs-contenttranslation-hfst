@@ -15,8 +15,8 @@
         if ((argc - optind) == 1)
           {
             inputfilename = hfst_strdup(argv[optind]);
-            inputfile = hfst_fopen(inputfilename, "r");
-            if (inputfile == stdin)  
+            inputfile = ::hfst_fopen(inputfilename, "r");
+            if (inputfile == stdin)
               {
                 free(inputfilename);
                 inputfilename = hfst_strdup("<stdin>");
@@ -24,7 +24,7 @@
           }
         else if ((argc - optind) > 1)
           {
-            error(EXIT_FAILURE, 0, 
+            error(EXIT_FAILURE, 0,
                   "no more than one transducer file may be given");
           }
         else
@@ -33,11 +33,11 @@
             inputfilename = hfst_strdup("<stdin>");
           }
       }
-    else 
+    else
       {
         if ((argc - optind) > 0)
           {
-            error(EXIT_FAILURE, 0, 
+            error(EXIT_FAILURE, 0,
                   "no more than one transducer filename may be given");
           }
       }

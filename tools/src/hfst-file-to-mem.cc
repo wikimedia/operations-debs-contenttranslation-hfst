@@ -18,8 +18,8 @@ char * hfst_stdin_to_mem()
       return NULL;
     }
 
-  while(true) 
-    { 
+  while(true)
+    {
       *(buffer + numbytes) = fgetc(stdin);
       if (feof(stdin))
         {
@@ -36,10 +36,10 @@ char * hfst_stdin_to_mem()
   return buffer;
 }
 
-// Based on a function in foma written by Mans Hulden.                                       
-// Read the file 'filename' to memory and return a pointer to it.                            
-// Filename "<stdin>" uses stdin for reading.                                              
-// Returns NULL if file cannot be opened or read or memory cannot be allocated.              
+// Based on a function in foma written by Mans Hulden.
+// Read the file 'filename' to memory and return a pointer to it.
+// Filename "<stdin>" uses stdin for reading.
+// Returns NULL if file cannot be opened or read or memory cannot be allocated.
 
 char * hfst_file_to_mem(const char *filename) {
 

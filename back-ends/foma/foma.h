@@ -35,7 +35,7 @@ struct stack_entry {
   struct apply_med_handle *amedh;
   struct fsm *fsm;
   struct stack_entry *next;
-  struct stack_entry *previous;    
+  struct stack_entry *previous;
 };
 
 /* Quantifier & Logic-related */

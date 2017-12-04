@@ -57,6 +57,8 @@ namespace hfst
             
             //copy
             Rule ( const Rule& );
+            // default constructor needed for SWIG...
+            Rule();
 
             HfstTransducerPairVector get_mapping() const;
             HfstTransducerPairVector get_context() const;
@@ -75,7 +77,7 @@ namespace hfst
          HfstTransducer encodeFlagDiacritics( const HfstTransducer &tr );
          
          /**
-         *  \brief  In the transducer \tr, change back all "non-special" flag diacritics to normal, 
+         *  \brief  In the transducer \tr, change back all "non-special" flag diacritics to normal,
          * functional flag diacritics
          *  It means that $ sign will be changed to @ sign
          *  ie. $P.FOO.BAR$ will be changed into @P.FOO.BAR@
@@ -251,7 +253,7 @@ namespace hfst
 
 
         // the problem is that the mark-up rules can be mixed with ordinary rules
-        // ie a -> b ... c , a -> d ; 
+        // ie a -> b ... c , a -> d ;
         // this is why each markup mapping should be accessed seperratly
         // HfstTransducer mark_up_replace(    const Rule &rule,
                                 // const StringPair &marks,
@@ -289,10 +291,10 @@ namespace hfst
         // Contexts
         // define NOS1 [ %[ -> 0 || b / B _ ];
         // define NOF1 [ %] -> 0 || _ c / B ];
-        static HfstTransducer removeBracketsInContext( const HfstTransducerPairVector &context,
+        /*static HfstTransducer removeBracketsInContext( const HfstTransducerPairVector &context,
                                                    const HfstTransducer &leftMark,
                                                    const HfstTransducer &rightMark,
-                                                   int i);
+                                                   int i);*/ // NOT DEFINED
         // Restriction function "=>"
         HfstTransducer restriction( const HfstTransducer &automata, const HfstTransducerPairVector &context);
         HfstTransducer before( const HfstTransducer &left, const HfstTransducer &right);

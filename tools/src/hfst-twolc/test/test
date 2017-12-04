@@ -21,59 +21,84 @@ echo "" | ../../hfst-format --test-format sfst > /dev/null
 SFST_EXISTS=$?
 
 WINDOWS=1
-if ( uname | egrep "MINGW|mingw" 2>1 > /dev/null); then
+if ( uname | egrep "MINGW|mingw" 2> /dev/null > /dev/null); then
     WINDOWS=0
 fi
-    
+
+if [ -e "../src/hfst-twolc" ]; then
+    USE_HFST_TWOLC=0
+else
+    USE_HFST_TWOLC=1
+fi
 
 for f in $(ls -d $srcdir/* | egrep "test[0-9][0-9]*$" | sort -n)
 do
         if [ $FOMA_EXISTS -eq 0 ]
 	then
-	    if [ $WINDOWS -eq 0 ]
-	    then
-		cat "$f" | ../src/htwolcpre1 -R -s -f foma | \
-		    ../src/htwolcpre2 -R -s -f foma | \
-		    ../src/htwolcpre3 -R -s -f foma > temp.twolc.hfst0
-	    else
-		cat "$f" | ../src/hfst-twolc-loc -R -s -f foma > temp.twolc.hfst0
-	    fi
+	    if [ $USE_HFST_TWOLC -eq 0 ]
+            then
+                cat "$f" | ../src/hfst-twolc -R -s -f foma > temp.twolc.hfst0
+            else
+	        if [ $WINDOWS -eq 0 ]
+	        then
+		    cat "$f" | ../src/htwolcpre1 -R -s -f foma | \
+		        ../src/htwolcpre2 -R -s -f foma | \
+		        ../src/htwolcpre3 -R -s -f foma > temp.twolc.hfst0
+	        else
+		    cat "$f" | ../src/hfst-twolc-loc -R -s -f foma > temp.twolc.hfst0
+	        fi
+            fi
 	fi
 
 	if [ $LOG_OPENFST_EXISTS -eq 0 ]
 	then
-	    if [ $WINDOWS -eq 0 ]
-	    then
-		cat "$f" | ../src/htwolcpre1 -R -s -f openfst-log | \
-		    ../src/htwolcpre2 -R -s -f openfst-log | \
-		    ../src/htwolcpre3 -R -s -f openfst-log > temp.twolc.hfst1
-	    else
-		cat "$f" | ../src/hfst-twolc-loc -R -s -f openfst-log > temp.twolc.hfst1
-	    fi
+	    if [ $USE_HFST_TWOLC -eq 0 ]
+            then
+                cat "$f" | ../src/hfst-twolc -R -s -f openfst-log > temp.twolc.hfst1
+            else
+	        if [ $WINDOWS -eq 0 ]
+	        then
+		    cat "$f" | ../src/htwolcpre1 -R -s -f openfst-log | \
+		        ../src/htwolcpre2 -R -s -f openfst-log | \
+		        ../src/htwolcpre3 -R -s -f openfst-log > temp.twolc.hfst1
+	        else
+		    cat "$f" | ../src/hfst-twolc-loc -R -s -f openfst-log > temp.twolc.hfst1
+	        fi
+            fi
 	fi
 
 	if [ $TROPICAL_OPENFST_EXISTS -eq 0 ]
 	then
-	    if [ $WINDOWS -eq 0 ]
-	    then
-		cat "$f" | ../src/htwolcpre1 -R -s -f openfst-tropical | \
-		    ../src/htwolcpre2 -R -s -f openfst-tropical | \
-		    ../src/htwolcpre3 -R -s -f openfst-tropical > temp.twolc.hfst2
-	    else
-		cat "$f" | ../src/hfst-twolc-loc -R -s -f openfst-tropical > temp.twolc.hfst2
-	    fi
+	    if [ $USE_HFST_TWOLC -eq 0 ]
+            then
+		cat "$f" | ../src/hfst-twolc -R -s -f openfst-tropical > temp.twolc.hfst2
+            else
+	        if [ $WINDOWS -eq 0 ]
+	        then
+		    cat "$f" | ../src/htwolcpre1 -R -s -f openfst-tropical | \
+		        ../src/htwolcpre2 -R -s -f openfst-tropical | \
+		        ../src/htwolcpre3 -R -s -f openfst-tropical > temp.twolc.hfst2
+	        else
+		    cat "$f" | ../src/hfst-twolc-loc -R -s -f openfst-tropical > temp.twolc.hfst2
+	        fi
+            fi
 	fi
 
 	if [ $SFST_EXISTS -eq 0 ]
 	then
-	    if [ $WINDOWS -eq 0 ]
-	    then
-		cat "$f" | ../src/htwolcpre1 -R -s -f sfst | \
-		    ../src/htwolcpre2 -R -s -f sfst | \
-		    ../src/htwolcpre3 -R -s -f sfst > temp.twolc.hfst3
-	    else
-		cat "$f" | ../src/hfst-twolc-loc -R -s -f sfst             > temp.twolc.hfst3
-	    fi
+	    if [ $USE_HFST_TWOLC -eq 0 ]
+            then
+		cat "$f" | ../src/hfst-twolc -R -s -f sfst > temp.twolc.hfst3
+            else
+	        if [ $WINDOWS -eq 0 ]
+	        then
+		    cat "$f" | ../src/htwolcpre1 -R -s -f sfst | \
+		        ../src/htwolcpre2 -R -s -f sfst | \
+		        ../src/htwolcpre3 -R -s -f sfst > temp.twolc.hfst3
+	        else
+		    cat "$f" | ../src/hfst-twolc-loc -R -s -f sfst > temp.twolc.hfst3
+	        fi
+            fi
 	fi
 
 	if  [ $? -ne 0 ] 
@@ -88,14 +113,19 @@ do
 	    if [ $? -eq 0 ]
 	    then
 		cat temp.twolc.hfst"$n" | ../../hfst-fst2txt | ../../hfst-txt2fst -e"@_EPSILON_SYMBOL_@" > temp.twolc.hfst
-		if [ $WINDOWS -eq 0 ]
-		then
-		    cat "$f" | ../src/htwolcpre1 -R -s | \
-			../src/htwolcpre2 -R -s | \
-			../src/htwolcpre3 -R -s > /dev/null 2>&1
-		else
-		    cat "$f" | ../src/hfst-twolc-loc -R -s > /dev/null 2>&1
-		fi
+	        if [ $USE_HFST_TWOLC -eq 0 ]
+                then
+		    cat "$f" | ../src/hfst-twolc -R -s > /dev/null 2>&1
+                else
+		    if [ $WINDOWS -eq 0 ]
+		    then
+		        cat "$f" | ../src/htwolcpre1 -R -s | \
+			    ../src/htwolcpre2 -R -s | \
+			    ../src/htwolcpre3 -R -s > /dev/null 2>&1
+		    else
+		        cat "$f" | ../src/hfst-twolc-loc -R -s > /dev/null 2>&1
+		    fi
+                fi
 		if ! ../../hfst-compare -q -1 temp.hfst -2 temp.twolc.hfst > /dev/null 2>&1
 		then
 		    echo "hfst-twolc sub$(basename $f) failed."

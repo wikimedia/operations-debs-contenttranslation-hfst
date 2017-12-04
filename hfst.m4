@@ -1,6 +1,6 @@
 # hfst.m4 - Macros to locate and utilise hfst library and tools -*- Autoconf -*-
 # serial 1 (hfst-3.1.1)
-# 
+#
 # Copyright © 2011 University of Helsinki <hfst-bugs@helsinki.fi>.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,7 @@ dnl HFST switches and variables
 AC_CACHE_CHECK([whether pkg-config can find hfst tools], [hfst_cv_prog_hfst],
                [hfst_cv_prog_hfst=no
     _hfst_min_version=m4_default([$1], [ >= 3.1])
-    PKG_CHECK_MODULES([HFST], [hfst$_hfst_min_version], 
+    PKG_CHECK_MODULES([HFST], [hfst$_hfst_min_version],
                       [hfst_cv_prog_hfst=yes], [hfst_cv_prog_hfst=no])])
 
 []dnl

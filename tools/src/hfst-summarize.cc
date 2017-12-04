@@ -35,7 +35,7 @@
 #include "HfstTransducer.h"
 #include "HfstInputStream.h"
 #include "HfstOutputStream.h"
-#include "implementations/HfstTransitionGraph.h"
+#include "implementations/HfstBasicTransducer.h"
 
 using std::map;
 using std::string;
@@ -74,7 +74,7 @@ print_usage()
     fprintf(message_out, "\n");
     print_common_unary_program_parameter_instructions(message_out);
     fprintf(message_out, "\n");
-    fprintf(message_out, 
+    fprintf(message_out,
             "The parameter --verbose gives more extensive information on\n"
             "the properties of a transducer.\n");
     fprintf(message_out, "\n");
@@ -94,13 +94,13 @@ parse_options(int argc, char** argv)
         {
         HFST_GETOPT_COMMON_LONG,
         HFST_GETOPT_UNARY_LONG,
-        // add tool-specific options here 
+        // add tool-specific options here
         {"print-symbol-pair-statistics", optional_argument, 0, 'S'},
         {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "S::",
                              long_options, &option_index);
         if (-1 == c)
@@ -251,7 +251,7 @@ process_stream(HfstInputStream& instream)
           map<string,unsigned int> input_ambiguity;
           map<string,unsigned int> output_ambiguity;
 
-      for (HfstBasicTransducer::HfstTransitions::const_iterator tr_it 
+      for (hfst::implementations::HfstBasicTransitions::const_iterator tr_it
            = it->begin();
            tr_it != it->end(); tr_it++)
         {
@@ -270,7 +270,7 @@ process_stream(HfstInputStream& instream)
                 {
                   acceptor = false;
                 }
-              if ( hfst::is_epsilon(tr_it->get_input_symbol()) && 
+              if ( hfst::is_epsilon(tr_it->get_input_symbol()) &&
                    hfst::is_epsilon(tr_it->get_output_symbol()) )
                 {
                   io_epsilons++;
@@ -356,15 +356,15 @@ process_stream(HfstInputStream& instream)
       // count physical size
       
       // average calculations
-      double average_arcs_per_state = 
+      double average_arcs_per_state =
     static_cast<double>(arcs)/static_cast<float>(states);
-      double average_input_epsilons = 
+      double average_input_epsilons =
     static_cast<double>(input_epsilons)/static_cast<double>(states);
-      double average_input_ambiguity = 
+      double average_input_ambiguity =
     static_cast<double>(arcs)/static_cast<double>(uniq_input_arcs);
-      double average_output_ambiguity = 
+      double average_output_ambiguity =
     static_cast<double>(arcs)/static_cast<double>(uniq_output_arcs);
-      double expected_arcs_per_symbol = 
+      double expected_arcs_per_symbol =
           static_cast<double>(average_arcs_per_state)/
           static_cast<float>(foundAlphabet.size());
 
@@ -420,8 +420,8 @@ process_stream(HfstInputStream& instream)
               "# of ... coaccessible states: ???\n"
               "# of ... connected states: ???\n"
               "# of ... strongly conn components: ???\n",
-              states, arcs, 
-              static_cast<long int>(initial_state),
+              states, arcs,
+              static_cast<long>(initial_state),
               final_states, io_epsilons,
               input_epsilons, output_epsilons);
       // other names from properties...
@@ -480,7 +480,7 @@ process_stream(HfstInputStream& instream)
                    s != transducerAlphabet.end();
                    ++s)
                 {
-                  if (!first) 
+                  if (!first)
                     {
                       fprintf(outfile, ", ");
                     }
@@ -499,7 +499,7 @@ process_stream(HfstInputStream& instream)
                s != foundAlphabet.end();
                ++s)
             {
-              if (!first) 
+              if (!first)
                 {
                   fprintf(outfile, ", ");
                 }
@@ -511,11 +511,11 @@ process_stream(HfstInputStream& instream)
           if (transducerKnowsAlphabet)
             {
               StringSet transducerMinusSet;
-              std::set_difference(transducerAlphabet.begin(), 
+              std::set_difference(transducerAlphabet.begin(),
                                   transducerAlphabet.end(),
-                                  foundAlphabet.begin(), 
+                                  foundAlphabet.begin(),
                                   foundAlphabet.end(),
-                                  std::inserter(transducerMinusSet, 
+                                  std::inserter(transducerMinusSet,
                                                 transducerMinusSet.end()));
 
               first = true;
@@ -523,7 +523,7 @@ process_stream(HfstInputStream& instream)
                    s != transducerMinusSet.end();
                    ++s)
                 {
-                  if (!first) 
+                  if (!first)
                     {
                       fprintf(outfile, ", ");
                     }
@@ -546,7 +546,7 @@ process_stream(HfstInputStream& instream)
                    s != ss.end();
                    ++s)
                 {
-                  if (!first) 
+                  if (!first)
                     {
                       fprintf(outfile, ", ");
                     }
@@ -559,7 +559,7 @@ process_stream(HfstInputStream& instream)
         } // if verbose
 
           // ADDED
-          if (print_symbol_pair_statistics) 
+          if (print_symbol_pair_statistics)
             {
               if (symbol_pair_threshold > -1)
                 {
@@ -603,7 +603,7 @@ int main( int argc, char **argv ) {
     {
         fclose(inputfile);
     }
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
         inputfilename, outfilename);
     // here starts the buffer handling part
     HfstInputStream* instream = NULL;

@@ -92,7 +92,7 @@ namespace SFST {
     { return !(l == *this); };
 
     // comparison operator needed for sorting labels in compact.C
-    int operator<( Label l ) const { 
+    int operator<( Label l ) const {
       if (upper_char() < l.upper_char())
         return true;
       if (upper_char() > l.upper_char())
@@ -101,7 +101,7 @@ namespace SFST {
         return true;
       return false;
     };
-    int operator>( Label l ) const { 
+    int operator>( Label l ) const {
       if (upper_char() > l.upper_char())
         return true;
       if (upper_char() < l.upper_char())
@@ -127,7 +127,7 @@ namespace SFST {
     // hash function needed to store labels in a hash table
     struct label_hash {
       size_t operator() ( const Label l ) const {
-        return (size_t)l.lower_char() ^ 
+        return (size_t)l.lower_char() ^
           ((size_t)l.upper_char() << 16) ^
           ((size_t)l.upper_char() >> 16);
       }
@@ -137,7 +137,7 @@ namespace SFST {
     struct label_cmp {
       bool operator() ( const Label l1, const Label l2 ) const {
         return (l1.lower_char() < l2.lower_char() ||
-                (l1.lower_char() == l2.lower_char() && 
+                (l1.lower_char() == l2.lower_char() &&
                  l1.upper_char() < l2.upper_char()));
       }
     };
@@ -234,7 +234,7 @@ namespace SFST {
     void complement( vector<Character> &sym );
   
     // return the code of the argument symbol
-    int symbol2code( const char *s ) const { 
+    int symbol2code( const char *s ) const {
       SymbolMap::const_iterator p = sm.find(s);
       if (p != sm.end()) return p->second;
       return EOF;

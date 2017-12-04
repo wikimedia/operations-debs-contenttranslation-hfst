@@ -43,7 +43,7 @@ void SplitToVector(char* full, const char* delim, vector<char*>* vec,
 }
 
 //AddedPD
-void UTF8ToUTF16(const string& utf8, wstring* utf16) {  
+void UTF8ToUTF16(const string& utf8, wstring* utf16) {
         utf16->clear();
         utf16->reserve(utf8.size());
         for ( size_t i = 0; i < utf8.size(); ++i ) {
@@ -53,13 +53,13 @@ void UTF8ToUTF16(const string& utf8, wstring* utf16) {
                 } else {
                         if ((ch0 & 0xe0) == 0xc0) {
                                 unsigned char ch1 = utf8[++i];
-                                utf16->push_back(((ch0 & 0x3f) << 6)|((ch1 & 0x3f)));    
+                                utf16->push_back(((ch0 & 0x3f) << 6)|((ch1 & 0x3f)));
                         } else {
                                 unsigned char ch1 = utf8[++i];
                                 unsigned char ch2 = utf8[++i];
                                 utf16->push_back(((ch0 & 0x0f)<<12)|((ch1 & 0x3f)<<6)|((ch2 & 0x3f)));
                         }
                 }
-        }       
+        }
 }
 }  // namespace fst

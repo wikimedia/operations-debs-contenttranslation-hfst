@@ -51,7 +51,7 @@ static char * format_to_test = NULL;
 void
 print_usage()
 {
-  // c.f. 
+  // c.f.
   // http://www.gnu.org/prep/standards/standards.html#g_t_002d_002dhelp
   fprintf(message_out, "Usage: %s [OPTIONS...] [INFILE]\n"
           "determine HFST transducer format\n"
@@ -60,12 +60,12 @@ print_usage()
   print_common_program_options(message_out);
   print_common_unary_program_options(message_out);
   fprintf
-    (message_out, 
+    (message_out,
      "Tool-specific options:\n"
      "  -l, --list-formats     List available transducer formats\n"
      "                         and print them to standard output\n");
   fprintf
-    (message_out, 
+    (message_out,
      "  -t, --test-format FMT  Whether the format FMT is available,\n"
      "                         exits with 0 if it is, else with 1\n");
   fprintf(message_out, "\n");
@@ -94,7 +94,7 @@ parse_options(int argc, char** argv)
           {0,0,0,0}
         };
         int option_index = 0;
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT "1:2:lt:",
                              long_options, &option_index);
         if (-1 == c)
@@ -184,7 +184,7 @@ parse_options(int argc, char** argv)
         if (HfstTransducer::is_implementation_type_available
             (hfst::HFST_OL_TYPE))
           fprintf(stdout, " Optimized lookup (weighted)     "
-                  "optimized-lookup-unweighted, olu\n");              
+                  "optimized-lookup-unweighted, olu\n");
         
         if (HfstTransducer::is_implementation_type_available
             (hfst::HFST_OLW_TYPE))
@@ -210,7 +210,7 @@ parse_options(int argc, char** argv)
       else if ((argc - optind) == 1)
         {
           inputfilename = argv[optind];
-        }     
+        }
     }
       hfst::HfstInputStream is(inputfilename);
       return is.get_type();

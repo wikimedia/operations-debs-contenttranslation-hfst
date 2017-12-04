@@ -19,8 +19,8 @@ SequenceModelBuilder::SequenceModelBuilder(std::istream &in)
 	  model_vector.push_back(model_builder.get_model());
 	}
       catch (const EmptyFile &e)
-	{ 
-	  static_cast<void>(e); 
+	{
+	  static_cast<void>(e);
 	  break;
 	}
     }
@@ -28,7 +28,7 @@ SequenceModelBuilder::SequenceModelBuilder(std::istream &in)
 
 void SequenceModelBuilder::store(const std::string &file_name)
 {
-  ModelBuilder::verbose_printf(std::string("Storing sequence models in ") + 
+  ModelBuilder::verbose_printf(std::string("Storing sequence models in ") +
 			       file_name + ".\n");
 
   HfstOutputStream out(file_name,TROPICAL_OPENFST_TYPE);

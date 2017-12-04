@@ -23,14 +23,14 @@ TransitionData DelayedSequenceModelComponent::get_transition
   TransitionData transition_data;
 
   if (state < static_cast<int>(delay))
-    { 
+    {
       transition_data.weight = 0.0;
       transition_data.target = state + 1;
     }
   else
     {
-      TransitionData internal_transition_data = 
-	model.get_transition(state - delay, symbol); 
+      TransitionData internal_transition_data =
+	model.get_transition(state - delay, symbol);
 
       transition_data.weight = internal_transition_data.weight;
       transition_data.target = internal_transition_data.target + delay;
@@ -91,11 +91,11 @@ int main(void)
 	 get_transition(2,SequenceModelComponent::get_symbol("a")).
 	 weight == static_cast<float>(0.0));
 
-  SequenceModelComponent * smc = 
+  SequenceModelComponent * smc =
     &delayed_sequence_model_component_0;
   assert(smc->get_final_weight(0) == infinity);
   
-  smc = 
+  smc =
     &delayed_sequence_model_component_2;
   assert(smc->get_final_weight(0) == 0.0);
 }

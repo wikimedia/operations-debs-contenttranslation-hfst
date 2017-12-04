@@ -1,0 +1,13 @@
+
+This directory contains the following alternative files
+
+  ├── back-ends
+  │   └── Makefile.am
+  ├── configure.ac
+  ├── COPYING
+  └── Makefile.am
+
+which are used instead of the default ones when creating a minimal LGPL
+release of HFST. It contains only openfst back-end, HFST library code
+and python bindings. All command line tools and sfst and foma back-ends
+are disabled.

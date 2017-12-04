@@ -54,7 +54,7 @@ namespace SFST {
   /*******************************************************************/
 
   void CompactTransducer::analyze(unsigned int n, vector<Character> &input,
-                                  size_t ipos, CAnalysis &ca, 
+                                  size_t ipos, CAnalysis &ca,
                                   vector<CAnalysis> &analyses )
   {
     // "n" is the number of the current transducer node/state
@@ -76,8 +76,8 @@ namespace SFST {
     // first_arc[n+1]-1 is the number of the last outgoing transition of node n
     // first_arc[n+1] is the number of the first outgoing transition of node n+1
     unsigned int i;
-    for( i=first_arc[n]; 
-         i<first_arc[n+1] && label[i].upper_char() == Label::epsilon; 
+    for( i=first_arc[n];
+         i<first_arc[n+1] && label[i].upper_char() == Label::epsilon;
          i++)
       {
         ca.push_back(i);
@@ -90,8 +90,8 @@ namespace SFST {
     // scan the next input symbol
     if (ipos < input.size()) {
       // find the set of arcs with matching upper character in the sorted list
-      pair<Label*,Label*>range = 
-        equal_range(label+i, label+first_arc[n+1], Label(input[ipos]), 
+      pair<Label*,Label*>range =
+        equal_range(label+i, label+first_arc[n+1], Label(input[ipos]),
                     label_less());
       unsigned int to = (unsigned int)(range.second - label);
 
@@ -304,7 +304,8 @@ namespace SFST {
 
   {
     size_t n,m;
-    fread(&n, sizeof(n), 1, file);
+    if (fread(&n, sizeof(n), 1, file) != 1) // HFST addition: checking return value of fread
+      throw "read_probs: fread failed";
     if (fread(&m, sizeof(n), 1, file) != 1 ||
         n != node_count() || m != arc_count())
       {
@@ -313,7 +314,8 @@ namespace SFST {
       }
     final_logprob = new float[n];
     arc_logprob = new float[m];
-    fread(final_logprob, sizeof(float), n, file);
+    if (fread(final_logprob, sizeof(float), n, file) != n) // HFST addition: checking return value of fread
+      throw "read_probs: fread failed";
     if (fread(arc_logprob, sizeof(float), n, file) != n) {
       fprintf(stderr,"Error: in probability file!\n");
       exit(1);
@@ -368,7 +370,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  void CompactTransducer::longest_match2(unsigned int n, char *string, int l, 
+  void CompactTransducer::longest_match2(unsigned int n, char *string, int l,
                                          CAnalysis &ca, int &bl, CAnalysis &ba)
   {
     // n: transducer state
@@ -386,8 +388,8 @@ namespace SFST {
 
     // follow the epsilon transitions
     unsigned int i;
-    for( i=first_arc[n]; 
-         i<first_arc[n+1] && label[i].upper_char() == Label::epsilon; 
+    for( i=first_arc[n];
+         i<first_arc[n+1] && label[i].upper_char() == Label::epsilon;
          i++)
       {
         ca.push_back(i);
@@ -401,8 +403,8 @@ namespace SFST {
     l += (int)(end - string);
     if (c != EOF) {
       // find the set of arcs with matching upper character in the sort list
-      pair<Label*,Label*>range = 
-        equal_range(label+i, label+first_arc[n+1], Label((Character)c), 
+      pair<Label*,Label*>range =
+        equal_range(label+i, label+first_arc[n+1], Label((Character)c),
                     label_less());
       unsigned int to = (unsigned int)(range.second - label);
       for( i=(unsigned)(range.first-label); i<to; i++) {
@@ -490,7 +492,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  bool CompactTransducer::train2( char *s, vector<double> &arcfreq, 
+  bool CompactTransducer::train2( char *s, vector<double> &arcfreq,
                                   vector<double> &finalfreq )
   {
     vector<CAnalysis> analyses;
@@ -532,7 +534,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  bool CompactTransducer::train( char *s, vector<double> &arcfreq, 
+  bool CompactTransducer::train( char *s, vector<double> &arcfreq,
                                  vector<double> &finalfreq )
   {
     vector<CAnalysis> analyses;
@@ -572,7 +574,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  void CompactTransducer::estimate_probs( vector<double> &arcfreq, 
+  void CompactTransducer::estimate_probs( vector<double> &arcfreq,
                                           vector<double> &finalfreq )
   {
     // turn frequencies into probabilities
@@ -596,7 +598,7 @@ namespace SFST {
   /*                                                                 */
   /*******************************************************************/
 
-  void CompactTransducer::compute_probs( vector<CAnalysis> &analyses, 
+  void CompactTransducer::compute_probs( vector<CAnalysis> &analyses,
                                          vector<double> &prob )
   {
     prob.resize(analyses.size());

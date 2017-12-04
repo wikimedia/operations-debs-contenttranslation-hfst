@@ -55,15 +55,15 @@ quit
 quit-on-fail
 read att
 read cmatrix
-read lexc 
+read lexc
 read prolog
-read spaced-text 
-read text 
+read spaced-text
+read text
 regex
 reverse net
 rotate stack
-save defined 
-save stack 
+save defined
+save stack
 set  <ON|OFF>
 show variables
 shuffle net
@@ -71,10 +71,10 @@ sigma net
 sort in
 sort net
 sort out
-source 
+source
 substitute defined X for Y
 substitute symbol X for Y
-system 
+system
 test equivalent
 test functional
 test identity
@@ -87,7 +87,7 @@ test unambiguous
 test upper-universal
 turn stack
 twosided flag-diacritics
-undefine 
+undefine
 union net
 upper-side net
 variable att-epsilon

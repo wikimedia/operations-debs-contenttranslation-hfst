@@ -127,7 +127,7 @@ print_usage()
         "  %s lexical.hfst  generates all forms of lexical.hfst\n"
         "\n", program_name);
 
-    fprintf(message_out, 
+    fprintf(message_out,
         "Known bugs:\n"
         "  Does not work correctly for hfst optimized lookup format.\n"
         "\n"
@@ -167,7 +167,7 @@ parse_options(int argc, char** argv)
             {0,0,0,0}
           };
         int option_index = 0;
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT
                              HFST_GETOPT_UNARY_SHORT
                              "Swb:c:e:u:p:l:L:n:r:N:U:P:X:",
                              long_options, &option_index);
@@ -264,7 +264,7 @@ parse_options(int argc, char** argv)
 }
 
 /* Replace all strings \a str1 in \a symbol with \a str2. */
-static std::string replace_all(std::string symbol, 
+static std::string replace_all(std::string symbol,
                    const std::string &str1,
                    const std::string &str2)
 {
@@ -274,13 +274,13 @@ static std::string replace_all(std::string symbol,
       symbol.erase(pos, str1.size()); // erase str1
       symbol.insert(pos, str2);       // insert str2 instead
       pos = symbol.find               // find next str1
-    (str1, pos+str2.size());      
+    (str1, pos+str2.size());
     }
   return symbol;
 }
 
 
-static std::string get_print_format(const std::string &s) 
+static std::string get_print_format(const std::string &s)
 {
   // print epsilon as defined by the user or use the default
   if (hfst::is_epsilon(s))
@@ -290,8 +290,8 @@ static std::string get_print_format(const std::string &s)
     return std::string(s);
 
   // escape spaces and colons as they have a special meaning
-  return 
-    replace_all 
+  return
+    replace_all
     (replace_all
      ( replace_all
        (std::string(s), " ", "@_SPACE_@"),
@@ -354,13 +354,13 @@ public:
             // continue searching, break off this path
           }
       }
-    if (input_exclude.length() > 0 && 
+    if (input_exclude.length() > 0 &&
         (istring.find(input_exclude) != std::string::npos))
       {
         return RetVal(true, false);
         // continue searching, break off this path
       }
-    if (output_exclude.length() > 0 && 
+    if (output_exclude.length() > 0 &&
         (ostring.find(output_exclude) != std::string::npos))
       {
         return RetVal(true, false);
@@ -374,15 +374,15 @@ public:
     // the path passed the checks. Print it if it is final
     if (final)
       {
-        if (print_in_pairstring_format) 
+        if (print_in_pairstring_format)
           {
         bool first_pair=true;
             for (StringPairVector::const_iterator it = path.second.begin();
-                 it != path.second.end(); it++) 
+                 it != path.second.end(); it++)
               {
-        if ((not filter_fd) || 
+        if ((not filter_fd) ||
             (not FdOperation::is_diacritic(it->first))) {
-          if (print_spaces && not first_pair) 
+          if (print_spaces && not first_pair)
             {
               *out_ << " ";
             }
@@ -393,19 +393,19 @@ public:
 
         if (it->first.compare(it->second) != 0)
           {
-            if ((not filter_fd) || 
+            if ((not filter_fd) ||
             (not FdOperation::is_diacritic(it->second)))
               *out_ << ":"
                 << get_print_format(it->second);
           }
               }
-            if (display_weights) 
+            if (display_weights)
               {
                 *out_ << "\t" << path.first;
               }
             *out_ << "\n";
           }
-        else 
+        else
           {
         bool is_automaton=true;
 
@@ -413,7 +413,7 @@ public:
             for (StringPairVector::const_iterator it = path.second.begin();
                  it != path.second.end(); ++it)
               {
-        if ((not filter_fd) || 
+        if ((not filter_fd) ||
             (not FdOperation::is_diacritic(it->first)))
           {
             if (print_spaces && not first_symbol)
@@ -437,7 +437,7 @@ public:
           for (StringPairVector::const_iterator it = path.second.begin();
            it != path.second.end(); ++it)
         {
-          if ((not filter_fd) || 
+          if ((not filter_fd) ||
               (not FdOperation::is_diacritic(it->second)))
             {
               if (print_spaces)
@@ -458,7 +458,7 @@ public:
         count++;
       }
     // continue until we've printed max_num strings
-    return RetVal((max_num < 1) || (count < max_num), true); 
+    return RetVal((max_num < 1) || (count < max_num), true);
   }
 };
 
@@ -477,10 +477,10 @@ process_stream(HfstInputStream& instream, std::ostream& outstream)
     HfstTransducer t(instream);
 
     /* Pairstring format is not supported on optimized lookup format. */
-    if (print_in_pairstring_format && 
-    (instream.get_type() == HFST_OL_TYPE || 
+    if (print_in_pairstring_format &&
+    (instream.get_type() == HFST_OL_TYPE ||
      instream.get_type() == HFST_OLW_TYPE) ) {
-      fprintf(stderr, 
+      fprintf(stderr,
           "Error: option --print-in-pairstring-format not supported on "
           "       optimized lookup transducers, exiting program\n" );
       exit(1);
@@ -489,10 +489,10 @@ process_stream(HfstInputStream& instream, std::ostream& outstream)
     if(input_prefix != "")
       verbose_printf("input_prefix: '%s'\n", input_prefix.c_str());
     
-    if(beam >= 0) 
+    if(beam >= 0)
       {
         verbose_printf("Finding the weight of the best path...\n");
-      try 
+      try
         {
           HfstTransducer tc(t);
           tc.n_best(1);
@@ -506,7 +506,7 @@ process_stream(HfstInputStream& instream, std::ostream& outstream)
         }
       catch (const FunctionNotImplementedException & e)
         {
-          if (instream.get_type() == hfst::HFST_OL_TYPE || 
+          if (instream.get_type() == hfst::HFST_OL_TYPE ||
               instream.get_type() == hfst::HFST_OLW_TYPE)
             {
               error(EXIT_FAILURE, 0, "option --beam not implemented for optimized lookup format");
@@ -526,15 +526,15 @@ process_stream(HfstInputStream& instream, std::ostream& outstream)
 
     if(nbest_strings > 0)
     {
-      verbose_printf("Pruning transducer to %i best path(s)...\n", 
+      verbose_printf("Pruning transducer to %i best path(s)...\n",
              nbest_strings);
-      try 
+      try
         {
           t.n_best(nbest_strings);
         }
       catch (const FunctionNotImplementedException & e)
         {
-          if (instream.get_type() == hfst::HFST_OL_TYPE || 
+          if (instream.get_type() == hfst::HFST_OL_TYPE ||
               instream.get_type() == hfst::HFST_OLW_TYPE)
             {
               error(EXIT_FAILURE, 0, "option --nbest not implemented for optimized lookup format");
@@ -553,7 +553,7 @@ process_stream(HfstInputStream& instream, std::ostream& outstream)
     }
     else
     {
-      if(max_random_strings <= 0 && max_strings <= 0 && max_input_length <= 0 
+      if(max_random_strings <= 0 && max_strings <= 0 && max_input_length <= 0
      && max_output_length <= 0 &&
      cycles < 0 && t.is_cyclic())
       {
@@ -567,7 +567,7 @@ process_stream(HfstInputStream& instream, std::ostream& outstream)
     if(max_strings > 0)
       verbose_printf("Finding at most %i path(s)...\n", max_strings);
     else if(max_random_strings > 0)
-      verbose_printf("Finding at most %i random path(s)...\n", 
+      verbose_printf("Finding at most %i random path(s)...\n",
              max_random_strings);
     else
       verbose_printf("Finding strings...\n");
@@ -579,7 +579,7 @@ process_stream(HfstInputStream& instream, std::ostream& outstream)
     if(eval_fd)
       t.extract_paths_fd(cb, cycles, filter_fd);
     else
-      t.extract_paths(cb, cycles);    
+      t.extract_paths(cb, cycles);
     verbose_printf("Printed %i string(s)\n", cb.count);
       }
     /* random strings */
@@ -595,7 +595,7 @@ process_stream(HfstInputStream& instream, std::ostream& outstream)
       }
     }
     catch (const FunctionNotImplementedException & e) {
-      if (instream.get_type() == hfst::HFST_OL_TYPE || 
+      if (instream.get_type() == hfst::HFST_OL_TYPE ||
           instream.get_type() == hfst::HFST_OLW_TYPE)
         {
           error(EXIT_FAILURE, 0, "option --random not implemented for optimized lookup format");
@@ -637,7 +637,7 @@ int main( int argc, char **argv ) {
 
     if (max_strings > 0 && max_random_strings > 0 && !silent)
       {
-    fprintf(stderr, 
+    fprintf(stderr,
         "warning: option --max_strings ignored, --random used\n");
     max_strings = -1;
       }
@@ -655,7 +655,7 @@ int main( int argc, char **argv ) {
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s, writing to %s\n", 
+    verbose_printf("Reading from %s, writing to %s\n",
         inputfilename, outfilename);
     // here starts the buffer handling part
     HfstInputStream* instream = NULL;

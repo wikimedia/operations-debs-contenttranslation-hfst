@@ -13,7 +13,7 @@ using hfst::HfstTokenizer;
 using hfst::StringVector;
 
 // STR1 changes its argument into a string, i.e. surrounds it with
-// quotation marks. Since arguments of # aren't evaluated, two macro 
+// quotation marks. Since arguments of # aren't evaluated, two macro
 // levels are needed, to convert the result of a macro such as __LINE__
 // into a string.
 #define STR1(a) # a
@@ -39,7 +39,7 @@ struct InvalidFloat
   std::string representation;
 };
 
-// Hold a vector of strings (a future path in a transducer) and it's 
+// Hold a vector of strings (a future path in a transducer) and it's
 // associated weight, which is a positive float.
 struct WeightedStringVector
 {
@@ -69,7 +69,7 @@ std::string read_model_start_tag(const std::string &line);
 // FOO". FOO can't contain tabs.
 std::string read_model_stop_tag(const std::string &line);
 
-// Read the penalty weight X as a float from string "PENALTY_WEIGHT=X". 
+// Read the penalty weight X as a float from string "PENALTY_WEIGHT=X".
 float read_model_penalty_weight(const std::string &line);
 
 #endif // HEADER_STRING_HANDLING_H

@@ -1,10 +1,10 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 #include "HfstTokenizer.h"
@@ -15,7 +15,7 @@
 #ifndef MAIN_TEST
 
 using std::string;
-namespace hfst 
+namespace hfst
 {
   bool MultiCharSymbolTrie::is_end_of_string(const char * p) const
   { return *(p+1) == 0; }
@@ -27,7 +27,7 @@ namespace hfst
   { return is_leaf[(unsigned char)(*p)]; }
   
   void MultiCharSymbolTrie::init_symbol_rests(const char * p)
-  { 
+  {
     if (symbol_rests[(unsigned char)(*p)] == NULL)
       { symbol_rests[(unsigned char)(*p)] = new MultiCharSymbolTrie(); }
   }
@@ -65,14 +65,14 @@ namespace hfst
   {
     MultiCharSymbolTrie * symbol_rest_trie = get_symbol_rest_trie(p);
     if (symbol_rest_trie == NULL)
-      { 
+      {
         if (is_symbol_end(p))
           { return p+1; }
-        return NULL; 
+        return NULL;
       }
     const char * symbol_end = symbol_rest_trie->find(p+1);
     if (symbol_end == NULL)
-      { 
+      {
         if (is_symbol_end(p))
           { return p+1; }
       }
@@ -88,11 +88,11 @@ const
   if (! *symbol)
     { return 0; }
 
-  const char * multi_char_symbol_end = multi_char_symbols.find(symbol);  
+  const char * multi_char_symbol_end = multi_char_symbols.find(symbol);
 
   /* The string begins with a multi character symbol */
   if (multi_char_symbol_end != NULL)
-    { return multi_char_symbol_end - symbol; }
+    { return (int)(multi_char_symbol_end - symbol); }
   if ((128 & *symbol) == 0)
     { return 1; }
   else if ((32 & *symbol) == 0)
@@ -118,7 +118,7 @@ void
 HfstTokenizer::add_skip_symbol(const std::string &symbol)
 { if (symbol == "")
     { return; }
-  multi_char_symbols.add(symbol.c_str()); 
+  multi_char_symbols.add(symbol.c_str());
   skip_symbol_set.insert(symbol.c_str()); }
 
 StringPairVector HfstTokenizer::tokenize
@@ -181,7 +181,7 @@ StringPairVector HfstTokenizer::tokenize_space_separated(const std::string & str
         {
           symbol_pos = pos;
         }
-      else 
+      else
         {}
       ++pos;
     }
@@ -252,7 +252,7 @@ StringPairVector HfstTokenizer::tokenize
       for (StringPairVector::iterator it = input_spv.begin();
            it != input_spv.end();
            ++it)
-        { 
+        {
           StringPair sp(it->first, jt->first);
           warn_about_pair(sp);
           spv.push_back(sp);
@@ -302,7 +302,7 @@ StringPairVector HfstTokenizer::tokenize_and_align_flag_diacritics
       StringPair sp("", "");  // string pair to push back to the result
       StringPair sp_cont("", "");  // possible continuation in case of missaligned flags
 
-      if (it == input_spv.end()) 
+      if (it == input_spv.end())
         {
           if (FdOperation::is_diacritic(jt->first)) // copy diacritic to other side
             {
@@ -314,7 +314,7 @@ StringPairVector HfstTokenizer::tokenize_and_align_flag_diacritics
             }
           jt++;
         }
-      else if (jt == output_spv.end()) 
+      else if (jt == output_spv.end())
         {
           if (FdOperation::is_diacritic(it->first)) // copy diacritic to other side
             {
@@ -329,7 +329,7 @@ StringPairVector HfstTokenizer::tokenize_and_align_flag_diacritics
       else
         {
           // take from both vectors (cases foo:bar, foo:foo, flag1:flag1)
-          if ((!FdOperation::is_diacritic(it->first) && !FdOperation::is_diacritic(jt->first)) || 
+          if ((!FdOperation::is_diacritic(it->first) && !FdOperation::is_diacritic(jt->first)) ||
               *it == *jt)
             {
               sp = StringPair(it->first, jt->first);
@@ -347,22 +347,29 @@ StringPairVector HfstTokenizer::tokenize_and_align_flag_diacritics
           jt++;
         }
       
-      spv.push_back(sp);      
+      spv.push_back(sp);
       if (sp_cont.first.size() != 0 && sp_cont.second.size() != 0)
         {
           spv.push_back(sp_cont);
-        }      
+        }
     }
 
   return spv;
 }
 
-  
-  void 
-  HfstTokenizer::check_utf8_correctness(const std::string &input_string)
+
+void 
+HfstTokenizer::check_utf8_correctness(const std::string &input_string)
 {
+  (void)check_utf8_correctness_and_calculate_length(input_string);
+}
+  
+  unsigned int
+  HfstTokenizer::check_utf8_correctness_and_calculate_length(const std::string &input_string)
+{
+  unsigned int retval = 0;
   // Check that input_string is made up from utf-8 sequences.
-  for (std::string::const_iterator it = input_string.begin(); 
+  for (std::string::const_iterator it = input_string.begin();
        it != input_string.end();
        ++it)
     {
@@ -373,14 +380,14 @@ StringPairVector HfstTokenizer::tokenize_and_align_flag_diacritics
       // The bytes 192, 193, 245, 246 and 247 are invalid in utf8.
       if (initial_char == 192 || initial_char == 193 ||
       initial_char == 245 || initial_char == 246 || initial_char == 247)
-    { HFST_THROW_MESSAGE(IncorrectUtf8CodingException, 
+    { HFST_THROW_MESSAGE(IncorrectUtf8CodingException,
                          "leading octet in [192, 193, 245, 246, 247]"); }
       // Case 0xxxxxxx, i.e. ASCII byte.
       else if ((128 & initial_char) == 0)
     { additional_chars = 0; }
-      // Case 10xxxxxx cannot be an initial byte. 
+      // Case 10xxxxxx cannot be an initial byte.
       else if ((64 & initial_char) == 0)
-    { HFST_THROW_MESSAGE(IncorrectUtf8CodingException, 
+    { HFST_THROW_MESSAGE(IncorrectUtf8CodingException,
                          "leading octet & 10000000b"); }
       // Case 110xxxxx, i.e. read one more byte.
       else if ((32 & initial_char) == 0)
@@ -389,11 +396,11 @@ StringPairVector HfstTokenizer::tokenize_and_align_flag_diacritics
       else if ((16 & initial_char) == 0)
     { additional_chars = 2; }
       // Case 11110xxx, i.e. read three more bytes.
-      else if ((8 & initial_char) == 0) 
+      else if ((8 & initial_char) == 0)
     { additional_chars = 3; }
       // Case 11111xxx is not allowed in utf8.
       else
-    { HFST_THROW_MESSAGE(IncorrectUtf8CodingException, 
+    { HFST_THROW_MESSAGE(IncorrectUtf8CodingException,
                          "leading octet & 11111000b"); }
 
       // Read the continuation bytes.
@@ -410,7 +417,9 @@ StringPairVector HfstTokenizer::tokenize_and_align_flag_diacritics
         { HFST_THROW_MESSAGE(IncorrectUtf8CodingException,
                              "not continuation octet & 100000000b"); }
     }
+      retval = retval + 1;
     }
+  return retval;
 }
   
 }

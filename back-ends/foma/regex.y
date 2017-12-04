@@ -324,7 +324,7 @@ network6: network7 { }
 | network6 IGNORE_INTERNAL network7      { $$ = fsm_ignore($1,$3, OP_IGNORE_INTERNAL);     }
 | network6 RIGHT_QUOTIENT network7       { $$ = fsm_quotient_right($1,$3);                 }
 | network6 LEFT_QUOTIENT network7        { $$ = fsm_quotient_left($1,$3);                  }
-| network6 INTERLEAVE_QUOTIENT network7  { $$ = fsm_quotient_interleave($1,$3);            } 
+| network6 INTERLEAVE_QUOTIENT network7  { $$ = fsm_quotient_interleave($1,$3);            }
 
 network7: network8 { }
 | COMPLEMENT network7         { $$ = fsm_complement($2);       }
@@ -392,17 +392,17 @@ network12: fend    { $$ = $1; } |
       
 fstart: FUNCTION network COMMA
 { frec++; fargptr[frec] = 0 ;declare_function_name($1) ; add_function_argument($2); }
-|       FUNCTION network       
+|       FUNCTION network
 { frec++; fargptr[frec] = 0 ;declare_function_name($1) ; add_function_argument($2); }
 
 fmid:   fstart network COMMA   { add_function_argument($2); }
 |       fmid   network COMMA   { add_function_argument($2); }
 
-fend:   fmid   network RPAREN  
+fend:   fmid   network RPAREN
 { add_function_argument($2); if (($$ = function_apply(defined_nets, defined_funcs)) == NULL) YYERROR; }
-|       fstart network RPAREN  
+|       fstart network RPAREN
 { add_function_argument($2); if (($$ = function_apply(defined_nets, defined_funcs)) == NULL) YYERROR; }
-|       fstart         RPAREN  
+|       fstart         RPAREN
 { if (($$ = function_apply(defined_nets, defined_funcs)) == NULL) YYERROR;}
 
 %%

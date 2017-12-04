@@ -1,0 +1,9 @@
+test	
+
+dog	dog N
+
+be dog	be Vdog N
+be dog	bedog V
+
+catdog	cat N Cmp#dog N
+

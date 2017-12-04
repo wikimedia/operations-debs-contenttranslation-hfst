@@ -5,10 +5,16 @@
 #  include <config.h>
 #endif
 
-#ifdef USE_TR1_UNORDERED_MAP
+#ifdef INCLUDE_TR1_UNORDERED_MAP_AND_SET
  #include <tr1/unordered_map>
 #else
  #include <unordered_map>
+#endif
+
+#ifdef USE_TR1_UNORDERED_MAP_AND_SET
+  using std::tr1::unordered_map;
+#else
+  using std::unordered_map;
 #endif
 
 #include <string>
@@ -24,33 +30,18 @@ struct TransitionData
   State  target;
 };
 
-#ifdef USE_TR1_UNORDERED_MAP
- typedef std::tr1::unordered_map<std::string,Symbol> Symbol2NumberMap;
-#else
- typedef std::unordered_map<std::string,Symbol> Symbol2NumberMap;
-#endif
 
+typedef unordered_map<std::string,Symbol> Symbol2NumberMap;
 typedef std::vector<std::string>               Number2SymbolMap;
-
 typedef std::vector<Weight> StateFinalWeightMap;
 
-#ifdef USE_TR1_UNORDERED_MAP
- typedef std::tr1::unordered_map<Symbol,TransitionData> Symbol2TransitionDataMap;
-#else
- typedef std::unordered_map<Symbol,TransitionData> Symbol2TransitionDataMap;
-#endif
-
+typedef unordered_map<Symbol,TransitionData> Symbol2TransitionDataMap;
 typedef std::vector<Symbol2TransitionDataMap>     TransitionMap;
 
 typedef std::pair<size_t,Weight> IdWeightPair;
 
-#ifdef USE_TR1_UNORDERED_MAP
- typedef std::tr1::unordered_map<std::string,IdWeightPair> StringWeightMap;
- typedef std::tr1::unordered_map<std::string,float> ProbabilityMap;
-#else
- typedef std::unordered_map<std::string,IdWeightPair> StringWeightMap;
- typedef std::unordered_map<std::string,float> ProbabilityMap;
-#endif
+typedef unordered_map<std::string,IdWeightPair> StringWeightMap;
+typedef unordered_map<std::string,float> ProbabilityMap;
 
 #define DEFAULT_SYMBOL "<NONE>"
 #define DEFAULT 1

@@ -13,8 +13,8 @@ FstBuilder::FstBuilder(ImplementationType type,
 {}
 
 HfstTransducer FstBuilder::get_model(void)
-{ 
-  HfstTransducer model(model_fst,type); 
+{
+  HfstTransducer model(model_fst,type);
   model.set_name(name);
   return model;
 }
@@ -24,10 +24,10 @@ void FstBuilder::add_transition
  HfstState target_state,
  const std::string &symbol,
  float weight)
-{ 
+{
   model_fst.add_transition(initial_state,
 			   HfstBasicTransition
-			   (target_state,symbol,symbol,weight)); 
+			   (target_state,symbol,symbol,weight));
 }
 
 void FstBuilder::add_transition
@@ -39,7 +39,7 @@ void FstBuilder::add_transition
 {
   model_fst.add_transition(initial_state,
 			   HfstBasicTransition
-			   (target_state,isymbol,osymbol,weight)); 
+			   (target_state,isymbol,osymbol,weight));
 }
 
 bool FstBuilder::has_target(HfstState s, const std::string &symbol)
@@ -47,9 +47,9 @@ bool FstBuilder::has_target(HfstState s, const std::string &symbol)
   if (s == START_STATE)
     { return start_state_targets.count(symbol) != 0; }
 
-  const HfstBasicTransducer::HfstTransitions &transitions = model_fst[s];
+  const hfst::implementations::HfstBasicTransitions &transitions = model_fst[s];
 
-  for (HfstBasicTransducer::HfstTransitions::const_iterator it = 
+  for (hfst::implementations::HfstBasicTransitions::const_iterator it =
 	 transitions.begin();
        it != transitions.end();
        ++it)
@@ -76,41 +76,41 @@ HfstState FstBuilder::get_target(HfstState s,
 	  new_transition_required = true;
 	}
       else
-	{ 
-	  target = start_state_targets[symbol]; 
+	{
+	  target = start_state_targets[symbol];
 	  new_transition_required = false;
-	} 
+	}
     }
   else
     {
-      const HfstBasicTransducer::HfstTransitions &transitions = model_fst[s];
+      const hfst::implementations::HfstBasicTransitions &transitions = model_fst[s];
 
-      for (HfstBasicTransducer::HfstTransitions::const_iterator it = 
+      for (hfst::implementations::HfstBasicTransitions::const_iterator it =
 	     transitions.begin();
 	   it != transitions.end();
 	   ++it)
 	{
 	  if (it->get_input_symbol() == symbol)
 	    {
-	      target = it->get_target_state();	      
+	      target = it->get_target_state();
 	      break;
 	    }
 	}
 
       if (target == NO_STATE)
-	{ 
-	  target = model_fst.add_state(); 
+	{
+	  target = model_fst.add_state();
 	  new_transition_required = true;
 	}
       else
 	{ new_transition_required = false; }
     }
 
-  model_fst.set_final_weight(target,default_final_weight);  
+  model_fst.set_final_weight(target,default_final_weight);
   return target;
 }
 
-FstBuilder::StringVector 
+FstBuilder::StringVector
 FstBuilder::split_at_tabs(const std::string &str)
 {
   StringVector result;
@@ -124,7 +124,7 @@ FstBuilder::split_at_tabs(const std::string &str)
       end_pos = str.find('\t',beg_pos);
       std::string token = str.substr(beg_pos,end_pos - beg_pos);
       result.push_back(token);
-    } 
+    }
   while (end_pos != std::string::npos);
   
   return result;
@@ -143,7 +143,7 @@ HfstState FstBuilder::add_sequence
     {
       target_state = get_target(initial_state,
 				*it,
-				new_transition_required); 
+				new_transition_required);
       
       if (new_transition_required)
 	{ add_transition(initial_state,target_state,*it,0.0); }

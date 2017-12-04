@@ -13,6 +13,7 @@
 #ifndef _HFST_PROC_APPLICATORS_H_
 #define _HFST_PROC_APPLICATORS_H_
 
+#include "lookup-path.h"
 #include "tokenizer.h"
 #include "transducer.h"
 
@@ -27,7 +28,7 @@ class Applicator
  public:
   Applicator(const ProcTransducer& t, TokenIOStream& ts): transducer(t), token_stream(ts) {}
   virtual ~Applicator() {}
-  
+
   virtual void apply() = 0;
 };
 
@@ -60,14 +61,17 @@ class GenerationApplicator: public Applicator
  private:
   GenerationMode mode;
   CapitalizationMode caps_mode;
-  
+
   /**
    * Split the given token string into a set of token strings to generate with,
    * breaking on + after apertium-style tags.
    */
   std::vector<TokenVector> split(const TokenVector& tokens) const;
-  
+
   bool lookup(const TokenVector& tokens, bool generate_on_fail);
+
+  LookupPathSet preprocess_finals(const LookupPathSet& finals) const ;
+
 
  public:
   GenerationApplicator(const ProcTransducer& t, TokenIOStream& ts,

@@ -207,7 +207,7 @@ for ext in .sfst .ofst .foma; do
 
     ## freely insert aka ignore
     echo "[?] / a" | $TOOLDIR/hfst-regexp2fst ${FFLAG} > tmp1;
-    echo "[a* ? a*]" | $TOOLDIR/hfst-regexp2fst -H ${FFLAG} > tmp2;
+    echo "[a* [?|a] a*]" | $TOOLDIR/hfst-regexp2fst -H ${FFLAG} > tmp2;
     if ! ($TOOLDIR/hfst-compare -H tmp1 tmp2 > /dev/null); then
 	echo "freely insert (aka ignore) test #1" ${FFLAG}
 	exit 1;
@@ -221,7 +221,7 @@ for ext in .sfst .ofst .foma; do
     fi
 
     echo "[?|a] / [a b]" | $TOOLDIR/hfst-regexp2fst ${FFLAG} > tmp1;
-    echo "[[a b]* [?|a] [a b]*]" | $TOOLDIR/hfst-regexp2fst -H ${FFLAG} > tmp2;
+    echo "[[a b]* [?|a|b] [a b]*]" | $TOOLDIR/hfst-regexp2fst -H ${FFLAG} > tmp2;
     if ! ($TOOLDIR/hfst-compare -H tmp1 tmp2 > /dev/null); then
 	echo "freely insert (aka ignore) test #3" ${FFLAG}
 	exit 1;
@@ -298,4 +298,4 @@ for ext in .sfst .ofst .foma; do
 
 done
 
-exit 0;
+rm -f tmp1 tmp2 tmp3 result

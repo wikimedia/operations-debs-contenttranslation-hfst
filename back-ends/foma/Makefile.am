@@ -28,7 +28,7 @@ hfst_foma_LDFLAGS += -ltermcap
 else
 if HAVE_NCURSES
 hfst_foma_LDFLAGS += -lncurses
-else 
+else
 if HAVE_CURSES
 hfst_foma_LDFLAGS += -lcurses
 endif
@@ -41,4 +41,4 @@ hfst_foma_SOURCES=foma.c stack.c iface.c lex.interface.c lex.cmatrix.c
 AM_CPPFLAGS += -DZLIB
 endif
 
-EXTRA_DIST=foma.h fomalibconf.h fomalib.h lexc.h regex.h 
+EXTRA_DIST=foma.h fomalibconf.h fomalib.h lexc.h regex.h

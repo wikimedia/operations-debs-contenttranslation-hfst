@@ -66,7 +66,7 @@ print_usage()
             "  -e, --extension=EXT   Use the extension EXT in "
             "naming output files\n");
     fprintf(message_out, "\n");
-    fprintf(message_out, 
+    fprintf(message_out,
         "If INFILE is omitted or -, stdin is used.\n"
             "If PRE is omitted, no prefix is used.\n"
         "If EXT is omitted, .hfst is used.\n"
@@ -98,12 +98,12 @@ parse_options(int argc, char** argv)
           {"input", required_argument, 0, 'i'},
           {"prefix", required_argument, 0, 'p'},
           {"extension", required_argument, 0, 'e'},
-          // add tool-specific options here 
+          // add tool-specific options here
             {0,0,0,0}
         };
         int option_index = 0;
-        // add tool-specific options here 
-        char c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT "i:p:e:",
+        // add tool-specific options here
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT "i:p:e:",
                              long_options, &option_index);
         if (-1 == c)
         {
@@ -116,7 +116,7 @@ parse_options(int argc, char** argv)
         case 'i':
           inputfilename = hfst_strdup(optarg);
           inputfile = hfst_fopen(inputfilename, "r");
-          if (inputfile == stdin) 
+          if (inputfile == stdin)
             {
               free(inputfilename);
               inputfilename = hfst_strdup("<stdin>");
@@ -155,7 +155,7 @@ process_stream(HfstInputStream& instream)
         sprintf(outfilename, "%s" SIZE_T_SPECIFIER "%s", prefix, transducer_n,
                               extension);
         verbose_printf("Writing " SIZE_T_SPECIFIER " of %s to %s...\n", transducer_n,
-                       inputfilename, outfilename); 
+                       inputfilename, outfilename);
         HfstOutputStream* outstream = new HfstOutputStream(outfilename,
                                                            instream.get_type());
         //outstream->open();
@@ -191,7 +191,7 @@ int main( int argc, char **argv ) {
     {
         fclose(outfile);
     }
-    verbose_printf("Reading from %s, writing to %s...%s\n", 
+    verbose_printf("Reading from %s, writing to %s...%s\n",
         inputfilename, prefix, extension);
     // here starts the buffer handling part
     HfstInputStream* instream = NULL;

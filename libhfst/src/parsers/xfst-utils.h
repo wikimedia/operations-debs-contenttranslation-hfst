@@ -1,16 +1,16 @@
-// Copyright (c) 2016 University of Helsinki                          
-//                                                                    
-// This library is free software; you can redistribute it and/or      
-// modify it under the terms of the GNU Lesser General Public         
-// License as published by the Free Software Foundation; either       
+// Copyright (c) 2016 University of Helsinki
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
 // version 3 of the License, or (at your option) any later version.
-// See the file COPYING included with this distribution for more      
+// See the file COPYING included with this distribution for more
 // information.
 
 //! @file lexc-utils.h
 //!
 //! @brief Various string handling methods for HFST lexc.
-//! 
+//!
 //! @author Tommi A. Pirinen
 
 #ifndef GUARD_lexc_utils_h
@@ -33,10 +33,6 @@ namespace hfst { namespace xfst {
     ssize_t getline(char** line, size_t* n, FILE* f);
 #endif
 
-//! @brief Open file and print XFSTish stuff
-//FILE* xfst_fopen(const char* path, const char* mode);
-//! @brief Close \a file that has \a name.
-// void xfst_fclose(FILE * file, const char * name);
 //! @brief Strips initial and final white space and strdups
 char* strstrip(const char* s);
 
@@ -44,7 +40,7 @@ char* strstrip(const char* s);
 
 //! @brief extracts the variable substring part from token.
 //! Omits constant string prefix, suffix and optionally strips spaces.
-char* strdup_nonconst_part(const char* token, 
+char* strdup_nonconst_part(const char* token,
                            const char* prefix,
                            const char* suffix,
                            bool strip);

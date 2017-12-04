@@ -23,15 +23,7 @@
 
 #include <algorithm>
 
-#ifdef USE_TR1_UNORDERED_MAP
-#include <tr1/unordered_map>
-using std::tr1::unordered_map;
-using std::tr1::unordered_multimap;
-#else
-#include <unordered_map>
-using std::unordered_map;
-using std::unordered_multimap;
-#endif
+#include <fst/unordered_map.h> // Changed HFST
 
 #include <fst/slist.h>
 #include <string>
