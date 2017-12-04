@@ -1,3 +1,13 @@
+hfst (3.13.0~r3461-1+wmf1) jessie-wikimedia; urgency=low
+
+  * New upstream release.
+  * Renamed libhfstNN-dev to plain libhfst-dev
+  * debian/docs change README to README.rst
+  * Updated debian/watch file.
+  * Updated Build-Depends.
+
+ -- Kartik Mistry <kartik@debian.org>  Mon, 04 Dec 2017 16:52:12 +0530
+
 hfst (3.10.0~r2798-1+wmf1) jessie; urgency=low
 
   * Rebuild for Jessie.

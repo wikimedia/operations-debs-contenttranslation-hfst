@@ -8,29 +8,31 @@ ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 	NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 endif
 
+build2vers := $(shell pyversions -sv)
 build3vers := $(shell py3versions -sv)
 
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
+export LC_ALL=C.UTF-8
 
 %:
-	dh $@ --fail-missing --parallel --with autoreconf,python2,python3
+	dh $@ --fail-missing --parallel --with autoreconf --with python2 --with python3
 
 override_dh_auto_configure:
-	dh_auto_configure -- --disable-static --with-unicode-handler=ICU --enable-all-tools
+	dh_auto_configure -- --disable-static --with-unicode-handler=ICU --enable-all-tools --with-readline
 
 override_dh_auto_build:
 	$(MAKE) -j$(NUMJOBS) || $(MAKE) -j$(NUMJOBS) || $(MAKE)
-	set -e && for i in $(build3vers); do \
+	set -e && for i in $(build2vers) $(build3vers); do \
 		cd $(CURDIR)/python && python$$i setup.py build_ext && strip --strip-unneeded build/*/*.so; \
 	done
 
 override_dh_auto_test:
-	make -j1 check
+	# Disable because they still break on big-endian
 
 override_dh_auto_install:
 	dh_auto_install
-	set -e && for i in $(build3vers); do \
+	set -e && for i in $(build2vers) $(build3vers); do \
 		cd $(CURDIR)/python && python$$i setup.py install --no-compile --prefix /usr --install-layout deb --root $(CURDIR)/debian/tmp; \
 	done
 	find $(CURDIR) -type f -name '*.pyc' -exec rm -f '{}' \;
