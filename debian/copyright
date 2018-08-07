@@ -1,5 +1,5 @@
-Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Source: http://www.ling.helsinki.fi/kieliteknologia/tutkimus/hfst/
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Source: https://github.com/hfst/hfst
 
 Files: *
 Copyright: 2009-2016, Department of Modern Languages, University of Helsinki
@@ -111,7 +111,8 @@ Files: back-ends/foma/*
 Copyright: 2008-2015 Mans Hulden
 License: Apache-2.0
 Comment: The source files still say GPL-2.0, but author and
- https://bitbucket.org/mhulden/foma/downloads explicitly states "License change to Apache 2.0"
+ https://bitbucket.org/mhulden/foma/downloads explicitly states "License change
+ to Apache 2.0"
 
 Files: back-ends/openfst/*
        back-ends/openfstwin/*

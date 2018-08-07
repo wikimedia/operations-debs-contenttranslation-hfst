@@ -21,9 +21,9 @@ Build-Depends: autoconf,
                swig,
                zlib1g-dev
 Standards-Version: 4.1.1
-Homepage: http://www.ling.helsinki.fi/kieliteknologia/tutkimus/hfst/
-Vcs-Git: https://anonscm.debian.org/cgit/debian-science/packages/hfst.git
-Vcs-Browser: https://anonscm.debian.org/cgit/debian-science/packages/hfst.git
+Homepage: https://hfst.github.io/
+Vcs-Git: https://salsa.debian.org/science-team/hfst.git
+Vcs-Browser: https://salsa.debian.org/science-team/hfst
 
 Package: hfst
 Architecture: any

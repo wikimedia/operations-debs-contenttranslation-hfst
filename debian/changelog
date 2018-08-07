@@ -1,3 +1,12 @@
+hfst (3.13.0~r3461-1+wmf2) jessie-wikimedia; urgency=low
+
+  * Update Homepage and Debian URLs.
+  * Updated debian/copyright URLs.
+  * debian/rules:
+    + Do not use --parallel in build.
+
+ -- Kartik Mistry <kartik@debian.org>  Mon, 17 Sep 2018 11:34:05 +0530
+
 hfst (3.13.0~r3461-1+wmf1) jessie-wikimedia; urgency=low
 
   * New upstream release.
