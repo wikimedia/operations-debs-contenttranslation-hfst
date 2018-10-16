@@ -2,7 +2,7 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Source: https://github.com/hfst/hfst
 
 Files: *
-Copyright: 2009-2016, Department of Modern Languages, University of Helsinki
+Copyright: 2009-2018, Department of Modern Languages, University of Helsinki
            See AUTHORS for more copyrights.
 License: GPL-3+
 
@@ -25,7 +25,7 @@ License: GPL-3+
 
 Files: libhfst/*
        python/*
-Copyright: 2009-2016, Department of Modern Languages, University of Helsinki
+Copyright: 2009-2018, Department of Modern Languages, University of Helsinki
            See AUTHORS for more copyrights.
 License: LGPL-3+
 
@@ -111,8 +111,7 @@ Files: back-ends/foma/*
 Copyright: 2008-2015 Mans Hulden
 License: Apache-2.0
 Comment: The source files still say GPL-2.0, but author and
- https://bitbucket.org/mhulden/foma/downloads explicitly states "License change
- to Apache 2.0"
+ https://bitbucket.org/mhulden/foma/downloads explicitly states "License change to Apache 2.0"
 
 Files: back-ends/openfst/*
        back-ends/openfstwin/*

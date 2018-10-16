@@ -1,3 +1,9 @@
+hfst (3.15.0-1+wmf1) jessie-wikimedia; urgency=low
+
+  * New upstream release.
+
+ -- Kartik Mistry <kartik@debian.org>  Tue, 16 Oct 2018 08:44:26 +0530
+
 hfst (3.13.0~r3461-1+wmf2) jessie-wikimedia; urgency=low
 
   * Update Homepage and Debian URLs.
