@@ -58,6 +58,8 @@ void print_nonmatching_sequence(std::string const & str, std::ostream & outstrea
     } else if (s.output_format == giellacg) {
         outstream << ":";
         print_escaping_newlines(str, outstream);
+    } else if (s.output_format == visl) {
+        outstream << str;
     } else if (s.output_format == conllu) {
         outstream << str;
     } else if (s.output_format == finnpos) {
@@ -89,20 +91,49 @@ bool location_compare(const Location& lhs, const Location& rhs) {
     else {
         return lhs.weight < rhs.weight;
     }
-};
+}
 
+bool location_compare_ignoring_weights(const Location& lhs, const Location& rhs) {
+    if(lhs.tag == rhs.tag) {
+        if(lhs.start == rhs.start){
+            if(lhs.length == rhs.length) {
+                return lhs.output < rhs.output;
+            }
+            else {
+                return lhs.length < rhs.length;
+            }
+        }
+        else {
+            return lhs.start < rhs.start;
+        }
+    }
+    else {
+        return lhs.tag < rhs.tag;
+    }
+}
 
+bool location_compare_using_only_weights(const Location& lhs, const Location& rhs) {
+    return lhs.weight < rhs.weight;
+}
 
-
-const LocationVector dedupe_locations(LocationVector const & locations, const TokenizeSettings& s) {
+const LocationVector dedupe_locations(LocationVector const & locations, const TokenizeSettings & s) {
     if(!s.dedupe) {
         return locations;
     }
-    std::set<Location, bool(*)(const Location& lhs, const Location& rhs)> ls(&location_compare);
-    ls.insert(locations.begin(), locations.end());
-    LocationVector uniq;
-    std::copy(ls.begin(), ls.end(), std::back_inserter(uniq));
-    return uniq;
+    if(s.print_weights) {
+        std::set<Location, bool(*)(const Location& lhs, const Location& rhs)> ls(&location_compare);
+        ls.insert(locations.begin(), locations.end());
+        LocationVector uniq;
+        std::copy(ls.begin(), ls.end(), std::back_inserter(uniq));
+        return uniq;
+    } else {
+        std::set<Location, bool(*)(const Location& lhs, const Location& rhs)> ls(&location_compare_ignoring_weights);
+        ls.insert(locations.begin(), locations.end());
+        LocationVector uniq;
+        std::copy(ls.begin(), ls.end(), std::back_inserter(uniq));
+        std::sort(uniq.begin(), uniq.end(), location_compare_using_only_weights);
+        return uniq;
+    }
 }
 /**
  * Keep only the max_weight_classes best weight classes
@@ -588,25 +619,38 @@ void print_location_vector(hfst_ol::PmatchContainer & container,
         outstream << std::endl;
     } else if (s.output_format == giellacg && locations.size() != 0) {
         print_location_vector_giellacg(container, locations, outstream, s);
+    } else if (s.output_format == visl && locations.size() != 0) {
+        print_location_vector_giellacg(container, locations, outstream, s);
     } else if (s.output_format == xerox) {
         float best_weight = std::numeric_limits<float>::max();
-        if (s.beam >= 0.0) {
-            for (LocationVector::const_iterator loc_it = locations.begin();
-                 loc_it != locations.end(); ++loc_it) {
-                if (best_weight > loc_it->weight) {
-                    best_weight = loc_it->weight;
-                }
-            }
-        }
         for (LocationVector::const_iterator loc_it = locations.begin();
              loc_it != locations.end(); ++loc_it) {
-            if (s.beam < 0.0 || loc_it->weight <= best_weight + s.beam) {
+            if (best_weight > loc_it->weight) {
+                best_weight = loc_it->weight;
+            }
+        }
+        bool printed_something = false;
+        for (LocationVector::const_iterator loc_it = locations.begin();
+             loc_it != locations.end(); ++loc_it) {
+            if ((s.beam < 0.0 || loc_it->weight <= best_weight + s.beam) &&
+                // We don't print "plain" tokens without any analysis
+                // except if they are the only one present
+                (loc_it->output.compare(loc_it->input) != 0 ||
+                 (loc_it + 1 == locations.end() && !printed_something))) {
                 outstream << loc_it->input << "\t" << loc_it->output;
                 if (s.print_weights) {
-                    outstream << "\t" << loc_it->weight;
+                    if (loc_it + 1 == locations.end() && !printed_something) {
+                        outstream << "\t" << best_weight;
+                    } else {
+                        outstream << "\t" << loc_it->weight;
+                    }
                 }
                 outstream << std::endl;
+                printed_something = true;
             }
+        }
+        if (locations.at(0).tag == "<Boundary=Sentence>") {
+            outstream << std::endl;
         }
         outstream << std::endl;
     } else if (s.output_format == conllu) {
@@ -696,6 +740,7 @@ void match_and_print(hfst_ol::PmatchContainer & container,
     LocationVectorVector locations = container.locate(input_text, s.time_cutoff);
     if (locations.size() == 0 && s.print_all) {
         print_no_output(input_text, outstream, s);
+        return;
     }
     int token_number = 1;
     for(LocationVectorVector::const_iterator it = locations.begin();
@@ -714,7 +759,7 @@ void match_and_print(hfst_ol::PmatchContainer & container,
                               s);
         ++token_number;
     }
-    if (s.output_format == finnpos) {
+    if (s.output_format == finnpos || s.output_format == tokenize || s.output_format == xerox) {
         outstream << std::endl;
     }
 }
@@ -725,7 +770,7 @@ void process_input(hfst_ol::PmatchContainer & container,
                    const TokenizeSettings& s)
 {
     container.set_single_codepoint_tokenization(!s.tokenize_multichar);
-    size_t bufsize = 4096;
+    const size_t bufsize = 4096;
     for(char line[bufsize]; instream.getline(line, bufsize); ) {
         string input_text(line);
         if(!input_text.empty()) {

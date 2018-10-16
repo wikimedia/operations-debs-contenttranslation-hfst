@@ -10,9 +10,17 @@ hfst::HfstTransducer * hfst_compile_sfst(const std::string & filename, const std
   (void)error_stream;
   (void)output_to_console;
 
-  FILE * inputfile = fopen(filename.c_str(), "rb");
-  if (inputfile == NULL)
-    return NULL;
+  FILE * inputfile;
+  if (filename == "")
+    {
+      inputfile = stdin;
+    }
+  else
+    {
+      inputfile = fopen(filename.c_str(), "rb");
+      if (inputfile == NULL)
+	return NULL;
+    }
 
   bool unknown_in_use = hfst::get_unknown_symbols_in_use();
   hfst::set_unknown_symbols_in_use(false);
@@ -25,7 +33,10 @@ hfst::HfstTransducer * hfst_compile_sfst(const std::string & filename, const std
     {
       compiler->parse();
       hfst::set_unknown_symbols_in_use(unknown_in_use);
-      fclose(inputfile);
+      if (filename != "")
+	{
+	  fclose(inputfile);
+	}
       return compiler->get_result();
     } 
   catch (HfstException e)

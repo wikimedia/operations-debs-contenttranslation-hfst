@@ -1263,7 +1263,7 @@ void lookup_fd_and_print(HfstBasicTransducer * tr, HfstTransducer * TR, HfstOneL
         {
           tr->lookup(s.second, results_spv, limit,
                      NULL /*no weight limit, variable 'beam' defines which paths are printed */,
-                     obey_flags);
+		     -1, obey_flags);
         }
     }
   else

@@ -10,7 +10,6 @@ assert os.path.isfile('streets.txt')
 # pmatch transducers are always in ol format, so this has actually no effect...
 for type in [hfst.ImplementationType.SFST_TYPE, hfst.ImplementationType.TROPICAL_OPENFST_TYPE, hfst.ImplementationType.FOMA_TYPE]:
     if hfst.HfstTransducer.is_implementation_type_available(type):
-        print(hfst.fst_type_to_string(type))
         hfst.set_default_fst_type(type)
 
         # (1) compile the file directly
@@ -35,7 +34,49 @@ for type in [hfst.ImplementationType.SFST_TYPE, hfst.ImplementationType.TROPICAL
         except IOError as e:
             pass
 
-        # (4) try to compile meaningless and invalid expressions
+        # (5) use PmatchContainer.locate
+        locations = cont.locate("Je marche seul dans l'avenue des Ternes.")
+        assert len(locations) == 3
+        assert locations[0][0].input == "Je marche seul dans l'"
+        assert locations[0][0].output == "@_NONMATCHING_@"
+        assert locations[1][0].input == "avenue des Ternes"
+        assert locations[1][0].output == "avenue des Ternes"
+        assert locations[2][0].input == "."
+        assert locations[2][0].output == "@_NONMATCHING_@"
+
+        # (6) use PmatchContainer.tokenize
+        tokenization = cont.get_tokenized_output("Je marche seul dans l'avenue des Ternes.")
+        assert tokenization.rstrip() == "avenue des Ternes"
+        tokenization = cont.tokenize("Je marche seul dans l'avenue des Ternes.")
+        assert tokenization == ["avenue des Ternes"]
+
+        # (7) Test Finnish tokenizer
+        if os.path.isfile('finnish-tokenizer.hfstol'):
+            #istr = hfst.HfstInputStream('finnish-tokenizer.hfstol')
+            #defs = istr.read_all()
+            #istr.close()
+            #cont = hfst.PmatchContainer(defs)
+            cont = hfst.PmatchContainer('finnish-tokenizer.hfstol')
+            locations = cont.locate("Tässä on sanoja!")
+            assert len(locations) == 6
+            assert locations[0][0].input == "Tässä"
+            assert locations[1][0].input == " "
+            assert locations[2][0].input == "on"
+            assert locations[3][0].input == " "
+            assert locations[4][0].input == "sanoja"
+            assert locations[5][0].input == "!"
+
+            assert cont.match("Tässä on sanoja!") == "tämä Pron Dem Ine Sg olla V Prs Act Sg3 sana N Par Pl!"
+
+            tokenization = cont.get_tokenized_output("Tässä on sanoja!")
+            assert tokenization.rstrip() == "Tässä\non\nsanoja\n!"
+
+            # stress test (tested also with 100 000)
+            for i in range(10000):
+                tokenization = cont.tokenize("Tässä on sanoja!")
+            assert tokenization == ["Tässä", "on", "sanoja", "!"]
+
+        # (8) try to compile meaningless and invalid expressions
         # skip these tests, it seems that PmatchCompiler should be reseted after
         # compilation that fails...
         continue

@@ -1,0 +1,63 @@
+! This is intended to be a language-independent "good enough" tokenizer.
+! It is preserving, ie. it should output everything except whitespace.
+
+set need-separators off
+
+define word Alpha+;
+! We use directed unicode quotation marks in both directions because people
+! don't use them correctly in the wild
+define punct_trailing_or_preceding "\"" | "'" | "’" | "”" | "“" | "„" | "″"; 
+define punct_trailing punct_trailing_or_preceding | "," | ")" | "]" | "}" | "–" | ":" | ";" | "»" | ">" ;
+define punct_preceding punct_trailing_or_preceding | "<" | "(" | "[" | "{" | "-" | "–" | "»" | ">" ;
+
+define punct_sentbound "." | "?" | "!";
+define dash "-" | "–";
+define hyphen "-" | "‐";
+define minus "-" | "−";
+define em_dash "—";
+define boundary Whitespace+ | .#. ;
+
+define date Num (Num) "." Num (Num) "." (Num^{1,4});
+define time Num Num ":" Num Num;
+define date_with_time date " " time;
+define numerical_expr (minus) [[Num+] | [Num^{1,3} [(","|"."|" ") Num^3]*]] (["."|","] Num+);
+define scientific_num (minus) [Num+] (["." | ","] Num+) ("e" Num+);
+define numerical_ord Num+ "." NRC(boundary UppercaseAlpha);
+define numerical_range numerical_expr [(" ") dash (" ")] numerical_expr;
+define date_range [ date | [ Num Num "." ] ] (" ") dash (" ") date;
+define percentage_maybe_change (["+" | minus]) numerical_expr ("%");
+define inch_sign {"} | {”};
+define numerical [numerical_expr (inch_sign)] | numerical_range | percentage_maybe_change | numerical_ord | scientific_num;
+define url (({http}) ("s") {://}) ({www.}) [[Alpha | Num]+ (".")]+ "." [Alpha]^{1,10} (":" Num+) ("/" [\Whitespace]+);
+define email [\Whitespace]+ "@" [\Whitespace]+ "." Alpha+;
+define xml_tag "<" ("/") [\[">"|"\n"]]+ ">";
+define typographic_paragraph_separator "*"+ | "-"+ | "=+";
+define any_nonwhitespace_utf8_char ? - Whitespace;
+define internal_punct "'" | "’" | "-" | "." | "*"+;
+define unknown_word_char [\[Whitespace | Punct | em_dash | punct_trailing]];
+define unknown_token [unknown_word_char+ (internal_punct unknown_word_char+)]+ ;
+
+define trailing_punct NLC(boundary) punct_trailing RC(boundary);
+define preceding_punct LC(boundary) punct_preceding NRC(boundary);
+define sentbound NLC(boundary) punct_sentbound+ RC(boundary);
+define punct_between NLC(boundary) [punct_trailing | punct_preceding] NRC(boundary);
+
+define TOP
+  [ LC(boundary) word RC(boundary) ] |
+  [ LC(boundary) word RC([punct_trailing | punct_sentbound]) ] |
+  [ LC(punct_preceding) word RC(boundary) ] |
+  [ LC(punct_preceding) word RC([punct_trailing | punct_sentbound]) ] |
+  [ trailing_punct ] |
+  [ preceding_punct ] |
+  [ xml_tag ] |
+  ! This will insert a newline in the token stream
+  [ sentbound EndTag("Boundary=Sentence")]::100 |
+  [ punct_between ] |
+  [date | date_range | date_with_time | time | numerical] |
+  [("<") url (">") ] | email |
+  ! Unknown token
+  [ define( LC([boundary | Punct]) unknown_token RC([boundary | Punct]) ) ]::500 |
+  [ Punct ]::700 |
+  [ typographic_paragraph_separator ]::800 |
+  [ any_nonwhitespace_utf8_char+ ]::900
+;

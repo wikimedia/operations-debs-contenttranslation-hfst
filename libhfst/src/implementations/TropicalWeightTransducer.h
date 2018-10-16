@@ -266,6 +266,9 @@ namespace implementations
       static void get_first_input_symbols
         (StdVectorFst *t, StateId s, std::set<StateId> & visited_states, StringSet & symbols);
       static StringSet get_first_input_symbols(StdVectorFst *t);
+      static void get_initial_input_symbols
+        (StdVectorFst *t, StateId s, std::set<StateId> & visited_states, StringSet & symbols);
+      static StringSet get_initial_input_symbols(StdVectorFst *t);
       static unsigned int get_symbol_number(StdVectorFst *t,
                         const std::string &symbol);
       static unsigned int get_biggest_symbol_number(StdVectorFst *t);

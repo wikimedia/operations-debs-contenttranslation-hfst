@@ -124,7 +124,7 @@ AM_CPPFLAGS=-I${top_srcdir}/libhfst/src/parsers -I${top_srcdir}/libhfst/src \
 		-Wno-deprecated
 
 if WANT_MINGW
-  AM_CPPFLAGS+= -I${top_srcdir}/back-ends/dlfcn -DWINDOWS
+  AM_CPPFLAGS += -I${top_srcdir}/back-ends/dlfcn -DWINDOWS
 endif
 
 # headers of parsers

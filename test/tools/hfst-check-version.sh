@@ -1,4 +1,8 @@
 #!/bin/sh
+if [ "$1" = "--python" ]; then
+    exit 77
+fi
+
 TOOLDIR=../../tools/src
 
 HFST_TOOLS="hfst-affix-guessify hfst-calculate hfst-compare hfst-compose \

@@ -1,0 +1,9 @@
+This archive contains the OmorFi lexical transducer for Finnish. The file
+
+	finnish-analysis.hfst
+
+contains a weighted, analysing transducer.
+
+Source code and documentation for OmorFi are available at https://github.com/flammie/omorfi
+
+For usage as an analyzing tool, see hfst-finnish-installable/README.

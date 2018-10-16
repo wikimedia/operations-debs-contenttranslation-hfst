@@ -90,11 +90,13 @@ static var_val count_patterns = not_defined;
 static var_val delete_patterns = not_defined;
 static var_val extract_patterns = not_defined;
 static var_val locate_mode = not_defined;
+static var_val print_weights = not_defined;
 static var_val mark_patterns = not_defined;
 static int max_recursion = -1;
 static int max_context = -1;
 
 static double time_cutoff = 0.0;
+static hfst_ol::Weight weight_cutoff = hfst_ol::INFINITE_WEIGHT;
 static bool profile = false;
 
 void
@@ -110,11 +112,13 @@ print_usage()
             "  -n  --newline           Newline as input separator (default is blank line)\n"
             "  -x  --extract-patterns  Only print tagged parts in output\n"
             "  -l  --locate            Only print locations of matches\n"
+            "  -w  --print-weights     In locate mode, include weights of the matches\n"
             "  -c  --count-patterns    Print the total number of matches when done\n"
             "      --delete-patterns   Replace matches with opening tags\n"
             "      --no-mark-patterns  Don't tag matched patterns\n"
             "      --max-context       Upper limit to context length allowed\n"
             "      --max-recursion     Upper limit for recursion\n"
+            "      --weight-cutoff=W   Upper limit for allowed weight\n"
             "  -t, --time-cutoff=S     Limit search after having used S seconds per input\n"
             "  -p  --profile           Produce profiling data\n");
     fprintf(message_out,
@@ -138,16 +142,16 @@ void match_and_print(hfst_ol::PmatchContainer & container,
     }
     if (!container.is_in_locate_mode()) {
 #ifndef _MSC_VER
-        outstream << container.match(input_text, time_cutoff);
+        outstream << container.match(input_text, time_cutoff, weight_cutoff);
 #else
-        hfst::hfst_fprintf_console(stdout, "%s", container.match(input_text, time_cutoff).c_str());
+        hfst::hfst_fprintf_console(stdout, "%s", container.match(input_text, time_cutoff, weight_cutoff).c_str());
 #endif
         outstream << std::endl;
         if (blankline_separated) {
             outstream << std::endl;
         }
     } else {
-        hfst_ol::LocationVectorVector locations = container.locate(input_text, time_cutoff);
+        hfst_ol::LocationVectorVector locations = container.locate(input_text, time_cutoff, weight_cutoff);
         bool printed_something = false;
         for(hfst_ol::LocationVectorVector::const_iterator it = locations.begin();
             it != locations.end(); ++it) {
@@ -155,9 +159,17 @@ void match_and_print(hfst_ol::PmatchContainer & container,
                 printed_something = true;
 #ifndef _MSC_VER
                 outstream << it->at(0).start << "|" << it->at(0).length << "|"
-                          << it->at(0).output << "|" << it->at(0).tag << std::endl;
+                          << it->at(0).output << "|" << it->at(0).tag;
+                if (print_weights) {
+                    outstream << "|" << it->at(0).weight;
+                }
+                outstream << std::endl;
 #else
-              hfst::hfst_fprintf_console(stdout, "%i|%i|%s|%s\n", it->at(0).start, it->at(0).length, it->at(0).output.c_str(), it->at(0).tag.c_str());
+                if (print_weights){
+                    hfst::hfst_fprintf_console(stdout, "%i|%i|%s|%s|%f\n", it->at(0).start, it->at(0).length, it->at(0).output.c_str(), it->at(0).tag.c_str(), it->at(0).weight);
+                } else {
+                    hfst::hfst_fprintf_console(stdout, "%i|%i|%s|%s\n", it->at(0).start, it->at(0).length, it->at(0).output.c_str(), it->at(0).tag.c_str());
+                }
 #endif
             }
         }
@@ -263,17 +275,19 @@ int parse_options(int argc, char** argv)
                 {"newline", no_argument, 0, 'n'},
                 {"extract-patterns", no_argument, 0, 'x'},
                 {"locate", no_argument, 0, 'l'},
+                {"print-weights", no_argument, 0, 'w'},
                 {"count-patterns", no_argument, 0, 'c'},
                 {"delete-patterns", no_argument, 0, 'z'},
                 {"no-mark-patterns", no_argument, 0, 'm'},
                 {"max-context", required_argument, 0, 'b'},
                 {"max-recursion", required_argument, 0, 'r'},
+                {"weight-cutoff", required_argument, 0, 'W'},
                 {"time-cutoff", required_argument, 0, 't'},
                 {"profile", no_argument, 0, 'p'},
                 {0,0,0,0}
             };
         int option_index = 0;
-        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT HFST_GETOPT_UNARY_SHORT "nxlcdmq:r:t:p",
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT HFST_GETOPT_UNARY_SHORT "nxlwcdmb:r:W:t:p",
                             long_options, &option_index);
         if (-1 == c)
         {
@@ -293,6 +307,9 @@ int parse_options(int argc, char** argv)
             break;
         case 'l':
             locate_mode = on;
+            break;
+        case 'w':
+            print_weights = on;
             break;
         case 'c':
             count_patterns = on;
@@ -319,6 +336,13 @@ int parse_options(int argc, char** argv)
                 return EXIT_FAILURE;
             }
             break;
+        case 'W':
+            weight_cutoff = atof(optarg);
+            if (weight_cutoff < 0.0)
+            {
+                std::cerr << "Invalid argument for --weight-cutoff\n";
+                return EXIT_FAILURE;
+            }
         case 't':
             time_cutoff = atof(optarg);
             if (time_cutoff < 0.0)

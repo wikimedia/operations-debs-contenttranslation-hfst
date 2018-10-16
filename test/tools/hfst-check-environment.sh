@@ -1,4 +1,8 @@
 #!/bin/bash
+if [ "$1" = "--python" ]; then
+    exit 77
+fi
+
 TOOLDIR=../../tools/src
 old_opts="$HFST_OPTIONS"
 export HFST_OPTIONS="--version"

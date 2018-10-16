@@ -41,7 +41,7 @@ endif
 endif
 
 if WANT_FOMA
-  libhfst_la_LIBADD +=$(top_builddir)/back-ends/foma/libfoma.la
+  libhfst_la_LIBADD += $(top_builddir)/back-ends/foma/libfoma.la
 endif
 
 if WANT_MINGW
@@ -104,7 +104,7 @@ HFST_HDRS = \
 
 hfstinclude_HEADERS = $(HFST_HDRS)
 
-libhfst_la_LDFLAGS = -no-undefined -version-info 50:0:0
+libhfst_la_LDFLAGS = -no-undefined -version-info 52:0:0
 
 LIBHFST_TSTS=HfstApply HfstInputStream HfstTransducer \
 		HfstOutputStream HfstXeroxRules HfstRules HfstSymbolDefs \

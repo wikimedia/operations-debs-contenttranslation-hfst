@@ -1,0 +1,7 @@
+The tools are based on Morphisto, a morphological analyzer and generator
+for German wordforms.
+
+The basis of Morphisto is the open-source SMOR morphology for the German
+language developed by the University of Stuttgart (GPL v2) for which a free
+lexicon is provided under the Creative Commons 3.0 BY-SA Non-Commercial
+license.

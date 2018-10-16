@@ -4,15 +4,21 @@ language: cpp
 sudo: required
 dist: trusty
 
-cache: ccache
+os:
+  - linux
+  - osx
+
+cache:
+    - ccache
+    - $HOME/Library/Caches/Homebrew
 
 before_install:
     - echo "$TRAVIS_OS_NAME"
     - if [[ "$TRAVIS_OS_NAME" = "linux" ]];then wget http://apertium.projectjj.com/apt/install-nightly.sh -O - | sudo bash; fi
     - if [[ "$TRAVIS_OS_NAME" = "linux" ]];then sudo apt-get install -y autopoint dh-autoreconf libpython3-all-dev libreadline-dev libreadline6-dev python3-all python3-all-dev swig swig2.0; fi
     - if [[ "$TRAVIS_OS_NAME" = "osx" ]];then wget http://apertium.projectjj.com/osx/install-nightly.sh -O - | sudo bash; fi
-    - if [[ "$TRAVIS_OS_NAME" = "osx" ]];then sudo brew update; fi
-    - if [[ "$TRAVIS_OS_NAME" = "osx" ]];then sudo brew install bison flex; fi
+    - if [[ "$TRAVIS_OS_NAME" = "osx" ]];then brew update; fi
+    - if [[ "$TRAVIS_OS_NAME" = "osx" ]];then brew install bison flex; fi
     - if [[ "$TRAVIS_OS_NAME" = "osx" ]];then export "PATH=/usr/local/opt/bison/bin:$PATH"; fi
 
 # TODO: "apt-get build-dep hfst" fails with "Unable to find a source package for hfst";
@@ -25,7 +31,7 @@ script:
     - echo "${CCACHE_ARGS[@]:-}"
     - ./configure --enable-xfst --enable-proc --without-foma --enable-lexc --enable-all-tools --enable-silent-rules "${CCACHE_ARGS[@]:-}"
     - if [[ $CXX = g++ ]]; then make -j2; else make -j; fi
-    - make check
+    - make check VERBOSE=1
 
 # g++ with -j runs out of memory on travis, thus -j2
 

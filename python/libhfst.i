@@ -21,8 +21,6 @@
 %include "std_map.i"
 %include "exception.i"
 
-// %feature("autodoc", "3");
-
 // We want warnings to be printed to standard error.
 %init %{
     hfst::set_warning_stream(&std::cerr);
@@ -46,8 +44,10 @@
 #include "implementations/HfstBasicTransition.h"
 #include "implementations/HfstBasicTransducer.h"
 #include "implementations/optimized-lookup/pmatch.h"
+#include "implementations/optimized-lookup/pmatch_tokenize.h"
 #include "parsers/TwolcCompiler.h"
 namespace hfst { typedef std::vector<hfst::xeroxRules::Rule> HfstRuleVector; }
+namespace hfst { typedef std::pair<hfst::HfstTransducer*,unsigned int> HfstTransducerUIntPair; }
 
 // Most of C++ extension code is located in separate files.
 #include "hfst_regex_extensions.cpp"
@@ -55,6 +55,7 @@ namespace hfst { typedef std::vector<hfst::xeroxRules::Rule> HfstRuleVector; }
 #include "hfst_lexc_extensions.cpp"
 #include "hfst_xfst_extensions.cpp"
 #include "hfst_pmatch_extensions.cpp"
+#include "hfst_pmatch_tokenize_extensions.cpp"
 #include "hfst_sfst_extensions.cpp"
 #include "hfst_lookup_extensions.cpp"
 #include "hfst_rules_extensions.cpp"
@@ -94,6 +95,9 @@ namespace std {
 %template(HfstTransducerPair) pair<hfst::HfstTransducer, hfst::HfstTransducer>;
 %template(HfstTransducerPairVector) vector<pair<hfst::HfstTransducer, hfst::HfstTransducer> >;
 %template(HfstRuleVector) vector<hfst::xeroxRules::Rule>;
+%template(HfstTransducerUIntPair) pair<hfst::HfstTransducer*,unsigned int>;
+%template(LocationVector) vector<hfst_ol::Location>;
+%template(LocationVectorVector) vector<vector<hfst_ol::Location> >;
 }
 
 
@@ -143,6 +147,32 @@ class SymbolNotFoundException : public HfstException { public: SymbolNotFoundExc
 class MetadataException : public HfstException { public: MetadataException(const std::string&, const std::string&, size_t); ~MetadataException(); std::string what() const; };
 class FlagDiacriticsAreNotIdentitiesException : public HfstException { public: FlagDiacriticsAreNotIdentitiesException(const std::string&, const std::string&, size_t); ~FlagDiacriticsAreNotIdentitiesException(); std::string what() const; };
 
+
+namespace hfst_ol
+{
+
+  struct Location
+  {
+    unsigned int start;
+    unsigned int length;
+    std::string input;
+    std::string output;
+    std::string tag;
+    float weight;
+    std::vector<size_t> input_parts; // indices in input_symbol_strings
+    std::vector<size_t> output_parts; // indices in output_symbol_strings
+    std::vector<std::string> input_symbol_strings;
+    std::vector<std::string> output_symbol_strings;
+
+    //bool operator<(Location rhs) const
+    //{ return this->weight < rhs.weight; }
+  };
+
+  typedef std::vector<hfst_ol::Location> LocationVector;
+  typedef std::vector<std::vector<hfst_ol::Location> > LocationVectorVector;
+
+}
+
 namespace hfst
 {
 
@@ -164,6 +194,7 @@ typedef std::vector<hfst::HfstTransducer> HfstTransducerVector;
 typedef std::pair<hfst::HfstTransducer, hfst::HfstTransducer> HfstTransducerPair;
 typedef std::vector<std::pair<hfst::HfstTransducer, hfst::HfstTransducer> > HfstTransducerPairVector;
 typedef std::vector<hfst::xeroxRules::Rule> HfstRuleVector;
+typedef std::pair<hfst::HfstTransducer*,unsigned int> HfstTransducerUIntPair;
 
 // *** Some enumerations *** //
 
@@ -434,19 +465,19 @@ public:
       return results;
     }
 
-    HfstOneLevelPaths _lookup_vector(const StringVector& s, int limit = -1, double time_cutoff = 0.0) const throw(FunctionNotImplementedException)
+    HfstOneLevelPaths _lookup_vector(const StringVector& s, int limit = -1, double time_cutoff = 0.0) const throw(TransducerIsCyclicException, FunctionNotImplementedException)
     {
       return hfst::lookup_vector($self, false /*fd*/, s, limit, time_cutoff);
     }
-    HfstOneLevelPaths _lookup_fd_vector(const StringVector& s, int limit = -1, double time_cutoff = 0.0) const throw(FunctionNotImplementedException)
+    HfstOneLevelPaths _lookup_fd_vector(const StringVector& s, int limit = -1, double time_cutoff = 0.0) const throw(TransducerIsCyclicException, FunctionNotImplementedException)
     {
       return hfst::lookup_vector($self, true /*fd*/, s, limit, time_cutoff);
     }
-    HfstOneLevelPaths _lookup_fd_string(const std::string& s, int limit = -1, double time_cutoff = 0.0) const throw(FunctionNotImplementedException)
+    HfstOneLevelPaths _lookup_fd_string(const std::string& s, int limit = -1, double time_cutoff = 0.0) const throw(TransducerIsCyclicException, FunctionNotImplementedException)
     {
       return hfst::lookup_string($self, true /*fd*/, s, limit, time_cutoff);
     }
-    HfstOneLevelPaths _lookup_string(const std::string & s, int limit = -1, double time_cutoff = 0.0) const throw(FunctionNotImplementedException)
+    HfstOneLevelPaths _lookup_string(const std::string & s, int limit = -1, double time_cutoff = 0.0) const throw(TransducerIsCyclicException, FunctionNotImplementedException)
     {
       return hfst::lookup_string($self, false /*fd*/, s, limit, time_cutoff);
     }
@@ -527,7 +558,7 @@ public:
       attstr = fsm.get_att_string(write_weights)
       f.write(attstr)
 
-  def lookup(self, input, **kvargs):
+  def lookup(self, input, **kwargs):
       """
       Lookup string *input*.
 
@@ -535,7 +566,7 @@ public:
       ----------
       * `input` :
           The input. A string or a pre-tokenized tuple of symbols (i.e. a tuple of strings).
-      * `kvargs` :
+      * `kwargs` :
           Possible parameters and their default values are: obey_flags=True,
           max_number=-1, time_cutoff=0.0, output='tuple'
       * `obey_flags` :
@@ -560,15 +591,15 @@ public:
       time_cutoff=0.0
       output='tuple' # 'tuple' (default), 'text', 'raw'
 
-      for k,v in kvargs.items():
+      for k,v in kwargs.items():
           if k == 'obey_flags':
-             if v == 'True':
+             if v == True:
                 pass
-             elif v == 'False':
+             elif v == False:
                 obey_flags=False
              else:
                 print('Warning: ignoring argument %s as it has value %s.' % (k, v))
-                print("Possible values are 'True' and 'False'.")
+                print("Possible values are True and False.")
           elif k == 'output':
              if v == 'text':
                 output='text'
@@ -614,13 +645,13 @@ public:
       else:
          return retval
 
-  def extract_longest_paths(self, **kvargs):
+  def extract_longest_paths(self, **kwargs):
       """
       Extract longest paths of the transducer.
 
       Parameters
       ----------
-      * `kvargs` :
+      * `kwargs` :
           Possible parameters and their default values are: obey_flags=True,
           output='dict'
       * `obey_flags` :
@@ -632,15 +663,15 @@ public:
       obey_flags=True
       output='dict' # 'dict' (default), 'text', 'raw'
 
-      for k,v in kvargs.items():
+      for k,v in kwargs.items():
           if k == 'obey_flags':
-             if v == 'True':
+             if v == True:
                 pass
-             elif v == 'False':
+             elif v == False:
                 obey_flags=False
              else:
                 print('Warning: ignoring argument %s as it has value %s.' % (k, v))
-                print("Possible values are 'True' and 'False'.")
+                print("Possible values are True and False.")
           elif k == 'output':
              if v == 'text':
                 output == 'text'
@@ -663,13 +694,13 @@ public:
       else:
          return retval
 
-  def extract_shortest_paths(self, **kvargs):
+  def extract_shortest_paths(self, **kwargs):
       """
       Extract shortest paths of the transducer.
 
       Parameters
       ----------
-      * `kvargs` :
+      * `kwargs` :
           Possible parameters and their default values are: obey_flags=True.
       * `output` :
           Possible values are 'dict', 'text' and 'raw', 'dict' being the default.
@@ -677,7 +708,7 @@ public:
       """
       output='dict' # 'dict' (default), 'text', 'raw'
 
-      for k,v in kvargs.items():
+      for k,v in kwargs.items():
           if k == 'output':
              if v == 'text':
                 output == 'text'
@@ -700,14 +731,14 @@ public:
       else:
          return retval
 
-  def extract_paths(self, **kvargs):
+  def extract_paths(self, **kwargs):
       """
 
       Extract paths that are recognized by the transducer.
 
       Parameters
       ----------
-      * `kvargs` :
+      * `kwargs` :
           Arguments recognized are filter_flags, max_cycles, max_number, obey_flags,
           output, random.
       * `filter_flags` :
@@ -781,35 +812,35 @@ public:
       random=False
       output='dict' # 'dict' (default), 'text', 'raw'
 
-      for k,v in kvargs.items():
+      for k,v in kwargs.items():
           if k == 'obey_flags' :
-             if v == 'True':
+             if v == True:
                 pass
-             elif v == 'False':
+             elif v == False:
                 obey_flags=False
              else:
                 print('Warning: ignoring argument %s as it has value %s.' % (k, v))
-                print("Possible values are 'True' and 'False'.")
+                print("Possible values are True and False.")
           elif k == 'filter_flags' :
-             if v == 'True':
+             if v == True:
                 pass
-             elif v == 'False':
+             elif v == False:
                 filter_flags=False
              else:
                 print('Warning: ignoring argument %s as it has value %s.' % (k, v))
-                print("Possible values are 'True' and 'False'.")
+                print("Possible values are True and False.")
           elif k == 'max_cycles' :
              max_cycles=v
           elif k == 'max_number' :
              max_number=v
           elif k == 'random' :
-             if v == 'False':
+             if v == False:
                 pass
-             elif v == 'True':
+             elif v == True:
                 random=True
              else:
                 print('Warning: ignoring argument %s as it has value %s.' % (k, v))
-                print("Possible values are 'True' and 'False'.")
+                print("Possible values are True and False.")
           elif k == 'output':
              if v == 'text':
                 output = 'text'
@@ -843,7 +874,7 @@ public:
       else:
          return retval
 
-  def substitute(self, s, S=None, **kvargs):
+  def substitute(self, s, S=None, **kwargs):
       """
       Substitute symbols or transitions in the transducer.
 
@@ -855,7 +886,7 @@ public:
       * `S` :
           The symbol, transition, a tuple of transitions or a transducer
           (hfst.HfstTransducer) that substitutes *s*.
-      * `kvargs` :
+      * `kwargs` :
           Arguments recognized are 'input' and 'output', their values can be False or
           True, True being the default. These arguments are valid only if *s* and *S*
           are strings, else they are ignored.
@@ -905,7 +936,7 @@ public:
          if _is_string(S):
             input=True
             output=True
-            for k,v in kvargs.items():
+            for k,v in kwargs.items():
                 if k == 'input':
                    if v == False:
                       input=False
@@ -945,22 +976,40 @@ public:
 ~HfstOutputStream(void);
 HfstOutputStream &flush();
 void close(void);
+hfst::HfstOutputStream & redirect(hfst::HfstTransducer &) throw(StreamIsClosedException);
 
 %extend {
 
-void write(hfst::HfstTransducer transducer) throw(StreamIsClosedException) { $self->redirect(transducer); }
 HfstOutputStream() { return new hfst::HfstOutputStream(hfst::get_default_fst_type()); }
 
 %pythoncode %{
 
-def __init__(self, **kvargs):
+def write(self, tr):
+    """
+    Write one or more transducers to stream.
+
+    Parameters
+    ----------
+    * `tr` :
+        An HfstTransducer or an iterable object of several HfstTransducers.
+    """
+    if isinstance(tr, HfstTransducer):
+        self.redirect(tr)
+    else:
+        for t in tr:
+            if isinstance(t, HfstTransducer):
+                self.redirect(t)
+            else:
+                raise RuntimeError('Cannot write objects that are not instances of HfstTransducer')
+
+def __init__(self, **kwargs):
     """
     Open a stream for writing binary transducers. Note: hfst.HfstTransducer.write_to_file
     is probably the easiest way to write a single binary transducer to a file.
 
     Parameters
     ----------
-    * `kvargs` :
+    * `kwargs` :
         Arguments recognized are filename, hfst_format, type.
     * `filename` :
         The name of the file where transducers are written. If the file exists, it
@@ -995,17 +1044,17 @@ def __init__(self, **kvargs):
     filename = ""
     hfst_format = True
     type = _libhfst.get_default_fst_type()
-    for k,v in kvargs.items():
+    for k,v in kwargs.items():
         if k == 'filename':
-           filename = v
+            filename = v
         if k == 'hfst_format':
-           hfst_format = v
+            hfst_format = v
         if k == 'type':
-           type = v
+            type = v
     if filename == "":
-       self.this = _libhfst.create_hfst_output_stream("", type, hfst_format)
+        self.this = _libhfst.create_hfst_output_stream("", type, hfst_format)
     else:
-       self.this = _libhfst.create_hfst_output_stream(filename, type, hfst_format)
+        self.this = _libhfst.create_hfst_output_stream(filename, type, hfst_format)
 %}
 
 }
@@ -1031,6 +1080,15 @@ public:
 hfst::HfstTransducer * read() throw (EndOfStreamException) { return new hfst::HfstTransducer(*($self)); }
 
 %pythoncode %{
+
+def read_all(self):
+    """
+    Read all transducers from stream and return them in a list.
+    """
+    retval = []
+    while(not self.is_eof()):
+        retval.append(self.read())
+    return retval
 
 def __iter__(self):
     """
@@ -1104,6 +1162,8 @@ class HfstBasicTransducer {
     std::set<std::string> symbols_used();
     void prune_alphabet(bool force=true);
     const std::set<std::string> &get_alphabet() const;
+    StringSet get_input_symbols() const;
+    StringSet get_output_symbols() const;
     StringPairSet get_transition_pairs() const;
     HfstState add_state(void);
     HfstState add_state(HfstState s);
@@ -1135,10 +1195,10 @@ class HfstBasicTransducer {
     void disjunct(const StringPairVector &spv, float weight) { self->disjunct(spv, weight); }
     void harmonize(HfstBasicTransducer &another) { self->harmonize(another); }
 
-  HfstTwoLevelPaths _lookup(const StringVector &lookup_path, size_t * infinite_cutoff, float * max_weight, bool obey_flags)
+  HfstTwoLevelPaths _lookup(const StringVector &lookup_path, size_t * infinite_cutoff, float * max_weight, bool obey_flags) throw(TransducerIsCyclicException)
   {
     hfst::HfstTwoLevelPaths results;
-    $self->lookup(lookup_path, results, infinite_cutoff, max_weight, obey_flags);
+    $self->lookup(lookup_path, results, infinite_cutoff, max_weight, -1, obey_flags);
     return results;
   }
 
@@ -1255,7 +1315,7 @@ class HfstBasicTransducer {
       attstr = self.get_att_string(write_weights)
       f.write(attstr)
 
-  def lookup(self, lookup_path, **kvargs):
+  def lookup(self, lookup_path, **kwargs):
       """
       Lookup tokenized input *input* in the transducer.
 
@@ -1263,7 +1323,7 @@ class HfstBasicTransducer {
       ----------
       * `str` :
           A list/tuple of strings to look up.
-      * `kvargs` :
+      * `kwargs` :
           infinite_cutoff=-1, max_weight=None, obey_flags=False
       * `max_epsilon_loops` :
           How many times epsilon input loops are followed. Defaults to -1, i.e. infinitely.
@@ -1277,7 +1337,7 @@ class HfstBasicTransducer {
       obey_flags = False
       output='dict' # 'dict' (default), 'text', 'raw'
 
-      for k,v in kvargs.items():
+      for k,v in kwargs.items():
           if k == 'max_weight' :
              max_weight=v
           elif k == 'max_epsilon_loops' :
@@ -1306,7 +1366,7 @@ class HfstBasicTransducer {
       else:
          return retval
 
-  def substitute(self, s, S=None, **kvargs):
+  def substitute(self, s, S=None, **kwargs):
       """
 
       Substitute symbols or transitions in the transducer.
@@ -1319,7 +1379,7 @@ class HfstBasicTransducer {
       * `S` :
           The symbol, transition, a tuple of transitions or a transducer
           (hfst.HfstBasicTransducer) that substitutes *s*.
-      * `kvargs` :
+      * `kwargs` :
           Arguments recognized are 'input' and 'output', their values can be False or
           True, True being the default. These arguments are valid only if *s* and *S*
           are strings, else they are ignored.
@@ -1394,7 +1454,7 @@ class HfstBasicTransducer {
          if _is_string(S):
             input=True
             output=True
-            for k,v in kvargs.items():
+            for k,v in kwargs.items():
                 if k == 'input':
                    if v == False:
                       input=False
@@ -1466,9 +1526,12 @@ class XreCompiler
   bool is_function_definition(const std::string& name);
   void undefine(const std::string& name);
   HfstTransducer* compile(const std::string& xre);
+  //HfstTransducer* compile_first(const std::string& xre, unsigned int & chars_read);
   void set_verbosity(bool verbose);
   bool getOutputToConsole();
   void set_expand_definitions(bool expand); // TODO: should this be set automatically to True?
+  void set_harmonization(bool harmonize);
+  bool contained_only_comments();
 
   // *** Some wrappers *** //
 %extend{
@@ -1485,6 +1548,12 @@ class XreCompiler
   void setOutputToConsole(bool value)
   {
     (void)self->setOutputToConsole(value);
+  }
+  HfstTransducerUIntPair compile_first(const std::string & xre)
+  {
+    unsigned int c=0;
+    hfst::HfstTransducer * result = self->compile_first(xre, c);
+    return std::pair<hfst::HfstTransducer*, unsigned int>(result, c);
   }
 }
 
@@ -1607,6 +1676,28 @@ namespace hfst {
 
 // *** PmatchContainer *** //
 
+// hfst_pmatch_tokenize_extensions.cc
+namespace hfst {
+  std::string pmatch_get_tokenized_output(hfst_ol::PmatchContainer * cont,
+					  const std::string & input_text,
+					  const std::string & output_format,
+					  int * max_weight_classes,
+					  bool dedupe,
+					  bool print_weights,
+					  bool print_all,
+					  double time_cutoff,
+					  bool verbose,
+					  float beam,
+					  bool tokenize_multichar);
+  hfst_ol::LocationVectorVector pmatch_locate(hfst_ol::PmatchContainer * cont,
+					      const std::string & input,
+					      double time_cutoff = 0.0);
+  hfst_ol::LocationVectorVector pmatch_locate(hfst_ol::PmatchContainer * cont,
+					      const std::string & input,
+					      double time_cutoff,
+					      float weight_cutoff);
+}
+
 namespace hfst_ol {
     class PmatchContainer
     {
@@ -1620,9 +1711,119 @@ namespace hfst_ol {
         //void set_extract_tags_mode(bool b);
         void set_profile(bool b);
 
+%extend {
+	  PmatchContainer(const std::string & filename)
+	    {
+	      std::ifstream ifs(filename);
+	      hfst_ol::PmatchContainer * retval = new hfst_ol::PmatchContainer(ifs);
+	      ifs.close();
+	      return retval;
+	    }
+	  // extension because of inf default value of weight_cutoff...
+	  hfst_ol::LocationVectorVector locate(const std::string & input,
+					       double time_cutoff = 0.0)
+	    {
+	      return hfst::pmatch_locate(self, input, time_cutoff);
+	    };
+	  hfst_ol::LocationVectorVector locate(const std::string & input,
+					       double time_cutoff,
+					       float weight_cutoff)
+	    {
+	      return hfst::pmatch_locate(self, input, time_cutoff, weight_cutoff);
+	    };
+%pythoncode %{
+  def get_tokenized_output(self, input, **kwargs):
+      """
+      Tokenize *input* and get a string representation of the tokenization
+      (essentially the same that command line tool hfst-tokenize would give).
+
+      Parameters
+      ----------
+      * `input` :
+          The input string to be tokenized.
+      * `kwargs` :
+          Possible parameters are:
+          output_format, max_weight_classes, dedupe, print_weights, print_all,
+          time_cutoff, verbose, beam, tokenize_multichar.
+      * `output_format` :
+          The format of output; possible values are 'tokenize', 'xerox', 'cg', 'finnpos',
+          'giellacg', 'conllu' and 'visl'; 'tokenize' being the default.
+      * `max_weight_classes` :
+          Maximum number of best weight classes to output
+          (where analyses with equal weight constitute a class), defaults to None i.e. no limit.
+      * `dedupe` :
+          Whether duplicate analyses are removed, defaults to False.
+      * `print_weights` :
+          Whether weights are printd, defaults to False.
+      * `print_all` :
+          Whether nonmatching text is printed, defaults to False.
+      * `time_cutoff` :
+          Maximum number of seconds used per input after limiting the search.
+      * `verbose` :
+          Whether input is processed verbosely, defaults to True.
+      * `beam` :
+          Beam within analyses must be to get printed.
+      * `tokenize_multichar` :
+          Tokenize input into multicharacter symbols present in the transducer, defaults to false.
+      """
+      output_format='tokenize'
+      max_weight_classes=None
+      dedupe=False
+      print_weights=False
+      print_all=False
+      time_cutoff=0.0
+      verbose=True
+      beam=-1.0
+      tokenize_multichar=False
+      for k,v in kwargs.items():
+         if k == 'output_format':
+            if v == 'tokenize' or v == 'space_separated' or v == 'xerox' or v == 'cg' or v == 'finnpos' or v == 'giellacg' or v == 'conllu':
+               output_format=v
+            else:
+               print('Warning: ignoring unknown value %s for argument %s.' % (v,k))
+         elif k == 'max_weight_classes':
+            max_weight_classes=int(v)
+         elif k == 'dedupe':
+            dedupe=v
+         elif k == 'print_weights':
+            print_weights=v
+         elif k == 'print_all':
+            print_all=v
+         elif k == 'time_cutoff':
+            time_cutoff=float(v)
+         elif k == 'verbose':
+            verbose=v
+         elif k == 'beam':
+            beam=float(v)
+         elif k == 'tokenize_multichar':
+            tokenize_multichar=v
+         else:
+            print('Warning: ignoring unknown argument %s.' % (k))
+      return pmatch_get_tokenized_output(self, input, output_format, max_weight_classes, dedupe, print_weights, print_all, time_cutoff, verbose, beam, tokenize_multichar)
+
+  def tokenize(self, input):
+      """
+      Tokenize *input* and return a list of tokens i.e. strings.
+
+      Parameters
+      ----------
+      * `input` :
+          The string to be tokenized.
+      """
+      retval = []
+      locations = self.locate(input)
+      for loc in locations:
+         if loc[0].output != "@_NONMATCHING_@":
+            retval.append(loc[0].input)
+      return retval
+
+%}
+
+}
+
 }; // class PmatchContainer
 } // namespace hfst_ol
- 
+
 %pythoncode %{
 
 class ImplementationType:

@@ -444,9 +444,18 @@ ProcTransducerAlphabet::caps_helper_single(const char* c, int& case_res)
                                                  {{"Α","Ϋ"},{"α","ϋ"}}, // Greek and Coptic
                                                  {{"А","Я"},{"а","я"}}, // Cyrillic
                                                  {{"Ѐ","Џ"},{"ѐ","џ"}}};// Cyrillic
-  static const char* serial_ranges[12][3] = {{"Ā","ķ"}, // Latin Extended A
+  /**
+   * These letters in Latin Extended A have no corresponding
+   * capital/small, and thus shift the range by one:
+   U+0138 	ĸ	LATIN SMALL LETTER KRA (between ķ and Ĺ)
+   U+0149 	ŉ	LATIN SMALL LETTER N PRECEDED BY APOSTROPHE (between ň and Ŋ)
+   U+0178 	Ÿ	LATIN CAPITAL LETTER Y WITH DIAERESIS (U+0178) (between ŷ and Ź)
+   U+017F 	ſ	LATIN SMALL LETTER LONG S (U+017F) (between ž and the end of the block)
+   */
+  static const char* serial_ranges[13][3] = {{"Ā","ķ"}, // Latin Extended A
                                              {"Ĺ","ň"}, // Latin Extended A
-                                             {"Ŋ","ž"}, // Latin Extended A
+                                             {"Ŋ","ŷ"}, // Latin Extended A
+                                             {"Ź","ž"}, // Latin Extended A
                                              {"Ǎ","ǜ"}, // Latin Extended B
                                              {"Ǟ","ǯ"}, // Latin Extended B
                                              {"Ǵ","ȳ"}, // Latin Extended B
@@ -455,7 +464,7 @@ ProcTransducerAlphabet::caps_helper_single(const char* c, int& case_res)
                                              {"Ӂ","ӎ"}, // Cyrillic
                                              {"Ӑ","ӿ"}, // Cyrillic
                                              {"Ԁ","ԥ"}, // Cyrillic Supplement
-                                             {"Ḁ","ỿ"}};//Latin Extended Additional
+                                             {"Ḁ","ỿ"}}; //Latin Extended Additional
 
   for(int i = 0; i < 21; i++)
   {

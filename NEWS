@@ -5,6 +5,50 @@
 This file contains all noteworthy changes in HFST development between releases.
 For full listing of changes see ChangeLog.
 
+Noteworthy changes in 3.15.0
+----------------------------
+
+* Numerous improvements in pmatch processing:
+
+  * hfst-pmatch2fst now implements eg @include"filename.txt" as a preprocessing stage
+  
+  * hfst-pmatch2fst now implements Explode() and Implode() in full generality
+  
+  * hfst-pmatch now allows printing weights (in location mode, with --locate)
+  
+  * hfst.PmatchContainer.locate offered via python bindings
+  
+  * bugfixes and improvements hfst.PmatchContainer.tokenize
+
+* Add tool hfst-eliminate-flags.
+
+* Allow both escaped and unescaped zeros in multicharacters in all lexc lexicon entries (fixes issue #274).
+
+* Also reweight state that is both initial and final in hfst-reweight (fixes issue #368).
+
+* Do not let distributed files depend on configuration. Include man files in dist.
+
+* Print warnings and error messages also in earlier stages of twol compilation.
+
+* Add option --execute-and-quit (-E) to hfst-xfst.
+
+
+Noteworthy changes in 3.14.0
+----------------------------
+
+* Numerous improvements to pmatching and tokenization:
+
+  * pmatch now supports the default symbol
+
+  * pmatch now supports reading word embeddings in the binary format
+
+  * improvements to pmatch runtime context handling: a bug affecting expression-initial contexts is fixed, and pmatch now supports Ins() arcs inside RC() and NRC() contexts
+
+  * in pmatch, bugs affecting multiple Ins() arcs, in particular nested ones, are fixed
+
+* Implement variable 'retokenize' in hfst-xfst
+
+
 Noteworthy changes in 3.13.0
 ----------------------------
 
@@ -829,4 +873,3 @@ Noteworthy changes in release 2.1
 ---------------------------------
 
 * hfst-twolc and hfst-compose-intersect understand # like xerox originals
-

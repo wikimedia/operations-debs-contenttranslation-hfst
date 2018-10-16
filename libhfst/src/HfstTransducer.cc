@@ -333,6 +333,20 @@ HfstTransducer &HfstTransducer::prune_alphabet(bool force)
   return convert_to_hfst_transducer(net);;
 }
 
+StringSet HfstTransducer::get_initial_input_symbols() const
+{
+  switch(type)
+    {
+#if HAVE_OPENFST
+    case TROPICAL_OPENFST_TYPE:
+      return tropical_ofst_interface.get_initial_input_symbols
+	(implementation.tropical_ofst);
+#endif
+    default:
+      HFST_THROW_MESSAGE(FunctionNotImplementedException, "get_first_input_symbols");
+    }
+}
+
 StringSet HfstTransducer::get_first_input_symbols() const
 {
     switch(type)
@@ -2499,7 +2513,8 @@ void HfstTransducer::extract_paths_fd(ExtractStringsCb& callback,
         (implementation.hfst_ol);
         hfst::implementations::HfstOlTransducer::extract_paths
         (implementation.hfst_ol,callback,cycles,t_hfst_ol,filter_fd);
-        delete t_hfst_ol;
+        // don't delete t_hfst_ol, it's not a copy of the FdTable but the
+        // real thing
     }
     break;
     case ERROR_TYPE:

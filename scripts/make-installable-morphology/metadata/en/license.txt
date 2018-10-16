@@ -1,0 +1,6 @@
+The tools are implemented with WordNet 2.0 and British National Corpus
+(BNC), which have the following licenses:
+
+WordNet 2.0: https://wordnet.princeton.edu/license-and-commercial-use
+
+BNC: http://www.natcorp.ox.ac.uk/docs/licence.pdf

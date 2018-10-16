@@ -41,6 +41,7 @@ if GENERATE_LEXC_WRAPPER
   AM_CPPFLAGS += -DZLIB
 endif
 
+
 # the bridges
 if WANT_SFST
 MAYBE_SFST=SfstTransducer.cc
@@ -69,23 +70,22 @@ endif
 #if WANT_MY_TRANSDUCER_LIBRARY
 #MAYBE_MY_TRANSDUCER_LIBRARY=MyTransducerLibraryTransducer.cc
 #endif
-if WANT_HFSTOL
-MAYBE_HFSTOL=HfstOlTransducer.cc
-endif
 
-BRIDGE_SRCS=$(MAYBE_SFST) $(MAYBE_OPENFST) $(MAYBE_FOMA) $(MAYBE_HFSTOL) $(MAYBE_XFSM) # $(MAYBE_MY_TRANSDUCER_LIBRARY)
-
-if WANT_HFSTOL
 HFST_OL_SRCS=\
 optimized-lookup/transducer.cc optimized-lookup/convert.cc \
 	optimized-lookup/ospell.cc optimized-lookup/pmatch.cc \
 	optimized-lookup/pmatch_tokenize.cc \
 	optimized-lookup/find_epsilon_loops.cc
+
+if WANT_HFSTOL
+MAYBE_HFSTOL=HfstOlTransducer.cc $(HFST_OL_SRCS)
 endif
 
-libhfstimplementations_la_SOURCES=$(IMPLEMENTATION_SRCS) $(BRIDGE_SRCS) \
-								  $(SFST_SRCS) $(HFST_OL_SRCS)
+BRIDGE_SRCS=$(MAYBE_SFST) $(MAYBE_OPENFST) $(MAYBE_FOMA) $(MAYBE_HFSTOL) $(MAYBE_XFSM) # $(MAYBE_MY_TRANSDUCER_LIBRARY)
 
+libhfstimplementations_la_SOURCES=$(IMPLEMENTATION_SRCS) $(BRIDGE_SRCS) # $(SFST_SRCS) $(HFST_OL_SRCS)
+
+EXTRA_DIST=SfstTransducer.cc TropicalWeightTransducer.cc LogWeightTransducer.cc FomaTransducer.cc XfsmTransducer.cc HfstOlTransducer.cc $(HFST_OL_SRCS)
 
 # headers of implementation bridge to reveal to public
 hfstincludedir = $(includedir)/hfst

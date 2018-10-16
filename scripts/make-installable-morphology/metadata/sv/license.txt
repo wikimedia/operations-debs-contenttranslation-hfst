@@ -1,0 +1,2 @@
+The tools are based on Den stora svenska ordlistan (copyright (c) 2003
+Tom Westerberg) distributed under Creative Commons ShareAlike 1.0 license.

@@ -91,7 +91,8 @@ int hxfstlex(void);
 
 %token <text> REGEX
 %token <text> APPLY_INPUT
-    
+%token <text> APPLY_UP_SINGLE APPLY_DOWN_SINGLE
+
 %type <text> COMMAND_SEQUENCE NAMETOKEN_LIST QUOTED_NAMETOKEN_LIST LABEL_LIST LABEL
 %%
 
@@ -127,9 +128,9 @@ COMMAND: ADD_PROPS REDIRECT_IN END_COMMAND {
        | APPLY_UP APPLY_INPUT END_COMMAND {
        	    hfst::xfst::xfst_->apply_up($2); CHECK; free($2);
        }
-       | APPLY_UP NAMETOKEN END_COMMAND {
-            hfst::xfst::xfst_->apply_up($2);
-            free($2); CHECK;
+       | APPLY_UP_SINGLE END_COMMAND {
+            hfst::xfst::xfst_->apply_up($1);
+            free($1); CHECK;
        }
        | APPLY_UP REDIRECT_IN END_COMMAND {
             if (hfst::xfst::xfst_->check_filename($2))
@@ -150,9 +151,9 @@ COMMAND: ADD_PROPS REDIRECT_IN END_COMMAND {
        | APPLY_DOWN APPLY_INPUT END_COMMAND {
        	    hfst::xfst::xfst_->apply_down($2); CHECK; free($2);
        }
-       | APPLY_DOWN NAMETOKEN END_COMMAND {
-            hfst::xfst::xfst_->apply_down($2);
-            free($2); CHECK;
+       | APPLY_DOWN_SINGLE END_COMMAND {
+            hfst::xfst::xfst_->apply_down($1);
+            free($1); CHECK;
        }
        | APPLY_DOWN REDIRECT_IN END_COMMAND {
             if (hfst::xfst::xfst_->check_filename($2))

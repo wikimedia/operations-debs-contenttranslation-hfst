@@ -375,7 +375,7 @@ def compile_pmatch_file(filename):
 ## Compile twolc file \a inputfilename and store the result to file \a outputfilename.
 # @param inputfilename The name of the twolc input file.
 # @param outputfilename The name of the transducer output file.
-# @param kvargs Arguments recognized are: silent, verbose, resolve_right_conflicts, resolve_left_conflicts, type.
+# @param kwargs Arguments recognized are: silent, verbose, resolve_right_conflicts, resolve_left_conflicts, type.
 # @param silent Whether compilation is performed in silent mode, defaults to False.
 # @param verbose Whether compilation is performed in verbose mode, defaults to False.
 # @param resolve_right_conflicts Whether right arrow conflicts are resolved, defaults to True.
@@ -1707,6 +1707,8 @@ class HfstTransducer:
     #       lookup via composition. Consider converting the transducer to optimized lookup format
     #       or to a HfstBasicTransducer. Conversion to HFST_OL(W)_TYPE might take a while but the
     #       lookup is fast. Conversion to HfstBasicTransducer is quick but lookup is slower.
+    def lookup(self, input, kwargs):
+        pass
 
     ## Optimize the transducer for lookup.
     # This effectively converts the transducer into #hfst.ImplementationType.HFST_OL_TYPE.

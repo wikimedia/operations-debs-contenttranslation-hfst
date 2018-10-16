@@ -16,11 +16,11 @@ LDADD = $(top_builddir)/libhfst/src/libhfst.la
 AM_INSTALLCHECK_STD_OPTIONS_EXEMPT=htwolcpre1 htwolcpre2 htwolcpre3
 
 hfst_twolc_SOURCES=hfst-twolc.cc
-if WANT_TWOLC_SCRIPT
-  htwolcpre1_SOURCES=htwolcpre1-main.cc
-  htwolcpre2_SOURCES=htwolcpre2-main.cc
-  htwolcpre3_SOURCES=htwolcpre3-main.cc
-endif
+
+htwolcpre1_SOURCES=htwolcpre1-main.cc
+htwolcpre2_SOURCES=htwolcpre2-main.cc
+htwolcpre3_SOURCES=htwolcpre3-main.cc
+
 
 if WANT_TWOLC_SCRIPT
 hfst-twolc-script: hfst-twolc.sh

@@ -56,7 +56,7 @@
 %start PMATCH
 %type <pmatchDefinition> DEFINITION
 %type <pmatchObject> EXPRESSION1 EXPRESSION2 EXPRESSION3 EXPRESSION4 EXPRESSION5 EXPRESSION6 EXPRESSION7 EXPRESSION8 EXPRESSION9 EXPRESSION10 EXPRESSION11 EXPRESSION12 EXPRESSION13
-%type <label> SYMBOL QUOTED_LITERAL CURLY_LITERAL SYMBOL_WITH_LEFT_PAREN CONCATENATED_STRING_LIST VARIABLE_NAME
+%type <label> SYMBOL QUOTED_LITERAL CURLY_LITERAL SYMBOL_WITH_LEFT_PAREN VARIABLE_NAME
 %type <string_vector> ARGLIST
 %type <pmatchObject_vector> FUNCALL_ARGLIST
 
@@ -70,7 +70,7 @@
 %type <restrictionContexts> RESTR_CONTEXTS
 %type <replType> CONTEXT_MARK
 %type <pmatchObject> INSERTION FUNCALL EXPLODE IMPLODE ENDTAG CAPTURE LIKE READ_FROM CONTEXT_CONDITION PMATCH_CONTEXT PMATCH_OR_CONTEXT PMATCH_AND_CONTEXT
-PMATCH_RIGHT_CONTEXT PMATCH_LEFT_CONTEXT PMATCH_NEGATIVE_RIGHT_CONTEXT PMATCH_NEGATIVE_LEFT_CONTEXT
+PMATCH_RIGHT_CONTEXT PMATCH_LEFT_CONTEXT PMATCH_NEGATIVE_RIGHT_CONTEXT PMATCH_NEGATIVE_LEFT_CONTEXT CONCATENATED_STRING_LIST STRINGLIKE
 %type <pmatchObject_vector> PMATCH_CONTEXTS
 
 %left <weight> END_OF_WEIGHTED_EXPRESSION WEIGHT
@@ -235,16 +235,11 @@ MAPPINGPAIR: EXPRESSION3 REPLACE_ARROW EXPRESSION3
 {
     $$ = new PmatchMappingPairsContainer($2, $1, $3); }
 | EXPRESSION3 REPLACE_ARROW EXPRESSION3 MARKUP_MARKER EXPRESSION3 {
-    PmatchMarkupContainer * markup = new PmatchMarkupContainer($3, $5);
-    $$ = new PmatchMappingPairsContainer($2, $1, markup); }
+    $$ = new PmatchMappingPairsContainer($2, new PmatchMarkupContainer($1, $3, $5)); }
 | EXPRESSION3 REPLACE_ARROW EXPRESSION3 MARKUP_MARKER {
-    PmatchTransducerContainer * epsilon = new PmatchTransducerContainer(
-        new HfstTransducer(hfst::internal_epsilon, format));
-    PmatchMarkupContainer * markup = new PmatchMarkupContainer($3, epsilon);
-    $$ = new PmatchMappingPairsContainer($2, $1, markup);
+    $$ = new PmatchMappingPairsContainer($2, new PmatchMarkupContainer($1, $3, new PmatchEpsilonArc));
 } | EXPRESSION3 REPLACE_ARROW MARKUP_MARKER EXPRESSION3 {
-    PmatchMarkupContainer * markup = new PmatchMarkupContainer(new PmatchEpsilonArc, $4);
-    $$ = new PmatchMappingPairsContainer($2, $1, markup);
+    $$ = new PmatchMappingPairsContainer($2, new PmatchMarkupContainer($1, new PmatchEpsilonArc, $4));
 } | LEFT_BRACKET_DOTTED RIGHT_BRACKET_DOTTED REPLACE_ARROW EXPRESSION3 {
     $$ = new PmatchMappingPairsContainer($3, new PmatchEpsilonArc, $4);
 } | LEFT_BRACKET_DOTTED EXPRESSION3 RIGHT_BRACKET_DOTTED REPLACE_ARROW EXPRESSION3 {
@@ -303,13 +298,11 @@ EXPRESSION6 LEFT_RIGHT_ARROW EXPRESSION6 CENTER_MARKER EXPRESSION6 { pmatcherror
 
 RESTR_CONTEXTS: RESTR_CONTEXT {
     $$ = new MappingPairVector();
-    $$->push_back(*$1);
-    delete $1;
+    $$->push_back($1);
 } |
 RESTR_CONTEXTS COMMA RESTR_CONTEXT {
-     $1->push_back(*$3);
+     $1->push_back($3);
      $$ = $1;
-     delete $3;
 };
 
 RESTR_CONTEXT:
@@ -534,24 +527,19 @@ SYMBOL {
 
 EXPLODE: EXPLODE_LEFT CONCATENATED_STRING_LIST RIGHT_PARENTHESIS
 {
-    $$ = new PmatchString($2, true);
-    free($2);
+    $$ = new PmatchUnaryOperation(Explode, $2);
 };
 
 IMPLODE: IMPLODE_LEFT CONCATENATED_STRING_LIST RIGHT_PARENTHESIS
 {
-    $$ = new PmatchString($2);
-    free($2);
+    $$ = new PmatchUnaryOperation(Implode, $2);
 };
 
-CONCATENATED_STRING_LIST: SYMBOL
+CONCATENATED_STRING_LIST: STRINGLIKE
 { $$ = $1; } |
-SYMBOL COMMA CONCATENATED_STRING_LIST
+STRINGLIKE COMMA CONCATENATED_STRING_LIST
 {
-    $$ = static_cast<char*>(malloc(sizeof(char)*(strlen($1) + strlen($3)+1)));
-    strcpy($$, $1);
-    strcat($$, $3);
-    free($1); free($3);
+    $$ = new PmatchBinaryOperation(Concatenate, $1, $3);
 };
 
 FUNCALL: SYMBOL_WITH_LEFT_PAREN FUNCALL_ARGLIST RIGHT_PARENTHESIS
@@ -812,6 +800,10 @@ PMATCH_NEGATIVE_LEFT_CONTEXT: NLC_LEFT EXPRESSION2 RIGHT_PARENTHESIS {
     $$ = new PmatchUnaryOperation(NLC, $2);
 };
 
+STRINGLIKE: QUOTED_LITERAL { $$ = new PmatchString($1); free($1); } |
+CURLY_LITERAL { $$ = new PmatchString(std::string($1), true); free($1); } |
+SYMBOL { $$ = new PmatchSymbol($1); free($1); }
+;
 
 // MAP: MAP_LEFT SYMBOL COMMA READ_TEXT RIGHT_PARENTHESIS {
 //     if (hfst::pmatch::functions.count($2) == 0) {

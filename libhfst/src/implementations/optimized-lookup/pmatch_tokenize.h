@@ -23,19 +23,21 @@ enum OutputFormat {
     cg,
     finnpos,
     giellacg,
-    conllu
+    conllu,
+    visl,
 };
 
 struct TokenizeSettings {
-        OutputFormat output_format = tokenize;
-        int max_weight_classes = std::numeric_limits<int>::max();
-        bool dedupe = false;
-        bool print_weights = false;
-        bool print_all = false;
-        double time_cutoff = 0.0;
-        bool verbose = true;
-        float beam = -1.0;
-        bool tokenize_multichar = false;
+    OutputFormat output_format = tokenize;
+    int max_weight_classes = std::numeric_limits<int>::max();
+    bool dedupe = false;
+    bool print_weights = false;
+    bool print_all = false;
+    double time_cutoff = 0.0;
+    float weight_cutoff = -1.0;
+    bool verbose = true;
+    float beam = -1.0;
+    bool tokenize_multichar = false;
 };
 
 void print_nonmatching_sequence(std::string const & str, std::ostream & outstream, const TokenizeSettings& s);

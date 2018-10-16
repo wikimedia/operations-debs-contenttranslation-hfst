@@ -6,6 +6,6 @@ EXTRA_DIST = README test.sh \
 	test_read_att_transducer.py test_xre.py test_hfst.py test_examples.py \
 	test_att_reader.py test_prolog_reader.py \
 	test_streams_1.py test_streams_2.py test_streams_3.py streets.txt \
-	test_xerox_rules.py test_twolc.py \
-	calculate_functionality.py cat2dog.att cat2dog.sfstpl four_plus_cats.att four_plus_cats.sfstpl \
+	test_streams_all_1.py test_streams_all_2.py test_streams_all_3.py \
+	test_xerox_rules.py test_twolc.py test_lookup.py \
 	test1.twolc test2.twolc test3.twolc

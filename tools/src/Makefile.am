@@ -55,6 +55,9 @@ endif
 if WANT_EDIT_METADATA
 MAYBE_EDIT_METADATA=hfst-edit-metadata$(EXEEXT)
 endif
+if WANT_ELIMINATE_FLAGS
+MAYBE_ELIMINATE_FLAGS=hfst-eliminate-flags$(EXEEXT)
+endif
 if WANT_FORMAT
 MAYBE_FORMAT=hfst-format$(EXEEXT)
 endif
@@ -191,7 +194,8 @@ bin_PROGRAMS= \
 			 $(MAYBE_COMPARE) $(MAYBE_COMPOSE) $(MAYBE_CONCATENATE)     \
 			 $(MAYBE_CONJUNCT) $(MAYBE_DETERMINIZE) $(MAYBE_DISJUNCT)   \
 			 $(MAYBE_MULTIPLY) $(MAYBE_EDIT_METADATA)                  \
-			 $(MAYBE_FORMAT) $(MAYBE_FST2FST) $(MAYBE_FST2STRINGS)      \
+			 $(MAYBE_FORMAT) $(MAYBE_ELIMINATE_FLAGS) $(MAYBE_FST2FST) \
+			 $(MAYBE_FST2STRINGS)      \
 			 $(MAYBE_FST2TXT) $(MAYBE_GREP) $(MAYBE_HEAD)               \
 			 $(MAYBE_INVERT)                                            \
 			 $(MAYBE_LOOKUP) $(MAYBE_FLOOKUP) $(MAYBE_MINIMIZE) $(MAYBE_NAME)            \
@@ -225,6 +229,7 @@ hfst_disjunct_SOURCES=hfst-disjunct.cc $(HFST_COMMON_SRC)
 hfst_multiply_SOURCES=hfst-multiply.cc $(HFST_COMMON_SRC)
 hfst_expand_equivalences_SOURCES=hfst-expand-equivalences.cc $(HFST_COMMON_SRC)
 hfst_edit_metadata_SOURCES=hfst-edit-metadata.cc $(HFST_COMMON_SRC)
+hfst_eliminate_flags_SOURCES=hfst-eliminate-flags.cc $(HFST_COMMON_SRC)
 hfst_format_SOURCES=hfst-format.cc $(HFST_COMMON_SRC)
 hfst_fst2fst_SOURCES=hfst-fst2fst.cc $(HFST_COMMON_SRC)
 hfst_fst2strings_SOURCES=hfst-fst2strings.cc $(HFST_COMMON_SRC)

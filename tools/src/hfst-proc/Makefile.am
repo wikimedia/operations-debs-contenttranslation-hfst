@@ -29,6 +29,7 @@ bin_PROGRAMS=$(MAYBE_PROC)
 hfst_apertium_proc_SOURCES = hfst-proc.cc formatter.cc lookup-path.cc lookup-state.cc tokenizer.cc transducer.cc applicators.cc alphabet.cc
 hfst_apertium_proc_LDADD = $(top_builddir)/libhfst/src/libhfst.la $(GLIB_LIBS)
 
+if WANT_PROC
 install-exec-hook:
 	cd $(DESTDIR)$(bindir) && \
 		$(LN_S) -f hfst-apertium-proc$(EXEEXT) hfst-proc$(EXEEXT)
@@ -36,3 +37,4 @@ install-exec-hook:
 uninstall-local:
 	cd $(DESTDIR)$(bindir) && \
 		rm hfst-proc$(EXEEXT)
+endif

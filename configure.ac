@@ -18,7 +18,7 @@
 # Information on package
 HFST_NAME=hfst
 HFST_MAJOR=3
-HFST_MINOR=13
+HFST_MINOR=15
 HFST_EXTENSION=0
 HFST_VERSION=$HFST_MAJOR.$HFST_MINOR.$HFST_EXTENSION
 
@@ -27,11 +27,11 @@ HFST_VERSION=$HFST_MAJOR.$HFST_MINOR.$HFST_EXTENSION
 # for package-config pc file
 LIBHFST_NAME=hfst
 LIBHFST_MAJOR=3
-LIBHFST_MINOR=13
+LIBHFST_MINOR=15
 LIBHFST_EXTENSION=0
 LIBHFST_VERSION=$LIBHFST_MAJOR.$LIBHFST_MINOR.$LIBHFST_EXTENSION
 
-AC_INIT([hfst], [3.13.0], [hfst-bugs@helsinki.fi], [hfst])
+AC_INIT([hfst], [3.15.0], [hfst-bugs@helsinki.fi], [hfst])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([-Wall std-options foreign check-news])
 
@@ -43,9 +43,9 @@ AC_CONFIG_SRCDIR([libhfst/src/HfstTransducer.h])
 AC_CONFIG_HEADERS([config.h libhfst/src/hfst.hpp])
 
 AC_SUBST([LIBHFST_MAJOR],     [3])
-AC_SUBST([LIBHFST_MINOR],     [13])
+AC_SUBST([LIBHFST_MINOR],     [15])
 AC_SUBST([LIBHFST_EXTENSION], [0])
-AC_SUBST([LIBHFST_VERSION],   [3.13.0])
+AC_SUBST([LIBHFST_VERSION],   [3.15.0])
 AC_SUBST([LIBHFST_NAME],      [hfst])
 
 # long version = version vector cast in base 10000, for automatic comparisons
@@ -56,7 +56,7 @@ AC_SUBST([LIBHFST_NAME],      [hfst])
 # $LIBHFST_MINOR * 10000 + $LIBHFST_EXTENSION + "L"
 # NB! It turned out to be not portable, and can't be used!
 
-AC_DEFINE([HFST_LONGVERSION], [300130000L],
+AC_DEFINE([HFST_LONGVERSION], [300150000L],
           [Define to hfst version vector as long in base 10000])
 AC_DEFINE([HFST_REVISION], ["$Revision$"],
           [Automatically substitute to configure.ac revision])
@@ -263,6 +263,12 @@ AC_ARG_ENABLE([edit_metadata],
 			  [enable_edit_metadata=$enableval],
 			  [if test x$enable_no_tools != xno; then enable_edit_metadata=no; else enable_edit_metadata=yes; fi])
 AM_CONDITIONAL([WANT_EDIT_METADATA], [test x$enable_edit_metadata != xno])
+AC_ARG_ENABLE([eliminate_flags],
+			  [AS_HELP_STRING([--enable-eliminate-flags],
+							  [build eliminate-flags tool @<:@default=yes@:>@])],
+			  [enable_eliminate_flags=$enableval],
+			  [if test x$enable_no_tools != xno; then enable_eliminate_flags=no; else enable_eliminate_flags=yes; fi])
+AM_CONDITIONAL([WANT_ELIMINATE_FLAGS], [test x$enable_eliminate_flags != xno])
 AC_ARG_ENABLE([format],
 			  [AS_HELP_STRING([--enable-format],
 							  [build format tool @<:@default=yes@:>@])],
@@ -795,6 +801,7 @@ cat <<EOF
     *                 conjunct: $enable_conjunct (intersect)
     *                 determinize: $enable_determinize (determinise)
     *                 disjunct: $enable_disjunct (union)
+    *                 eliminate-flags: $enable_eliminate_flags
     *                 foma: $enable_foma_wrapper
     *                 format: $enable_format
     *                 fst2fst: $enable_fst2fst

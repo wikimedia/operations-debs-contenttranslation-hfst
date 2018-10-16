@@ -1,0 +1,8 @@
+42c42
+<   [
+---
+>   [[
+63c63
+<   ] | any_nonwhitespace_utf8_char::2000
+---
+>   ] NRC({'t})] | any_nonwhitespace_utf8_char::2000

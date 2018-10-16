@@ -1,0 +1,11 @@
+This archive contains the Swelex morphological analyser for Swedish. It is based on Den stora svenska ordlistan (copyright (c) 2003 Tom Westerberg) and is distributed under the Creative Commons ShareAlike 1.0 license, which is included in the archive and can be found at
+
+	http://creativecommons.org/licenses/sa/1.0/legalcode
+
+Den stora svenska ordlistan is available at
+
+	http://dsso.se/
+
+src/ contains Krister Lindén's scripts to build Swelex.
+
+For usage as an analyzing tool, see hfst-swedish-installable/README.

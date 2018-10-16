@@ -1,4 +1,8 @@
 #!/bin/sh
+if [ "$1" = "--python" ]; then
+    exit 77
+fi
+
 TOOLDIR=../../tools/src
 if test -f cat2dogol ; then
     for c in 1 256 65536 16777216 ; do

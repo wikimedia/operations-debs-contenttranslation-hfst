@@ -1,0 +1,11 @@
+40a41,46
+> define ae "a" | "ä";
+> define oe "o" | "ö";
+> define finnish_clitics [["k" oe ] | ["h" ae "n"] | [ "k" [{aa}|{ää}] "n" ] |  ! only the ones occurring with open classes
+> {kin} | [ "p" ae ]]+ ("s");
+> define finnish_foreign_conjugation [(["'" Alpha^{1,3}]:"")]::10;
+> 
+62c67
+<   [ NRC(Ins(morfo) boundary) [Alpha | Num]+ ]::1900
+---
+>   [ NRC(Ins(morfo) boundary) [[Alpha|Num]+ (finnish_foreign_conjugation (finnish_clitics))] ]::1900

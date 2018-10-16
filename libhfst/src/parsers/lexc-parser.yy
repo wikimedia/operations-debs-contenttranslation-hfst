@@ -37,12 +37,21 @@ static
 void
 handle_multichar(const string& multichar)
 {
-    //in multichars @ZERO@ should right away be replaced with "0"
-    string str = multichar;
+    //in multichars, both @ZERO@ ("%0") and literal 0 ("0") are allowed
+    hfst::lexc::lexc_->addAlphabet(multichar);
+
+    string str = std::string(multichar);
     string zero = "@ZERO@";
     size_t start_pos = str.find(zero);
     if(start_pos != std::string::npos)
         str.replace(start_pos, zero.length(), "0");
+    hfst::lexc::lexc_->addAlphabet(str);
+
+    str = std::string(multichar);
+    zero = "0";
+    start_pos = str.find(zero);
+    if(start_pos != std::string::npos)
+        str.replace(start_pos, zero.length(), "@ZERO@");
     hfst::lexc::lexc_->addAlphabet(str);
 }
 
