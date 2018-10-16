@@ -40,11 +40,13 @@ struct Token
     char character[5];
     unsigned int superblank_index; // see TokenIOStream::superblank_bucket
   };
+  bool escaped;
 
-  Token(): type(None), symbol(0) {}
+  Token(): type(None), symbol(0), escaped(false) {}
 
   void set_none() {type=None;}
   void set_symbol(SymbolNumber s) {type=Symbol; symbol=s;}
+  void set_escaped_symbol(SymbolNumber s) {type=Symbol; symbol=s; escaped=true;}
   void set_character(const char* c)
   {type=Character; strncpy(character,c,4); character[4]='\0';}
   void set_character(char c) {type=Character; character[0]=c; character[1]='\0';}
@@ -52,6 +54,7 @@ struct Token
   void set_reservedcharacter(char c) {type=ReservedCharacter; character[0]=c; character[1]='\0';}
 
   static Token as_symbol(SymbolNumber s) {Token t; t.set_symbol(s); return t;}
+  static Token as_escaped_symbol(SymbolNumber s) {Token t; t.set_escaped_symbol(s); return t;}
   static Token as_character(const char* c) {Token t; t.set_character(c); return t;}
   static Token as_character(char c) {Token t; t.set_character(c); return t;}
   static Token as_superblank(unsigned int i) {Token t; t.set_superblank(i); return t;}
@@ -133,7 +136,7 @@ class TokenIOStream
    * Make a token from the next character(s) in the stream by attempting to
    * get a symbol, and reverting to reading a character if that fails
    */
-  Token make_token();
+  Token make_token(bool was_escaped=false);
 
   /**
    * Read the next token in the stream, handling escaped characters

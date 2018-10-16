@@ -1,29 +1,34 @@
 #!/bin/sh
+if [ "$1" = "--python" ]; then
+    exit 77
+fi
+
 TOOLDIR=../../tools/src
-if [ -x $TOOLDIR/hfst-compare ] ; then
+COMPARE_TOOL=$TOOLDIR/hfst-compare
+if [ -x $COMPARE_TOOL ] ; then
     # well, not all permutations, but reasonable
-    if $TOOLDIR/hfst-compare -s -1 cat.hfst -2 dog.hfst  ; then
+    if $COMPARE_TOOL -s -1 cat.hfst -2 dog.hfst  ; then
        exit 1
     fi
-    if $TOOLDIR/hfst-compare -s -1 cat.hfst dog.hfst  ; then
+    if $COMPARE_TOOL -s -1 cat.hfst dog.hfst  ; then
        exit 1
     fi
-    if $TOOLDIR/hfst-compare -s -2 dog.hfst cat.hfst  ; then
+    if $COMPARE_TOOL -s -2 dog.hfst cat.hfst  ; then
        exit 1
     fi
-    if $TOOLDIR/hfst-compare -s dog.hfst -1 cat.hfst  ; then
+    if $COMPARE_TOOL -s dog.hfst -1 cat.hfst  ; then
        exit 1
     fi
-    if $TOOLDIR/hfst-compare -s cat.hfst -2 dog.hfst  ; then
+    if $COMPARE_TOOL -s cat.hfst -2 dog.hfst  ; then
        exit 1
     fi
-    if $TOOLDIR/hfst-compare -s cat.hfst < dog.hfst  ; then
+    if $COMPARE_TOOL -s cat.hfst < dog.hfst  ; then
         exit 1
     fi
-    if $TOOLDIR/hfst-compare -s -1 cat.hfst < dog.hfst  ; then
+    if $COMPARE_TOOL -s -1 cat.hfst < dog.hfst  ; then
         exit 1
     fi
-    if $TOOLDIR/hfst-compare -s -2 dog.hfst < cat.hfst  ; then
+    if $COMPARE_TOOL -s -2 dog.hfst < cat.hfst  ; then
         exit 1
     fi
 fi
@@ -52,7 +57,7 @@ for operator in conjunct disjunct compose subtract compose compose-intersect ; d
         $f -2 dog.hfst -o test_named2stdin1namedout < cat.hfst  || exit 1
         for g in test_* ; do
             for h in test_* ; do
-                if ! $TOOLDIR/hfst-compare -s $g $h  ; then
+                if ! $COMPARE_TOOL -s $g $h  ; then
                     echo "$f builds $g and $h differently from same sources"
                     exit 1
                 fi
@@ -71,7 +76,7 @@ for operator in determinize invert minimize remove-epsilons reverse ; do
         $f cat.hfst -o test_fileinnamedout || exit 1
         for g in test_* ; do
             for h in test_* ; do
-                if ! $TOOLDIR/hfst-compare -s $g $h  ; then
+                if ! $COMPARE_TOOL -s $g $h  ; then
                     echo "$f builds $g and $h differently from same sources"
                     exit 1
                 fi

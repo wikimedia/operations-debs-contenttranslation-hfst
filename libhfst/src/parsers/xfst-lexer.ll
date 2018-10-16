@@ -114,8 +114,14 @@ LWSP [\t ]*
     }
 }
 
-^{LWSP}("apply up"|"up") {
-    return APPLY_UP;
+^{LWSP}("apply up"){WSP}.* {
+    hxfstlval.text = hfst::xfst::strstrip(hxfsttext + strlen("apply up "));
+    return APPLY_UP_SINGLE;
+}
+
+^{LWSP}("up"){WSP}.* {
+    hxfstlval.text = hfst::xfst::strstrip(hxfsttext + strlen("up "));
+    return APPLY_UP_SINGLE;
 }
 
 ^{LWSP}("apply down"|"down"){LWSP}(""|"\r")$ {
@@ -132,10 +138,15 @@ LWSP [\t ]*
     }
 }
 
-^{LWSP}("apply down"|"down") {
-    return APPLY_DOWN;
+^{LWSP}("apply down"){WSP}.* {
+    hxfstlval.text = hfst::xfst::strstrip(hxfsttext + strlen("apply down "));
+    return APPLY_DOWN_SINGLE;
 }
 
+^{LWSP}("down"){WSP}.* {
+    hxfstlval.text = hfst::xfst::strstrip(hxfsttext + strlen("down "));
+    return APPLY_DOWN_SINGLE;
+}
 
 ^{LWSP}("apply med"|"med") {
     return APPLY_MED;

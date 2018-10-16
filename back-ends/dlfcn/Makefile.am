@@ -17,7 +17,10 @@
 
 AUTOMAKE_OPTIONS=subdir-objects
 
+if WANT_MINGW
 noinst_LTLIBRARIES = libdl.la
+endif
+
 nodist_libdl_la_SOURCES = dlfcn.c
 
-EXTRA_DIST=dlfcn.h dlfcn.c
+EXTRA_DIST=dlfcn.h

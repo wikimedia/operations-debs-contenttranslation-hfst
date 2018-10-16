@@ -120,6 +120,15 @@ bool TransducerAlphabet::is_like_epsilon(SymbolNumber symbol) const
     return false;
 }
 
+bool TransducerAlphabet::is_meta_arc(SymbolNumber symbol) const
+{
+    if (symbol == NO_SYMBOL_NUMBER) {
+        return false;
+    }
+    return (symbol == unknown_symbol) || (symbol == default_symbol) ||
+        (symbol == identity_symbol);
+}
+
 void TransducerAlphabet::display() const
 {
     std::cout << "Transducer alphabet:" << std::endl;
@@ -475,9 +484,7 @@ void Transducer::find_transitions(SymbolNumber input,
             // We're not going to find an epsilon / flag loop
             traversal_states.clear();
             SymbolNumber output = tables->get_transition_output(i);
-            if (output == alphabet->get_default_symbol()
-                || output == alphabet->get_identity_symbol()
-                || output == alphabet->get_unknown_symbol()) {
+            if (alphabet->is_meta_arc(output)) {
                 // we got here via default, identity or unknown, so look
                 // back in the input tape to find the symbol we want to write
                 output = input_tape[input_pos - 1];

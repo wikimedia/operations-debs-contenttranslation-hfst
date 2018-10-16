@@ -1,0 +1,7 @@
+Metadata files license.txt and README.txt for each language that will be
+offered at download directory. The files can be copied to the same
+directory where the package is offered, e.g. for English we will have:
+
+  korp.csc.fi/download/hfst-morphologies/en/wn-bnc/hfst-en-morph-wn-bnc.zip
+  korp.csc.fi/download/hfst-morphologies/en/wn-bnc/license.txt
+  korp.csc.fi/download/hfst-morphologies/en/wn-bnc/README.txt

@@ -1,19 +1,19 @@
 /*
-  
+
   Copyright 2009 University of Helsinki
-  
+
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
-  
+
   http://www.apache.org/licenses/LICENSE-2.0
-  
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
 */
 
 /*
@@ -79,7 +79,7 @@ typedef unsigned int ArcNumber;
 typedef short ValueNumber;
 typedef std::vector<SymbolNumber> SymbolNumberVector;
 typedef std::map<SymbolNumber,const char*> KeyTable;
- 
+
 const StateIdNumber NO_ID_NUMBER = UINT_MAX;
 const SymbolNumber NO_SYMBOL_NUMBER = USHRT_MAX;
 const TransitionTableIndex NO_TABLE_INDEX = UINT_MAX;
@@ -155,7 +155,7 @@ public:
     TransducerHeader(FILE * f)
         {
             skip_hfst3_header(f);
-    
+
             // The silly compiler complains about not catching the return value
             // of fread(). Hence this dummy variable is needed.
             size_t val;
@@ -168,7 +168,7 @@ public:
 
             val = fread(&number_of_states,sizeof(StateIdNumber),1,f);
             val = fread(&number_of_transitions,sizeof(TransitionNumber),1,f);
-      
+
             (void)val;
 
             read_property(weighted,f);
@@ -211,7 +211,7 @@ public:
             }
             return false;
         }
-  
+
 };
 
 class FlagDiacriticOperation
@@ -227,7 +227,7 @@ public:
     // dummy constructor
     FlagDiacriticOperation():
         operation(P), feature(NO_SYMBOL_NUMBER), value(0) {}
-  
+
     bool isFlag(void) { return feature != NO_SYMBOL_NUMBER; }
     FlagDiacriticOperator Operation(void) { return operation; }
     SymbolNumber Feature(void) { return feature; }
@@ -258,7 +258,7 @@ private:
     std::map<std::string, ValueNumber> value_bucket;
     ValueNumber val_num;
     SymbolNumber feat_num;
- 
+
 public:
     TransducerAlphabet(FILE * f,SymbolNumber symbol_number):
         number_of_symbols(symbol_number),
@@ -277,7 +277,7 @@ public:
             kt->operator[](0) = "";
             free(line);
         }
-  
+
     KeyTable * get_key_table(void)
         { return kt; }
 
@@ -286,7 +286,7 @@ public:
 
     SymbolNumber get_state_size(void)
         { return feature_bucket.size(); }
-  
+
 };
 
 class LetterTrie;
@@ -327,7 +327,7 @@ public:
         {
             read_input_symbols(kt);
         }
-  
+
     SymbolNumber find_key(char ** p);
 };
 
@@ -349,9 +349,9 @@ class TransitionIndex
 protected:
     SymbolNumber input_symbol;
     TransitionTableIndex first_transition_index;
-  
+
 public:
-  
+
     // Each TransitionIndex has an input symbol and a target index.
     static const size_t SIZE =
         sizeof(SymbolNumber) + sizeof(TransitionTableIndex);
@@ -363,17 +363,17 @@ public:
         {}
 
     bool matches(SymbolNumber s);
-  
+
     TransitionTableIndex target(void)
         {
             return first_transition_index;
         }
-  
+
     bool final(void)
         {
             return first_transition_index == 1;
         }
-  
+
     SymbolNumber get_input(void)
         {
             return input_symbol;
@@ -419,7 +419,7 @@ public:
         {
             return input_symbol;
         }
-  
+
     bool final(void)
         {
             return target_index == 1;
@@ -433,7 +433,7 @@ private:
     char * TableIndices;
     TransitionIndexVector indices;
     size_t table_size;
-  
+
     void get_index_vector(void);
 public:
     IndexTableReader(FILE * f,
@@ -451,17 +451,17 @@ public:
             (void)dummy_number_of_bytes;
             get_index_vector();
         }
-  
+
     bool get_finality(TransitionTableIndex i)
         {
             return indices[i]->final();
         }
-  
+
     TransitionIndex * at(TransitionTableIndex i)
         {
             return indices[i];
         }
-  
+
     TransitionIndexVector &operator() (void)
         { return indices; }
 };
@@ -474,9 +474,9 @@ protected:
     TransitionVector transitions;
     size_t table_size;
     size_t transition_size;
-  
+
     TransitionTableIndex position;
-  
+
     void get_transition_vector(void);
 public:
     TransitionTableReader(FILE * f,
@@ -492,7 +492,7 @@ public:
             get_transition_vector();
 
         }
-  
+
     void Set(TransitionTableIndex pos);
 
     Transition * at(TransitionTableIndex i)
@@ -504,7 +504,7 @@ public:
         {
             ++position;
         }
-  
+
     bool Matches(SymbolNumber s);
 
     TransitionTableIndex get_target(void)
@@ -544,13 +544,13 @@ protected:
     SymbolNumber * output_string;
 
     static const TransitionTableIndex START_INDEX = 0;
-  
+
     std::vector<const char*> symbol_table;
-  
+
     TransitionIndexVector &indices;
-  
+
     TransitionVector &transitions;
-  
+
     void set_symbol_table(void);
 
     virtual void note_analysis(SymbolNumber * whole_output_string);
@@ -559,34 +559,34 @@ protected:
         {
             return transitions[i]->final();
         }
-  
+
     bool final_index(TransitionTableIndex i)
         {
             return indices[i]->final();
         }
-  
+
     void try_epsilon_indices(SymbolNumber * input_symbol,
                              SymbolNumber * output_symbol,
                              SymbolNumber * original_output_string,
                              TransitionTableIndex i);
-  
+
     virtual void try_epsilon_transitions(SymbolNumber * input_symbol,
                                          SymbolNumber * output_symbol,
                                          SymbolNumber * original_output_string,
                                          TransitionTableIndex i);
-  
+
     void find_index(SymbolNumber input,
                     SymbolNumber * input_symbol,
                     SymbolNumber * output_symbol,
                     SymbolNumber * original_output_string,
                     TransitionTableIndex i);
-  
+
     void find_transitions(SymbolNumber input,
                           SymbolNumber * input_symbol,
                           SymbolNumber * output_symbol,
                           SymbolNumber * original_output_string,
                           TransitionTableIndex i);
-  
+
     void get_analyses(SymbolNumber * input_symbol,
                       SymbolNumber * output_symbol,
                       SymbolNumber * original_output_string,
@@ -613,7 +613,7 @@ public:
             set_symbol_table();
         }
 
-    
+
     KeyTable * get_key_table(void)
         {
             return keys;
@@ -642,7 +642,7 @@ public:
         Transducer(f, h, a),
         display_vector()
         {}
-  
+
     void printAnalyses(std::string prepend);
 };
 
@@ -655,7 +655,7 @@ class TransducerFd: public Transducer
                                  SymbolNumber * output_symbol,
                                  SymbolNumber * original_output_string,
                                  TransitionTableIndex i);
-  
+
     bool PushState(FlagDiacriticOperation op);
 
 public:
@@ -676,7 +676,7 @@ public:
         TransducerFd(f, h, a),
         display_vector()
         {}
-  
+
     void printAnalyses(std::string prepend);
 
 };
@@ -702,9 +702,9 @@ class TransitionWIndex
 private:
     SymbolNumber input_symbol;
     TransitionTableIndex first_transition_index;
-  
+
 public:
-  
+
     // Each TransitionIndex has an input symbol and a target index.
     static const size_t SIZE =
         sizeof(SymbolNumber) + sizeof(TransitionTableIndex);
@@ -716,18 +716,18 @@ public:
         {}
 
     bool matches(SymbolNumber s);
-  
+
     TransitionTableIndex target(void)
         {
             return first_transition_index;
         }
-  
+
     bool final(void)
         {
             return input_symbol == NO_SYMBOL_NUMBER &&
                 first_transition_index != NO_TABLE_INDEX;
         }
-  
+
     Weight final_weight(void)
         {
             union to_weight
@@ -738,7 +738,7 @@ public:
             weight.i = first_transition_index;
             return weight.w;
         }
-  
+
     SymbolNumber get_input(void)
         {
             return input_symbol;
@@ -793,7 +793,7 @@ public:
         {
             return input_symbol;
         }
-  
+
     Weight get_weight(void)
         {
             return transition_weight;
@@ -814,7 +814,7 @@ private:
     char * TableIndices;
     TransitionWIndexVector indices;
     size_t table_size;
-  
+
     void get_index_vector(void);
 public:
     IndexTableReaderW(FILE * f,
@@ -832,17 +832,17 @@ public:
             (void)dummy_number_of_bytes;
             get_index_vector();
         }
-  
+
     bool get_finality(TransitionTableIndex i)
         {
             return indices[i]->final();
         }
-  
+
     TransitionWIndex * at(TransitionTableIndex i)
         {
             return indices[i];
         }
-  
+
     TransitionWIndexVector &operator() (void)
         { return indices; }
 };
@@ -855,9 +855,9 @@ private:
     char * TableTransitions;
     TransitionWVector transitions;
     size_t table_size;
-  
+
     TransitionTableIndex position;
-  
+
     void get_transition_vector(void);
 
 public:
@@ -873,7 +873,7 @@ public:
             (void)bytes;
             get_transition_vector();
         }
-  
+
     void Set(TransitionTableIndex pos);
 
     TransitionW * at(TransitionTableIndex i)
@@ -885,7 +885,7 @@ public:
         {
             ++position;
         }
-  
+
     bool Matches(SymbolNumber s);
 
     TransitionTableIndex get_target(void)
@@ -923,7 +923,7 @@ protected:
     Encoder encoder;
     DisplayMultiMap display_map;
 
-    SymbolNumber * output_string;
+    std::vector<SymbolNumber> output_string;
 
     static const TransitionTableIndex START_INDEX = 0;
 
@@ -941,7 +941,7 @@ protected:
                                          SymbolNumber * output_symbol,
                                          SymbolNumber * original_output_string,
                                          TransitionTableIndex i);
-  
+
     void try_epsilon_indices(SymbolNumber * input_symbol,
                              SymbolNumber * output_symbol,
                              SymbolNumber * original_output_string,
@@ -965,7 +965,7 @@ protected:
         {
             return transitions[i]->final();
         }
-  
+
     bool final_index(TransitionTableIndex i)
         {
             return indices[i]->final();
@@ -993,15 +993,11 @@ public:
         transition_reader(f,header.target_table_size()),
         encoder(keys,header.input_symbol_count()),
         display_map(),
-        output_string((SymbolNumber*)(malloc(2000))),
         indices(index_reader()),
         transitions(transition_reader()),
         current_weight(0.0)
         {
-            for (int i = 0; i < 1000; ++i)
-            {
-                output_string[i] = NO_SYMBOL_NUMBER;
-            }
+            output_string.resize(1000, NO_SYMBOL_NUMBER);
             set_symbol_table();
         }
 
@@ -1012,7 +1008,7 @@ public:
 
     void analyze(SymbolNumber * input_string)
         {
-            get_analyses(input_string,output_string,output_string,START_INDEX);
+            get_analyses(input_string, &output_string[0], &output_string[0], START_INDEX);
         }
 
 
@@ -1034,7 +1030,7 @@ public:
         TransducerW(f, h, a),
         display_map()
         {}
-  
+
     void printAnalyses(std::string prepend);
 };
 
@@ -1050,7 +1046,7 @@ class TransducerWFd: public TransducerW
 
     bool PushState(FlagDiacriticOperation op);
 
-  
+
 public:
     TransducerWFd(FILE * f, TransducerHeader h, TransducerAlphabet a):
         TransducerW(f, h, a),
@@ -1069,7 +1065,7 @@ public:
         TransducerWFd(f, h, a),
         display_map()
         {}
-  
+
     void printAnalyses(std::string prepend);
 
 };

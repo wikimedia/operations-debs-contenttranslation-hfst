@@ -22,6 +22,8 @@ namespace hfst {
     int parse();
     void set_input(std::istream & istr);
     void set_output(std::ostream & ostr);
+    void set_warning_stream(std::ostream & ostr);
+    void set_error_stream(std::ostream & ostr);
   }
 }
 
@@ -32,6 +34,8 @@ namespace hfst {
     void complete_alphabet(void);
     const HandyDeque<std::string> & get_total_alphabet_symbol_queue();
     const HandyDeque<std::string> & get_non_alphabet_symbol_queue();
+    void set_warning_stream(std::ostream & ostr);
+    void set_error_stream(std::ostream & ostr);
   }
 }
 
@@ -43,6 +47,8 @@ namespace hfst {
     TwolCGrammar * get_grammar();
     void set_silent(bool val);
     void set_verbose(bool val);
+    void set_warning_stream(std::ostream & ostr);
+    void set_error_stream(std::ostream & ostr);
   }
 }
 
@@ -87,12 +93,20 @@ int main(int argc, char * argv[])
   if (command_line.be_verbose)
     { std::cerr << "Verbose mode." << std::endl; }
 
+  silent = command_line.be_quiet;
+  verbose = command_line.be_verbose;
+
   hfst::twolcpre1::set_input(command_line.set_input_file());
 
   // Test that the output file is okay.
   (void)command_line.set_output_file();
   std::ostringstream oss1;
   hfst::twolcpre1::set_output(oss1);
+  if (!silent)
+    {
+      hfst::twolcpre1::set_error_stream(std::cerr);
+      hfst::twolcpre1::set_warning_stream(std::cerr);
+    }
   try
     {
       if (hfst::twolcpre1::parse() != 0)
@@ -108,6 +122,11 @@ int main(int argc, char * argv[])
 
   std::istringstream iss1(oss1.str());
   hfst::twolcpre2::set_input(iss1);
+  if (!silent)
+    {
+      hfst::twolcpre2::set_error_stream(std::cerr);
+      hfst::twolcpre2::set_warning_stream(std::cerr);
+    }
   try
     {
       if (hfst::twolcpre2::parse() != 0)
@@ -135,11 +154,14 @@ int main(int argc, char * argv[])
     {
       std::istringstream iss2(oss2.str());
       hfst::twolcpre3::set_input(iss2);
-      
+      if (!silent)
+	{
+	  hfst::twolcpre3::set_error_stream(std::cerr);
+	  hfst::twolcpre3::set_warning_stream(std::cerr);
+	}
+
       OtherSymbolTransducer::set_transducer_type(command_line.format);
-      silent = command_line.be_quiet;
       hfst::twolcpre3::set_silent(silent);
-      verbose = command_line.be_verbose;
       hfst::twolcpre3::set_verbose(verbose);
       
       TwolCGrammar twolc_grammar(command_line.be_quiet,

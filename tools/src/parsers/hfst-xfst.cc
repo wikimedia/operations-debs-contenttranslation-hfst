@@ -48,6 +48,7 @@ static hfst::ImplementationType output_format = hfst::UNSPECIFIED_TYPE;
 static char* scriptfilename = NULL;
 static char* startupfilename = NULL;
 static std::vector<char*> execute_commands;
+static char* execute_command_and_quit = NULL;
 static bool pipe_input = false;
 static bool pipe_output = false; // this has no effect on non-windows platforms
 static bool restricted_mode = false;
@@ -72,15 +73,16 @@ print_usage()
   fprintf(message_out, "\n");
   fprintf(message_out, "Xfst-specific options:\n");
   fprintf(message_out,
-          "  -e, --execute=CMD        Execute command CMD on startup\n"
-          "  -f, --format=FMT         Write result using FMT as backend format\n"
-          "  -F, --scriptfile=FILE    Read commands from FILE, and quit\n"
-          "  -l, --startupfile=FILE   Read commands from FILE on startup\n"
-          "  -p, --pipe-mode[=STREAM] Control input and output streams\n"
-          "  -r, --no-readline        Do not use readline library for input\n"
-          "  -w, --print-weight       Print weights for each operation\n"
-	  "  -R, --restricted-mode    Allow read and write operations only in current\n"
-	  "                           directory, do not allow system calls\n"
+          "  -e, --execute=CMD          Execute command CMD on startup\n"
+	  "  -E, --execute-and-quit=CMD Execute command CMD, and quit\n"
+          "  -f, --format=FMT           Write result using FMT as backend format\n"
+          "  -F, --scriptfile=FILE      Read commands from FILE, and quit\n"
+          "  -l, --startupfile=FILE     Read commands from FILE on startup\n"
+          "  -p, --pipe-mode[=STREAM]   Control input and output streams\n"
+          "  -r, --no-readline          Do not use readline library for input\n"
+          "  -w, --print-weight         Print weights for each operation\n"
+	  "  -R, --restricted-mode      Allow read and write operations only in current\n"
+	  "                             directory, do not allow system calls\n"
           //          "  -k, --no-console         Do not output directly to console (Windows-specific)\n"
           "\n"
           "Option --execute can be invoked many times.\n"
@@ -120,6 +122,7 @@ parse_options(int argc, char** argv)
             {"format", required_argument, 0, 'f'},
             {"scriptfile", required_argument, 0, 'F'},
             {"execute", required_argument, 0, 'e'},
+	    {"execute-and-quit", required_argument, 0, 'E'},
             {"startupfile", required_argument, 0, 'l'},
             {"pipe-mode", optional_argument, 0, 'p'},
             {"no-readline", no_argument, 0, 'r'},
@@ -130,7 +133,7 @@ parse_options(int argc, char** argv)
           };
         int option_index = 0;
         // add tool-specific options here
-        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT "f:F:e:l:p::rwkR",
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT "f:F:e:E:l:p::rwkR",
                              long_options, &option_index);
         if (-1 == c)
           {
@@ -170,6 +173,9 @@ parse_options(int argc, char** argv)
             // e.g. option  -e 'regex U;'  where U is a unicode character is not possible
           case 'e':
             execute_commands.push_back(hfst_strdup(optarg));
+            break;
+	  case 'E':
+            execute_command_and_quit = hfst_strdup(optarg);
             break;
           case 'l':
             startupfilename = hfst_strdup(optarg);
@@ -408,6 +414,17 @@ int main(int argc, char** argv)
           error(EXIT_FAILURE, 0, "command '%s' could not be parsed\n", *cmd);
           return EXIT_FAILURE;
         }
+    }
+  // If needed, execute script given in command line, and quit
+  if (execute_command_and_quit != NULL)
+    {
+      verbose_printf("Executing xfst command '%s' given on command line\n", execute_command_and_quit);
+      if (0 != comp.parse_line(execute_command_and_quit))
+        {
+          error(EXIT_FAILURE, 0, "command '%s' could not be parsed\n", execute_command_and_quit);
+          return EXIT_FAILURE;
+        }
+      return EXIT_SUCCESS;
     }
   // If needed, execute script in startup file
   if (startupfilename != NULL)

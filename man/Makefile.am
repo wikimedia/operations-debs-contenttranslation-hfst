@@ -79,6 +79,10 @@ dist_man1_MANS=$(hfst_tools) $(hfst_xfst) $(hfst_apertium_proc) $(hfst_foma) $(h
 	$(hfst_tag_and_reweight) $(hfst_train_tagger) $(hfst_train_tagger_subprograms) $(hfst_twolc) \
 	$(hfst_twolc_subprograms) $(hfst_lexc_wrapper) $(aliases)
 
+EXTRA_DIST=hfst-lexc-wrapper.1 hfst-foma.1 hfst-foma-wrapper.1 hfst-train-tagger.1 \
+	hfst-open-input-file-for-tagger.1 hfst_tagger_compute_data_statistics.py.1 \
+	hfst-build-tagger.1 htwolcpre1.1 htwolcpre2.1 htwolcpre3.1 hfst-twolc-script.1
+
 LN_S=ln -s -f
 
 hfst-determinise.1:
@@ -136,12 +140,12 @@ bootstrap:
 		-n="$$N" \
 		-s 1 -o $$f -N -S HFST `echo $$f | sed 's/.1//' | sed 's/hfst/..\/tools\/src\/parsers\/hfst/'`; \
 	done;
-	for f in $(hfst_apertium_proc); do \
-		N=`echo $$f | sed 's/.1/ \-\-help/' | sed 's/hfst/..\/tools\/src\/hfst-proc\/hfst/' | sh | sed -n 2p`; \
-		help2man \
-		-n="$$N" \
-		-s 1 -o $$f -N -S HFST `echo $$f | sed 's/.1//' | sed 's/hfst/..\/tools\/src\/hfst-proc\/hfst/'`; \
-	done;
+#	for f in $(hfst_apertium_proc); do \
+#		N=`echo $$f | sed 's/.1/ \-\-help/' | sed 's/hfst/..\/tools\/src\/hfst-proc\/hfst/' | sh | sed -n 2p`; \
+#		help2man \
+#		-n="$$N" \
+#		-s 1 -o $$f -N -S HFST `echo $$f | sed 's/.1//' | sed 's/hfst/..\/tools\/src\/hfst-proc\/hfst/'`; \
+#	done;
 	for f in $(hfst_tag_and_reweight); do \
 		N=`echo $$f | sed 's/.1/ \-\-help/' | sed 's/hfst/..\/tools\/src\/hfst-tagger\/src\/hfst/' | sh | sed -n 2p`; \
 		help2man --no-discard-stderr \

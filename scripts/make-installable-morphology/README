@@ -1,0 +1,29 @@
+So you have an analyzing morphological transducer and would like to make an
+installable tool around it for analyzing running text, and generating wordforms
+from morphological tags given by the user.
+
+The main command for this is make-installable.sh. See
+./make-installable.sh --help.
+
+For now it will also generate a separate tokenizer, effectively including three
+copies of the morphology (one for analyzing, one for generating, one for
+tokenizing). Hopefully this will be corrected in the future.
+
+For best results, check the following things:
+
+1) Does the morphology handle capital letters at the beginning of words? If not,
+you should use --capcase
+
+2) Does the morphology know about punctuation like .,!? If not, consider using
+--punct
+
+Notes about args for existing transducers:
+
+French: --capcase --punct --unweighted
+Italian: --capcase --unweighted
+Finnish: [none, but consider using tokenizer from
+  scripts/tokenization/omorfi-tokenize]
+Turkish: --punct --capcase --unweighted
+Swedish: --punct --capcase --unweighted
+German: --unweighted
+English: --capcase

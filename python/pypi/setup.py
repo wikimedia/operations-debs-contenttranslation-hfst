@@ -94,11 +94,15 @@ if hfst_specific_option('--generate-wrapper'):
 
 # Readline is needed for hfst.start_xfst(). On windows the shell where HFST
 # python bindings are run from has its own readline which will do.
-include_readline_and_getline=False
+include_readline=False
+include_getline=False
 if platform == "linux" or platform == "linux2" or platform == "darwin":
-    include_readline_and_getline=True
+    include_readline=True
+    include_getline=True
+if hfst_specific_option('--no-readline'):
+    include_readline=False
 ext_extra_link_args = []
-if include_readline_and_getline:
+if include_readline:
     ext_extra_link_args = ['-lreadline']
 # Experimental...
 if platform == "darwin" and CPP_STD_11:
@@ -130,8 +134,9 @@ if include_foma_backend:
 ext_define_macros.append(('HAVE_OPENFST', None))
 ext_define_macros.append(('HAVE_OPENFST_LOG', None))
 
-if include_readline_and_getline:
+if include_readline:
     ext_define_macros.append(('HAVE_READLINE', None))
+if include_getline:
     ext_define_macros.append(('HAVE_GETLINE', None))
 
 # msvc-specific macros.
@@ -225,6 +230,7 @@ libhfst_source_files = ["libhfst/src/parsers/XfstCompiler" + cpp,
                         "libhfst/src/implementations/optimized-lookup/convert" + cpp,
                         "libhfst/src/implementations/optimized-lookup/ospell" + cpp,
                         "libhfst/src/implementations/optimized-lookup/pmatch" + cpp,
+                        "libhfst/src/implementations/optimized-lookup/pmatch_tokenize" + cpp,
                         "libhfst/src/implementations/optimized-lookup/find_epsilon_loops" + cpp,
                         "libhfst/src/parsers/xre_lex" + cpp,
                         "libhfst/src/parsers/xre_parse" + cpp,
@@ -343,7 +349,7 @@ libhfst_module = Extension('_libhfst',
                            )
 
 setup(name = 'hfst',
-      version = '3.13.0.0_beta',
+      version = '3.15.0.0_beta',
       author = 'HFST team',
       author_email = 'hfst-bugs@helsinki.fi',
       url = 'http://hfst.github.io/',

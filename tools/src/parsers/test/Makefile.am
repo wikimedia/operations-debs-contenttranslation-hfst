@@ -171,9 +171,11 @@ EXTRA_DIST=test.sh \
 	weighted_parallel_rules_10.xfst weighted_parallel_rules_10.output \
 	weighted_parallel_rules_11.xfst weighted_parallel_rules_11.output \
 	xerox_composition.xfst xerox_composition.output \
+	tokenization_test.xfst tokenization_test.output \
 	compile_replace_1.xfst compile_replace_1.output \
 	compile_replace_2.xfst compile_replace_2.output \
 	compile_replace_3.xfst compile_replace_3.output \
+	compile_replace_4.xfst compile_replace_4.output \
 	replace_markup_1.att replace_markup_1.xfst \
 	replace_markup_2.att replace_markup_2.xfst \
 	replace_markup_3.att replace_markup_3.xfst \

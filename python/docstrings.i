@@ -96,7 +96,7 @@ Exceptions
 // File: classhfst_1_1HfstBasicTransducer.xml
 
 
-%feature("docstring") hfst::HfstBasicTransducer
+%feature("docstring") hfst::implementations::HfstBasicTransducer
 """
 
 A simple transducer class with tropical weights.
@@ -1922,57 +1922,91 @@ Parameters
 
 // File: classhfst_1_1PmatchContainer.xml
 
+%feature("docstring") hfst_ol::Location
+"""
+    Location of a pmatch result.
 
-%feature("docstring") hfst::PmatchContainer
+    Attributes:
+
+        start:                  start index of match
+        length:                 length of match
+        input:                  the matched input string
+        output:                 the matching output string
+        tag:                    the tag of match
+        weight:                 the weight of match
+        input_parts:            tuple of indices in input_symbol_strings
+        output_string:          tuple of indices in output_symbol_strings
+        input_symbol_strings:   tuple of matched input symbol strings
+        output_symbol_strings:  tuple of matching output symbol strings
+"""
+
+%feature("docstring") hfst_ol::PmatchContainer
 """
 
 A class for performing pattern matching.
 """
 
-%feature("docstring") hfst::PmatchContainer::__init__
+%feature("docstring") hfst_ol::PmatchContainer::__init__
 """
 
-Initialize a PmatchContainer.
-
-Is this needed?
-"""
-
-%feature("docstring") hfst::PmatchContainer::__init__
-"""
-
-Create a PmatchContainer based on definitions *defs*.
+Create a PmatchContainer based on definitions *defs* or transducer read from *filename*.
+NOTE: the first variant performs many checks and conversion and is much slower than
+the second one. The second variant assumes that the transducer has been compiled for
+pmatch and is in valid format.
 
 *   defs A tuple of transducers in hfst.HFST_OLW_FORMAT defining how pmatch is
     done.
+*   filename Name of the file that contains a compiled transducer (archive) that is
+    used for pmatching.
 
     See also: hfst.compile_pmatch_file
 """
 
-%feature("docstring") hfst::PmatchContainer::get_profiling_info
+%feature("docstring") hfst_ol::PmatchContainer::locate
+"""
+
+The locations of pmatched strings for string *input* where the results are limited
+as defined by *time_cutoff* and *weight_cutoff*.
+
+Parameters
+----------
+* `input` :
+    The input string.
+* `time_cutoff` :
+    Time cutoff, defaults to zero, i.e. no cutoff.
+* `weight_cutoff` :
+    Weight cutoff, defaults to infinity, i.e. no cutoff.
+
+Returns
+-------
+A tuple of tuples of Location.
+"""
+
+%feature("docstring") hfst_ol::PmatchContainer::get_profiling_info
 """
 
 todo
 """
 
-%feature("docstring") hfst::PmatchContainer::set_profile
+%feature("docstring") hfst_ol::PmatchContainer::set_profile
 """
 
 todo
 """
 
-%feature("docstring") hfst::PmatchContainer::set_extract_tags_mode
+%feature("docstring") hfst_ol::PmatchContainer::set_extract_tags_mode
 """
 
 todo
 """
 
-%feature("docstring") hfst::PmatchContainer::match
+%feature("docstring") hfst_ol::PmatchContainer::match
 """
 
 Match input *input*.
 """
 
-%feature("docstring") hfst::PmatchContainer::set_verbose
+%feature("docstring") hfst_ol::PmatchContainer::set_verbose
 """
 
 todo

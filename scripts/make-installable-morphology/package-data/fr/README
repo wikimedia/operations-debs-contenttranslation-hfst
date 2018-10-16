@@ -1,0 +1,7 @@
+This archive contains the Morphalou morphological analyser for French. It is
+distributed under the Morphalou license, which is included in the archive and
+can be found at
+
+	http://www.cnrtl.fr/lexiques/morphalou/
+
+For usage as an analyzing tool, see hfst-french-installable/README.

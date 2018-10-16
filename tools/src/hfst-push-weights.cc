@@ -229,6 +229,11 @@ int main( int argc, char **argv ) {
     HfstOutputStream* outstream = (outfile != stdout) ?
         new HfstOutputStream(outfilename, instream->get_type()) :
         new HfstOutputStream(instream->get_type());
+
+    if ( is_input_stream_in_ol_format(instream, "hfst-push-weights"))
+      {
+	return EXIT_FAILURE;
+      }
     
     retval = process_stream(*instream, *outstream);
     delete instream;

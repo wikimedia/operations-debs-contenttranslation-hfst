@@ -1,0 +1,39 @@
+General
+-------
+
+This is an English morphological transducer.  It is meant for analysis, and
+thus overgenerates by allowing a large number of prefixes and suffixes.  The
+exceptions lexicon and parts of the main lexicon are based on WordNet 2.0
+(see http://wordnet.princeton.edu/wordnet/license/).
+
+The lexicon has been further expanded by including words appearing in the
+British National Corpus (BNC).  The grammar itself is licensed under the Gnu
+General Public License.  The BNC expansion is not available in src/ as we don't
+have license to distribute, but a guide to producing something similar may be
+found in https://kitwiki.csc.fi/twiki/bin/view/KitWiki/HfstApplicationTutorial?#Building_an_English_morphology_f .
+
+Compilation
+-----------
+
+Requires the files lexicon.lex and exceptions.lex
+
+Compiles with foma (http://foma.sourceforge.net):
+
+foma -l english.script
+
+This constructs the main transducer. Parsing is from bottom to top, i.e. the command "up <word>" will parse a verb, etc.
+
+For usage as an analyzing tool, see hfst-english-installable/README.
+
+Files
+-----
+
+english.hfst: precompiled transducer in HFST format (OpenFST tropical)
+src:
+  english.script: foma source file
+  lexicon.lex: lexc main lexicon
+  exceptions.lex: lexc exceptions lexicon
+  english.att: precompiled transducer in AT&T/HFST-txt format
+hfst-english-installable:
+  System-installable scripts, see README
+  

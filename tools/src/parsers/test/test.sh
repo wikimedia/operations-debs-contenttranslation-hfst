@@ -189,7 +189,8 @@ do
     ## is the same as testfile.output
     for testfile in print_stack print_labels print_label_tally \
     shortest_string set_variable print_net eliminate_flag empty_context xerox_composition \
-        compile_replace_1 compile_replace_2 compile_replace_3 flag_with_unknown
+    compile_replace_1 compile_replace_2 compile_replace_3 compile_replace_4 flag_with_unknown \
+    tokenization_test
     do
     if ! (${LS} $testfile.xfst > /dev/null 2> /dev/null); then
         echo "skipping missing test for "$testfile"..."

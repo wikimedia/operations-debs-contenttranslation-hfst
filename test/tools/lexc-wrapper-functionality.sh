@@ -1,4 +1,8 @@
 #!/bin/sh
+if [ "$1" = "--python" ]; then
+    exit 77
+fi
+
 TOOLDIR=../../tools/src
 LEXCTESTS="basic.cat-dog-bird.lexc basic.colons.lexc basic.comments.lexc 
           basic.empty-sides.lexc basic.end.lexc basic.escapes.lexc 

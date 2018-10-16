@@ -1,14 +1,25 @@
 #!/bin/sh
 TOOLDIR=../../tools/src
+TOOL=
+
+if [ "$1" = '--python' ]; then
+    TOOL="python3 ./hfst-pmatch.py"
+else
+    TOOL=$TOOLDIR/hfst-pmatch
+    if ! test -x $TOOL; then
+	exit 77;
+    fi
+fi
+
 if [ "$srcdir" = "" ] ; then
     srcdir=. ;
 fi
-if ! $TOOLDIR/hfst-pmatch pmatch_endtag.pmatch < $srcdir/cat.strings > test.lookups ; then
+if ! $TOOL pmatch_endtag.pmatch < $srcdir/cat.strings > test.lookups ; then
     exit 1
 fi
 
 # test equality of output
-if ! echo "cat" | $TOOLDIR/hfst-pmatch pmatch_endtag.pmatch > test.pmatch; 
+if ! echo "cat" | $TOOL pmatch_endtag.pmatch > test.pmatch; 
     then
         exit 1
     fi
@@ -19,14 +30,16 @@ if ! echo "cat" | $TOOLDIR/hfst-pmatch pmatch_endtag.pmatch > test.pmatch;
     
 rm test.pmatch test.lookups
 
-# Jyrki's suite
-if ! $srcdir/pmatch-tests.sh --log none; then
-    if [ -e $srcdir/pmatch-tests.sh.* ]; then
-        rm $srcdir/pmatch-tests.sh.*
+if [ "$1" != '--python' ]; then
+    # Jyrki's suite
+    if ! $srcdir/pmatch-tests.sh --log none; then
+	if [ -e $srcdir/pmatch-tests.sh.* ]; then
+            rm $srcdir/pmatch-tests.sh.*
+	fi
+	exit 1
     fi
-    exit 1
-fi
-
-if [ -e $srcdir/pmatch-tests.sh.* ]; then
-    rm $srcdir/pmatch-tests.sh.*
+    
+    if [ -e $srcdir/pmatch-tests.sh.* ]; then
+	rm $srcdir/pmatch-tests.sh.*
+    fi
 fi

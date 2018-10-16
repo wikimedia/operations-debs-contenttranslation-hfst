@@ -92,7 +92,7 @@ see `README <https://github.com/hfst/hfst/tree/master/python>`_ of the ``python`
 Documentation
 #############
 
-See Doxygen-generated `package documentation <https://hfst.github.io/python>`_
+See wiki-based `package documentation <https://github.com/hfst/python/wiki>`_
 on our Github pages. In python, you can also use ``dir`` and ``help``
 commands, e.g.:
 

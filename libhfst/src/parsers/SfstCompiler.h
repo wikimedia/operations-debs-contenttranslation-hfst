@@ -61,8 +61,8 @@ namespace hfst
       
       typedef std::set<char*, ltstr> RVarSet;
       // using std::(tr1::)unordered_map directive comes from SfstAlphabet.h
-      typedef unordered_map<char*,HfstTransducer*> VarMap;
-      typedef unordered_map<char*,Range*> SVarMap;
+      typedef unordered_map<std::string,HfstTransducer*> VarMap;
+      typedef unordered_map<std::string,Range*> SVarMap;
       
     private:
       VarMap VM;

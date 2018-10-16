@@ -6,12 +6,11 @@ bin_PROGRAMS=hfst-build-tagger$(EXEEXT) hfst-open-input-file-for-tagger$(EXEEXT)
 hfst-reweight-tagger$(EXEEXT) hfst-train-tagger-system$(EXEEXT)
 bin_SCRIPTS=hfst_tagger_compute_data_statistics.py hfst-train-tagger$(EXEEXT) \
 hfst-train-tagger-loc$(EXEEXT)
-EXTRA_DIST=hfst-train-tagger.sh hfst-train-tagger.bat
 else
 bin_PROGRAMS=hfst-tag hfst-reweight-tagger$(EXEEXT)
 bin_SCRIPTS=
-EXTRA_DIST=
 endif
+EXTRA_DIST=hfst-train-tagger.sh hfst-train-tagger.bat hfst_tagger_compute_data_statistics.py
 
 BUILD_MODEL_SRC=$(srcdir)/build_model_src
 USE_MODEL_SRC=$(srcdir)/use_model_src
@@ -20,6 +19,9 @@ LDADD = $(top_builddir)/libhfst/src/libhfst.la
 
 if WANT_TRAIN_TAGGER
 python_PYTHON=$(BUILD_MODEL_SRC)/tagger_aux.py \
+              hfst_tagger_compute_data_statistics.py
+else
+EXTRA_DIST += $(BUILD_MODEL_SRC)/tagger_aux.py \
               hfst_tagger_compute_data_statistics.py
 endif
 
@@ -33,7 +35,6 @@ AM_INSTALLCHECK_STD_OPTIONS_EXEMPT=hfst_tagger_compute_data_statistics.py \
                                    hfst-train-tagger hfst-train-tagger-loc \
 				   hfst-train-tagger-system
 
-if WANT_TRAIN_TAGGER
 hfst_build_tagger_SOURCES=hfst-build-tagger.cc \
 			  $(BUILD_MODEL_SRC)/FstBuilder.cc \
 			  $(BUILD_MODEL_SRC)/LexicalModelBuilder.cc \
@@ -43,7 +44,6 @@ hfst_build_tagger_SOURCES=hfst-build-tagger.cc \
 			  $(BUILD_MODEL_SRC)/WeightedStringVectorCollection.cc\
 			  $(BUILD_MODEL_SRC)/string_handling.cc \
 			  $(HFST_COMMON_SRC)
-endif
 
 hfst_tag_SOURCES=hfst-tag.cc \
 	         $(USE_MODEL_SRC)/DelayedSequenceModelComponent.cc \
@@ -59,9 +59,10 @@ hfst_tag_SOURCES=hfst-tag.cc \
 hfst_reweight_tagger_SOURCES=hfst-reweight-tagger.cc \
 		             $(HFST_COMMON_SRC)
 
-if WANT_TRAIN_TAGGER
+
 hfst_train_tagger_system_SOURCES=hfst-train-tagger-system.cc
 
+if WANT_TRAIN_TAGGER
 hfst-train-tagger$(EXEEXT): hfst-train-tagger.sh
 	cat $< | sed -e 's|BINDIR|$(bindir)|' > $@
 	chmod ogu+rx $@
@@ -76,10 +77,8 @@ endif
 
 unit_test_aux.o:$(srcdir)/unit_test_aux.cc
 
-if WANT_TRAIN_TAGGER
 hfst_open_input_file_for_tagger_SOURCES=hfst-open-input-file-for-tagger.cc \
 			  $(HFST_COMMON_SRC)
-endif
 
 check_PROGRAMS=FstBuilder LexicalModelBuilder ModelBuilder \
                SequenceModelBuilder TaggerBuilder \
@@ -197,7 +196,7 @@ SequenceTagger_CXXFLAGS=-DMAIN_TEST -Wno-deprecated
 
 TESTS=$(check_PROGRAMS)
 
-EXTRA_DIST +=$(BUILD_MODEL_SRC)/FstBuilder.h \
+EXTRA_DIST += $(BUILD_MODEL_SRC)/FstBuilder.h \
 $(BUILD_MODEL_SRC)/LexicalModelBuilder.h \
 $(BUILD_MODEL_SRC)/ModelBuilder.h \
 $(BUILD_MODEL_SRC)/SequenceModelBuilder.h \

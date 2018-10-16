@@ -252,19 +252,19 @@ namespace hfst
   
   bool SfstCompiler::def_var( char *name, HfstTransducer *t ) {
     // delete the old value of the variable
-    VarMap::iterator it=VM.find(name);
+    VarMap::iterator it=VM.find(std::string(name));
     if (it != VM.end()) {
-      char *n=it->first;
+      //char *n=it->first;
       HfstTransducer *v=it->second;
       VM.erase(it);
       delete v;
-      free(n);
+      //free(n);
     }
     
     t = explode(t);
     t->minimize();
     
-    VM[name] = t;
+    VM[std::string(name)] = t;
 
     return false;
   }
@@ -276,7 +276,7 @@ namespace hfst
   }
   
   HfstTransducer * SfstCompiler::var_value( char *name ) {
-    VarMap::iterator it=VM.find(name);
+    VarMap::iterator it=VM.find(std::string(name));
     if (it == VM.end()) {
       printf("undefined variable %s\n", name);
       HFST_THROW(HfstException);
@@ -294,15 +294,15 @@ namespace hfst
 
   bool SfstCompiler::def_svar( char *name, Range *r ) {
     // delete the old value of the variable
-    SVarMap::iterator it=SVM.find(name);
+    SVarMap::iterator it=SVM.find(std::string(name));
     if (it != SVM.end()) {
-      char *n=it->first;
+      //char *n=it->first;
       Range *v=it->second;
       SVM.erase(it);
       delete v;
-      free(n);
+      //free(n);
     }
-    SVM[name] = r;
+    SVM[std::string(name)] = r;
     return r == NULL;
   }
 
@@ -313,7 +313,7 @@ namespace hfst
   }
 
   Range *SfstCompiler::svar_value( char *name ) {
-    SVarMap::iterator it=SVM.find(name);
+    SVarMap::iterator it=SVM.find(std::string(name));
     if (it == SVM.end())
       error2("undefined variable", name);
     free(name);
@@ -633,7 +633,7 @@ namespace hfst
                         ImplementationType type) {
 
     std::string filestr("");
-    if (NULL != folder) {
+    if (NULL != folder && strcmp(folder, "") != 0) {
       filestr.append(folder);
       filestr.append("/"); // FIX: WINDOWS
     }
@@ -848,16 +848,16 @@ namespace hfst
     t = explode(t);
 
     // delete the variable values
-    std::vector<char*> s;
+    //std::vector<char*> s;
     for( VarMap::iterator it=VM.begin(); it != VM.end(); it++ ) {
-      s.push_back(it->first);
+      //s.push_back(it->first);
       delete it->second;
       it->second = NULL;
     }
     VM.clear();
-    for( size_t i=0; i<s.size(); i++ )
-      free(s[i]);
-    s.clear();
+    //for( size_t i=0; i<s.size(); i++ )
+    //  free(s[i]);
+    //s.clear();
     
     if (switch_flag)
       t->invert();

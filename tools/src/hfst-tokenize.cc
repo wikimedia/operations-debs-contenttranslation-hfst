@@ -86,13 +86,13 @@ print_usage()
             "  -m, --tokenize-multichar Tokenize multicharacter symbols\n"
             "                           (by default only one utf-8 character is tokenized at a time\n"
             "                           regardless of what is present in the alphabet)\n"
-            "  -b, --beam=B             Output only analyses whose weight is within B from\n"
+            "  -b, --beam=B             Output only analyses whose weight is within B from best result\n"
             "  -tS, --time-cutoff=S     Limit search after having used S seconds per input\n"
             "  -lN, --weight-classes=N  Output no more than N best weight classes\n"
             "                           (where analyses with equal weight constitute a class\n"
             "  -u, --unique             Remove duplicate analyses\n"
             "  -z, --segment            Segmenting / tokenization mode (default)\n"
-	    "  -i, --space-separated    Tokenization with one sentence per line, space-separated tokens\n"
+            "  -i, --space-separated    Tokenization with one sentence per line, space-separated tokens\n"
             "  -x, --xerox              Xerox output\n"
             "  -c, --cg                 Constraint Grammar output\n"
             "  -S, --superblanks        Ignore contents of unescaped [] (cf. apertium-destxt); flush on NUL\n"
@@ -100,7 +100,9 @@ print_usage()
             "                           treats @PMATCH_INPUT_MARK@ as subreading separator,\n"
             "                           expects tags to be Multichar_symbols, flush on NUL)\n"
             "  -C  --conllu             CoNLL-U format\n"
-            "  -f, --finnpos            FinnPos output\n");
+            "  -f, --finnpos            FinnPos output\n"
+            "  -L, --visl               VISL input and output (implies -W, handles <s> as blocks and <STYLE> inline)\n"
+            );
     fprintf(message_out,
             "Use standard streams for input and output (for now).\n"
             "\n"
@@ -196,12 +198,71 @@ inline void process_input_0delim_print(hfst_ol::PmatchContainer & container,
                                        std::ostream & outstream,
                                        std::ostringstream& cur)
 {
-    string input_text(cur.str());
+    const std::string& input_text{cur.str()};
     if(!input_text.empty()) {
         match_and_print(container, outstream, input_text, settings);
     }
     cur.clear();
     cur.str(string());
+}
+
+inline void trim(std::string& str) {
+    while (!str.empty() && (std::isspace(str.back()) || str.back() == 0)) {
+        str.pop_back();
+    }
+    while (!str.empty() && (std::isspace(str.front()) || str.front() == 0)) {
+        str.erase(0, 1);
+    }
+}
+
+int process_input_visl(hfst_ol::PmatchContainer& container, std::ostream& outstream) {
+    size_t bufsize = 0;
+    char *buffer = 0;
+    std::string line;
+
+    ssize_t len = 0;
+    while ((len = hfst_getline(&buffer, &bufsize, inputfile)) > 0) {
+        line.assign(buffer, buffer+len);
+        trim(line);
+        if (!line.empty()) {
+            if (line.front() == '<' && line.back() == '>') {
+                print_nonmatching_sequence(line, outstream, settings);
+            }
+            else {
+                match_and_print(container, outstream, line, settings);
+            }
+        }
+        else {
+            outstream << '\n';
+        }
+        outstream.flush();
+
+        buffer[0] = 0;
+        len = 0;
+
+        if (feof(inputfile)) {
+            break;
+        }
+    }
+
+    if (len < 0) {
+        len = 0;
+    }
+
+    line.assign(buffer, buffer+len);
+    trim(line);
+    if (!line.empty()) {
+        if (line.front() == '<' && line.back() == '>') {
+            print_nonmatching_sequence(line, outstream, settings);
+        }
+        else {
+            match_and_print(container, outstream, line, settings);
+        }
+    }
+    outstream.flush();
+
+    free(buffer);
+    return EXIT_SUCCESS;
 }
 
 template<bool do_superblank>
@@ -283,7 +344,7 @@ inline void maybe_erase_newline(string& input_text)
 int process_input(hfst_ol::PmatchContainer & container,
                   std::ostream & outstream)
 {
-    if(settings.output_format == cg || settings.output_format == giellacg) {
+    if(settings.output_format == cg || settings.output_format == giellacg || settings.output_format == visl) {
         outstream << std::fixed << std::setprecision(10);
     }
     if(settings.output_format == giellacg || superblanks) {
@@ -293,6 +354,9 @@ int process_input(hfst_ol::PmatchContainer & container,
         else {
             return process_input_0delim<false>(container, outstream);
         }
+    }
+    if(settings.output_format == visl) {
+        return process_input_visl(container, outstream);
     }
     string input_text;
     char * line = NULL;
@@ -346,9 +410,9 @@ int parse_options(int argc, char** argv)
                 {"beam", required_argument, 0, 'b'},
                 {"time-cutoff", required_argument, 0, 't'},
                 {"weight-classes", required_argument, 0, 'l'},
-                {"unique", required_argument, 0, 'u'},
+                {"unique", no_argument, 0, 'u'},
                 {"segment", no_argument, 0, 'z'},
-		{"space-separated", no_argument, 0, 'd'},
+                {"space-separated", no_argument, 0, 'd'},
                 {"xerox", no_argument, 0, 'x'},
                 {"cg", no_argument, 0, 'c'},
                 {"superblanks", no_argument, 0, 'S'},
@@ -356,10 +420,11 @@ int parse_options(int argc, char** argv)
                 {"gtd", no_argument, 0, 'g'},
                 {"conllu", no_argument, 0, 'C'},
                 {"finnpos", no_argument, 0, 'f'},
+                {"visl", no_argument, 0, 'L'},
                 {0,0,0,0}
             };
         int option_index = 0;
-        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT "nkawWmub:t:l:zixcSgCf",
+        int c = getopt_long(argc, argv, HFST_GETOPT_COMMON_SHORT "nkawWmub:t:l:zixcSgCfL",
                              long_options, &option_index);
         if (-1 == c)
         {
@@ -443,6 +508,13 @@ int parse_options(int argc, char** argv)
             if(settings.max_weight_classes == std::numeric_limits<int>::max()) {
                 settings.max_weight_classes = 2;
             }
+            break;
+        case 'L':
+            settings.output_format = visl;
+            settings.print_weights = false;
+            settings.print_all = true;
+            settings.dedupe = true;
+            settings.verbose = false;
             break;
         case 'f':
             settings.output_format = finnpos;

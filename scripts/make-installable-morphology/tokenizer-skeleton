@@ -1,0 +1,64 @@
+set need-separators off
+
+define morfo @bin"LANG";
+! We use directed unicode quotation marks in both directions because people
+! don't use them correctly in the wild
+define punct_trailing_or_preceding "\"" | "'" | "’" | "”" | "“" | "„" | "″";
+define punct_trailing_strict "," | ")" | "]" | "}" | "–" | ":" | ";" | "»" | ">" ;
+define punct_preceding_strict "<" | "(" | "[" | "{" | "-" | "–" | "»" | ">" ;
+define punct_trailing punct_trailing_or_preceding | punct_trailing_strict;
+define punct_preceding punct_trailing_or_preceding | punct_preceding_strict;
+
+define punct_sentbound "." | "?" | "!";
+define dash "-" | "–";
+define hyphen "-" | "‐";
+define minus "-" | "−";
+define em_dash "—";
+define boundary Whitespace+ | .#. ;
+
+define date Num (Num) "." Num (Num) "." (Num^{1,4});
+define time Num Num ":" Num Num;
+define date_with_time date " " time;
+define numerical_expr (minus) [[Num+] | [Num^{1,3} [(","|"."|" ") Num^3]*]] (["."|","] Num+);
+define scientific_num (minus) [Num+] (["." | ","] Num+) ("e" Num+);
+define numerical_ord Num+ "." RC(boundary LowercaseAlpha);
+define numerical_range numerical_expr [(" ") dash (" ")] numerical_expr;
+define date_range [ date | [ Num Num "." ] ] (" ") dash (" ") date;
+define percentage_maybe_change (["+" | minus]) numerical_expr ("%");
+define inch_sign {"} | {”};
+define numerical [numerical_expr (inch_sign)] | numerical_range | percentage_maybe_change | numerical_ord | scientific_num;
+define url (({http}) ("s") {://}) ({www.}) [[Alpha | Num]+ (".")]+ "." [Alpha]^{1,10} (":" Num+) ("/" [\Whitespace]+);
+define email [\Whitespace]+ "@" [\Whitespace]+ "." Alpha+;
+define xml_tag "<" ("/") [\[">"|"\n"]]+ ">";
+define typographic_paragraph_separator "*"+ | "-"+ | "=+";
+define any_nonwhitespace_utf8_char ? - Whitespace;
+define internal_punct "'" | "’" | "-" | "*"+;
+define unknown_word_char [\[Whitespace | Punct | em_dash | punct_trailing]];
+define unknown_token unknown_word_char+ (internal_punct) ;
+
+define punct_between [punct_trailing | punct_preceding | punct_sentbound]+;
+
+define TOP
+  [
+  [ LC([boundary | punct_preceding]) Ins(morfo) RC(boundary | [punct_trailing | punct_sentbound]) ] |
+  ! The case where the morphology contains entries ending in internal punctuation
+  ! and will be immediately followed or preceded by an another alpha token
+  [ RC([Alpha+ internal_punct Alpha+]) Ins(morfo) OR(LC([boundary | punct_preceding | [Alpha+ boundary]]), RC(Alpha+ boundary)) ]::200 |
+  ! The case where the next token contains internal punctuation, like "isn't"
+  [ LC([boundary | punct_preceding]) Ins(morfo) AND(RC([Alpha+ internal_punct Alpha+]), RC(Ins(morfo) boundary)) ]::300 |
+  [ RC([Alpha+ internal_punct Alpha+]) Ins(morfo) RC(boundary) ]::300 |
+  [ NLC(boundary) RC(punct_trailing) Ins(morfo) RC(boundary) ] |
+  [ LC(boundary) RC(punct_preceding) Ins(morfo) NRC(boundary) ] |
+  [ xml_tag ] |
+  ! This will insert a newline in the token stream
+  [ NLC(boundary) RC(punct_sentbound) Ins(morfo) RC(boundary) EndTag("Boundary=Sentence")]::1100 |
+  [ NLC(boundary) RC(punct_between) Ins(morfo) NRC(boundary) ] |
+  [ date | date_range | date_with_time | time | numerical ]::1050 |
+  [("<") url (">") ] | email |
+  ! Unknown token
+  [ define( LC([boundary | punct_preceding_strict]) unknown_token RC([boundary | punct_trailing_strict | punct_sentbound]) ) ]::1500 |
+  [ Punct ]::700 |
+  [ typographic_paragraph_separator ]::800 |
+  [ NRC(Ins(morfo) boundary) [Alpha | Num]+ ]::1900
+  ] | any_nonwhitespace_utf8_char::2000
+;

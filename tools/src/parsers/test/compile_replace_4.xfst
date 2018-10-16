@@ -1,0 +1,16 @@
+set retokenize OFF
+read regex "^[" "[" [ b | p ] u [ k | l ] u "]" "^2" "^]" ;
+compile-replace lower
+invert net
+apply down pulupulu
+apply down pukupulu
+apply down pukupuku
+apply down bukubuku
+echo --
+clear stack
+read regex "^[" "[" [ b | p ] u [ k | l ] u "]" "^2" "^]" ;
+compile-replace lower
+apply down ^[[pulu]^2^]
+apply down ^[[pukupulu]^]
+apply down ^[[puku]^2^]
+apply down ^[[buku]^2^]

@@ -8,7 +8,10 @@ if WANT_MINGW
 AM_CPPFLAGS += -D__NO_MINGW_LFS
 endif
 
+if WANT_FOMA
 noinst_LTLIBRARIES = libfoma.la
+endif
+
 libfoma_la_SOURCES = int_stack.c define.c determinize.c apply.c \
         rewrite.c lexcread.c topsort.c flags.c minimize.c reverse.c \
         extract.c sigma.c structures.c constructions.c \
@@ -35,10 +38,12 @@ endif
 endif
 endif
 
+
 if GENERATE_FOMA_WRAPPER
 bin_PROGRAMS=hfst_foma
-hfst_foma_SOURCES=foma.c stack.c iface.c lex.interface.c lex.cmatrix.c
 AM_CPPFLAGS += -DZLIB
 endif
 
-EXTRA_DIST=foma.h fomalibconf.h fomalib.h lexc.h regex.h
+hfst_foma_SOURCES=foma.c stack.c iface.c lex.interface.c lex.cmatrix.c
+
+EXTRA_DIST = foma.h fomalibconf.h fomalib.h lexc.h regex.h

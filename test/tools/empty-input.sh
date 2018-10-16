@@ -16,7 +16,16 @@ hfst-subtract hfst-summarize hfst-tail hfst-traverse \
 hfst-txt2fst"
 
 for prog in $HFST_TOOLS ; do
-    f=$TOOLDIR/$prog
+    f=
+    if [ "$1" != "--python" ]; then
+	f=$TOOLDIR/$prog
+    else
+	if ! [ -f $prog".py" ]; then
+	    echo $prog".py not found, skipping it"
+	    continue
+	fi
+	f="python3 "$prog".py"
+    fi
     if [ -x "$f" -a ! -d "$f" ] ; then
         $f < $srcdir/empty-file > /dev/null 2>&1
         rv=$?

@@ -24,10 +24,12 @@ TokenIOStream::TokenIOStream(std::istream& i, std::ostream& o,
   is(i), os(o), alphabet(a), null_flush(flush), is_raw(raw),
   symbolizer(a.get_symbolizer()), superblank_bucket(), token_buffer(1024)
 {
-  if(printDebuggingInformationFlag)
+  if(printDebuggingInformationFlag) {
     std::cout << "Creating TokenIOStream" << std::endl;
-  if(escaped_chars.size() == 0 && !is_raw)
+  }
+  if(escaped_chars.size() == 0 && !is_raw) {
     initialize_escaped_chars();
+  }
 }
 
 void
@@ -205,8 +207,9 @@ TokenIOStream::read_delimited(const char delim)
 }
 
 Token
-TokenIOStream::make_token()
+TokenIOStream::make_token(bool was_escaped)
 {
+    int c = is.peek();
   SymbolNumber s = symbolizer.extract_symbol(is);
   if(s == 0)
   {
@@ -214,14 +217,26 @@ TokenIOStream::make_token()
     return Token();
   }
 
-  if(s != NO_SYMBOL_NUMBER)
-    return Token::as_symbol(s);
+  if(s != NO_SYMBOL_NUMBER) {
+    if(was_escaped) {
+      return Token::as_escaped_symbol(s);
+    }
+    else {
+      return Token::as_symbol(s);
+
+    }
+  }
 
   // the next thing in the stream is not a symbol
   // (extract_symbol moved the stream back to before anything was read)
   std::string ch = read_utf8_char();
-  if(null_flush && ch == "")
+  if(null_flush && ch == "") {
     do_null_flush();
+  }
+  if(was_escaped) {
+    return Token::as_character(ch.c_str());
+  }
+
   return (escaped_chars.find(ch[0]) == escaped_chars.end()) ?
     Token::as_character(ch.c_str()) :
     Token::as_reservedcharacter(ch[0]);
@@ -249,7 +264,7 @@ TokenIOStream::read_token()
 
       case '\\':
         next_char = is.get(); // get the peeked char for real
-        return Token::as_character(read_escaped());
+        return make_token(true);
 
       case '<':
       {
@@ -340,7 +355,12 @@ TokenIOStream::token_to_string(const Token& t, bool raw) const
   switch(t.type)
   {
     case Symbol:
-      return alphabet.symbol_to_string(t.symbol);
+      if(t.escaped) {
+        return "\\" + alphabet.symbol_to_string(t.symbol);
+      }
+      else {
+        return alphabet.symbol_to_string(t.symbol);
+      }
     case Character:
       if(raw)
         return t.character;

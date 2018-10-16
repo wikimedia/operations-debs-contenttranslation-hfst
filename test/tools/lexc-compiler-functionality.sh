@@ -1,6 +1,29 @@
 #!/bin/sh
-
 TOOLDIR=../../tools/src
+TOOL=
+FORMAT_TOOL=
+COMPARE_TOOL=
+TXT2FST=
+
+if [ "$1" = '--python' ]; then
+    TOOL="python3 ./hfst-lexc.py"
+    FORMAT_TOOL="python3 ./hfst-format.py"
+    COMPARE_TOOL="python3 ./hfst-compare.py"
+    TXT2FST="python3 ./hfst-txt2fst.py"
+else
+    TOOL=$TOOLDIR/hfst-lexc
+    FORMAT_TOOL=$TOOLDIR/hfst-format
+    COMPARE_TOOL=$TOOLDIR/hfst-compare
+    TXT2FST=$TOOLDIR/hfst-txt2fst
+    for tool in $TOOL $FORMAT_TOOL $COMPARE_TOOL $TXT2FST;
+    do
+	if ! test -x $tool ; then
+	    echo "missing hfst-lexc, assuming configured off, skipping"
+	    exit 77
+	fi
+    done
+fi
+
 LEXCTESTS="basic.cat-dog-bird.lexc basic.colons.lexc basic.comments.lexc 
           basic.empty-sides.lexc basic.escapes.lexc 
           basic.infostrings.lexc basic.initial-lexicon-empty.lexc 
@@ -23,6 +46,7 @@ LEXCTESTS="basic.cat-dog-bird.lexc basic.colons.lexc basic.comments.lexc
           xre.star-plus-optional.lexc
           no-newline-before-sublexicon.lexc xre.any-variations.lexc"
 
+          # basic.lowercase-lexicon-end.lexc fails with -F with python
           # xre.any-variations.lexc # - hfst works file, foma's eliminate_flags removes valid paths (hfst-compare -e)
           # basic.end.lexc -hfst doesn't parse till end
           # xre.any-variations.lexc -foma ?:? problem
@@ -38,12 +62,6 @@ LEXCWARN="warn.sublexicon-mentioned-but-not-defined.lexc warn.one-sided-flags.le
 
 if test "$srcdir" = ""; then
     srcdir="./"
-fi
-
-
-if ! test -x $TOOLDIR/hfst-lexc ; then
-    echo "missing hfst-lexc, assuming configured off, skipping"
-    exit 73
 fi
 
 for i in .sfst .ofst .foma ; do
@@ -66,16 +84,16 @@ for i in .sfst .ofst .foma ; do
     
     #echo "---- $FNAME --------"
 
-    if ! ($TOOLDIR/hfst-format --test-format $FNAME ) ; then
+    if ! ($FORMAT_TOOL --test-format $FNAME ) ; then
         continue;
     fi
 
     if test -f cat$i ; then
-        if ! $TOOLDIR/hfst-lexc $FFLAG $srcdir/cat.lexc -o test 2> /dev/null; then
+        if ! $TOOL $FFLAG $srcdir/cat.lexc -o test 2> /dev/null; then
             echo lexc $FFLAG cat.lexc failed with $?
             exit 1
         fi
-        if ! $TOOLDIR/hfst-compare -e -s cat$i test ; then
+        if ! $COMPARE_TOOL -e -s cat$i test ; then
         echo "results differ: " "cat"$i" test"
             exit 1
         fi
@@ -84,7 +102,7 @@ for i in .sfst .ofst .foma ; do
     for f in $LEXCTESTS $LEXCWARN ; do
         
         #check non-flag result
-        if ! $TOOLDIR/hfst-lexc $FFLAG $srcdir/$f -o test 2> /dev/null; then
+        if ! $TOOL $FFLAG $srcdir/$f -o test 2> /dev/null; then
             echo lexc $FFLAG $f failed with $?
             exit 1
         fi
@@ -101,10 +119,10 @@ for i in .sfst .ofst .foma ; do
      #   mv test.foma $RESULT
      #   rm tmp-foma-script
      
-        $TOOLDIR/hfst-txt2fst --prolog $FFLAG -i $RESULT -o $RESULT.tmp
+        $TXT2FST --prolog $FFLAG -i $RESULT -o $RESULT.tmp
            
          #echo "comparing file: $f"
-         if ! $TOOLDIR/hfst-compare -e -s $RESULT.tmp test ; then
+         if ! $COMPARE_TOOL -e -s $RESULT.tmp test ; then
              echo "results differ: $f"
              exit 1
          fi
@@ -116,15 +134,15 @@ for i in .sfst .ofst .foma ; do
         RESULT="$f.flag.result.prolog"
  
 
-        if ! $TOOLDIR/hfst-lexc -F $FFLAG $srcdir/$f -o test 2> /dev/null; then
-            echo lexc2fst -F $FFLAG $f failed with $?
+        if ! $TOOL -F $FFLAG $srcdir/$f -o test 2> /dev/null; then
+            echo hfst-lexc -F $FFLAG $f failed with $?
             exit 1
         fi
         
-        $TOOLDIR/hfst-txt2fst --prolog $FFLAG -i $RESULT -o $RESULT.tmp
+        $TXT2FST --prolog $FFLAG -i $RESULT -o $RESULT.tmp
            
          #echo "comparing flag file: $f"
-         if ! $TOOLDIR/hfst-compare -e -s $RESULT.tmp test ; then
+         if ! $COMPARE_TOOL -e -s $RESULT.tmp test ; then
              echo "flag results differ: $f: "$RESULT".tmp != test"
              exit 1
          fi
@@ -136,21 +154,21 @@ for i in .sfst .ofst .foma ; do
     done
 
     for f in $LEXCWARN ; do
-        if $TOOLDIR/hfst-lexc --Werror $FFLAG $srcdir/$f -o test 2> /dev/null; then
+        if $TOOL --Werror $FFLAG $srcdir/$f -o test 2> /dev/null; then
             echo lexc $FFLAG $f passed although --Werror was used
             exit 1
         fi        
     done
 
-    if ! $TOOLDIR/hfst-lexc $FFLAG $srcdir/basic.multi-file-1.lexc \
+    if ! $TOOL $FFLAG $srcdir/basic.multi-file-1.lexc \
         $srcdir/basic.multi-file-2.lexc \
         $srcdir/basic.multi-file-3.lexc -o test 2> /dev/null; then
-        echo lexc2fst $FFLAG basic.multi-file-{1,2,3}.lexc failed with $?
+        echo hfst-lexc $FFLAG basic.multi-file-{1,2,3}.lexc failed with $?
         exit 1
     fi
-    if ! $TOOLDIR/hfst-compare -e -s walk_or_dog$i test ; then
+    if ! $COMPARE_TOOL -e -s walk_or_dog$i test ; then
         exit 1
     fi
 done
 
-exit 77
+#exit 77

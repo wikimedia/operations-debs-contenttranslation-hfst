@@ -47,14 +47,14 @@ CLASSES:
 
 """
 
-__version__ = "3.13.0.0"
+__version__ = "3.15.0.0"
 
 import hfst.exceptions
 import hfst.sfst_rules
 import hfst.xerox_rules
 from libhfst import is_diacritic, compile_pmatch_expression, HfstTransducer, HfstOutputStream, HfstInputStream, \
 HfstTokenizer, HfstBasicTransducer, HfstBasicTransition, XreCompiler, LexcCompiler, \
-XfstCompiler, set_default_fst_type, get_default_fst_type, fst_type_to_string, PmatchContainer
+XfstCompiler, set_default_fst_type, get_default_fst_type, fst_type_to_string, PmatchContainer, Location
 import libhfst
 
 from sys import version
@@ -82,13 +82,13 @@ def get_output_to_console():
     """
     return OUTPUT_TO_CONSOLE
 
-def start_xfst(**kvargs):
+def start_xfst(**kwargs):
     """
     Start interactive xfst compiler.
 
     Parameters
     ----------
-    * `kvargs` :
+    * `kwargs` :
         Arguments recognized are: type, quit_on_fail.
     * `quit_on_fail` :
         Whether the compiler exits on any error, defaults to False.
@@ -106,7 +106,7 @@ def start_xfst(**kvargs):
     type = get_default_fst_type()
     quit_on_fail = 'OFF'
     to_console=get_output_to_console()
-    for k,v in kvargs.items():
+    for k,v in kwargs.items():
       if k == 'type':
         type = v
       elif k == 'output_to_console':
@@ -184,7 +184,7 @@ def start_xfst(**kvargs):
 
 from sys import stdout
 
-def regex(re, **kvargs):
+def regex(re, **kwargs):
     """
     Get a transducer as defined by regular expression *re*.
 
@@ -192,7 +192,7 @@ def regex(re, **kvargs):
     ----------
     * `re` :
         The regular expression defined with Xerox transducer notation.
-    * `kvargs` :
+    * `kwargs` :
         Arguments recognized are: 'error' and 'definitions'.
     * `error` :
         Where warnings and errors are printed. Possible values are sys.stdout,
@@ -310,7 +310,7 @@ def regex(re, **kvargs):
     err=None
     defs=None
 
-    for k,v in kvargs.items():
+    for k,v in kwargs.items():
       if k == 'output_to_console':
           to_console=v
       if k == 'error':
@@ -659,7 +659,7 @@ class PrologReader:
           """
           return self.next()
 
-def compile_xfst_file(filename, **kvargs):
+def compile_xfst_file(filename, **kwargs):
     """
     Compile (run) xfst file *filename*.
 
@@ -667,7 +667,7 @@ def compile_xfst_file(filename, **kvargs):
     ----------
     * `filename` :
         The name of the xfst file.
-    * `kvargs` :
+    * `kwargs` :
         Arguments recognized are: verbosity, quit_on_fail, output, type.
     * `verbosity` :
         The verbosity of the compiler, defaults to 0 (silent). Possible values are:
@@ -696,7 +696,7 @@ def compile_xfst_file(filename, **kvargs):
     error=None
     to_console=get_output_to_console()
 
-    for k,v in kvargs.items():
+    for k,v in kwargs.items():
       if k == 'verbosity':
         verbosity=v
       elif k == 'quit_on_fail':
@@ -756,7 +756,7 @@ def compile_xfst_file(filename, **kvargs):
       print('Parsed file with return value %i (0 indicating succesful parsing).' % retval)
     return retval
 
-def compile_twolc_file(inputfilename, outputfilename, **kvargs):
+def compile_twolc_file(inputfilename, outputfilename, **kwargs):
     """
     Compile twolc file *inputfilename* and store the result to file *outputfilename*.
 
@@ -766,7 +766,7 @@ def compile_twolc_file(inputfilename, outputfilename, **kvargs):
         The name of the twolc input file.
     * `outputfilename` :
         The name of the transducer output file.
-    * `kvargs` :
+    * `kwargs` :
         Arguments recognized are: silent, verbose, resolve_right_conflicts, resolve_left_conflicts, type.
     * `silent` :
         Whether compilation is performed in silent mode, defaults to False.
@@ -789,7 +789,7 @@ def compile_twolc_file(inputfilename, outputfilename, **kvargs):
     resolve_left_conflicts=False
     implementation_type=get_default_fst_type()
 
-    for k,v in kvargs.items():
+    for k,v in kwargs.items():
         if k == 'type':
             implementation_type = v
         elif k == 'silent':
@@ -834,7 +834,7 @@ def compile_pmatch_file(filename):
     defs = compile_pmatch_expression(data)
     return defs
 
-def compile_sfst_file(filename, **kvargs):
+def compile_sfst_file(filename, **kwargs):
     """
     Compile sfst file *filename* into a transducer.
 
@@ -842,7 +842,7 @@ def compile_sfst_file(filename, **kvargs):
     ----------
     * `filename` :
         The name of the sfst file.
-    * `kvargs` :
+    * `kwargs` :
         Arguments recognized are: verbose, output.
     * `verbose` :
         Whether sfst file is processed in verbose mode, defaults to False.
@@ -859,7 +859,7 @@ def compile_sfst_file(filename, **kvargs):
     output=None
     to_console=get_output_to_console()
 
-    for k,v in kvargs.items():
+    for k,v in kwargs.items():
       if k == 'verbose':
         verbosity=v
       elif k == 'output':
@@ -883,7 +883,7 @@ def compile_sfst_file(filename, **kvargs):
 
     return retval
 
-def compile_lexc_file(filename, **kvargs):
+def compile_lexc_file(filename, **kwargs):
     """
     Compile lexc file *filename* into a transducer.
 
@@ -891,7 +891,7 @@ def compile_lexc_file(filename, **kvargs):
     ----------
     * `filename` :
         The name of the lexc file.
-    * `kvargs` :
+    * `kwargs` :
         Arguments recognized are: verbosity, with_flags, output.
     * `verbosity` :
         The verbosity of the compiler, defaults to 0 (silent). Possible values are:
@@ -913,7 +913,7 @@ def compile_lexc_file(filename, **kvargs):
     output=None
     to_console=get_output_to_console()
 
-    for k,v in kvargs.items():
+    for k,v in kwargs.items():
       if k == 'verbosity':
         verbosity=v
       elif k == 'with_flags':

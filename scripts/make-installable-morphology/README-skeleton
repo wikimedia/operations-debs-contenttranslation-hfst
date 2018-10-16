@@ -1,0 +1,34 @@
+    HFST Langname-analyze and Langname-generate installer
+
+This package installs HFST's Langname-language morphological transducers and
+scripts.
+
+As root, "make install" installs system-wide scripts under /usr/local/bin and
+transducers under /usr/local/share/hfst. "make uninstall" does the reverse.
+
+After installation, the scripts
+
+        LANGNAME-analyze-words
+and
+	LANGNAME-generate-words
+	
+will perform analysis and generation by attempting to run, respectively,
+hfst-tokenize and hfst-lookup. Those utilities are not included, they have
+to be present on your system. HFST is available from
+https://github.com/hfst/hfst.
+
+The morphologies vary somewhat in their tagging
+conventions. To find the right tags to give to the generation side,
+you have to either reverse-engineer them from what you see from the analysis
+side, or refer to the documentation of the morphology itself (which are
+sourced from third parties, NOT developed by HFST).
+
+The scripts use standard input and standard output for communication. When
+used interactively, they wait for EOF (probably CTR+D on your keyboard) from
+the user before doing anything.
+
+Report bugs to <hfst-bugs@helsinki.fi> or directly to our bug tracker at:
+<https://github.com/hfst/hfst/issues>
+
+General help using HFST software:
+<https://github.com/hfst/hfst/wiki>

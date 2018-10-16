@@ -1,0 +1,4 @@
+The tools are based on Omorfi - Open Morphology for Finnish
+(http://urn.fi/urn:nbn:fi:lb-20140730127).
+
+Omorfi is licensed as GPL version 3.

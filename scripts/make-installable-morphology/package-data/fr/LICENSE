@@ -1,0 +1,46 @@
+ Licence publique Morphalou pour les ressources linguistiques dynamiques à gestion centralisée
+(Rédaction : Susanne Salmon-Alt, William del-Mancino, Laurent Romary - Janvier 05)
+PREAMBULE
+
+"Morphalou" (Lexique morphologique ouvert du français) est un ensemble de données de nature linguistique (formes fléchies du français) et de métadonnées représentées dans un format permettant leur exploitation informatique.
+
+Les données d'origine sont issues de la nomenclature du Trésor de la Langue Française informatisé, production du Laboratoire Analyse et Traitement Informatique de la Langue Française (ATILF/ Nancy Université - CNRS), soit une couverture linguistique équivalente à plus de 95 000 entrées lexicales et plus de 500 000 formes fléchies (adjectifs, verbes, adverbes, mots grammaticaux, interjections, onomatopées).
+
+La norme relative à la création de la ressource "Morphalou" a été réalisée dans le cadre d'une collaboration entre le Laboratoire ATILF (Nancy Université - CNRS) et le Laboratoire Lorrain de Recherche en Informatique et ses Applications (LORIA / INRIA - CNRS - Nancy Université).
+
+D'abord, la présente licence a été conçue pour permettre la libre distribution de la ressource linguistique ci-dessus décrite à la communauté des chercheurs et des enseignants chercheurs pour des besoins liés à la recherche et à l'enseignement.
+
+Plus généralement, la présente licence vise à la mise en œuvre d'une ressource dynamique résultant de la compilation de contributions multiples de la part de ses utilisateurs et à la distribution de versions améliorées de la ressource "Morphalou" passant par la soumission de propositions de modification auprès du site ATILF (www.atilf.fr) hébergeant celle-ci.
+Dans l'avenir, elle pourra s'appliquer à tout type de ressource linguistique résultant d'un acte de compilation explicite, comme les lexiques, les grammaires, les thésaurus, et les corpus oraux ou textuels.
+1. GESTION, MISE A JOUR, DISTRIBUTION
+
+La gestion, la mise à jour et la distribution de la ressource "Morphalou" relèvent exclusivement du laboratoire Analyse et Traitement Informatique de la Langue Française (ATILF/ Nancy Université - CNRS) dont le site est localisé à : www.atilf.fr.
+2. PROPRIETE
+
+Le contenu initial de "Morphalou" fait, de la part du laboratoire ATILF, l'objet d'une protection auprès de l'Agence de Protection des Programmes. La marque "Morphalou" est déposée auprès de l'INPI au bénéfice du laboratoire ATILF. La soumission d'une contribution laisse le contributeur libre de distribuer celle-ci dans les termes qui lui paraissent les plus appropriés. La présente licence s'applique néanmoins aux versions ultérieures de la ressource "Morphalou" intégrant la dite contribution.
+3. TERMES ET CONDITIONS DE COPIE, DISTRIBUTION ET MODIFICATION DE LA RESSOURCE
+[Introduction]
+
+"Morphalou" (Lexique morphologique ouvert du français) auquel s'applique cette licence est désormais désigné par "la ressource".
+
+0. La présente licence s'applique à la ressource à laquelle est attachée, par l'ATILF ayant droit de la ressource ou tout tiers autorisé à le faire, impliquant l'indication que ladite ressource est distribuée selon les termes de la licence publique "Morphalou" pour les ressources linguistiques, désormais désignée par "cette licence". Toute personne à qui s'applique cette licence est désormais désignée par " vous ".
+Le " site d'hébergement " désigne le laboratoire ATILF. L'indication de l'adresse du site d'hébergement www.cnrtl.fr/lexiques/morphalou/ garantit le référencement de la ressource "Morphalou".
+[Distribution et copies]
+
+1. Vous pouvez librement télécharger la ressource attachée à cette licence et en effectuer autant de copies que nécessaires pour votre propre usage.
+
+2. La distribution de la ressource doit systématiquement se faire par le biais du site d'hébergement www.cnrtl.fr/lexiques/morphalou/. Vous ne devez pas redistribuer la ressource directement à des tiers, mais au contraire faire référence au site d'hébergement ci-dessus indiqué.
+[Modification]
+
+3. Vous pouvez modifier la ressource pour votre propre usage. Il est recommandé de soumettre au site d'hébergement les modifications susceptibles d'améliorer la qualité et la couverture linguistique de la ressource dans le cadre de sa distribution publique.
+
+4. Le site d'hébergement s'engage à référencer l'origine des contributions qui lui sont soumises après validation par un comité scientifique et à distribuer des versions de la ressource à intervalles réguliers intégrant les contributions validées au cours de la période qui a précédé.
+
+5. La ressource telle que définie dans le préambule peut être intégrée dans une ressource plus large, à la condition qu'elle n'en représente pas une composante majeure 1 et que l'en-tête de la ressource résultante quelle qu'en soit la forme référencie explicitement l'origine des données par la mention de leur intitulé "Morphalou - ATILF/ CNRS - Universités de Nancy" et le numéro de version ainsi que le site d'hébergement www.cnrtl.fr/lexiques/morphalou/.
+[Intégration dans des produits]
+
+6. Vous pouvez librement intégrer la ressource dans des outils logiciels à des fins de recherche ou d'enseignement aux conditions prévues à l'article 5. La distribution non commerciale ou commerciale de ces outils peut se faire également aux conditions prévues à l'article 5.
+[Dissémination]
+
+7. De façon à contribuer à la connaissance de l'existence de la ressource, toute publication ou communication scientifique reposant sur l'usage de la ressource doit citer la publication de référence : Romary L., Salmon-Alt S., Francopoulo G. (2004). Standards going concrete : from LMF to Morphalou. Workshop on Electronic Dictionaries, Coling 2004, Geneva, Switzerland. ainsi que le site d'hébergement www.cnrtl.fr/lexiques/morphalou/ (ATILF/ Nancy Université - CNRS)
+

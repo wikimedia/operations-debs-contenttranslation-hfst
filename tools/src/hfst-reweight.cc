@@ -355,7 +355,12 @@ do_reweight(HfstTransducer& trans)
         HfstBasicTransducer replication;
         HfstState state_count = 1;
         std::map<HfstState,HfstState> rebuilt;
-        rebuilt[0] = 0;
+        rebuilt[0] = 0;  // HfstBasicTransducer initially has state number zero
+	if (original.is_final_state(0))
+	  {
+	    float nuweight = reweight(original.get_final_weight(0), 0, 0);
+	    replication.set_final_weight(0, nuweight);
+	  }
         HfstState source_state=0;
         for (HfstBasicTransducer::const_iterator state = original.begin();
              state != original.end();
@@ -366,8 +371,8 @@ do_reweight(HfstTransducer& trans)
                 replication.add_state(state_count);
                 if (original.is_final_state(source_state))
                   {
-                    replication.set_final_weight(state_count,
-                                                 reweight(original.get_final_weight(source_state), 0, 0));
+		    float nuweight = reweight(original.get_final_weight(source_state), 0, 0);
+                    replication.set_final_weight(state_count, nuweight);
                   }
                 rebuilt[source_state] = state_count;
                 state_count++;
@@ -382,8 +387,8 @@ do_reweight(HfstTransducer& trans)
                     replication.add_state(state_count);
                     if (original.is_final_state(arc->get_target_state()))
                       {
-                        replication.set_final_weight(state_count,
-                                                     reweight(original.get_final_weight(arc->get_target_state()), 0, 0));
+			float nuweight = reweight(original.get_final_weight(arc->get_target_state()), 0, 0);
+			replication.set_final_weight(state_count, nuweight);
                       }
                     rebuilt[arc->get_target_state()] = state_count;
                     state_count++;

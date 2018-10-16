@@ -17,9 +17,4 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-if ENABLE_NO_TOOLS
-  SUBDIRS=libhfst
-else
-  SUBDIRS=libhfst tools
-endif
+SUBDIRS=libhfst tools

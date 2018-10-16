@@ -16,9 +16,7 @@
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 if GENERATE_FOMA_WRAPPER
-bin_SCRIPTS = hfst-foma-wrapper.sh hfst-foma ${top_srcdir}/back-ends/foma/hfst_foma$(EXEEXT)
-EXTRA_DIST=hfst-foma generate-cc-files.sh
-AM_INSTALLCHECK_STD_OPTIONS_EXEMPT=hfst-foma-wrapper.sh hfst-foma ${top_srcdir}/back-ends/foma/hfst_foma$(EXEEXT)
-else
-EXTRA_DIST=generate-cc-files.sh
+bin_SCRIPTS = hfst-foma-wrapper.sh hfst-foma
+AM_INSTALLCHECK_STD_OPTIONS_EXEMPT=hfst-foma-wrapper.sh hfst-foma
 endif
+EXTRA_DIST=hfst-foma-wrapper.sh hfst-foma generate-cc-files.sh

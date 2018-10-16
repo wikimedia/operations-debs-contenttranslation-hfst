@@ -31,9 +31,9 @@ cp -R ../../libhfst/* libhfst/
 cp -R ../hfst/* hfst/
 
 for file in hfst_extensions.cpp hfst_file_extensions.cpp hfst_lexc_extensions.cpp \
-hfst_lookup_extensions.cpp hfst_pmatch_extensions.cpp hfst_prolog_extensions.cpp \
-hfst_regex_extensions.cpp hfst_rules_extensions.cpp hfst_xfst_extensions.cpp \
-hfst_sfst_extensions.cpp libhfst.i docstrings.i ;
+hfst_lookup_extensions.cpp hfst_pmatch_extensions.cpp hfst_pmatch_tokenize_extensions.cpp \
+hfst_prolog_extensions.cpp hfst_regex_extensions.cpp hfst_rules_extensions.cpp \
+hfst_xfst_extensions.cpp hfst_sfst_extensions.cpp libhfst.i docstrings.i ;
 do
     cp ../$file $file
 done

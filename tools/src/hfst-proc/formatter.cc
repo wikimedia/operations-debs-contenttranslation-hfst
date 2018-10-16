@@ -218,7 +218,7 @@ ApertiumOutputFormatter::print_word(const TokenVector& surface_form,
   // analysis output, but should be output directly afterwards
   TokenVector output_surface_form;
   std::vector<unsigned int> superblanks;
-  for(TokenVector::const_iterator it=surface_form.begin(); it!=surface_form.end(); it++)
+  for(TokenVector::const_iterator it=surface_form.begin(); it!=surface_form.end(); ++it)
   {
     if(it->type == Superblank)
     {
@@ -229,18 +229,22 @@ ApertiumOutputFormatter::print_word(const TokenVector& surface_form,
       output_surface_form.push_back(*it);
   }
 
-  if(printDebuggingInformationFlag)
+  if(printDebuggingInformationFlag) {
     std::cout << "surface_form consists of " << output_surface_form.size() << " tokens" << std::endl;
+  }
 
   token_stream.ostream() << '^';
   token_stream.write_escaped(output_surface_form);
-  for(ProcResult::const_iterator it=analyzed_forms.begin(); it!=analyzed_forms.end(); it++)
+  for(ProcResult::const_iterator it=analyzed_forms.begin(); it!=analyzed_forms.end(); ++it) {
     token_stream.ostream() << "/" << *it;
+  }
   token_stream.ostream() << "$";
 
-  for(size_t i=0;i<superblanks.size();i++)
+  for(size_t i=0;i<superblanks.size();i++) {
     token_stream.ostream() << token_stream.get_superblank(superblanks[i]);
+  }
 }
+
 void
 ApertiumOutputFormatter::print_unknown_word(const TokenVector& surface_form) const
 {

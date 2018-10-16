@@ -1,0 +1,6 @@
+The tools are based on Morphalou ("Romary L., Salmon-Alt S., Francopoulo G.
+(2004). Standards going concrete: from LMF to Morphalou. Workshop on
+Electronic Dictionaries, Coling 2004, Geneva, Switzerland").
+
+License of Morphalou:
+http://www.cnrtl.fr/lexiques/morphalou/licence_morphalou.php

@@ -21,7 +21,6 @@ if hfst.HfstTransducer.is_implementation_type_available(hfst.ImplementationType.
     types.append(hfst.ImplementationType.TROPICAL_OPENFST_TYPE)
 if hfst.HfstTransducer.is_implementation_type_available(hfst.ImplementationType.FOMA_TYPE):
     types.append(hfst.ImplementationType.FOMA_TYPE)
-    print('HERE!!!')
 
 for type in types:
 
@@ -239,7 +238,7 @@ for type in types:
     tr.remove_optimization()
     assert(tr.compare(tr_))
 
-#  def lookup_fd(self, lookup_path, **kvargs):
+#  def lookup_fd(self, lookup_path, **kwargs):
 #      max_weight = None
 #      infinite_cutoff = -1 # Is this right?
 #      output='dict' # 'dict' (default), 'text', 'raw'

@@ -1,0 +1,11 @@
+# foo is only used on output side, so do not tokenize input as one symbol
+regex f:0 o:0 o:foo ;
+apply down foo
+echo --
+# foo is used on input side, so tokenize input as one symbol
+regex foo:f 0:o 0:o ;
+apply down foo
+echo --
+# foo is used on input side, so only tokenize input as one symbol
+regex foo:bar | [?:B ?:A ?:R] ;
+apply down foo

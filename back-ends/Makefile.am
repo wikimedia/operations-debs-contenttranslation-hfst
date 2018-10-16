@@ -15,26 +15,5 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if WANT_MINGW
-  SUBDIRS = dlfcn openfstwin
-else
-  SUBDIRS = openfst
-endif
-
-if WANT_SFST
-  SUBDIRS += sfst
-else
-if WANT_LEAN_SFST
-  SUBDIRS += sfst
-endif
-endif
-
-if WANT_FOMA
-  SUBDIRS += foma
-endif
-
-if WANT_FOMA_WRAPPER
-  SUBDIRS += foma
-endif
-
+SUBDIRS=openfst openfstwin dlfcn sfst foma
 AUTOMAKE_OPTIONS=subdir-objects

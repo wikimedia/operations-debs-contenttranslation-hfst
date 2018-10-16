@@ -1,4 +1,9 @@
 #!/bin/sh
+
+if [ "$1" = "--python" ]; then
+    exit 77
+fi
+
 TOOLDIR=../../tools/src
 HFST_FLAGS="--quiet --output=/dev/null"
 VALGRIND="libtool --mode=execute valgrind --leak-check=full"

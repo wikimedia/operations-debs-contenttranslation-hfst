@@ -299,6 +299,10 @@
        HFSTDLL const HfstAlphabet &get_alphabet() const;
        
        HFSTDLL StringPairSet get_transition_pairs() const;
+
+       HFSTDLL StringSet get_input_symbols() const;
+
+       HFSTDLL StringSet get_output_symbols() const;
        
        // ----------------------------------------------------------------
        // --- Adding states and transitions and iterating through them ---
@@ -983,6 +987,7 @@
         HfstEpsilonHandler Eh,
         size_t max_epsilon_cycles,
         float * max_weight = NULL,
+	int max_number = -1,
         StringVector * flag_diacritic_path = NULL);
      
      HFSTDLL void lookup
@@ -990,6 +995,7 @@
         HfstTwoLevelPaths &results,
         size_t * max_epsilon_cycles = NULL,
         float * max_weight = NULL,
+	int max_number = -1,
         bool obey_flags = false);
      
      HFSTDLL void check_regexp_state_for_cycle(HfstState s, const std::set<HfstState> & states_visited);

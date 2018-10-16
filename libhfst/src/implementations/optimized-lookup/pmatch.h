@@ -27,6 +27,7 @@ namespace hfst_ol {
     struct RtnStackFrame;
 
     typedef std::vector<RtnStackFrame> RtnCallStack;
+    typedef std::vector<RtnCallStack> RtnCallStacks;
     typedef std::vector<PmatchTransducer *> RtnVector;
     typedef std::map<std::string, SymbolNumber> RtnNameMap;
     typedef std::vector<Location> LocationVector;
@@ -62,6 +63,7 @@ namespace hfst_ol {
     class PmatchAlphabet: public TransducerAlphabet {
     protected:
         RtnVector rtns;
+        SymbolNumber input_mark_symbol;
         SymbolNumberVector special_symbols;
         std::map<SymbolNumber, std::string> end_tag_map;
         std::map<std::string, SymbolNumber> capture_tag_map;
@@ -106,6 +108,7 @@ namespace hfst_ol {
         static bool is_insertion(const std::string & symbol);
         static bool is_guard(const std::string & symbol);
         static bool is_list(const std::string & symbol);
+        static bool is_underscored_list(const std::string & symbol);
         static bool is_counter(const std::string & symbol);
         static bool is_special(const std::string & symbol);
         static bool is_printable(const std::string & symbol);
@@ -115,7 +118,8 @@ namespace hfst_ol {
         bool is_printable(SymbolNumber symbol);
         bool is_global_flag(SymbolNumber symbol);
         void add_special_symbol(const std::string & str, SymbolNumber symbol_number);
-        void process_symbol_list(std::string str, SymbolNumber sym);
+        void process_underscored_symbol_list(const std::string & str, SymbolNumber sym);
+        void process_symbol_list(const std::string & str, SymbolNumber sym);
         void process_counter(std::string str, SymbolNumber sym);
         void count(SymbolNumber sym);
         void add_rtn(PmatchTransducer * rtn, std::string const & name);
@@ -158,7 +162,7 @@ namespace hfst_ol {
         SymbolNumberVector input;
         // This tracks the ENTRY and EXIT tags
         PositionStack entry_stack;
-        RtnCallStack rtn_stack;
+        RtnCallStacks rtn_stacks;
         DoubleTape tape;
         DoubleTape best_result;
         DoubleTape result;
@@ -167,7 +171,7 @@ namespace hfst_ol {
         std::vector<Capture> captures;
         std::vector<Capture> best_captures;
         std::vector<Capture> old_captures;
-        std::vector<char> possible_first_symbols;
+        std::vector<bool> possible_first_symbols;
         // The flag state for global flags
         hfst::FdState<SymbolNumber> global_flag_state;
         bool verbose;
@@ -195,8 +199,11 @@ namespace hfst_ol {
         unsigned long call_counter;
         // A flag to set for when time has been overstepped
         bool limit_reached;
+        // Weight cutoff
+        Weight max_weight;
         // The global running weight
         Weight running_weight;
+        Weight weight_limit;
         // This is the depth of the stack from the point of view of the
         // container. When it's 0, we're in the toplevel, even if the
         // stack of variables is bigger due to having passed through a RTN.
@@ -204,8 +211,6 @@ namespace hfst_ol {
         // Where in the input the best candidate so far has gotten to
         unsigned int best_input_pos;
         Weight best_weight;
-
-        void collect_first_symbols(void);
 
     public:
 
@@ -215,18 +220,21 @@ namespace hfst_ol {
         PmatchContainer(void);
         ~PmatchContainer(void);
 
-
         void set_properties(void);
         void set_properties(std::map<std::string, std::string> & properties);
+        void collect_first_symbols(const std::string & symbol_list);
+        SymbolNumberVector symbol_vector_from_symbols(const std::string & symbols);
         void initialize_input(const char * input);
         bool has_unsatisfied_rtns(void) const;
         std::string get_unsatisfied_rtn_name(void) const;
         void add_rtn(Transducer * rtn, const std::string & name);
         void process(const std::string & input);
         std::string match(const std::string & input,
-                          double time_cutoff = 0.0);
+                          double time_cutoff = 0.0,
+                          Weight weight_cutoff = INFINITE_WEIGHT);
         LocationVectorVector locate(const std::string & input,
-                                    double time_cutoff = 0.0);
+                                    double time_cutoff = 0.0,
+                                    Weight weight_cutoff = INFINITE_WEIGHT);
         void note_analysis(unsigned int input_pos, unsigned int tape_pos);
         void grab_location(unsigned int input_pos, unsigned int tape_pos);
         std::pair<SymbolNumberVector::iterator,
@@ -244,7 +252,7 @@ namespace hfst_ol {
                 return false;
             }
             return sym >= possible_first_symbols.size() ||
-                possible_first_symbols[sym] == 0;
+                possible_first_symbols[sym] == false;
         }
         void copy_to_result(const DoubleTape & best_result);
         void copy_to_result(SymbolNumber input, SymbolNumber output);
@@ -280,6 +288,7 @@ namespace hfst_ol {
             }
         void push_rtn_call(unsigned int return_index, PmatchTransducer * caller);
         RtnStackFrame rtn_stack_top(void);
+        PmatchTransducer * get_latest_rtn_caller(void);
         void rtn_stack_pop(void);
         unsigned int get_stack_depth(void) { return stack_depth; }
         bool candidate_found(void)
@@ -422,23 +431,6 @@ namespace hfst_ol {
         bool try_exiting_context(SymbolNumber symbol);
         void exit_context(void);
 
-        void collect_first_epsilon(TransitionTableIndex i,
-                                   SymbolNumberVector const& input_symbols,
-                                   std::set<TransitionTableIndex> & seen_indices);
-        void collect_first_epsilon_index(TransitionTableIndex i,
-                                         SymbolNumberVector const& input_symbols,
-                                         std::set<TransitionTableIndex> & seen_indices);
-        void collect_first_transition(TransitionTableIndex i,
-                                      SymbolNumberVector const& input_symbols,
-                                      std::set<TransitionTableIndex> & seen_indices);
-        void collect_first_index(TransitionTableIndex i,
-                                 SymbolNumberVector const& input_symbols,
-                                 std::set<TransitionTableIndex> & seen_indices);
-        void collect_first(TransitionTableIndex i,
-                           SymbolNumberVector const& input_symbols,
-                           std::set<TransitionTableIndex> & seen_indices);
-
-
     public:
         PmatchTransducer(std::istream& is,
                          TransitionTableIndex index_table_size,
@@ -452,8 +444,6 @@ namespace hfst_ol {
                          PmatchAlphabet & alphabet,
                          std::string name,
                          PmatchContainer * container);
-
-        std::set<SymbolNumber> possible_first_symbols;
 
         bool final_index(TransitionTableIndex i) const
         {
@@ -473,9 +463,11 @@ namespace hfst_ol {
         void match(unsigned int input_pos, unsigned int tape_pos);
         void rtn_call(unsigned int input_pos, unsigned int tape_pos,
                       PmatchTransducer * caller, TransitionTableIndex caller_index);
+        void rtn_call_in_context(unsigned int input_pos, unsigned int tape_pos,
+                                 PmatchTransducer * caller, TransitionTableIndex caller_index,
+                                 LocalVariables locals);
         void rtn_return(unsigned int input_pos, unsigned int tape_pos);
         void handle_final_state(unsigned int input_pos, unsigned int tape_pos);
-        void collect_possible_first_symbols(void);
 
         friend class PmatchContainer;
     };

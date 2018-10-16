@@ -718,6 +718,10 @@ in \a ifile.
 
     /** \brief Get first input level symbols of strings recognized
         (or rejected, if they end in a non-final state) by the transducer. */
+    HFSTDLL StringSet get_initial_input_symbols() const;
+
+
+    // what is this?
     HFSTDLL StringSet get_first_input_symbols() const;
 
     /** \brief Harmonize transducers this and another.
