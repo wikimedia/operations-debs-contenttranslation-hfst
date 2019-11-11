@@ -12,25 +12,33 @@ morphological complexity.
 Requirements
 ############
 
-For Windows and Mac OS X, we offer binary wheels on PyPI. Wheels are available
-for python versions 2.7, 3.4, 3.5 and 3.6.
-The wheels for Windows are 32-bit; they also require a 32-bit
-python to work correctly. Wheels for Mac are compiled as universal binaries
-that work both on 32- and 64-bit environments. OS X must be 10.6 or higher.
+We offer binary wheels on PyPI for Linux, Mac OS X and Windows.
 
-For Linux, we offer only the source code on PyPI. It is also possible to install hfst
-using Debian binary packages. This is the recommended way if the environment supports Debian.
-Compiling hfst from source requires a C++ compiler (tested with gcc 5.4.0),
-readline and getline libraries for C++ compiler and setuptools package for python
+Wheels for Linux are compiled with a 64-bit docker image (quay.io/pypa/manylinux1_x86_64)
+for python versions 2.7, 3.4, 3.5, 3.6 and 3.7.
+It is also possible to install hfst to Linux using Debian binary packages (see below).
+
+Wheels for Mac are compiled as universal binaries for python versions 2.7, 3.5, 3.6 and 3.7.
+OS X must be 10.7 or higher.
+
+Wheels for Windows are 32-bit and also require a 32-bit python to work correctly.
+They are available for python versions 3.5 and 3.6; earlier versions would need
+an older compiler that does not support C++11 features.
+Wheels for version 3.7. may be added to future releases.
+
+Compiling hfst from source requires at least C++ compiler (tested with gcc 5.4.0),
+readline and getline libraries and setuptools package for python
 (tested with version 28.8.0). Swig is no longer needed as pre-generated files are
 included in source distribution.
+
+Support for python version 2 is experimental and may be left out at some point.
+We recommend python version 3 as it works better with unicode.
 
 Installation via PyPI
 #####################
 
-We recommend using ``pip`` tool for installation for Windows and OS X.
-``pip`` also works for Linux, but everything will be compiled from
-source. Before installation, see that dependencies given under heading 'Requirements' are met.
+We recommend using ``pip`` tool for installation.
+Before installation, see that dependencies given under heading 'Requirements' are met.
 
 For python version 3, the ``pip`` tool is usually named ``pip3``, plain ``pip`` being used
 for python version 2. Basic installation is done with:

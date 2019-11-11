@@ -1,5 +1,5 @@
 import hfst
-
+import hfst_commandline
 ofile = None
 ifile = None
 from_file = None
@@ -7,48 +7,23 @@ silent = False
 from_label = None
 to_label = None
 
-from sys import argv
-for arg in argv[1:]:
-    if arg == '-s' or arg == '--silent':
-        silent=True
-    elif arg == '-o' or arg == '--output':
-        ofile = '<next>'
-    elif arg == '-i' or arg == '--input':
-        ifile = '<next>'
-    elif arg == '-F' or arg == '--from-file':
-        from_file = '<next>'
-    elif arg == '-f' or arg == '--from-label':
-        from_label = '<next>'
-    elif arg == '-t' or arg == '--to-label':
-        to_label = '<next>'
-    elif ofile == '<next>':
-        ofile = arg
-    elif ifile == '<next>':
-        ifile = arg
-    elif from_file == '<next>':
-        from_file = arg
-    elif from_label == '<next>':
-        from_label = arg
-    elif to_label == '<next>':
-        to_label = arg
-    elif ifile == None:
-        ifile = arg
-    elif ofile == None:
-        ofile = arg
+short_getopts = 'so:i:F:f:t:'
+long_getopts = ['silent','output=','input=','from-file=','from-label=','to-label=']
+options = hfst_commandline.hfst_getopt(short_getopts, long_getopts, 1)
+for opt in options [0]:
+    if opt[0] == '-s' or opt[0] == '--silent':
+        silent = True
+    elif opt[0] == '-F' or opt[0] == '--from-file':
+        from_file = opt[1]
+    elif opt[0] == '-f' or opt[0] == '--from-label':
+        from_label = opt[1]
+    elif opt[0] == '-t' or opt[0] == '--to-label':
+        to_label = opt[1]
     else:
-        raise RuntimeError('Error: hfst-substitute.py: unknown option: ' + arg)
+        pass
 
-istr = None
-if ifile != None:
-    istr = hfst.HfstInputStream(ifile)
-else:
-    istr = hfst.HfstInputStream()
-
-ostr = None
-if ofile != None:
-    ostr = hfst.HfstOutputStream(filename=ofile, type=istr.get_type())
-else:
-    ostr = hfst.HfstOutputStream(type=istr.get_type())
+istr = hfst_commandline.get_one_hfst_input_stream(options)[0]
+ostr = hfst_commandline.get_one_hfst_output_stream(options, istr.get_type())[0]
 
 def eps(s):
     if s == "@0@":

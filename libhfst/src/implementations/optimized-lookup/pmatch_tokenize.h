@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2017 University of Helsinki
+// Copyright (c) 2016-2019 University of Helsinki
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -10,6 +10,7 @@
 #define _HFST_OL_TRANSDUCER_PMATCH_TOKENIZE_H_
 
 #include <iostream>
+#include <iomanip>
 #include <iterator>
 
 #include "pmatch.h"
@@ -54,5 +55,24 @@ void process_input(hfst_ol::PmatchContainer & container,
 
 }
 
+inline std::size_t find_first_not_of_def(const std::string & str, char c, std::size_t def) {
+    auto ret = str.find_first_not_of(c);
+    if(ret == std::string::npos) {
+        return def;
+    }
+    else {
+        return ret;
+    }
+}
+
+inline std::size_t find_last_not_of_def(const std::string & str, char c, std::size_t def) {
+    auto ret = str.find_last_not_of(c);
+    if(ret == std::string::npos) {
+        return def;
+    }
+    else {
+        return ret;
+    }
+}
 
 #endif //_HFST_OL_TRANSDUCER_PMATCH_TOKENIZE_H_

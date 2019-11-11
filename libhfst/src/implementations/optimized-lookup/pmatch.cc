@@ -669,7 +669,7 @@ bool PmatchAlphabet::is_special(const std::string & symbol)
     if (symbol.size() < 3) {
         return false;
     }
-    if (symbol == "@PMATCH_INPUT_MARK@") { // seems like is_special symbols can't be referred to in pmatch scripts
+    if (symbol == "@PMATCH_INPUT_MARK@" || symbol == "@PMATCH_BACKTRACK@") { // seems like is_special symbols can't be referred to in pmatch scripts
         return false;
     }
     if (is_insertion(symbol) || symbol == "@BOUNDARY@") {
@@ -1388,7 +1388,7 @@ void PmatchContainer::initialize_input(const char * input_s)
     SymbolNumber k = NO_SYMBOL_NUMBER;
     SymbolNumber boundary_sym = alphabet.get_special(boundary);
     char * single_codepoint_scratch;
-    char single_codepoint_scratch_orig[5]{};
+    char single_codepoint_scratch_orig[5] = {};
     if (boundary_sym != NO_SYMBOL_NUMBER) {
         input.push_back(boundary_sym);
     }

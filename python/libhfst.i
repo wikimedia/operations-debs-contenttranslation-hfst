@@ -1714,7 +1714,7 @@ namespace hfst_ol {
 %extend {
 	  PmatchContainer(const std::string & filename)
 	    {
-	      std::ifstream ifs(filename);
+	      std::ifstream ifs(filename.c_str());
 	      hfst_ol::PmatchContainer * retval = new hfst_ol::PmatchContainer(ifs);
 	      ifs.close();
 	      return retval;

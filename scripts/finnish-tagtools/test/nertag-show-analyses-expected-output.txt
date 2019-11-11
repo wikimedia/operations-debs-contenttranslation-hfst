@@ -1,0 +1,66 @@
+Tällä	tämä	[POS=PRONOUN][SUBCAT=DEMONSTRATIVE][NUM=SG][CASE=ADE]	_	
+tiedostolla	tiedosto	[POS=NOUN][NUM=SG][CASE=ADE]	_	
+testaamme	testata	[POS=VERB][VOICE=ACT][MOOD=INDV][TENSE=PRESENT][PERS=PL1]	_	
+finnish-tagtools	finnish-tagtools	[POS=NOUN][NUM=SG][CASE=NOM]	_	
+-paketin	-paketti	[POS=NOUN][NUM=SG][CASE=GEN]	_	
+toimintaa	toiminta	[POS=NOUN][NUM=SG][CASE=PAR]	_	
+.	.	[POS=PUNCTUATION]	_	
+
+Helsingin	helsinki	[POS=NOUN][PROPER=PROPER][NUM=SG][CASE=GEN]	[PROP=GEO][PROP=LAST]	<EnamexLocPpl/>
+lisäksi	lisäksi	[POS=ADVERB]	_	
+mukana	mukana	[POS=ADVERB]	_	
+on	olla	[POS=VERB][VOICE=ACT][MOOD=INDV][TENSE=PRESENT][PERS=SG3]	_	
+sellaisia	sellainen	[POS=ADJECTIVE][SUBCAT=DEMONSTRATIVE][NUM=PL][CASE=PAR]	_	
+erisnimiä	erisnimi	[POS=NOUN][NUM=PL][CASE=PAR]	_	
+kuin	kuin	[POS=PARTICLE][SUBCAT=CONJUNCTION][CONJ=COORD]	_	
+Stora	stora	[POS=NOUN][PROPER=PROPER][NUM=SG][CASE=NOM]	_	<EnamexOrgCrp>
+Enso	enso	[POS=NOUN][PROPER=PROPER][NUM=SG][CASE=NOM]	[PROP=GEO][PROP=ORG]	</EnamexOrgCrp>
+,	,	[POS=PUNCTUATION]	_	
+Roosevelt	roosevelt	[POS=NOUN][PROPER=PROPER][PROP=LAST][NUM=SG][CASE=NOM]	[PROP=LAST]	<EnamexPrsHum/>
+ja	ja	[POS=PARTICLE][SUBCAT=CONJUNCTION][CONJ=COORD]	_	
+Kirgisian	kirgisia	[POS=NOUN][PROPER=PROPER][PROP=GEO][SEM=COUNTRY][NUM=SG][CASE=GEN]	[PROP=GEO]	<EnamexLocPpl/>
+pääkaupunki	pääkaupunki	[POS=NOUN][NUM=SG][CASE=NOM]	_	
+Bishkek	biškek	[POS=NOUN][PROPER=PROPER][PROP=GEO][NUM=SG][CASE=NOM]	[PROP=GEO]	<EnamexLocPpl/>
+.	.	[POS=PUNCTUATION]	_	
+
+Sähköpostiosoitteet	sähköpostiosoite	[POS=NOUN][NUM=PL][CASE=NOM]	_	
+kuten	kuten	[POS=ADVERB]	_	
+kielipankki@csc.fi	kielipankki@csc.fada	[POS=NOUN][NUM=SG][CASE=TRA]	_	
+ja	ja	[POS=PARTICLE][SUBCAT=CONJUNCTION][CONJ=COORD]	_	
+www-osoitteet	www-osoite	[POS=NOUN][NUM=PL][CASE=NOM]	_	
+kuten	kuten	[POS=ADVERB]	_	
+https://www.kielipankki.fi/tuki/kayttooikeudet/	https://www.kielipankki.fi/tuki/kayttooikeudet/	[POS=NOUN][NUM=PL][CASE=PAR]	_	
+ovat	olla	[POS=VERB][VOICE=ACT][MOOD=INDV][TENSE=PRESENT][PERS=PL3]	_	
+tavallisia	tavallinen	[POS=ADJECTIVE][NUM=PL][CASE=PAR]	_	
+,	,	[POS=PUNCTUATION]	_	
+oli	olla	[POS=VERB][VOICE=ACT][MOOD=INDV][TENSE=PAST][PERS=SG3]	_	
+vuosi	vuosi	[POS=NOUN][NUM=SG][CASE=NOM]	_	
+sitten	sitten	[POS=ADVERB]	_	
+2018	2018	[POS=NUMERAL][SUBCAT=DIGIT][SUBCAT=CARD]	_	<TimexTmeDat/>
+tai	tai	[POS=PARTICLE][SUBCAT=CONJUNCTION][CONJ=COORD]	_	
+2019	2019	[POS=NUMERAL][SUBCAT=DIGIT][SUBCAT=CARD]	_	<TimexTmeDat/>
+.	.	[POS=PUNCTUATION]	_	
+
+Tiedätkö	tietää	[POS=VERB][VOICE=ACT][MOOD=INDV][TENSE=PRESENT][PERS=SG2][CLIT=KO]	_	
+SINÄ	se	[POS=NOUN][PROPER=PROPER][NUM=SG][CASE=GEN]	_	
+missä	mikä	[POS=PRONOUN][SUBCAT=QUANTOR][CASE=INE]	_	
+sijamuodossa	sijamuoto	[POS=NOUN][NUM=SG][CASE=INE]	_	
+ovat	olla	[POS=VERB][VOICE=ACT][MOOD=INDV][TENSE=PRESENT][PERS=PL3]	_	
+sellaiset	sellainen	[POS=ADJECTIVE][SUBCAT=DEMONSTRATIVE][NUM=PL][CASE=NOM]	_	
+sanat	sana	[POS=NOUN][NUM=PL][CASE=NOM]	_	
+kuin	kuin	[POS=PARTICLE][SUBCAT=CONJUNCTION][CONJ=COORD]	_	
+tietokoneilla	tietokone	[POS=NOUN][NUM=PL][CASE=ADE]	_	
+,	,	[POS=PUNCTUATION]	_	
+astalolta	astalo	[POS=NOUN][NUM=SG][CASE=ABL]	_	
+tai	tai	[POS=PARTICLE][SUBCAT=CONJUNCTION][CONJ=COORD]	_	
+löylylle	löyly	[POS=NOUN][NUM=SG][CASE=ALL]	_	
+.	.	[POS=PUNCTUATION]	_	
+
+Sekö	se	[POS=PRONOUN][SUBCAT=DEMONSTRATIVE][NUM=SG][CASE=NOM][CLIT=KO]	_	
+onkin	olla	[POS=VERB][VOICE=ACT][MOOD=INDV][TENSE=PRESENT][PERS=SG3][CLIT=KIN]	_	
+tärkeähköä	tärkeähköä	[POS=ADVERB][SUBCAT=DEMONSTRATIVE]	_	
+että	että	[POS=PARTICLE][SUBCAT=CONJUNCTION][CONJ=ADVERBIAL]	_	
+hallitsemme	hallita	[POS=VERB][VOICE=ACT][MOOD=INDV][TENSE=PRESENT][PERS=PL1]	_	
+kliititkin	kliitit	[POS=ADVERB][CLIT=KIN]	_	
+??	?	[POS=PUNCTUATION]	_	
+

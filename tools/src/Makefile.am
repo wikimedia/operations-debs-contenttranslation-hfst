@@ -17,8 +17,8 @@
 
 SUBDIRS=hfst-proc hfst-twolc hfst-tagger parsers
 AUTOMAKE_OPTIONS=std-options subdir-objects
-LDADD = $(top_builddir)/libhfst/src/libhfst.la
-AM_CPPFLAGS = -I${top_srcdir}/libhfst/src -I${top_srcdir}/libhfst/src/parsers -I${top_srcdir}/tools/src/parsers -Wno-sign-compare
+LDADD = $(top_builddir)/libhfst/src/libhfst.la $(ICU_LIBS)
+AM_CPPFLAGS = -I${top_srcdir}/libhfst/src -I${top_srcdir}/libhfst/src/parsers -I${top_srcdir}/tools/src/parsers -Wno-sign-compare ${GLIB_CPPFLAGS} ${ICU_CPPFLAGS}
 AM_CXXFLAGS = -Wno-deprecated -Wno-sign-compare
 
 # sort alphabetically:

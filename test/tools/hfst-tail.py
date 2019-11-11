@@ -1,25 +1,17 @@
 import hfst
+import hfst_commandline
 nlast=None
 from_nth=None
 infile=None
-from sys import argv
-for arg in argv[1:]:
-    if arg == '-n' or arg == '--n-last':
-        nlast='<next>'
-    elif nlast == '<next>':
-        if arg[0] == '+':
-            from_nth = int(arg[1:])
-            nlast = None
-        else:
-            nlast = int(arg)
-    else:
-        infile = arg
-        
-istr=None
-if infile != None:
-    istr = hfst.HfstInputStream(infile)
-else:
-    istr = hfst.HfstInputStream()
+
+short_getopts='n:'
+long_getopts=['n-last=']
+options = hfst_commandline.hfst_getopt(short_getopts, long_getopts, 1)
+
+for opt in options[0]:
+    if opt[0] == '-n' or opt[0] == '--n-last':
+        nlast = int(opt[1])
+istr = hfst_commandline.get_one_hfst_input_stream(options)[0]
 ostr = hfst.HfstOutputStream(type=istr.get_type())
 
 if from_nth != None:
@@ -41,4 +33,5 @@ else:
     pass
 
 istr.close()
+ostr.flush()
 ostr.close()

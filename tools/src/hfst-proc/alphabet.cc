@@ -16,6 +16,9 @@
 
 #if USE_GLIB_UNICODE
 #  include <glib.h>
+#elif USE_ICU_UNICODE
+#  include <unicode/unistr.h>
+#  include <unicode/uchar.h>
 #endif
 
 #include <cstring>
@@ -369,7 +372,26 @@ std::string
 ProcTransducerAlphabet::caps_helper_single(const char* c, int& case_res)
 {
 #if USE_ICU_UNICODE
-#error ICU unicode unimplemented
+    icu::UnicodeString us(c);
+    if (us.countChar32() == 1) {
+        UChar32 uc = us.char32At(0);
+        icu::UnicodeString cased_u = us;
+        std::string cased;
+        if (u_isupper(uc)) {
+            case_res = 1;
+            cased_u.toLower();
+            cased_u.toUTF8String(cased);
+            return cased;
+        }
+        else if (u_islower(uc)) {
+            case_res = -1;
+            cased_u.toUpper();
+            cased_u.toUTF8String(cased);
+            return cased;
+        }
+    }
+    case_res = 0;
+    return "";
 #elif USE_GLIB_UNICODE
   glong readed = 0;
   glong written = 0;

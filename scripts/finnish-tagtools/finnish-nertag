@@ -1,25 +1,36 @@
 #!/bin/bash
-BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-TAGGER=$BASE/omotag/run_tagger
-PMATCH=hfst-pmatch
-MOVETAGS=$BASE/move_tags
-DISAMB_LEMMA=$BASE/omotag/lemmafilter
 
-if command -v hfst-tokenize 2 > /dev/null; then
-    TOKENIZE="hfst-tokenize $BASE/tokenize.pmatch"
-else
-    TOKENIZE="python3 $BASE/tokenize.py"
+TAG=tag
+
+PMATCH=hfst-pmatch
+if ! command -v $PMATCH > /dev/null 2>&1; then
+    PMATCH=$TAG/hfst-pmatch
 fi
+
+TOKENIZE="hfst-tokenize -x $TAG/omorfi_tokenize.pmatch"
+if ! command -v hfst-tokenize > /dev/null 2>&1; then
+    TOKENIZE="$TAG/hfst-tokenize -x $TAG/omorfi_tokenize.pmatch"
+fi
+
+MOVETAGS=$TAG/move_tags
 
 function print_help()
 {
     echo "Adds named entity tags to running Finnish text on standard input."
     echo
+    echo "Options:"
+    echo "  --version, -v        Print version information"
+    echo "  --no-tokenize        Instead of running text, expect a newline-separated"
+    echo "                       stream of tokens, with an empty line signifying sentence"
+    echo "                       boundaries"
+    echo "  --show-analyses      Include lemmas and morphological analyses in the output"
+    echo "  --show-nested        Show possible tested tags"
+    echo
     echo "The output is returned one token per line. Where named entities are"
     echo "identified, the token in question is followed by a tab character and"
     echo "the entity identifier. Entities that span multiple tokens are given"
     echo "opening and closing XML-style tags, and single-token entities only a"
-    echo "closing tag."
+    echo "self-closing tag."
     echo
     echo "This package is based on the statistical (CRF-based) tagger FinnPos,"
     echo "the Finnish morphology package OmorFi, the FinnTreeBank corpus of"
@@ -44,17 +55,58 @@ function print_help()
     exit 0
 }
 
-case $1 in
-    "")
-	;;
-    *)
-	print_help ;;
-esac
+function print_version()
+{
+    echo "finnish-tagtools version 1.3.3"
+    echo "2019-02-13"
+    exit 0
+}
 
-$TOKENIZE |
-$BASE/hfst-optimized-lookup $BASE/combined_morphology.hfst 2>/dev/null |
-python3 $BASE/omorfi2finnpos.py ftb                               |
-python3 $BASE/finnpos-ratna-feats.py $BASE/freq_words              |
-$BASE/finnpos-label $BASE/ftb.omorfi.model 2>/dev/null             |
-python3 $BASE/finnpos-restore-lemma.py --finer                     |
-$BASE/prefilt_tags | $PMATCH $BASE/proper_tagger_ph1.pmatch | $MOVETAGS | $PMATCH $BASE/proper_tagger_ph2.pmatch | $MOVETAGS | $BASE/remove_exc | cut -f1,5
+function lookup_and_cut() {
+    hfst-lookup -p $TAG/omorfi.tagtools.optcap.hfst | cut -f1,2
+}
+
+function cut_output() {
+    cut -f 1,5- 
+}
+
+function cut_nested() {
+    cut -f 1-5
+}
+
+FINAL_CUT=cut_output
+CUT_NESTED=cut_nested
+
+for var in "$@"
+do
+    case $var in
+	"") ;;
+	"--version")
+            print_version ;;
+	"-v")
+            print_version ;;
+	"--no-tokenize")
+	    TOKENIZE=lookup_and_cut;;
+	"--show-analyses")
+	    FINAL_CUT=cat;;
+	"--show-nested")
+	    CUT_NESTED=cat;;
+	*)
+	    print_help ;;
+    esac
+done
+
+$TOKENIZE                                               |
+python3 $TAG/omorfi2finnpos.py ftb                      |
+python3 $TAG/finnpos-ratna-feats.py $TAG/freq_words     |
+$TAG/finnpos-label $TAG/ftb.omorfi.model 2>/dev/null    |
+python3 $TAG/finnpos-restore-lemma.py ner               |
+cut -f1,3,4,5                                           |
+python3 $TAG/normalize-lemmas.py                        |
+$TAG/prefilt_tags                                       |
+$TAG/add_boundaries                                     |
+$PMATCH $TAG/proper_tagger_ph1.pmatch | $MOVETAGS       |
+$PMATCH $TAG/proper_tagger_ph2.pmatch | $MOVETAGS       |
+$TAG/remove_exc                                         |
+$CUT_NESTED                                             |
+$FINAL_CUT

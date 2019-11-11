@@ -1,0 +1,34 @@
+finnish-tagtools
+
+This software package provides finnish-postag, a part-of-speech and morphology
+tagger for Finnish, finnish-nertag, a named entity recogniser for Finnish,
+and finnish-tokenize, a tokenizer.
+
+All tools take running text from standard input and produce tabular output
+(one token per line) to standard output. See --help messages for more details.
+
+An installer is provided in the form of a Makefile. By default, the Makefile
+installs data files under /usr/local/share and executable binaries under
+/usr/local/bin. To change this, edit the first lines of the Makefile.
+
+To install, run (with appropriate permissions)
+
+  make install
+
+To uninstall,
+
+  make uninstall
+
+The software in this package is precompiled. Best efforts have been made
+to produce portable binaries, but in some cases you may need to compile
+software yourself. This package has the following software dependencies:
+
+- hfst-tokenize and hfst-pmatch - these are provided by
+  the HFST project, https://github.com/hfst
+
+- FinnPos - https://github.com/mpsilfve/FinnPos
+
+All of the above are provided in this package as statically linked binaries.
+
+All of the components of this package are licensed under licenses which are
+compatible with the GPL 3 license, which is included in the file named COPYING.

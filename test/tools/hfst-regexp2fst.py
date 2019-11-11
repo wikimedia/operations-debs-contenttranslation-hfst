@@ -1,40 +1,31 @@
 import hfst
-from sys import argv, stdin, stderr
+import hfst_commandline
+
 impl=hfst.ImplementationType.TROPICAL_OPENFST_TYPE
 skip_next = False
 harmonize=True
 semicolons=False
-infile=stdin
 transducers_written=0
 
-for i in range(1, len(argv)):
-    if skip_next:
-        skip_next = False
-        continue
-    arg = argv[i]
-    if arg == '-f':
-        skip_next= True
-        val = argv[i+1]
-        if val == 'sfst':
-            impl = hfst.ImplementationType.SFST_TYPE
-        elif val == 'openfst-tropical':
-            impl = hfst.ImplementationType.TROPICAL_OPENFST_TYPE
-        elif val == 'foma':
-            impl = hfst.ImplementationType.FOMA_TYPE
-        else:
-            raise RuntimeError('type not recognized: ' + val)
-    elif arg == '-H' or arg == '--do-not-harmonize':
-        harmonize=False
-    elif arg == '-S' or arg == '--semicolon':
-        semicolons=True
+short_opts = 'f:HS'
+long_opts = ['format=','do-not-harmonize','semicolon']
+options = hfst_commandline.hfst_getopt(short_opts, long_opts, 1)
+for opt in options[0]:
+    if opt[0] == '-f' or opt[0] == '--format':
+        impl = hfst_commandline.get_implementation_type(opt[1])
+    elif opt[0] == '-H' or opt[0] == '--do-not-harmonize':
+        harmonize= False
+    elif opt[0] == '-S' or opt[0] == '--semicolon':
+        semicolons = True
     else:
-        infile = open(arg, 'r')
+        pass
+istr = hfst_commandline.get_one_text_input_stream(options)[0]
+ostr = hfst_commandline.get_one_hfst_output_stream(options, impl)[0]
 
-ostr = hfst.HfstOutputStream(type=impl)
 comp = hfst.XreCompiler(impl)
 comp.set_harmonization(harmonize)
 if (semicolons):
-    data = infile.read()
+    data = istr.read()
     i=0
     while(i < len(data)):
         tr_and_chars_read = comp.compile_first(data[i:]) # HFST 4.0: document this
@@ -51,7 +42,7 @@ if (semicolons):
                 sys.exit(1)
                 raise RuntimeError('error in regexp compilation')
 else:
-    for line in infile:
+    for line in istr:
         tr = comp.compile(line)
         if tr != None:
             ostr.write(tr)
@@ -65,8 +56,9 @@ else:
                 raise RuntimeError('error in regexp compilation')
 
 ostr.close()
-if infile != stdin:
-    infile.close()
+from sys import stdin
+if istr != stdin:
+    istr.close()
 
 if transducers_written == 0:
     import sys

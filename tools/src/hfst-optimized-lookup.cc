@@ -559,12 +559,6 @@ int setup(FILE * f)
   try {
   TransducerHeader header(f);
   TransducerAlphabet alphabet(f, header.symbol_count());
-
-  if (!feof(f))
-    {
-      std::cerr << "!! Warning: file contains more than one transducer          !!" << std::endl
-		<< "!! This is currently not handled - using only the first one !!" << std::endl;
-    }
   
   if (header.probe_flag(Has_unweighted_input_epsilon_cycles) ||
       header.probe_flag(Has_input_epsilon_cycles))

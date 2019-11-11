@@ -29,10 +29,16 @@ assert(f.closed)
 assert(len(transducers)) == 4
 
 transducers = []
-with open('testfile_unicode.att', 'r') as f:
-    r = hfst.AttReader(f)
-    for tr in r:
-        transducers.append(tr)
+if sys.version_info[0] < 3:
+    with open('testfile_unicode.att', 'rb') as f:
+        r = hfst.AttReader(f)
+        for tr in r:
+            transducers.append(tr)
+else:
+    with open('testfile_unicode.att', 'r', encoding='utf-8') as f:
+        r = hfst.AttReader(f)
+        for tr in r:
+            transducers.append(tr)
 
 assert(f.closed)
 assert(len(transducers)) == 1

@@ -1,26 +1,21 @@
 import hfst
-from sys import argv
-
+import hfst_commandline
 minimum=0
 maximum='inf'
-infile=None
-for arg in argv[1:]:
-    if arg == '-f' or arg == "--from":
-        minimum='<next>'
-    elif arg == '-t' or arg == "--to":
-        maximum='<next>'
-    elif minimum == '<next>':
-        minimum = int(arg)
-    elif maximum == '<next>':
-        maximum = int(arg)
-    else:
-        infile = arg
 
-istr=None
-if infile != None:
-    istr = hfst.HfstInputStream(infile)
-else:
-    istr = hfst.HfstInputStream()
+short_getopts='f:t:'
+long_getopts=['from=', 'to=']
+options = hfst_commandline.hfst_getopt(short_getopts, long_getopts, 1)
+
+for opt in options[0]:
+    if opt[0] == '-f' or opt[0] == '--from':
+        minimum = int(opt[1])
+    elif opt[0] == '-t' or opt[0] == '--to':
+        maximum = int(opt[1])
+    else:
+        pass
+
+istr = hfst_commandline.get_one_hfst_input_stream(options)[0]
 ostr = hfst.HfstOutputStream(type=istr.get_type())
 
 tr = istr.read()

@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 
 # @file hfst_tagger_compute_data_statistics.py
 #
@@ -127,8 +127,8 @@ for line in sys.stdin:
     try:
         tagger_aux.check_line(line,2)
     except Exception as e:
-        print e.message + " " + str(line_number) + ":"
-        print line
+        print(e.message + " " + str(line_number) + ":")
+        print(line)
         exit(1)
 
     # Split the line into fields.
@@ -179,70 +179,70 @@ for line in sys.stdin:
 tagger_aux.verbose_print("Storing lexical statistics.",verbose)
 tagger_aux.verbose_print("P(WORD_FORM | TAG)",verbose)
 
-print "START P(WORD_FORM | TAG)"
+print("START P(WORD_FORM | TAG)")
 tagger_aux.print_conditional_penalties(word_form_and_tag_map,
                                        entry_tag_map,
                                        "",
                                        False,
                                        False)
-print "STOP P(WORD_FORM | TAG)"
+print("STOP P(WORD_FORM | TAG)")
 
 # Compute and display the penalties for suffix and tag combinations.
 tagger_aux.verbose_print("P(LOWER_SUFFIX_AND_TAG | LOWER_SUFFIX)",verbose)
 
-print "START P(LOWER_SUFFIX_AND_TAG | LOWER_SUFFIX)"
+print("START P(LOWER_SUFFIX_AND_TAG | LOWER_SUFFIX)")
 tagger_aux.print_conditional_penalties(lower_suffix_and_tag_count_map,
                                        lower_suffix_count_map,
                                        "<lower_suffix_and_tag>",
                                        True,
                                        False)
-print "STOP P(LOWER_SUFFIX_AND_TAG | LOWER_SUFFIX)"
+print("STOP P(LOWER_SUFFIX_AND_TAG | LOWER_SUFFIX)")
 
 # Compute and display the penalties for suffixes.
 tagger_aux.verbose_print("P(LOWER_SUFFIX)",verbose)
 
-print "START P(LOWER_SUFFIX)"
+print("START P(LOWER_SUFFIX)")
 tagger_aux.print_penalties(lower_suffix_count_map,
                            number_of_lower_suffixes,
                            "<lower_suffix>")
-print "STOP P(LOWER_SUFFIX)"
+print("STOP P(LOWER_SUFFIX)")
 
 # Compute and display the penalties for tags.
 tagger_aux.verbose_print("P(LOWER_TAG)",verbose)
-print "START P(LOWER_TAG)"
+print("START P(LOWER_TAG)")
 number_of_lower_tags = number_of_lower_suffixes
 tagger_aux.print_penalties(lower_tag_count_map,
                            number_of_lower_suffixes,
                            "<lower_tag>")
-print "STOP P(LOWER_TAG)"
+print("STOP P(LOWER_TAG)")
 
 
 # Compute and display the penalties for suffix and tag combinations.
-print "START P(UPPER_SUFFIX_AND_TAG | UPPER_SUFFIX)"
+print("START P(UPPER_SUFFIX_AND_TAG | UPPER_SUFFIX)")
 tagger_aux.print_conditional_penalties(upper_suffix_and_tag_count_map,
                                        upper_suffix_count_map,
                                        "<upper_suffix_and_tag>",
                                        True,
                                        False)
-print "STOP P(UPPER_SUFFIX_AND_TAG | UPPER_SUFFIX)"
+print("STOP P(UPPER_SUFFIX_AND_TAG | UPPER_SUFFIX)")
 
 # Compute and display the penalties for suffixes.
 tagger_aux.verbose_print("P(UPPER_SUFFIX)",verbose)
 
-print "START P(UPPER_SUFFIX)"
+print("START P(UPPER_SUFFIX)")
 tagger_aux.print_penalties(upper_suffix_count_map,
                            number_of_upper_suffixes,
                            "<upper_suffix>")
-print "STOP P(UPPER_SUFFIX)"
+print("STOP P(UPPER_SUFFIX)")
 
 # Compute and display the penalties for tags.
 tagger_aux.verbose_print("P(UPPER_TAG)",verbose)
-print "START P(UPPER_TAG)"
+print("START P(UPPER_TAG)")
 number_of_tags = number_of_upper_suffixes
 tagger_aux.print_penalties(upper_tag_count_map,
                            number_of_upper_suffixes,
                            "<upper_tag>")
-print "STOP P(UPPER_TAG)"
+print("STOP P(UPPER_TAG)")
 
 ## CONSTRUCT TAG SEQUENCE TABLE.
 
@@ -277,7 +277,7 @@ for i in range(len(statistics_patterns)):
     start_tag = "START " + model_order_tag + " " + statistics_patterns[i].name
     stop_tag  = "STOP "  + model_order_tag + " " + statistics_patterns[i].name
 
-    print start_tag
+    print(start_tag)
 
     tagger_aux.print_conditional_penalties(counters[i][0],
                                            counters[i][1],
@@ -285,7 +285,7 @@ for i in range(len(statistics_patterns)):
                                            False,
                                            True)
 
-    print stop_tag
+    print(stop_tag)
 
 
 

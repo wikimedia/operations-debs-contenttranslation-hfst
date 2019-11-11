@@ -7,4 +7,4 @@ Name: hfst
 Description: Finite-state transducer library bridge for multiple FLOSS packages
 Version: @LIBHFST_VERSION@
 Libs: -L${libdir} -l@LIBHFST_NAME@
-Cflags: -I${includedir}/hfst/ @GLIB_CFLAGS@
+Cflags: -I${includedir}/hfst/

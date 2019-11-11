@@ -30,7 +30,7 @@ HFST_SRCS=HfstApply.cc HfstInputStream.cc HfstTransducer.cc HfstOutputStream.cc\
 # libtool takes over
 libhfst_la_SOURCES = $(HFST_SRCS)
 libhfst_la_LIBADD = implementations/libhfstimplementations.la \
-			parsers/libhfstparsers.la
+			parsers/libhfstparsers.la $(ICU_LIBS)
 
 if WANT_SFST
   libhfst_la_LIBADD += $(top_builddir)/back-ends/sfst/libsfst.la
