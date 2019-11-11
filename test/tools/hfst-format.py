@@ -1,19 +1,20 @@
 import hfst
+import hfst_commandline
+
 list_formats=False
 test_format=None
-infile=None
-from sys import argv
-for arg in argv[1:]:
-    if arg == '-l' or arg == '--list-formats':
+shortopts = 'l'
+longopts = ['list-formats', 'test-format=']
+options = hfst_commandline.hfst_getopt(shortopts, longopts, 1)
+for opt in options[0]:
+    if opt[0] == '-l' or opt[0] == '--list-formats':
         list_formats=True
-    elif arg == '--test-format':
-        test_format='<next>'
-    elif test_format == '<next>':
-        test_format = arg
+    elif opt[0] == '--test-format':
+        test_format = opt[1]
     else:
-        infile = arg
+        pass
 
-if (not list_formats) and test_format == None and infile == None:
+if (not list_formats) and test_format == None and len(options[1]) == 0:
     raise RuntimeError('error: hfst-format.py: input file, option --list-formats or option --test-format FMT must be given')
 
 aval = hfst.HfstTransducer.is_implementation_type_available
@@ -69,8 +70,8 @@ if test_format != None:
     else:
         raise RuntimeError('hfst-format.py: format ' + test_format + ' not recognized')
 
-if infile != None:
-    istr = hfst.HfstInputStream(infile)
+if len(options[1]) != 0:
+    istr = hfst.HfstInputStream(options[1][0])
     for tr in istr:
         t = tr.get_type()
         print(hfst.fst_type_to_string(t))

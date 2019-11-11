@@ -1232,15 +1232,21 @@ compile(const string& pmatch, map<string,HfstTransducer*>& defs,
         timer = clock();
     }
 
-    if (inserted_names.size() > 0) {
+    if (inserted_names.size() > 0 || def_insed_expressions.size() > 0) {
         HfstTransducer dummy(format);
         // We keep TOP and any inserted transducers
         std::map<std::string, PmatchObject *>::iterator defs_it;
         for (defs_it = definitions.begin(); defs_it != definitions.end();
              ++defs_it) {
             if (defs_it->first.compare("TOP") == 0 ||
-                inserted_names.count(defs_it->first) != 0) {
-                HfstTransducer * tmp = defs_it->second->evaluate();
+                inserted_names.count(defs_it->first) != 0 ||
+                def_insed_expressions.count(defs_it->first) != 0) {
+                HfstTransducer * tmp = NULL;
+                if (def_insed_expressions.count(defs_it->first) != 0) {
+                    tmp = def_insed_expressions[defs_it->first]->evaluate();
+                } else {
+                    tmp = defs_it->second->evaluate();
+                }
                 tmp->minimize();
                 dummy.harmonize(*tmp);
                 // This is what it will be called in the archive
@@ -1705,10 +1711,186 @@ HfstTransducer * PmatchUtilityTransducers::make_lowerfy(ImplementationType type)
     return retval;
 }
 
+#if USE_GLIB_UNICODE
+std::string PmatchUtilityTransducers::string_from_g_unichar(gunichar ch)
+{
+    char buf[7];
+    int buflen = g_unichar_to_utf8(ch, buf);
+    buf[buflen] = '\0';
+    return std::string(buf);
+}
+#endif
+
+HfstTransducer PmatchUtilityTransducers::get_lowercase_acceptor_from_transducer(HfstTransducer & t)
+{
+#if USE_GLIB_UNICODE
+    HfstTransducer lowercase(t.get_type());
+    StringSet ss = t.get_alphabet();
+    for (StringSet::const_iterator it = ss.begin(); it != ss.end(); ++it) {
+        if (g_utf8_strlen(it->c_str(), -1) == 1) {
+            gunichar this_unichar = g_utf8_get_char_validated(it->c_str(), -1);
+            if (g_unichar_islower(this_unichar)) {
+                lowercase.disjunct(HfstTransducer(*it, t.get_type()));
+            }
+        }
+    }
+#elif USE_ICU_UNICODE
+    HfstTransducer lowercase(t.get_type());
+    StringSet ss = t.get_alphabet();
+    for (StringSet::const_iterator it = ss.begin(); it != ss.end(); ++it) {
+        icu::UnicodeString us(it->c_str());
+        if (us.countChar32() == 1) {
+            if (u_islower(us.char32At(0))) {
+                lowercase.disjunct(HfstTransducer(*it, t.get_type()));
+            }
+        }
+    }
+#else
+    HfstTransducer lowercase(*latin1_lowercase_acceptor);
+#endif
+    return lowercase;
+}
+
+HfstTransducer PmatchUtilityTransducers::get_uppercase_acceptor_from_transducer(HfstTransducer & t)
+{
+#if USE_GLIB_UNICODE
+    HfstTransducer uppercase(t.get_type());
+    StringSet ss = t.get_alphabet();
+    for (StringSet::const_iterator it = ss.begin(); it != ss.end(); ++it) {
+        if (g_utf8_strlen(it->c_str(), -1) == 1) {
+            gunichar this_unichar = g_utf8_get_char_validated(it->c_str(), -1);
+            if (g_unichar_isupper(this_unichar)) {
+                uppercase.disjunct(HfstTransducer(*it, t.get_type()));
+            }
+        }
+    }
+#elif USE_ICU_UNICODE
+    HfstTransducer uppercase(t.get_type());
+    StringSet ss = t.get_alphabet();
+    for (StringSet::const_iterator it = ss.begin(); it != ss.end(); ++it) {
+        icu::UnicodeString us(it->c_str());
+        if (us.countChar32() == 1) {
+            if (u_isupper(us.char32At(0))) {
+                uppercase.disjunct(HfstTransducer(*it, t.get_type()));
+            }
+        }
+    }
+#else
+    HfstTransducer uppercase(*latin1_uppercase_acceptor);
+#endif
+    return uppercase;
+}
+
+HfstTransducer PmatchUtilityTransducers::lowercaser_from_transducer(HfstTransducer & t)
+{
+#if USE_GLIB_UNICODE
+    HfstTransducer lowercase(t.get_type());
+    StringSet ss = t.get_alphabet();
+    StringSet uppercases_seen;
+    for (StringSet::const_iterator it = ss.begin(); it != ss.end(); ++it) {
+        if (g_utf8_strlen(it->c_str(), -1) == 1) {
+            gunichar this_unichar = g_utf8_get_char_validated(it->c_str(), -1);
+            if (g_unichar_isalpha(this_unichar)) {
+                std::string upper = string_from_g_unichar(g_unichar_toupper(this_unichar));
+                if (uppercases_seen.count(upper) != 0) {
+                    continue;
+                }
+                uppercases_seen.insert(upper);
+                std::string lower = string_from_g_unichar(g_unichar_tolower(this_unichar));
+                lowercase.disjunct(HfstTransducer(upper, lower, t.get_type()));
+            }
+        }
+    }
+#elif USE_ICU_UNICODE
+    HfstTransducer lowercase(t.get_type());
+    StringSet ss = t.get_alphabet();
+    StringSet uppercases_seen;
+    for (StringSet::const_iterator it = ss.begin(); it != ss.end(); ++it) {
+        icu::UnicodeString us(it->c_str());
+        if (us.countChar32() == 1) {
+            UChar32 this_unichar = us.char32At(0);
+            if (u_isalpha(this_unichar)) {
+                icu::UnicodeString upper_u = us;
+                upper_u.toUpper();
+                std::string upper;
+                upper_u.toUTF8String(upper);
+                if (uppercases_seen.count(upper) != 0) {
+                    continue;
+                }
+                uppercases_seen.insert(upper);
+                icu::UnicodeString lower_u = us;
+                lower_u.toLower();
+                std::string lower;
+                lower_u.toUTF8String(lower);
+                lowercase.disjunct(HfstTransducer(upper, lower, t.get_type()));
+            }
+        }
+    }
+#else
+    HfstTransducer lowercase(*lowerfy);
+#endif
+    return lowercase;
+}
+
+HfstTransducer PmatchUtilityTransducers::uppercaser_from_transducer(HfstTransducer & t)
+{
+#if USE_GLIB_UNICODE
+    HfstTransducer uppercase(t.get_type());
+    StringSet ss = t.get_alphabet();
+    StringSet uppercases_seen;
+    for (StringSet::const_iterator it = ss.begin(); it != ss.end(); ++it) {
+        if (g_utf8_strlen(it->c_str(), -1) == 1) {
+            gunichar this_unichar = g_utf8_get_char_validated(it->c_str(), -1);
+            if (g_unichar_isalpha(this_unichar)) {
+                std::string upper = string_from_g_unichar(g_unichar_toupper(this_unichar));
+                if (uppercases_seen.count(upper) != 0) {
+                    continue;
+                }
+                uppercases_seen.insert(upper);
+                std::string lower = string_from_g_unichar(g_unichar_tolower(this_unichar));
+                uppercase.disjunct(HfstTransducer(lower, upper, t.get_type()));
+            }
+        }
+    }
+#elif USE_ICU_UNICODE
+    HfstTransducer uppercase(t.get_type());
+    StringSet ss = t.get_alphabet();
+    StringSet uppercases_seen;
+    for (StringSet::const_iterator it = ss.begin(); it != ss.end(); ++it) {
+        icu::UnicodeString us(it->c_str());
+        if (us.countChar32() == 1) {
+            UChar32 this_unichar = us.char32At(0);
+            if (u_isalpha(this_unichar)) {
+                icu::UnicodeString upper_u = us;
+                upper_u.toUpper();
+                std::string upper;
+                upper_u.toUTF8String(upper);
+                if (uppercases_seen.count(upper) != 0) {
+                    continue;
+                }
+                uppercases_seen.insert(upper);
+                icu::UnicodeString lower_u = us;
+                lower_u.toLower();
+                std::string lower;
+                lower_u.toUTF8String(lower);
+                uppercase.disjunct(HfstTransducer(lower, upper, t.get_type()));
+            }
+        }
+    }
+#else
+    HfstTransducer uppercase(*capify);
+#endif
+    return uppercase;
+}
+
 HfstTransducer * PmatchUtilityTransducers::cap(HfstTransducer & t, Side side, bool optional)
 {
+    bool orig_xerox_composition_value = hfst::get_xerox_composition();
+    // This is to match flags in t with ?'s in "anything"
+    hfst::set_xerox_composition(true);
+
     HfstTransducer * retval = NULL;
-    HfstTransducer cap(*capify);
+    HfstTransducer cap = uppercaser_from_transducer(t);
     HfstTransducer decap(cap);
     decap.invert();
     HfstTransducer anything(HfstTransducer::identity_pair(t.get_type()));
@@ -1717,7 +1899,7 @@ HfstTransducer * PmatchUtilityTransducers::cap(HfstTransducer & t, Side side, bo
     anything_but_whitespace_star.repeat_star();
     if (optional == false) {
         // don't let lowercased first letters through
-        anything.subtract(*latin1_lowercase_acceptor);
+        anything.subtract(get_lowercase_acceptor_from_transducer(t));
     }
     // As in the regexp
     // [[[["A":"a" [[\" "]* (" " "A":"a")]* ] .o. [{ab ad}:{ef eh}].u]] .o.
@@ -1772,70 +1954,82 @@ HfstTransducer * PmatchUtilityTransducers::cap(HfstTransducer & t, Side side, bo
         retval->output_project();
     }
     retval->minimize();
+    hfst::set_xerox_composition(orig_xerox_composition_value);
     return retval;
 }
 
 HfstTransducer * PmatchUtilityTransducers::tolower(HfstTransducer & t, Side side, bool optional)
 {
+    bool orig_xerox_composition_value = hfst::get_xerox_composition();
+    // This is to match flags in t with ?'s in "anything"
+    hfst::set_xerox_composition(true);
+
     HfstTransducer anything(hfst::internal_identity, hfst::pmatch::format);
     if (optional == false) {
-        anything.subtract(*latin1_uppercase_acceptor);
+        anything.subtract(get_uppercase_acceptor_from_transducer(t));
     }
     HfstTransducer * retval = NULL;
     if (side == Lower) {
-        HfstTransducer lowercase(*lowerfy);
+        HfstTransducer lowercase = lowercaser_from_transducer(t);
         lowercase.disjunct(anything);
         lowercase.repeat_star();
         retval = new HfstTransducer(t);
         retval->compose(lowercase);
     } else if (side == Upper) {
-        retval = new HfstTransducer(*capify);
+        retval = new HfstTransducer(uppercaser_from_transducer(t));
         retval->disjunct(anything);
         retval->repeat_star();
         retval->compose(t);
     } else { // both
-        retval = new HfstTransducer(*capify);
+        retval = new HfstTransducer(uppercaser_from_transducer(t));
         retval->disjunct(anything);
         retval->repeat_star();
         retval->compose(t);
-        HfstTransducer lowercase(*lowerfy);
+        HfstTransducer lowercase = lowercaser_from_transducer(t);
         lowercase.disjunct(anything);
         lowercase.repeat_star();
         retval->compose(lowercase);
     }
     retval->minimize();
+    hfst::set_xerox_composition(orig_xerox_composition_value);
     return retval;
 }
 
 HfstTransducer * PmatchUtilityTransducers::toupper(HfstTransducer & t, Side side, bool optional)
 {
+
+    bool orig_xerox_composition_value = hfst::get_xerox_composition();
+    // This is to match flags in t with ?'s in "anything"
+    hfst::set_xerox_composition(true);
+
     HfstTransducer anything(hfst::internal_identity, hfst::pmatch::format);
     if (optional == false) {
-        anything.subtract(*latin1_lowercase_acceptor);
+        anything.subtract(get_lowercase_acceptor_from_transducer(t));
     }
     HfstTransducer * retval = NULL;
     if (side == Lower) {
-        HfstTransducer uppercase(*capify);
+        HfstTransducer uppercase = uppercaser_from_transducer(t);
         uppercase.disjunct(anything);
         uppercase.repeat_star();
         retval = new HfstTransducer(t);
         retval->compose(uppercase);
     } else if (side == Upper) {
-        retval = new HfstTransducer(*lowerfy);
+        retval = new HfstTransducer(lowercaser_from_transducer(t));
         retval->disjunct(anything);
         retval->repeat_star();
         retval->compose(t);
     } else { // both
-        retval = new HfstTransducer(*lowerfy);
+        retval = new HfstTransducer(lowercaser_from_transducer(t));
         retval->disjunct(anything);
         retval->repeat_star();
         retval->compose(t);
-        HfstTransducer uppercase(*capify);
+        HfstTransducer uppercase = uppercaser_from_transducer(t);
         uppercase.disjunct(anything);
         uppercase.repeat_star();
         retval->compose(uppercase);
     }
     retval->minimize();
+    hfst::set_xerox_composition(orig_xerox_composition_value);
     return retval;
 }
 
@@ -1899,7 +2093,11 @@ void PmatchObject::expand_Ins_arcs(StringSet & ss)
                     expansions_done.insert(*it);
                     if (definitions.count(ins_name) != 0) {
                         StringSet allowed, disallowed;
-                        definitions[ins_name]->collect_initial_symbols_into(allowed, disallowed);
+                        if (def_insed_expressions.count(ins_name) != 0) {
+                            def_insed_expressions[ins_name]->collect_initial_symbols_into(allowed, disallowed);
+                        } else {
+                            definitions[ins_name]->collect_initial_symbols_into(allowed, disallowed);
+                        }
                         if (allowed.size() != 0) {
                             expanded_symbols.insert(allowed.begin(), allowed.end());
                         } else {

@@ -1,7 +1,10 @@
 import hfst
-from sys import argv
+import hfst_commandline
 
-istr = hfst.HfstInputStream(argv[1])
+short_getopts=''
+long_getopts=[]
+options = hfst_commandline.hfst_getopt(short_getopts, long_getopts, 1)
+istr = hfst_commandline.get_one_hfst_input_stream(options)
 ostr = hfst.HfstOutputStream(type=istr.get_type())
 
 while(not istr.is_eof()):

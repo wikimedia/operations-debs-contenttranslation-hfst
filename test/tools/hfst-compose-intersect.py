@@ -1,27 +1,13 @@
 import hfst
-from sys import argv
-infile1=None
-infile2=None
-for arg in argv[1:]:
-    if arg == '-1':
-        infile1 = '<next>'
-    elif arg == '-2':
-        infile2 = '<next>'
-    elif infile1 == '<next>':
-        infile1 = arg
-    elif infile2 == '<next>':
-        infile2 = arg
-    elif infile1 == None:
-        infile1 = arg
-    elif infile2 == None:
-        infile2 = arg
-    else:
-        raise RuntimeError('Usage: hfst-compose-intersect.py [-1] INFILE1 [-2] INFILE2')
+import hfst_commandline
 
-istr1 = hfst.HfstInputStream(infile1)
-istr2 = hfst.HfstInputStream(infile2)
+options = hfst_commandline.hfst_getopt('1:2:',[],2)
+istreams = hfst_commandline.get_two_hfst_input_streams(options)
+istr1 = istreams[0][0]
+istr2 = istreams[1][0]
+
 if (istr1.get_type() != istr2.get_type()):
-    raise RuntimeError('Error: transducer types differ in ' + infile1 + ' and ' + infile2)
+    raise RuntimeError('Error: transducer types differ in ' + istreams[0][1] + ' and ' + istreams[1][1])
 
 tr1 = istr1.read()
 if not istr1.is_eof():

@@ -1,14 +1,14 @@
 "<njeallje   logi guokte>"
-	"njealljelogiguokte" Num ErrSpace <W:0.0000000000>
-	"guokte" Num <W:0> "<guokte>"
-		"logi" Num <W:0> "<  logi >"
-			"njeallje" Num <W:0> "<njeallje >"
-	"guokte" Num <W:0> "<guokte>"
-		"gi" N <W:0> "<gi >"
-			"lo" Num <W:0> "<  lo>"
-				"njeallje" Num <W:0> "<njeallje >"
-	"guokte" Num <W:0> "<guokte>"
-		"gi" N <W:0> "<  logi >"
-			"lo" Cmp <W:0>
-				"njeallje" Num <W:0> "<njeallje >"
+	"njealljelogiguokte" Num ErrSpace <W:0.0>
+	"guokte" Num <W:0.0> "<guokte>"
+		"logi" Num <W:0.0> "<  logi >"
+			"njeallje" Num <W:0.0> "<njeallje >"
+	"guokte" Num <W:0.0> "<guokte>"
+		"gi" N <W:0.0> "<gi >"
+			"lo" Num <W:0.0> "<  lo>"
+				"njeallje" Num <W:0.0> "<njeallje >"
+	"guokte" Num <W:0.0> "<guokte>"
+		"gi" N <W:0.0> "<  logi >"
+			"lo" Cmp <W:0.0>
+				"njeallje" Num <W:0.0> "<njeallje >"
 :\n

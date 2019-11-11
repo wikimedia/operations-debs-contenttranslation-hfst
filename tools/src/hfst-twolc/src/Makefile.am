@@ -9,7 +9,7 @@ else
 endif
 
 AM_CPPFLAGS = -I${top_srcdir}/libhfst/src -I${top_srcdir}/libhfst/src/parsers
-LDADD = $(top_builddir)/libhfst/src/libhfst.la
+LDADD = $(top_builddir)/libhfst/src/libhfst.la $(ICU_LIBS)
 
 # the preprocessor scripts do not support options per se, so we whitelist
 # them here

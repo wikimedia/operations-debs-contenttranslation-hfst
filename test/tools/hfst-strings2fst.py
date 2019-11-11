@@ -1,5 +1,5 @@
 import hfst
-from sys import argv, stdin
+import hfst_commandline
 
 inputfilename=None
 outputfilename=None
@@ -7,53 +7,22 @@ has_spaces=False
 pairstrings=False
 impl=hfst.ImplementationType.TROPICAL_OPENFST_TYPE
 
-skip_next = False
-for i in range(1, len(argv)):
-    if skip_next:
-        skip_next = False
-        continue
-    arg = argv[i]
-    if arg == '-f' or arg == '--format':
-        skip_next= True
-        val = argv[i+1]
-        if val == 'sfst':
-            impl = hfst.ImplementationType.SFST_TYPE
-        elif val == 'openfst-tropical':
-            impl = hfst.ImplementationType.TROPICAL_OPENFST_TYPE
-        elif val == 'foma':
-            impl = hfst.ImplementationType.FOMA_TYPE
-        else:
-            raise RuntimeError('type not recognized: ' + val)
-    elif arg == '-i':
-        skip_next= True
-        inputfilename = argv[i+1]
-    elif arg == '-o':
-        skip_next= True
-        outputfilename = argv[i+1]
-    elif arg == '-S' or arg == '--has-spaces':
-        has_spaces=True
-    elif arg == '-p' or arg == '--pairstrings':
-        pairstrings=True
-    elif inputfilename == None:
-        inputfilename = arg
-    elif outputfilename == None:
-        outputfilename = arg
+short_getopts = 'f:i:o:Sp'
+long_getopts = ['format=','input=','output=','has-spaces','pairstrings']
+options = hfst_commandline.hfst_getopt(short_getopts, long_getopts, 1)
+
+for opt in options[0]:
+    if opt[0] == '-f' or opt[0] == '--format':
+        impl = hfst_commandline.get_implementation_type(opt[1])
+    elif opt[0] == '-S' or opt[0] == '--has-spaces':
+        has_spaces = True
+    elif opt[0] == '-p' or opt[0] == '--pairstrings':
+        pairstrings = True
     else:
-        raise RuntimeError('Unknown option: ' + arg)
-
+        pass
+istr = hfst_commandline.get_one_text_input_stream(options)[0]
+ostr = hfst_commandline.get_one_hfst_output_stream(options, impl)[0]
 hfst.set_default_fst_type(impl)
-
-istr = None
-if inputfilename != None:
-    istr = open(inputfilename, 'r')
-else:
-    istr = stdin
-
-ostr = None
-if outputfilename != None:
-    ostr = hfst.HfstOutputStream(filename=outputfilename, type=impl)
-else:
-    ostr = hfst.HfstOutputStream(type=impl)
 
 for line in istr:
     line = line.rstrip()

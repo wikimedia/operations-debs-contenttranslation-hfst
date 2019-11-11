@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2017 University of Helsinki
+// Copyright (c) 2016-2019 University of Helsinki
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -244,7 +244,28 @@ void print_cg_subreading(size_t const & indent,
     }
 
     if (s.print_weights) {
-        outstream << " <" << wtag << ":" << weight << ">";
+        std::ostringstream w;
+        w << std::fixed << std::setprecision(9) << weight;
+        std::string rounded = w.str();
+        bool seendot = false;
+        bool inzeroes = true;
+        size_t firstzero = rounded.length();
+        for(size_t i = rounded.length(); i > 0; --i) {
+            if(inzeroes && rounded[i-1] == '0') {
+                firstzero = i;  // not i-1, keep one zero
+            }
+            else {
+                inzeroes = false;
+            }
+            if(rounded[i-1] == '.') {
+                seendot = true;
+                break;
+            }
+        }
+        if(seendot) {
+            rounded = rounded.substr(0, firstzero);
+        }
+        outstream << " <" << wtag << ":" << rounded << ">";
     }
     if (in_beg != in_end) {
         std::ostringstream form;
@@ -437,8 +458,8 @@ void print_location_vector_giellacg(hfst_ol::PmatchContainer & container,
         hfst::StringVector words = split_at(in_syms, &*(bt_points));
         for(hfst::StringVector::const_iterator it = words.begin(); it != words.end(); ++it) {
             // Trim left/right spaces:
-            const size_t first = it->find_first_not_of(' ');
-            const size_t last = it->find_last_not_of(' ') + 1;
+            const size_t first = find_first_not_of_def(*it, ' ', 0);
+            const size_t last = 1 + find_last_not_of_def(*it, ' ', it->length() - 1);
             string form = it->substr(first, last-first);
             LocationVector loc = locate_fullmatch(container, form, s);
             if(loc.size() == 0 && s.verbose) {

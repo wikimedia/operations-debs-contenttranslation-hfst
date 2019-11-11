@@ -1,16 +1,19 @@
-from sys import argv
-newline=False
-if len(argv) != 3 and len(argv) != 2:
-    raise RuntimeError('Usage: hfst-pmatch.py [--newline] INFILE')
-for arg in argv[1:]:
-    if arg == '--newline':
-        newline=True
-    else:
-        infilename = arg
 import hfst
+import hfst_commandline
+
+newline=False
+shortopts = 'n'
+longopts = ['newline']
+options = hfst_commandline.hfst_getopt(shortopts, longopts, 1)
+for opt in options[0]:
+    if opt[0] == '-n' or opt[0] == '--newline':
+        newline = True
+    else:
+        pass
+#    raise RuntimeError('Usage: hfst-pmatch.py [--newline] INFILE')
+istr = hfst_commandline.get_one_hfst_input_stream(options)[0]
 
 transducers = []
-istr = hfst.HfstInputStream(infilename)
 for tr in istr:
     transducers.append(tr)
 istr.close()

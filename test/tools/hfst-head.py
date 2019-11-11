@@ -1,20 +1,18 @@
 import hfst
+import hfst_commandline
 nfirst=None
 infile=None
-from sys import argv
-for arg in argv[1:]:
-    if arg == '-n' or arg == '--n-first':
-        nfirst='<next>'
-    elif nfirst == '<next>':
-        nfirst = int(arg)
+
+short_getopts='n:'
+long_getopts=['n-first=']
+options = hfst_commandline.hfst_getopt(short_getopts, long_getopts, 1)
+
+for opt in options[0]:
+    if opt[0] == '-n' or opt[0] == '--n-first':
+        nfirst = int(opt[1])
     else:
-        infile = arg
-        
-istr=None
-if infile != None:
-    istr = hfst.HfstInputStream(infile)
-else:
-    istr = hfst.HfstInputStream()
+        pass
+istr = hfst_commandline.get_one_hfst_input_stream(options)[0]
 ostr = hfst.HfstOutputStream(type=istr.get_type())
 
 if nfirst > 0:

@@ -1,0 +1,56 @@
+#! /bin/bash
+
+TAG=tag
+
+TOKENIZE="hfst-tokenize $TAG/omorfi_tokenize.pmatch"
+if ! command -v hfst-tokenize > /dev/null 2>&1; then
+    TOKENIZE="$TAG/hfst-tokenize $TAG/omorfi_tokenize.pmatch"
+fi
+
+function print_help()
+{
+    echo "Tokenizes running Finnish text on standard input."
+    echo
+    echo "Options:"
+    echo "  --version, -v          Print version information"
+    echo "  --no-tokenize          Instead of running text, expect a space-separated stream of tokens"
+    echo
+    echo "Process entire files with redirection, eg."
+    echo "  $ finnish-tokenize < mytext.txt > mytext_tokenized.txt"
+    echo "or type into the terminal and terminate with EOF (usually ctrl-D on"
+    echo "your keyboard), or directly input a line of text with <<<. Example:"
+    echo
+    echo "$ finnish-tokenize <<< \"Sähköpostiosoitteeni on (muuten) seppo.teppo@gmail.com.\""
+    echo ""
+    echo "Sähköpostiosoitteeni"
+    echo "on"
+    echo "("
+    echo "muuten"
+    echo ")"
+    echo "seppo.teppo@gmail.com"
+    echo "."
+
+    exit 0
+}
+
+function print_version()
+{
+    echo "finnish-tagtools version 1.3.3"
+    echo "2019-02-13"
+    exit 0
+}
+
+for var in "$@"
+do
+    case $var in
+	"") ;;
+	"--version")
+            print_version ;;
+	"-v")
+            print_version ;;
+	*)
+	    print_help ;;
+    esac
+done
+
+$TOKENIZE

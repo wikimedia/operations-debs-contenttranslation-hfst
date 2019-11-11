@@ -1,43 +1,29 @@
 import hfst
+import hfst_commandline
 
-ofile = None
-ifile = None
-treat_warnings_as_errors=False
+#treat_warnings_as_errors=False
 output_format=hfst.ImplementationType.TROPICAL_OPENFST_TYPE
 WithFlags=False
 
-from sys import argv
-for arg in argv[1:]:
-    if arg == '--Werror':
-        treat_warnings_as_errors=True
-    elif arg == '-F' or arg == '--withFlags':
-        WithFlags=True
-    elif arg == '-o' or arg == '--output':
-        ofile = '<next>'
-    elif arg == '-i' or arg == '--input':
-        ifile = '<next>'
-    elif arg == '-f' or arg == '--format':
-        output_format = '<next>'
-    elif ofile == '<next>':
-        ofile = arg
-    elif ifile == '<next>':
-        ifile = arg
-    elif output_format == '<next>':
-        if arg == 'openfst-tropical' or arg == 'openfst':
-            output_format = hfst.ImplementationType.TROPICAL_OPENFST_TYPE
-        elif arg == 'foma':
-            output_format = hfst.ImplementationType.FOMA_TYPE
-        elif arg == 'sfst':
-            output_format = hfst.ImplementationType.SFST_TYPE
-        else:
-            raise RuntimeError('Error: hfst-lexc.py: format ' + arg + ' not recognized.')
-        hfst.set_default_fst_type(output_format)
-    elif ifile == None:
-        ifile = arg
-    elif ofile == None:
-        ofile = arg
-    else:
-        raise RuntimeError('Error: hfst-lexc.py: unknown option: ' + arg)
+shortopts = 'f:Fi:o:'
+longopts = ['format=', 'withFlags', 'Werror', 'input=', 'output=']
+options = hfst_commandline.hfst_getopt(shortopts, longopts, 1)
 
-tr = hfst.compile_lexc_file(ifile, with_flags=WithFlags)
-tr.write_to_file(ofile)
+for opt in options[0]:
+#    if opt[0] == '--Werror':
+#        treat_warnings_as_errors=True
+    if opt[0] == '-F' or opt[0] == '--withFlags':
+        WithFlags=True
+    elif opt[0] == '-f' or opt[0] == '--format':
+        output_format = hfst_commandline.get_implementation_type(opt[1])
+    else:
+        pass
+
+istr = hfst_commandline.get_one_input_text_stream(options)
+ostr = hfst_commandline.get_one_output_hfst_stream(options, output_format)
+istr[0].close()
+ostr[0].close()
+
+hfst.set_default_fst_type(output_format)
+tr = hfst.compile_lexc_file(istr[1], with_flags=WithFlags)
+tr.write_to_file(ostr[1])

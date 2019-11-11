@@ -1,8 +1,21 @@
 #! /bin/bash
 
+TAG=tag
+
+TOKENIZE="hfst-tokenize -x $TAG/omorfi_tokenize.pmatch"
+if ! command -v hfst-tokenize > /dev/null 2>&1; then
+    TOKENIZE="$TAG/hfst-tokenize -x $TAG/omorfi_tokenize.pmatch"
+fi
+
 function print_help()
 {
     echo "Lemmatizes and morphologically labels running Finnish text on standard input."
+    echo
+    echo "Options:"
+    echo "  --version, -v        Print version information"
+    echo "  --no-tokenize        Instead of running text, expect a newline-separated"
+    echo "                       stream of tokens, with an empty line signifying sentence"
+    echo "                       boundaries"
     echo
     echo "This package is based on the statistical (CRF-based) tagger FinnPos,"
     echo "the Finnish morphology package OmorFi and the FinnTreeBank corpus of"
@@ -22,24 +35,36 @@ function print_help()
     exit 0
 }
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-if command -v hfst-tokenize 2 > /dev/null; then
-    TOKENIZE="hfst-tokenize $DIR/tokenize.pmatch"
-else
-    TOKENIZE="python3 $DIR/tokenize.py"
-fi
+function print_version()
+{
+    echo "finnish-tagtools version 1.3.3"
+    echo "2019-02-13"
+    exit 0
+}
 
-case $1 in
-    "")
-	;;
-    *)
-	print_help ;;
-esac
+function lookup_and_cut() {
+    hfst-lookup -p $TAG/omorfi.tagtools.optcap.hfst | cut -f1,2
+}
+
+for var in "$@"
+do
+    case $var in
+	"") ;;
+	"--version")
+            print_version ;;
+	"-v")
+            print_version ;;
+	"--no-tokenize")
+	    TOKENIZE=lookup_and_cut;;
+	*)
+	    print_help ;;
+    esac
+done
+
 
 $TOKENIZE |
-$DIR/hfst-optimized-lookup $DIR/morphology.omor.hfst 2>/dev/null |
-python3 $DIR/omorfi2finnpos.py ftb                               |
-python3 $DIR/finnpos-ratna-feats.py $DIR/freq_words              |
-$DIR/finnpos-label $DIR/ftb.omorfi.model 2>/dev/null             |
-python3 $DIR/finnpos-restore-lemma.py                           |
+python3 $TAG/omorfi2finnpos.py ftb                                  |
+python3 $TAG/finnpos-ratna-feats.py $TAG/freq_words                 |
+$TAG/finnpos-label $TAG/ftb.omorfi.model 2>/dev/null                |
+python3 $TAG/finnpos-restore-lemma.py                               |
 cut -f1,3,4

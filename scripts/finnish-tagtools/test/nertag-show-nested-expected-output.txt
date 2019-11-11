@@ -1,0 +1,66 @@
+Tällä				
+tiedostolla				
+testaamme				
+finnish-tagtools				
+-paketin				
+toimintaa				
+.				
+
+Helsingin	<EnamexLocPpl/>			
+lisäksi				
+mukana				
+on				
+sellaisia				
+erisnimiä				
+kuin				
+Stora	<EnamexOrgCrp>			
+Enso	</EnamexOrgCrp>			
+,				
+Roosevelt	<EnamexPrsHum/>			
+ja				
+Kirgisian	<EnamexLocPpl/>			
+pääkaupunki				
+Bishkek	<EnamexLocPpl/>			
+.				
+
+Sähköpostiosoitteet				
+kuten				
+kielipankki@csc.fi				
+ja				
+www-osoitteet				
+kuten				
+https://www.kielipankki.fi/tuki/kayttooikeudet/				
+ovat				
+tavallisia				
+,				
+oli				
+vuosi				
+sitten				
+2018	<TimexTmeDat/>			
+tai				
+2019	<TimexTmeDat/>			
+.				
+
+Tiedätkö				
+SINÄ				
+missä				
+sijamuodossa				
+ovat				
+sellaiset				
+sanat				
+kuin				
+tietokoneilla				
+,				
+astalolta				
+tai				
+löylylle				
+.				
+
+Sekö				
+onkin				
+tärkeähköä				
+että				
+hallitsemme				
+kliititkin				
+??				
+

@@ -252,6 +252,14 @@ int main (int argc, char * argv[])
                 "Required GLIB-based Unicode handling not present");
 #endif
         }
+      else if ((*f == "icu") || (*f == "USE_ICU_UNICODE"))
+        {
+          verbose_printf("Requiring Unicode parsed by ICU");
+#ifndef USE_ICU_UNICODE
+          error(EXIT_FAILURE, 0,
+                "Required ICU-based Unicode handling not present");
+#endif
+        }
       else
         {
           error(EXIT_FAILURE, 0, "Required %s support is unrecognised "

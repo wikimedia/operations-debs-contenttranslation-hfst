@@ -1,11 +1,12 @@
 import hfst
-from sys import argv
+import hfst_commandline
+options = hfst_commandline.hfst_getopt('',[],1)
 
 istr = None
-if len(argv) == 2:
-    istr = hfst.HfstInputStream(argv[1])
-else:
+if len(options[1]) == 0:
     istr = hfst.HfstInputStream()
+else:
+    istr = hfst.HfstInputStream(options[1][0])
 
 ostr = hfst.HfstOutputStream(type=istr.get_type())
 

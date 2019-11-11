@@ -11,3 +11,7 @@
 	"*tesT"
 "<TEst>"
 	"*TEst"
+"<čest>"
+	"čest"	n
+"<Čest>"
+	"*Čest"
