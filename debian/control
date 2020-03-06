@@ -10,14 +10,11 @@ Build-Depends: autoconf,
                bison,
                debhelper (>= 9.0),
                dh-autoreconf,
-               dh-python,
                dpkg-dev (>= 1.16.1~),
                flex,
                libicu-dev,
                libreadline-dev,
                libtool,
-               python-all-dev,
-               python3-all-dev,
                swig,
                zlib1g-dev
 Standards-Version: 4.1.1
@@ -29,7 +26,6 @@ Package: hfst
 Architecture: any
 Depends: libhfst52 (= ${binary:Version}),
          ${misc:Depends},
-         ${python:Depends},
          ${shlibs:Depends}
 Description: Helsinki Finite-State Transducer Technology
  The Helsinki Finite-State Transducer software is intended for the
@@ -65,31 +61,3 @@ Description: Helsinki Finite-State Transducer Technology Development files
  based on weighted and unweighted finite-state transducer technology.
  .
  This package provides development headers and libraries for HFST
-
-Package: python-libhfst
-Architecture: any
-Section: python
-Depends: libhfst52 (= ${binary:Version}),
-         ${misc:Depends},
-         ${python:Depends},
-         ${shlibs:Depends}
-Description: Helsinki Finite-State Transducer Technology (Python2 module)
- The Helsinki Finite-State Transducer software is intended for the
- implementation of morphological analysers and other tools which are
- based on weighted and unweighted finite-state transducer technology.
- .
- This package provides Python2 module for libhfst.
-
-Package: python3-libhfst
-Architecture: any
-Section: python
-Depends: libhfst52 (= ${binary:Version}),
-         ${misc:Depends},
-         ${python3:Depends},
-         ${shlibs:Depends}
-Description: Helsinki Finite-State Transducer Technology (Python3 module)
- The Helsinki Finite-State Transducer software is intended for the
- implementation of morphological analysers and other tools which are
- based on weighted and unweighted finite-state transducer technology.
- .
- This package provides Python3 module for libhfst.

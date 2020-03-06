@@ -3,38 +3,29 @@
 
 #export DH_VERBOSE=1
 
-NUMJOBS = 1
-ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
-	NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
-endif
-
-build2vers := $(shell pyversions -sv)
-build3vers := $(shell py3versions -sv)
-
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 export LC_ALL=C.UTF-8
 
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+DPKG_EXPORT_BUILDFLAGS = 1
+include /usr/share/dpkg/buildflags.mk
+
 %:
-	dh $@ --fail-missing --with autoreconf --with python2 --with python3
+	dh $@ --fail-missing --with autoreconf
 
 override_dh_auto_configure:
 	dh_auto_configure -- --disable-static --enable-all-tools --with-readline
 
 override_dh_auto_build:
 	$(MAKE) -j$(NUMJOBS) || $(MAKE) -j$(NUMJOBS) || $(MAKE)
-	set -e && for i in $(build2vers) $(build3vers); do \
-		cd $(CURDIR)/python && python$$i setup.py build_ext && strip --strip-unneeded build/*/*.so; \
-	done
 
 override_dh_auto_test:
 	# Disable because they still break on big-endian
 
 override_dh_auto_install:
 	dh_auto_install
-	set -e && for i in $(build2vers) $(build3vers); do \
-		cd $(CURDIR)/python && python$$i setup.py install --no-compile --prefix /usr --install-layout deb --root $(CURDIR)/debian/tmp; \
-	done
-	find $(CURDIR) -type f -name '*.pyc' -exec rm -f '{}' \;
-	find $(CURDIR) -type f -name '*.pyo' -exec rm -f '{}' \;
 	find $(CURDIR) -type f -name '*.la' -exec rm -f '{}' \;
+
+override_dh_dwz:
+	# Disable dwz as it fails for the Python module
